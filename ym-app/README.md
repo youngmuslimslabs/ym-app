@@ -1,5 +1,24 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Tech Stack
+
+### Frontend
+- **Next.js 15.5.3** - React framework with App Router
+- **React 19.1.0** - UI library
+- **TypeScript 5** - Type safety and better DX
+- **Tailwind CSS 3.4.17** - Utility-first CSS framework (pinned to v3)
+
+### Backend & Database
+- **Supabase** - Backend-as-a-Service with PostgreSQL
+  - Authentication
+  - Real-time database
+  - Storage
+
+### Development Tools
+- **ESLint 9** - Code linting
+- **PostCSS 8** - CSS processing
+- **Autoprefixer** - CSS vendor prefixing
+
 ## Getting Started
 
 First, run the development server:

@@ -1,3 +1,9 @@
+## YM App
+
+Young Muslim's proprietary application that serves to create a database of organization leadership, track meaningful metrics in the field of tarbiyah, PDP, Study circle, and overall organizational operations. By consolidating this information, the application streamlines leadership management and strengthens overall organizational effectiveness.
+
+<br> 
+
 ## Tech Stack
 
 ### Frontend
@@ -16,6 +22,8 @@
 - **ESLint 9** - Code linting
 - **PostCSS 8** - CSS processing
 - **Autoprefixer** - CSS vendor prefixing
+
+<br>
 
 ## Getting Started
 

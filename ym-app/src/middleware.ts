@@ -1,19 +1,13 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Add all routes that should be accessible without authentication
-const publicRoutes = ['/login', '/auth-test', '/', '/api/auth']
+// Routes that should be accessible without authentication
+// TODO: Implement server-side auth check in production
+// const publicRoutes = ['/login', '/home', '/', '/api/auth']
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // Check if the route is public
-  const isPublicRoute = publicRoutes.some(route =>
-    pathname === route || pathname.startsWith(`${route}/`)
-  )
-
-  // For now, we'll just allow all routes since auth is handled client-side
-  // In production, you'd check for a session cookie here
+export function middleware(_request: NextRequest) {
+  // For now, allow all routes since auth is handled client-side
+  // In production, check for session cookie and enforce publicRoutes
   return NextResponse.next()
 }
 

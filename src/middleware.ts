@@ -2,11 +2,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // Routes that should be accessible without authentication
-// TODO: Implement server-side auth check in production
+// TODO: CRITICAL - Implement server-side auth check before production deploy
+// Currently NO route protection exists - users can access any route by direct URL
+// Need to:
+// 1. Create Supabase middleware client
+// 2. Check session on each request
+// 3. Redirect unauthenticated users from protected routes
 // const publicRoutes = ['/login', '/home', '/', '/api/auth']
 
 export function middleware(_request: NextRequest) {
-  // For now, allow all routes since auth is handled client-side
+  // WARNING: For now, allow all routes since auth is handled client-side only
   // In production, check for session cookie and enforce publicRoutes
   return NextResponse.next()
 }

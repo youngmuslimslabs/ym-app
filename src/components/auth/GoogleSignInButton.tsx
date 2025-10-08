@@ -6,6 +6,8 @@ import { useState } from 'react'
 
 const ALLOWED_DOMAIN = 'youngmuslims.com'
 
+// TODO: Replace 'any' types with proper TypeScript interfaces for Google Identity Services
+// This will fix build errors and improve type safety
 declare global {
   interface Window {
     google: any
@@ -30,6 +32,8 @@ export default function GoogleSignInButton({
       // Decode the JWT to check the email domain before sending to Supabase
       const payload = JSON.parse(atob(response.credential.split('.')[1]))
 
+      // TODO: Move domain validation to server-side (API route or Supabase Auth Hook)
+      // Client-side validation can be bypassed - this is only for UX
       // Verify email domain
       if (!payload.email?.endsWith(`@${ALLOWED_DOMAIN}`)) {
         const errorMsg = `Access restricted to @${ALLOWED_DOMAIN} accounts only`

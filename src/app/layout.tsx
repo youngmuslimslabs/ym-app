@@ -14,11 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YM App - Young Muslims",
-  description: "Young Muslims organizational database and leadership management system",
-  icons: {
-    icon: '/favicon.png',
-  },
+  title: "Young Muslims App",
+  description: "Young Muslims Official App",
 };
 
 export default function RootLayout({

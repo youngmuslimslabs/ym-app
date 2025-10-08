@@ -19,6 +19,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const ALLOWED_DOMAIN = 'youngmuslims.com'
 
+    // TODO: Add server-side domain validation via Supabase Auth Hook or RLS policy
+    // Client-side validation can be bypassed - this is only for UX feedback
+
     // Check active sessions and validate domain
     supabase.auth.getSession().then(({ data: { session } }) => {
       const user = session?.user
@@ -64,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+// TODO: Add error boundary to catch useAuth errors and prevent full app crashes
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {

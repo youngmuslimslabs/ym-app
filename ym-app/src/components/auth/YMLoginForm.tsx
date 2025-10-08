@@ -26,9 +26,6 @@ export function YMLoginForm({ onSuccess, onError, error }: YMLoginFormProps) {
         {/* Google Sign In Button - Full Width & Centered */}
         <div className="w-full">
           <GoogleSignInButton
-            text="continue_with"
-            size="large"
-            theme="outline"
             onSuccess={onSuccess}
             onError={onError}
           />

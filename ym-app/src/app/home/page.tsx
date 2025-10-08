@@ -74,8 +74,6 @@ export default function HomePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <GoogleSignInButton
-            text="continue_with"
-            size="large"
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
           />

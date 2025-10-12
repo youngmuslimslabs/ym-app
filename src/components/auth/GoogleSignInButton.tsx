@@ -2,7 +2,7 @@
 
 import Script from 'next/script'
 import { supabase } from '@/lib/supabase'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const ALLOWED_DOMAIN = 'youngmuslims.com'
 
@@ -53,7 +53,8 @@ export default function GoogleSignInButton({
 }: GoogleSignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSignInWithGoogle = async (response: GoogleCredentialResponse) => {
+  // Memoized sign-in handler - stable reference across renders
+  const handleSignInWithGoogle = useCallback(async (response: GoogleCredentialResponse) => {
     setIsLoading(true)
     try {
       // Decode the JWT to check the email domain before sending to Supabase
@@ -86,16 +87,21 @@ export default function GoogleSignInButton({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [onSuccess, onError])
 
-  const initializeGoogleSignIn = () => {
+  // Memoized button renderer - stable reference, depends on handleSignInWithGoogle
+  const renderGoogleButton = useCallback(() => {
     if (!window.google || !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-      console.error('Google client not loaded or Client ID not configured')
       return
     }
 
-    // Make the callback function globally available
-    window.handleSignInWithGoogle = handleSignInWithGoogle
+    const buttonElement = document.getElementById('google-signin-button')
+    if (!buttonElement) {
+      return
+    }
+
+    // Clear any existing button content before re-rendering
+    buttonElement.innerHTML = ''
 
     // Initialize Google Identity Services
     window.google.accounts.id.initialize({
@@ -104,21 +110,42 @@ export default function GoogleSignInButton({
       hosted_domain: ALLOWED_DOMAIN,
     })
 
-    // Render the sign-in button with custom styling to match shadcn
-    window.google.accounts.id.renderButton(
-      document.getElementById('google-signin-button'),
-      {
-        type: 'standard',
-        theme: 'outline',
-        size: 'large',
-        text: 'continue_with',
-        shape: 'rectangular',
-        logo_alignment: 'left',
-      }
-    )
+    // Render the sign-in button
+    window.google.accounts.id.renderButton(buttonElement, {
+      type: 'standard',
+      theme: 'outline',
+      size: 'large',
+      text: 'continue_with',
+      shape: 'rectangular',
+      logo_alignment: 'left',
+    })
+  }, [handleSignInWithGoogle])
 
-    // Initialization complete
-  }
+  // Effect to render button whenever component mounts or Google SDK loads
+  useEffect(() => {
+    // Make the callback function globally available
+    window.handleSignInWithGoogle = handleSignInWithGoogle
+
+    // If Google is already loaded, render immediately
+    if (window.google) {
+      renderGoogleButton()
+    }
+
+    // Cleanup: remove global reference when component unmounts
+    return () => {
+      // Cast to any to allow deletion of global property
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any).handleSignInWithGoogle
+    }
+  }, [handleSignInWithGoogle, renderGoogleButton])
+
+  // Function to initialize when script first loads
+  const initializeGoogleSignIn = useCallback(() => {
+    // Make the callback function globally available
+    window.handleSignInWithGoogle = handleSignInWithGoogle
+    // Render the button
+    renderGoogleButton()
+  }, [handleSignInWithGoogle, renderGoogleButton])
 
   return (
     <>

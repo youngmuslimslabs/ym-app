@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
 // Routes that should be accessible without authentication
 // TODO: CRITICAL - Implement server-side auth check before production deploy
@@ -10,7 +9,7 @@ import type { NextRequest } from 'next/server'
 // 3. Redirect unauthenticated users from protected routes
 // const publicRoutes = ['/login', '/home', '/', '/api/auth']
 
-export function middleware(_request: NextRequest) {
+export function middleware() {
   // WARNING: For now, allow all routes since auth is handled client-side only
   // In production, check for session cookie and enforce publicRoutes
   return NextResponse.next()

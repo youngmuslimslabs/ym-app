@@ -89,7 +89,8 @@ export default function GoogleSignInButton({
     }
   }, [onSuccess, onError])
 
-  // Memoized button renderer - stable reference, depends on handleSignInWithGoogle
+  // Memoized button renderer - stable reference
+  // Note: Uses window.handleSignInWithGoogle which is set in useEffect
   const renderGoogleButton = useCallback(() => {
     if (!window.google || !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
       return
@@ -119,7 +120,7 @@ export default function GoogleSignInButton({
       shape: 'rectangular',
       logo_alignment: 'left',
     })
-  }, [handleSignInWithGoogle])
+  }, [])
 
   // Effect to render button whenever component mounts or Google SDK loads
   useEffect(() => {

@@ -30,6 +30,7 @@ interface GoogleAccounts {
         logo_alignment?: string
       }
     ) => void
+    cancel: () => void
   }
 }
 
@@ -110,6 +111,10 @@ export default function GoogleSignInButton({
       callback: window.handleSignInWithGoogle,
       hosted_domain: ALLOWED_DOMAIN,
     })
+
+    // Disable automatic One Tap prompt
+    // This ensures only our custom button is shown, not Google's floating One Tap UI
+    window.google.accounts.id.cancel()
 
     // Render the sign-in button
     window.google.accounts.id.renderButton(buttonElement, {

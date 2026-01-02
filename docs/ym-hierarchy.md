@@ -13,8 +13,15 @@ This document defines the complete organizational structure of YM Brothers.
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                           NATIONAL LEVEL                                    │
-│  National Coordinator + Secretary General + National Shura + Cabinet        │
-│  (NC is part of NS, just the leader)                                        │
+│  National Shura (NC + NS members who hold functional roles like            │
+│  Cabinet Chair, Council Coordinator, NS SG, Nat'l Cloud Rep)               │
+│  + Cabinet (led by Cabinet Chair who is NS)                                 │
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                           THE COUNCIL                                       │
+│        All Regional Coordinators, led by Council Coordinator (NS member)    │
 └────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -28,8 +35,8 @@ This document defines the complete organizational structure of YM Brothers.
                     ▼                               ▼
 ┌───────────────────────────────┐   ┌───────────────────────────────┐
 │      SUBREGIONAL (SR)         │   │      CLOUD (per SR)           │
-│  SRC + Secretary + NNCs       │   │  Cloud Coordinator + Teams    │
-│  (Geographic leadership)       │   │  (Parallel, not under SR)     │
+│  SRC + SR Secretary General   │   │  Cloud Coordinator + Teams    │
+│  + NNCs                        │   │  (Parallel, not under SR)     │
 └───────────────────────────────┘   └───────────────────────────────┘
                 │
                 ▼
@@ -61,12 +68,12 @@ The top of the organization with overall leadership and governance.
               ┌────────────────┼────────────────┐
               ▼                ▼                ▼
     ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-    │ Secretary       │ │ National Shura  │ │ Cabinet         │
-    │ General         │ │ (includes NC,   │ │ (Departments)   │
-    └─────────────────┘ │ RCs, Nat'l      │ └────────┬────────┘
-                        │ Cloud Rep)      │          │
-                        └─────────────────┘          │
-                                           ┌─────────┴─────────┐
+    │ National Shura  │ │ The Council     │ │ Cabinet         │
+    │ (NC + other NS  │ │ (All RCs, led   │ │ (Departments)   │
+    │ members - they  │ │ by Council      │ └────────┬────────┘
+    │ often hold      │ │ Coordinator     │          │
+    │ other roles)    │ │ who is NS)      │          │
+    └─────────────────┘ └─────────────────┘ ┌────────┴─────────┐
                                            ▼                   ▼
                                     ┌────────────┐      ┌────────────┐
                                     │ Finance    │ ...  │ IT         │
@@ -81,13 +88,38 @@ The top of the organization with overall leadership and governance.
 
 The governing body at the national level. **Key insight:** The NC is part of NS, not separate from it - NC is the leader of NS.
 
+**Important:**
+- Every NS member is associated with **one region** (their geographic home)
+- Multiple NS members can come from the same region
+- NS members typically **hold additional functional roles** (see "NS Roles" below)
+
+| Attribute | Description |
+|-----------|-------------|
+| **Geographic Association** | Each NS member belongs to one region |
+| **Count** | Multiple members (1+ per region possible) |
+
+#### NS Roles (Functional Assignments)
+
+These are roles held by NS members in addition to their NS membership:
+
 | Role | Count | Description |
 |------|-------|-------------|
-| **National Coordinator (NC)** | 1 | Leader of the National Shura (and part of it) |
-| **Secretary General** | 1 | Administrative leadership |
-| **Regional Coordinators** | 1 per region | RCs sit on the National Shura |
-| **National Cloud Rep** | 1 | Represents Cloud on the National Shura |
-| **Other NS Members** | Multiple | Other national leaders |
+| **National Coordinator (NC)** | 1 | Leader of NS (held by an NS member) |
+| **NS Secretary General** | 1 | Administrative leadership for NS (held by an NS member) |
+| **Cabinet Chair** | 1 | Oversees Cabinet (held by an NS member) |
+| **Council Coordinator** | 1 | Leads The Council of all RCs (held by an NS member) |
+| **National Cloud Rep** | 1 | Represents Cloud nationally (held by an NS member) |
+
+**Note:** Regional Coordinators are **NOT** part of National Shura. They form their own body called "The Council."
+
+#### The Council
+
+All Regional Coordinators together form **"The Council"** - a separate body from National Shura.
+
+| Role | Count | Description |
+|------|-------|-------------|
+| **Council Coordinator** | 1 | NS member who leads The Council |
+| **Regional Coordinators (RCs)** | 1 per region | Members of The Council (not NS members) |
 
 #### Cabinet Structure (National Departments)
 
@@ -99,8 +131,8 @@ The Cabinet handles **functional/departmental work** at the national level.
 
 | Role | Count | Description |
 |------|-------|-------------|
-| **Cabinet Chair** | 1 | Oversees all of Cabinet |
-| **Cabinet Secretary General** | 1 | Administrative leadership for Cabinet |
+| **Cabinet Chair** | 1 | Oversees all of Cabinet (this is an NS member - see NS Roles) |
+| **Cabinet Secretary General** | 1 | Administrative leadership for Cabinet (separate from NS Secretary General) |
 
 **Departments & Teams (8 departments):**
 
@@ -146,9 +178,9 @@ Regions are large geographic areas (e.g., Texas, New York, California, Southeast
 
 | Role | Count | Description |
 |------|-------|-------------|
-| **Regional Coordinator (RC)** | 1 per region | Leader of Regional Shura (and part of it), sits on National Shura |
+| **Regional Coordinator (RC)** | 1 per region | Leader of Regional Shura (and part of it), member of The Council |
 | **Cloud Rep** | 1 per region | Represents Cloud at regional level, sits on Regional Shura |
-| **Special Projects** | 1 per region | Handles regional special initiatives |
+| **Special Projects** | 1 per region | Handles regional special initiatives, sits on Regional Shura |
 | **SRCs** | Multiple | Sub-Regional Coordinators sit on Regional Shura |
 
 ---
@@ -165,8 +197,8 @@ Subregions are collections of NeighborNets within a Region (e.g., Houston, Dalla
         ┌───────┴───────┐
         ▼               ▼
 ┌───────────────┐ ┌─────────────────┐
-│ Secretary     │ │ NNCs            │
-│               │ │ (one per NN)    │
+│ SR Secretary  │ │ NNCs            │
+│ General       │ │ (one per NN)    │
 └───────────────┘ └─────────────────┘
 ```
 
@@ -175,8 +207,10 @@ Subregions are collections of NeighborNets within a Region (e.g., Houston, Dalla
 | Role | Count | Description |
 |------|-------|-------------|
 | **Sub-Regional Coordinator (SRC)** | 1 per SR | Leader of the subregion (part of it too) |
-| **Secretary** | 1 per SR | Administrative support for the SRC |
+| **SR Secretary General** | 1 per SR | Administrative leadership for the SR |
 | **NeighborNet Coordinators (NNCs)** | 1 per NN | Leaders of individual NeighborNets |
+
+**Note:** The Coordinator + Secretary General pattern repeats at multiple levels: NS, Cabinet, and SR each have their own.
 
 ---
 
@@ -217,7 +251,7 @@ Cloud is a **parallel track** that exists at every level but runs **adjacent** t
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          CLOUD STRUCTURE                                 │
 │                                                                          │
-│   National Level:     National Cloud Rep (sits on National Shura)        │
+│   National Level:     National Cloud Rep (NS member role)                │
 │                              │                                           │
 │   Regional Level:     Cloud Rep per region (sits on Regional Shura)      │
 │                              │                                           │
@@ -231,7 +265,7 @@ Cloud is a **parallel track** that exists at every level but runs **adjacent** t
 
 | Level | Role | Count | Description |
 |-------|------|-------|-------------|
-| National | **National Cloud Rep** | 1 | Sits on National Shura |
+| National | **National Cloud Rep** | 1 | NS member role (the person IS an NS member) |
 | Regional | **Cloud Rep** | 1 per region | Sits on Regional Shura |
 | SR-adjacent | **Cloud Coordinator** | 1 per SR | Leads cloud in their subregion area |
 | SR-adjacent | **Cloud Teams/Members** | Multiple | On-the-ground specialized work |
@@ -239,8 +273,9 @@ Cloud is a **parallel track** that exists at every level but runs **adjacent** t
 **Key Points:**
 - Cloud is **geographically adjacent** to subregions but **not under SR leadership**
 - Cloud does NOT report to SRC or RC - it's a parallel structure
-- Cloud has representation on shuras (NS and Regional) but operates independently
-- **Cloud Rep** = regional & national level, **Cloud Coordinator** = SR level only
+- National Cloud Rep is an **NS member** who holds this functional role
+- Regional Cloud Rep sits on Regional Shura but is not an NS member
+- **Cloud Rep** = regional level, **National Cloud Rep** = NS role, **Cloud Coordinator** = SR level
 
 ---
 
@@ -273,9 +308,10 @@ This pattern repeats at every level:
 
 | Level | Leader | Other Members | Reports To |
 |-------|--------|---------------|------------|
-| National | National Coordinator | SG, RCs, Nat'l Cloud Rep, others | - |
-| Regional | Regional Coordinator | Cloud Rep, Special Projects, SRCs | National Shura |
-| Subregional | Sub-Regional Coordinator | Secretary, NNCs | RC |
+| National Shura | National Coordinator | NS members (who hold functional roles like NS SG, Cabinet Chair, etc.) | - |
+| The Council | Council Coordinator (NS member) | All RCs | NS |
+| Regional Shura | Regional Coordinator | Cloud Rep, Special Projects, SRCs | The Council |
+| Subregional | Sub-Regional Coordinator | SR Secretary General, NNCs | RC |
 | NeighborNet | NeighborNet Coordinator | Core Team Members | SRC |
 | - | - | Members | NNC |
 
@@ -291,14 +327,14 @@ This pattern repeats at every level:
 
 ### Parallel Structure (Cloud)
 
-| Level | Role | Sits On | Notes |
-|-------|------|---------|-------|
-| National | National Cloud Rep | National Shura | 1 total |
+| Level | Role | Membership | Notes |
+|-------|------|------------|-------|
+| National | National Cloud Rep | NS member (functional role) | 1 total |
 | Regional | Cloud Rep | Regional Shura | 1 per region |
 | SR-adjacent | Cloud Coordinator | - | 1 per SR area |
 | SR-adjacent | Cloud Members | - | Multiple per SR |
 
-**Note:** Cloud is parallel/adjacent, not under geographic leadership.
+**Note:** Cloud is parallel/adjacent, not under geographic leadership. National Cloud Rep is an NS member holding this role, not a separate person "sitting on" NS.
 
 ### Non-Leadership
 
@@ -315,65 +351,109 @@ This pattern repeats at every level:
                          National Coordinator
                           (leader of NS, part of NS)
                                 │
-                ┌───────────────┼───────────────┬─────────────────┐
-                ▼               ▼               ▼                 ▼
-         Secretary      National Shura      Cabinet          Nat'l Cloud
-          General       (RCs, Cloud Rep,     Chair               Rep
-                         others)               │
-                              │          ┌─────┴─────┐
-                              │          ▼           ▼
-                              │     Dept Heads → Team Leads → Team Members
-                              │     (Finance, Fundraising, Marketing,
-                              │      Operations, Societal Impact, IT)
-                              ▼
-                    Regional Coordinator (RC)
-                     (leader of Regional Shura)
-                              │
-                   ┌──────────┼──────────┬──────────┐
-                   ▼          ▼          ▼          ▼
-            Regional      SRCs      Special    Cloud Rep
-             Shura                  Projects   (for region)
-                           │                       │
-                           ▼                       ▼
-                    ┌──────┴──────┐          Cloud Coordinator
-                    ▼             ▼          (per SR area)
-                   SRC        Secretary           │
-            (leader of SR)                   Cloud Members
+          ┌─────────────────────┼─────────────────────┐
+          ▼                     ▼                     ▼
+   NS Secretary           NS Members            Cabinet Chair
+     General        (each from a region,         (NS member)
+                    hold functional roles)            │
+                           │                    ┌─────┴─────┐
+          ┌────────────────┼────────────────┐   ▼           ▼
+          ▼                ▼                ▼  Cabinet SG  Dept Heads
+    Council          Nat'l Cloud       (other                 │
+   Coordinator          Rep           NS roles)          Team Leads
+   (NS member)      (NS member)                              │
+          │                                             Team Members
+          ▼
+    ┌─────────────────────────────────────┐
+    │           THE COUNCIL                │
+    │  (All RCs, led by Council Coord)    │
+    └─────────────────────────────────────┘
                     │
                     ▼
-               NNCs (per NN)
+          Regional Coordinator (RC)
+           (leader of Regional Shura)
                     │
-                    ▼
-              NNC (leader of CT, part of CT)
-                    │
-              Core Team Members
-                    │
-                 Members
+         ┌──────────┼──────────┬──────────┐
+         ▼          ▼          ▼          ▼
+      Regional    SRCs     Special    Cloud Rep
+       Shura                Projects  (for region)
+                    │                     │
+                    ▼                     ▼
+                   SRC              Cloud Coordinator
+            (leader of SR)          (per SR area)
+                    │                     │
+         ┌──────────┴──────────┐    Cloud Members
+         ▼                     ▼
+   SR Secretary            NNCs (per NN)
+     General                   │
+                               ▼
+                    NNC (leader of CT, part of CT)
+                               │
+                         Core Team Members
+                               │
+                            Members
 ```
 
-**Three Structures:**
-1. **Geographic**: NC → RC → SRC → NNC → Members
-2. **Cabinet** (national only): Cabinet → Departments → Teams
-3. **Cloud** (parallel): Nat'l Rep → Regional Rep → Cloud Coordinator → Cloud Members
+**Key Structures:**
+1. **National Shura (NS)**: NC + NS members (each has a geographic home region, many hold functional roles)
+2. **The Council**: All RCs, led by Council Coordinator (who is an NS member)
+3. **Geographic Chain**: Regional Shura → Subregional → NeighborNet → Members
+4. **Cabinet** (national): Cabinet Chair (NS member) → Dept Heads → Team Leads → Members
+5. **Cloud** (parallel): Nat'l Cloud Rep (NS role) → Regional Cloud Rep → Cloud Coordinator → Cloud Members
 
 ---
 
 ## Resolved Questions
 
+### National Level
+
 | Question | Answer |
 |----------|--------|
 | NC in National Shura? | Yes - NC is leader of NS AND part of NS |
+| RCs in National Shura? | **No** - RCs form "The Council", a separate body |
+| NS member geography? | Each NS member belongs to one region; multiple NS members can be from the same region |
+| NS members multi-role? | Yes - NS members hold functional roles (NC, NS SG, Cabinet Chair, Council Coordinator, Nat'l Cloud Rep) |
+| Cabinet Chair NS member? | Yes - must be an NS member (for now) |
+| Secretary General levels? | Three distinct SG roles: NS SG, Cabinet SG, SR SG (each level has its own) |
+
+### The Council
+
+| Question | Answer |
+|----------|--------|
+| What is The Council? | All RCs together form The Council - a body separate from NS |
+| Who leads The Council? | Council Coordinator (an NS member) |
+| RC count per region? | 1 per region |
+
+### Regional & Subregional
+
+| Question | Answer |
+|----------|--------|
+| Regional Shura roles? | RC (leader), Cloud Rep, Special Projects, SRCs |
 | SRC in Subregion? | Yes - SRC is leader AND part of the SR |
+| SR Team Roles? | SRC + SR Secretary General + NNCs |
+
+### NeighborNet
+
+| Question | Answer |
+|----------|--------|
 | NNC in Core Team? | Yes - NNC is leader of CT AND part of CT |
-| Cabinet Departments | 8 depts: Marketing, HR, Operations, Special Projects, Fundraising, Finance, IT, Societal Impact |
-| Regional Shura roles | RC (leader), Cloud Rep, Special Projects, SRCs |
-| Cloud structure | Nat'l Cloud Rep → Regional Cloud Rep → Cloud Coordinator (SR) → Members |
-| Cloud reporting | Parallel/adjacent - not under SR or Regional leadership |
-| SR Team Roles | SRC + Secretary + NNCs |
-| Core Team Roles | NNC (leader) + CT Members (no sub-roles) |
-| RC count per region | 1 per region |
+| Core Team Roles? | NNC (leader) + CT Members (no sub-roles) |
+
+### Cloud
+
+| Question | Answer |
+|----------|--------|
+| Cloud structure? | Nat'l Cloud Rep (NS role) → Regional Cloud Rep → Cloud Coordinator → Members |
+| Cloud reporting? | Parallel/adjacent - not under SR or Regional geographic leadership |
+| National Cloud Rep? | This is an NS member holding a functional role (not a separate person) |
 | Multi-role (geo + Cloud)? | Generally no, but edge cases possible |
-| Alumni | Track with subregion association, not in leadership |
+
+### Other
+
+| Question | Answer |
+|----------|--------|
+| Cabinet Departments? | 8 depts: Marketing, HR, Operations, Special Projects, Fundraising, Finance, IT, Societal Impact |
+| Alumni? | Track with subregion association, not in leadership structure |
 
 ---
 
@@ -381,3 +461,4 @@ This pattern repeats at every level:
 
 1. [x] ~~Document organizational structure~~
 2. [ ] Design database schema to match
+ 

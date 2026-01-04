@@ -29,6 +29,13 @@
 5. Use `cn()` from `@/lib/utils` for className merging
 6. Only create custom components if shadcn doesn't have it
 
+### Icons
+- **Use lucide-react exclusively** - this is the shadcn/ui standard
+- Import: `import { IconName } from "lucide-react"`
+- Browse icons: https://lucide.dev/icons
+- Standard sizing: `className="h-4 w-4"` (small), `className="h-5 w-5"` (medium)
+- ❌ Do NOT use `@radix-ui/react-icons`, `react-icons`, or other icon libraries
+
 ### Styling & Design System
 
 #### Color Palette (STRICTLY USE THESE)
@@ -67,6 +74,11 @@ Test at these breakpoints:
 - **Standard iOS**: 393px (iPhone 16)
 - **Large iOS**: 430px (iPhone 16 Pro Max)
 - **Desktop**: 1280px+
+
+#### Glassmorphism (use sparingly)
+- Only for overlays and floating elements, not general containers
+- Pattern: `bg-background/95 backdrop-blur-sm` (subtle, not heavy)
+- Examples: dialog overlays, floating save bars, command palettes
 
 #### Animations (keep subtle)
 - Transitions: `transition-all duration-300` or `duration-500`

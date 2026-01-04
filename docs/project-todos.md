@@ -109,6 +109,12 @@
 
 ---
 
+## Product Analytics
+
+- [ ] Integrate PostHog for event tracking and user analytics
+
+---
+
 ## Testing
 
 - [ ] Unit tests for validation functions (phone, email)

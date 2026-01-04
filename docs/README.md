@@ -9,8 +9,17 @@ Young Muslim's proprietary application that serves to create a database of organ
 ### Frontend
 - **Next.js 15.5.3** - React framework with App Router
 - **React 19.1.0**
+- **React Context** - State management (used for onboarding flow)
 - **TypeScript 5**
 - **Tailwind CSS 3.4.17** - Utility-first CSS framework (pinned to v3)
+
+### UI Components
+- **shadcn/ui** - Accessible component primitives built on Radix UI
+- **Radix UI** - Headless UI components (Select, Popover, Dialog, etc.)
+- **Lucide React** - Icon library
+- **cmdk** - Command menu component (for searchable comboboxes)
+- **date-fns** - Date formatting utilities
+- **react-day-picker** - Calendar/date picker component
 
 ### Backend & Database
 - **Supabase** - Backend-as-a-Service with PostgreSQL

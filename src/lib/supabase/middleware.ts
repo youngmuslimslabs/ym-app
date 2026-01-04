@@ -46,10 +46,11 @@ export async function updateSession(request: NextRequest) {
                 console.error('Middleware auth error:', getUserError)
             }
 
-            // Don't redirect if already on login or auth pages (prevents redirect loop)
+            // Don't redirect if already on login, auth, or onboarding pages (prevents redirect loop)
             if (
                 !request.nextUrl.pathname.startsWith('/login') &&
                 !request.nextUrl.pathname.startsWith('/auth') &&
+                !request.nextUrl.pathname.startsWith('/onboarding') &&
                 request.nextUrl.pathname !== '/'
             ) {
                 // Redirect to login on auth errors
@@ -65,6 +66,7 @@ export async function updateSession(request: NextRequest) {
             !user &&
             !request.nextUrl.pathname.startsWith('/login') &&
             !request.nextUrl.pathname.startsWith('/auth') &&
+            !request.nextUrl.pathname.startsWith('/onboarding') &&
             request.nextUrl.pathname !== '/'
         ) {
             // no user, potentially respond by redirecting the user to the login page

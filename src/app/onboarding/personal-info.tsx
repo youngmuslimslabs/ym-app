@@ -57,6 +57,33 @@ const ETHNICITIES = [
   "Other",
 ] as const
 
+// Format phone number as user types: (555) 123-4567
+function formatPhoneNumber(value: string): string {
+  // Strip all non-digits
+  const digits = value.replace(/\D/g, "")
+
+  // Limit to 10 digits
+  const limited = digits.slice(0, 10)
+
+  // Format based on length
+  if (limited.length === 0) return ""
+  if (limited.length <= 3) return `(${limited}`
+  if (limited.length <= 6) return `(${limited.slice(0, 3)}) ${limited.slice(3)}`
+  return `(${limited.slice(0, 3)}) ${limited.slice(3, 6)}-${limited.slice(6)}`
+}
+
+// Basic email validation: has @ and domain with TLD
+function isValidEmail(email: string): boolean {
+  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return pattern.test(email)
+}
+
+// Check if phone has 10 digits
+function isValidPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, "")
+  return digits.length === 10
+}
+
 export default function PersonalInfo() {
   const router = useRouter()
   const { data, updateData } = useOnboarding()
@@ -67,7 +94,34 @@ export default function PersonalInfo() {
   const [ethnicity, setEthnicity] = useState(data.ethnicity ?? "")
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(data.dateOfBirth)
 
+  // Track which fields have been touched (blurred)
+  const [touched, setTouched] = useState({
+    phone: false,
+    email: false,
+  })
+
   const progressPercentage = calculateProgress(1)
+
+  // Handle phone input with auto-formatting
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value)
+    setPhoneNumber(formatted)
+  }
+
+  // Mark field as touched on blur
+  const handleBlur = (field: "phone" | "email") => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+  }
+
+  // Determine error states (only show if touched and invalid)
+  const phoneError = touched.phone && phoneNumber.length > 0 && !isValidPhone(phoneNumber)
+  const emailError = touched.email && personalEmail.length > 0 && !isValidEmail(personalEmail)
+
+  // Validation: all fields required with format checks
+  const isValid = isValidPhone(phoneNumber) &&
+                  isValidEmail(personalEmail) &&
+                  ethnicity !== "" &&
+                  dateOfBirth !== undefined
 
   const handleNext = () => {
     // Save to context before navigating
@@ -100,32 +154,60 @@ export default function PersonalInfo() {
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="phone">Phone Number</Label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Phone className={cn(
+                "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
+                phoneError ? "text-destructive" : "text-muted-foreground"
+              )} />
               <Input
                 id="phone"
                 type="tel"
                 placeholder="(555) 123-4567"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="pl-10"
+                onChange={handlePhoneChange}
+                onBlur={() => handleBlur("phone")}
+                aria-invalid={phoneError}
+                aria-describedby={phoneError ? "phone-error" : undefined}
+                className={cn(
+                  "pl-10",
+                  phoneError && "border-destructive focus-visible:ring-destructive"
+                )}
               />
             </div>
+            {phoneError && (
+              <p id="phone-error" className="text-sm text-destructive">
+                Please enter a valid 10-digit phone number
+              </p>
+            )}
           </div>
 
           {/* Personal Email */}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="personalEmail">Personal Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Mail className={cn(
+                "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
+                emailError ? "text-destructive" : "text-muted-foreground"
+              )} />
               <Input
                 id="personalEmail"
                 type="email"
                 placeholder="you@example.com"
                 value={personalEmail}
                 onChange={(e) => setPersonalEmail(e.target.value)}
-                className="pl-10"
+                onBlur={() => handleBlur("email")}
+                aria-invalid={emailError}
+                aria-describedby={emailError ? "email-error" : undefined}
+                className={cn(
+                  "pl-10",
+                  emailError && "border-destructive focus-visible:ring-destructive"
+                )}
               />
             </div>
+            {emailError && (
+              <p id="email-error" className="text-sm text-destructive">
+                Please enter a valid email address
+              </p>
+            )}
           </div>
 
           {/* Ethnicity */}
@@ -183,7 +265,7 @@ export default function PersonalInfo() {
       {/* Navigation Buttons */}
       <div className="flex w-full items-center justify-center gap-4 pb-4">
         {/* No previous button for first step */}
-        <Button onClick={handleNext} className="w-40">
+        <Button onClick={handleNext} disabled={!isValid} className="w-40">
           Next
         </Button>
       </div>

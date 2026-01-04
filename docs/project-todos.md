@@ -28,6 +28,9 @@
 - [ ] Pre-populate `role_assignments` (current leadership)
 - [ ] Pre-populate `memberships`
 
+### Static Data Prepared
+- [x] US Universities list — 6,429 universities in `src/data/us-universities.json` (converted from CSV)
+
 ### Auth
 - [ ] Implement GSuite auth trigger (link users on first login)
 - [ ] Add "Before User Created" hook (restrict to @youngmuslims.com)
@@ -40,6 +43,12 @@
 
 ## UI
 
+### Reusable Components Created
+- [x] `SearchableCombobox` — Searchable dropdown with "Add new" option for custom entries
+- [x] `MonthYearPicker` — Month/Year selectors for date ranges
+- [x] `DateRangeInput` — Combines two MonthYearPickers with "current" checkbox
+- [x] Onboarding context (`OnboardingContext`) — State management for multi-step form
+
 ### Layout & Navigation
 - [ ] App shell/layout (header, nav, content area)
 - [ ] Navigation component
@@ -47,10 +56,18 @@
 - [ ] Logout functionality
 
 ### Onboarding
-- [ ] Design onboarding flow (steps, fields)
-- [ ] Build onboarding pages (multi-step form)
+- [x] Design onboarding flow (steps, fields) — 7 steps defined in `docs/plans/2026-01-03-onboarding-expansion-design.md`
+- [x] Build onboarding pages (multi-step form) — Steps 1-7 implemented with validation
+- [x] Form validation with blur error states (phone/email)
 - [ ] Handle onboarding state (redirect if incomplete)
 - [ ] Save onboarding data to Supabase
+
+### Onboarding Data Integration (currently using placeholders)
+- [ ] Step 2: Fetch subregions from Supabase (currently hardcoded)
+- [ ] Step 2: Fetch NeighborNets from Supabase filtered by subregion
+- [ ] Step 3: Fetch Amir/Manager list from Supabase users table
+- [ ] Step 4: Fetch Amir/Manager list from Supabase users table
+- [ ] Step 6: Define skills list (currently hardcoded placeholder)
 
 ### Landing Page
 - [ ] Design landing page (what does user see after onboarding?)
@@ -88,6 +105,25 @@
 - [ ] Error handling
 - [ ] Loading states
 - [ ] Mobile responsiveness
+- [ ] Accessibility audit (keyboard navigation, screen readers)
+
+---
+
+## Testing
+
+- [ ] Unit tests for validation functions (phone, email)
+- [ ] Component tests for onboarding steps
+- [ ] E2E tests for onboarding flow
+- [ ] E2E tests for auth flow
+
+---
+
+## Technical Debt / Cleanup
+
+- [ ] Fix production build error (`/_error` module not found)
+- [ ] Update baseline-browser-mapping package (dev warning)
+- [ ] Consider extracting common onboarding step layout to shared component
+- [ ] Add loading skeletons for Supabase data fetching
 
 ---
 

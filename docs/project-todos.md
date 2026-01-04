@@ -165,6 +165,20 @@
 - [ ] Button hover states: subtle lift/shadow effect
 - [ ] Input focus: glowing border animation
 
+---
+
+## Component Improvements
+
+### SearchableCombobox UX
+- [ ] Always show "Add new option" at bottom of dropdown list (not just when typing)
+  - **Current behavior:** "Add new" only appears when user types something not in the list
+  - **Problem:** Users may not know they can add custom entries
+  - **Idea:** Show a persistent "Add custom..." option at the bottom, perhaps styled differently (muted, with + icon)
+  - **Open question:** How does this interact with the search/filter? Always visible, or only when list is short?
+- [ ] Consider placeholder text hint: "Select or type to add your own"
+
+---
+
 ### Design Notes
 - **Current issue:** Every step looks identical (monotonous layout)
 - **Color:** Currently pure grayscale—consider adding one accent color

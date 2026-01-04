@@ -83,8 +83,23 @@ claude /mcp
 # Select "supabase" → "Authenticate"
 ```
 
+<br>
 
+## Reference Documents
 
+External documents that may be relevant for understanding the data model and organizational structure.
+
+| Document | Description |
+|----------|-------------|
+| [Original ERD](https://docs.google.com/document/d/1OIHjd8OVqVa2TGD6bSNIp1BF0Jq3MNXzXVLOXvYpP3M/edit?tab=t.0) | Early entity-relationship diagram |
+| [NN Database (Version A)](https://docs.google.com/spreadsheets/d/1Ihl0DEdeY850e_mUuHYN4MtlLgy80AGr1AkOEbznkIE/edit?gid=0#gid=0) | NeighborNet data spreadsheet |
+| [NN Database (Version B)](https://docs.google.com/spreadsheets/d/1CbpRgFKZSN7s9HtOHBQuUra4bKQBnQocnziQ43srjHc/edit?gid=0#gid=0) | NeighborNet data spreadsheet (alternate version) |
+
+> **Note:** It's unclear which NN database version is most current. Compare both when referencing member data.
+
+<br>
+
+---
 
 todos:
 - update oauth client ids in google cloud console once ready to go live

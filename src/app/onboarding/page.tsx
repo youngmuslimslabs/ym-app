@@ -4,13 +4,13 @@ import { Suspense, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { OnboardingProvider } from "@/contexts/OnboardingContext"
 import { ONBOARDING_TOTAL_STEPS } from "./constants"
-import PersonalInfo from "./personal-info"
-import Step2 from "./step2"
-import Step3 from "./step3"
-import Step4 from "./step4"
-import Step5 from "./step5"
-import Step6 from "./step6"
-import Step7 from "./step7"
+import Step1PersonalInfo from "./step1-personal-info"
+import Step2Location from "./step2-location"
+import Step3YmRoles from "./step3-ym-roles"
+import Step4YmProjects from "./step4-ym-projects"
+import Step5Education from "./step5-education"
+import Step6Skills from "./step6-skills"
+import Step7Complete from "./step7-complete"
 
 function OnboardingContent() {
   const searchParams = useSearchParams()
@@ -29,21 +29,21 @@ function OnboardingContent() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <PersonalInfo />
+        return <Step1PersonalInfo />
       case 2:
-        return <Step2 />
+        return <Step2Location />
       case 3:
-        return <Step3 />
+        return <Step3YmRoles />
       case 4:
-        return <Step4 />
+        return <Step4YmProjects />
       case 5:
-        return <Step5 />
+        return <Step5Education />
       case 6:
-        return <Step6 />
+        return <Step6Skills />
       case 7:
-        return <Step7 />
+        return <Step7Complete />
       default:
-        return <PersonalInfo />
+        return <Step1PersonalInfo />
     }
   }
 

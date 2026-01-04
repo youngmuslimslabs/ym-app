@@ -107,6 +107,15 @@
 - [ ] Mobile responsiveness
 - [ ] Accessibility audit (keyboard navigation, screen readers)
 
+### Progressive Web App (PWA)
+- [ ] Explore iOS "Add to Home Screen" functionality for webapp
+  - Research PWA requirements (manifest.json, service worker, icons)
+  - Add Web App Manifest with proper iOS meta tags
+  - Create app icons in required sizes (180x180 for iOS)
+  - Add `apple-touch-icon` and `apple-mobile-web-app-*` meta tags
+  - Test standalone mode behavior on iOS Safari
+  - Consider splash screen configuration
+
 ---
 
 ## Product Analytics
@@ -189,7 +198,4 @@
 - **Current issue:** Every step looks identical (monotonous layout)
 - **Color:** Currently pure grayscale—consider adding one accent color
 - **Typography:** Using default font-sans—consider a display font for headings
-- **Aesthetic direction options:**
-  - Warm & Welcoming: earthy tones, soft gradients
-  - Modern & Confident: deep navy + gold, geometric patterns
-  - Fresh & Energetic: vibrant teal/emerald, playful illustrations
+

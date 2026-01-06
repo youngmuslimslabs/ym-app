@@ -1,12 +1,5 @@
 'use client'
 
-// TODO: Fix sidebar icon alignment bug - when collapsed, the YM logo and profile avatar
-// (which use size="lg") shift position compared to nav icons (which use default size).
-// The issue is that the lg variant has `group-data-[collapsible=icon]:!p-0` which removes
-// padding, while default size has `!p-2`. Need to either:
-// 1. Make all buttons use consistent sizing, or
-// 2. Override the lg variant's collapsed padding to match nav icons
-
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -127,13 +120,13 @@ export function AppSidebar() {
                 tooltip="Open sidebar"
               >
                 {isHoveringCollapsed ? (
-                  <PanelLeft className="!size-5" />
+                  <PanelLeft className="!size-6" />
                 ) : (
                   <Image
                     src="/favicon.ico"
                     alt="Young Muslims"
-                    width={20}
-                    height={20}
+                    width={24}
+                    height={24}
                     className="rounded shrink-0"
                   />
                 )}
@@ -144,8 +137,8 @@ export function AppSidebar() {
                 <Image
                   src="/favicon.ico"
                   alt="Young Muslims"
-                  width={20}
-                  height={20}
+                  width={24}
+                  height={24}
                   className="rounded shrink-0"
                 />
                 <span className="truncate font-semibold">Young Muslims</span>
@@ -218,8 +211,8 @@ export function AppSidebar() {
                   tooltip={capitalizedName}
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  {/* Avatar */}
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                  {/* Avatar - 24px to match logo size in lg variant buttons */}
+                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
                     {initials}
                   </div>
                   {/* Name with inline chevron */}

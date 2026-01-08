@@ -4,7 +4,6 @@
 
 - [ ] Review data model with Umar Khattak
 - [ ] Review data model with Nooh
-- [ ] Get alumni database from Umar Khattak
 - [ ] Clarify which NN database is current (Version A vs B)
 
 ---
@@ -50,10 +49,10 @@
 - [x] Onboarding context (`OnboardingContext`) — State management for multi-step form
 
 ### Layout & Navigation
-- [ ] App shell/layout (header, nav, content area)
-- [ ] Navigation component
-- [ ] Profile icon with dropdown (avatar, name, logout)
-- [ ] Logout functionality
+- [x] App shell/layout (header, nav, content area) — `AppShell` component with `SidebarProvider`
+- [x] Navigation component — `AppSidebar` with collapsible icon mode
+- [x] Profile icon with dropdown (avatar, name, logout) — User dropdown in sidebar footer
+- [x] Logout functionality — `signOut` in user dropdown
 
 ### Onboarding
 - [x] Design onboarding flow (steps, fields) — 7 steps defined in `docs/plans/2026-01-03-onboarding-expansion-design.md`
@@ -69,21 +68,22 @@
 - [ ] Step 4: Fetch Amir/Manager list from Supabase users table
 - [ ] Step 6: Define skills list (currently hardcoded placeholder)
 
-### Landing Page
-- [ ] Design landing page (what does user see after onboarding?)
-- [ ] Build landing page
-- [ ] Show user's role(s)
+### Landing Page (Home)
+- [x] Design landing page (what does user see after onboarding?) — Personal context card + quick actions
+- [x] Build landing page — `/home` with `AppShell`, `PersonalContextCard`, `QuickActionCard`
+- [ ] Show user's role(s) — currently mock data, needs DB integration
 
 ### Profile Page
-- [ ] Design profile page
-- [ ] Build profile page
-- [ ] Display user info from onboarding
-- [ ] Display role assignments
-- [ ] Display geographic association (NN/SR/Region)
+- [x] Design profile page — Expandable card sections with inline editing
+- [x] Build profile page — `/profile` with personal info, YM roles, projects, education, skills
+- [x] Display user info from onboarding — Personal info section with inline edit
+- [x] Display role assignments — YM Roles section with expandable cards
+- [x] Display geographic association (NN/SR/Region) — In personal info section
+- [ ] Connect to Supabase — currently using mock data
 
 ### People Page
+- [x] Build people page — `/people` placeholder with "Coming soon"
 - [ ] Design people directory
-- [ ] Build people page
 - [ ] Browse/search all YM members
 - [ ] Filter by region/subregion/NN/role
 

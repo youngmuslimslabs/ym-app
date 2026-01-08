@@ -7,45 +7,40 @@ This document defines the complete organizational structure of YM Brothers.
 ## High-Level Overview
 
 ```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                           NATIONAL LEVEL                                    │
-│  National Shura (NC + NS members who hold functional roles like            │
-│  Cabinet Chair, Council Coordinator, NS SG, Nat'l Cloud Rep)               │
-│  + Cabinet (led by Cabinet Chair who is NS)                                 │
-└────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│                           THE COUNCIL                                       │
-│        All Regional Coordinators, led by Council Coordinator (NS member)    │
-└────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│                           REGIONAL LEVEL                                    │
-│        Regional Coordinator + Regional Shura + Cloud Rep + Special Projects │
-│        (RC is part of Regional Shura, just the leader)                      │
-└────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                    ┌───────────────┴───────────────┐
-                    ▼                               ▼
-┌───────────────────────────────┐   ┌───────────────────────────────┐
-│      SUBREGIONAL (SR)         │   │      CLOUD (per SR)           │
-│  SRC + SR Secretary General   │   │  Cloud Coordinator + Teams    │
-│  + NNCs                        │   │  (Parallel, not under SR)     │
-└───────────────────────────────┘   └───────────────────────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│       NEIGHBORNET (NN)        │
-│   NNC + Core Team Members     │
-│   (NNC is part of CT, leader) │
-└───────────────────────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│       GENERAL MEMBERS         │
-└───────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                       NATIONAL SHURA                          │
+│  NC + NS members (NS SG, Cabinet Chair, Council Coordinator,  │
+│  Nat'l Cloud Rep, other NS roles)                             │
+└──────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────────┐
+│    CABINET    │    │  THE COUNCIL  │    │       CLOUD       │
+│  (functional) │    │   (all RCs)   │    │ (parallel track)  │
+└───────────────┘    └───────┬───────┘    └───────────────────┘
+                             │
+                             ▼
+                   ┌───────────────────┐
+                   │  REGIONAL SHURA   │
+                   │  (Cloud Rep sits  │
+                   │  on, not under)   │
+                   └─────────┬─────────┘
+                             │
+                             ▼
+                   ┌───────────────────┐
+                   │   SUBREGIONAL     │
+                   └─────────┬─────────┘
+                             │
+                             ▼
+                   ┌───────────────────┐
+                   │   NEIGHBORNET     │
+                   └─────────┬─────────┘
+                             │
+                             ▼
+                   ┌───────────────────┐
+                   │  GENERAL MEMBERS  │
+                   └───────────────────┘
 ```
 
 ---
@@ -351,35 +346,25 @@ At every level, the Coordinator is both the leader of their group and a member o
            (NS member)                         (NS member)        roles)                 Team Leads
               │                                    │                                          │
               ▼                                    ▼                                    Team Members
-┌─────────────────────────────┐      ┌─────────────────────────────┐
-│         THE COUNCIL         │      │           CLOUD             │  (parallel structure)
-│   (All RCs, led by Council  │      │                             │
-│        Coordinator)         │      │                             │
-└──────────────┬──────────────┘      └──────────────┬──────────────┘
-               │                                    │
-               ▼                                    ▼
-      Regional Coordinator                      Cloud Rep  ←── sits on Regional Shura
-      (leader of Reg Shura)                  (1 per region)
+      Regional Coordinator (RC)             Cloud Rep  ←── sits on Regional Shura
+         (1 per region)                    (1 per region)
                │                                    │
     ┌──────────┼──────────┬──────────┐              ▼
     ▼          ▼          ▼          ▼       Cloud Coordinator
- Regional    SRCs     Special      (...)      (1 per SR area)
-  Shura        │     Projects                       │
-               ▼                                    ▼
-              SRC                             Cloud Members
-        (leader of SR)
-               │
-        ┌──────┴──────┐
-        ▼             ▼
-   SR Secretary     NNCs
-     General      (per NN)
-                   │
-                   ▼
-        NNC (leader of CT)
-                   │
-             Core Team Members
-                   │
-                Members
+ Regional   Special     SRC        (...)      (1 per SR)
+  Shura     Projects  (1 per SR)                    │
+                         │                          ▼
+                  ┌──────┴──────┐              Cloud Members
+                  ▼             ▼
+             SR Secretary     NNCs
+               General      (1 per NN)
+                                 │
+                                 ▼
+                      NNC (leader of CT)
+                                 │
+                           Core Team Members
+                                 │
+                              Members
 ```
 
 **Key Structures:**
@@ -391,7 +376,8 @@ At every level, the Coordinator is both the leader of their group and a member o
 
 ---
 
-## Resolved Questions
+<details>
+<summary>Reference: Q&A for AI/Admin Context (click to expand)</summary>
 
 ### National Level
 
@@ -443,10 +429,5 @@ At every level, the Coordinator is both the leader of their group and a member o
 | Cabinet Departments? | 8 depts: Marketing, HR, Operations, Special Projects, Fundraising, Finance, IT, Societal Impact |
 | Alumni? | Track with subregion association, not in leadership structure |
 
----
-
-## Next Steps
-
-1. [x] ~~Document organizational structure~~
-2. [ ] Design database schema to match
+</details>
  

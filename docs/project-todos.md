@@ -126,8 +126,19 @@
 
 ## Testing
 
+### Foundation
+- [x] Set up Vitest testing framework
+- [x] Add test scripts to package.json (`npm test`, `npm run test:watch`)
+- [x] Create CI/CD workflow with test step (`.github/workflows/ci.yml`)
+- [x] Example unit test for `cn()` utility
+
+### Unit Tests (Next)
 - [ ] Unit tests for validation functions (phone, email)
+
+### Component Tests (Later)
 - [ ] Component tests for onboarding steps
+
+### E2E Tests (Eventually)
 - [ ] E2E tests for onboarding flow
 - [ ] E2E tests for auth flow
 

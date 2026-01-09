@@ -29,6 +29,7 @@ Young Muslim's proprietary application that serves to create a database of organ
 
 ### Development Tools
 - **ESLint 9** - Code linting
+- **Vitest 4** - Unit testing framework
 - **PostCSS 8** - CSS processing
 - **Autoprefixer** - CSS vendor prefixing
 
@@ -69,6 +70,52 @@ bun dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+<br>
+
+## Testing
+
+### Run Tests
+
+```bash
+# Run all tests once
+npm test
+
+# Run tests in watch mode (re-runs on file changes)
+npm run test:watch
+```
+
+### Test Structure
+
+Tests live alongside source files with `.test.ts` or `.spec.ts` suffix:
+
+```
+src/
+  lib/
+    utils.ts        # Source file
+    utils.test.ts   # Test file
+```
+
+### Writing Tests
+
+```typescript
+import { describe, it, expect } from 'vitest'
+import { myFunction } from './myModule'
+
+describe('myFunction', () => {
+  it('should do something', () => {
+    expect(myFunction('input')).toBe('expected output')
+  })
+})
+```
+
+### CI/CD
+
+Tests run automatically on:
+- Every push to `main`
+- Every pull request targeting `main`
+
+The CI pipeline runs: **lint → test → build**. All must pass for PRs to be mergeable.
 
 <br>
 

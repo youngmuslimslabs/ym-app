@@ -28,6 +28,7 @@ Young Muslim's proprietary application that serves to create a database of organ
   - Storage
 
 ### Development Tools
+- **Bun** - Fast JavaScript runtime and package manager
 - **ESLint 9** - Code linting
 - **Vitest 4** - Unit testing framework
 - **PostCSS 8** - CSS processing
@@ -37,17 +38,19 @@ Young Muslim's proprietary application that serves to create a database of organ
 
 ## Getting Started
 
-### 1. Install Dependencies
+### 1. Install Bun (if not already installed)
 
 ```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
+curl -fsSL https://bun.sh/install | bash
 ```
 
-### 2. Set Up Environment Variables
+### 2. Install Dependencies
+
+```bash
+bun install
+```
+
+### 3. Set Up Environment Variables
 
 Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 
@@ -55,15 +58,9 @@ Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 cp .env.example .env.local
 ```
 
-### 3. Run the Development Server
+### 4. Run the Development Server
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
 bun dev
 ```
 
@@ -79,10 +76,10 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 ```bash
 # Run all tests once
-npm test
+bun test
 
 # Run tests in watch mode (re-runs on file changes)
-npm run test:watch
+bun run test:watch
 ```
 
 ### Test Structure

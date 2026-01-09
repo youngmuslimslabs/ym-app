@@ -128,9 +128,10 @@
 
 ### Foundation
 - [x] Set up Vitest testing framework
-- [x] Add test scripts to package.json (`npm test`, `npm run test:watch`)
+- [x] Add test scripts to package.json (`bun test`, `bun run test:watch`)
 - [x] Create CI/CD workflow with test step (`.github/workflows/ci.yml`)
 - [x] Example unit test for `cn()` utility
+- [x] Migrate from npm to Bun package manager
 
 ### Unit Tests (Next)
 - [ ] Unit tests for validation functions (phone, email)

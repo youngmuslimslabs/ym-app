@@ -59,6 +59,31 @@ interface UserProjectRow {
   description: string | null
 }
 
+/**
+ * Helper to parse date string without timezone issues
+ * Parses "YYYY-MM-DD" directly without Date constructor timezone shift
+ */
+function parseDateString(dateStr: string): { year: number; month: number; day: number } | null {
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return null
+  return {
+    year: parseInt(match[1], 10),
+    month: parseInt(match[2], 10),
+    day: parseInt(match[3], 10)
+  }
+}
+
+/**
+ * Creates a Date object from a date string, preserving the date as-is
+ * Avoids timezone shift issues with new Date(string)
+ */
+function dateFromString(dateStr: string): Date {
+  const parsed = parseDateString(dateStr)
+  if (!parsed) return new Date(dateStr) // fallback
+  // Use UTC to avoid timezone shifts, then we only care about the date parts
+  return new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day))
+}
+
 // ============================================
 // FETCH EXISTING DATA
 // ============================================
@@ -123,7 +148,7 @@ export async function fetchOnboardingData(authId: string): Promise<{
       phoneNumber: typedUser.phone || undefined,
       personalEmail: typedUser.personal_email || undefined,
       ethnicity: typedUser.ethnicity || undefined,
-      dateOfBirth: typedUser.date_of_birth ? new Date(typedUser.date_of_birth) : undefined,
+      dateOfBirth: typedUser.date_of_birth ? dateFromString(typedUser.date_of_birth) : undefined,
 
       // Step 2: Location
       subregionId: typedMembership?.neighbor_nets?.subregion_id || undefined,
@@ -131,8 +156,8 @@ export async function fetchOnboardingData(authId: string): Promise<{
 
       // Step 3: YM Roles
       ymRoles: typedRoles.map((role): YMRoleEntry => {
-        const startDate = role.start_date ? new Date(role.start_date) : null
-        const endDate = role.end_date ? new Date(role.end_date) : null
+        const startDate = role.start_date ? dateFromString(role.start_date) : null
+        const endDate = role.end_date ? dateFromString(role.end_date) : null
         return {
           id: role.id,
           roleTypeId: role.role_type_id || undefined,
@@ -235,6 +260,7 @@ export async function saveStep1(authId: string, data: {
 
 /**
  * Save Step 2: Location (Membership)
+ * Uses upsert pattern: update existing active membership or create new one
  */
 export async function saveStep2(authId: string, data: {
   neighborNetId?: string
@@ -247,26 +273,40 @@ export async function saveStep2(authId: string, data: {
     return { success: true } // No location to save
   }
 
-  // Deactivate existing active memberships
-  await supabase
+  // Check for existing active membership
+  const { data: existingMembership } = await supabase
     .from('memberships')
-    .update({ status: 'inactive' })
+    .select('id')
     .eq('user_id', userId)
     .eq('status', 'active')
+    .single()
 
-  // Create new membership
-  const { error } = await supabase
-    .from('memberships')
-    .insert({
-      user_id: userId,
-      neighbor_net_id: data.neighborNetId,
-      status: 'active',
-      joined_at: new Date().toISOString().split('T')[0]
-    })
+  if (existingMembership) {
+    // Update existing membership
+    const { error } = await supabase
+      .from('memberships')
+      .update({ neighbor_net_id: data.neighborNetId })
+      .eq('id', existingMembership.id)
 
-  if (error) {
-    console.error('Error saving step 2:', error)
-    return { success: false, error: 'Failed to save location' }
+    if (error) {
+      console.error('Error updating membership:', error)
+      return { success: false, error: 'Failed to save location' }
+    }
+  } else {
+    // Create new membership
+    const { error } = await supabase
+      .from('memberships')
+      .insert({
+        user_id: userId,
+        neighbor_net_id: data.neighborNetId,
+        status: 'active',
+        joined_at: new Date().toISOString().split('T')[0]
+      })
+
+    if (error) {
+      console.error('Error creating membership:', error)
+      return { success: false, error: 'Failed to save location' }
+    }
   }
 
   return { success: true }
@@ -274,6 +314,7 @@ export async function saveStep2(authId: string, data: {
 
 /**
  * Save Step 3: YM Roles
+ * Uses insert-first-then-delete pattern to avoid data loss if insert fails
  */
 export async function saveStep3(authId: string, data: {
   ymRoles?: YMRoleEntry[]
@@ -282,14 +323,23 @@ export async function saveStep3(authId: string, data: {
   const userId = await getUserId(authId)
   if (!userId) return { success: false, error: 'User not found' }
 
-  // Delete existing role assignments
-  await supabase
+  // Get existing role IDs before modifying
+  const { data: existingRoles } = await supabase
     .from('role_assignments')
-    .delete()
+    .select('id')
     .eq('user_id', userId)
 
+  const existingIds = (existingRoles || []).map(r => r.id)
+
+  // If no new roles, just delete existing ones
   if (!data.ymRoles || data.ymRoles.length === 0) {
-    return { success: true } // No roles to save
+    if (existingIds.length > 0) {
+      await supabase
+        .from('role_assignments')
+        .delete()
+        .in('id', existingIds)
+    }
+    return { success: true }
   }
 
   // Helper to convert month/year to date string
@@ -310,6 +360,7 @@ export async function saveStep3(authId: string, data: {
     notes: role.description || null
   }))
 
+  // Insert new records first
   const { error } = await supabase
     .from('role_assignments')
     .insert(roleAssignments)
@@ -319,11 +370,20 @@ export async function saveStep3(authId: string, data: {
     return { success: false, error: 'Failed to save roles' }
   }
 
+  // Only delete old records after successful insert
+  if (existingIds.length > 0) {
+    await supabase
+      .from('role_assignments')
+      .delete()
+      .in('id', existingIds)
+  }
+
   return { success: true }
 }
 
 /**
  * Save Step 4: YM Projects
+ * Uses insert-first-then-delete pattern to avoid data loss if insert fails
  */
 export async function saveStep4(authId: string, data: {
   ymProjects?: YMProjectEntry[]
@@ -332,14 +392,23 @@ export async function saveStep4(authId: string, data: {
   const userId = await getUserId(authId)
   if (!userId) return { success: false, error: 'User not found' }
 
-  // Delete existing projects
-  await supabase
+  // Get existing project IDs before modifying
+  const { data: existingProjects } = await supabase
     .from('user_projects')
-    .delete()
+    .select('id')
     .eq('user_id', userId)
 
+  const existingIds = (existingProjects || []).map(p => p.id)
+
+  // If no new projects, just delete existing ones
   if (!data.ymProjects || data.ymProjects.length === 0) {
-    return { success: true } // No projects to save
+    if (existingIds.length > 0) {
+      await supabase
+        .from('user_projects')
+        .delete()
+        .in('id', existingIds)
+    }
+    return { success: true }
   }
 
   const userProjects = data.ymProjects.map(project => ({
@@ -357,6 +426,7 @@ export async function saveStep4(authId: string, data: {
     description: project.description || null
   }))
 
+  // Insert new records first
   const { error } = await supabase
     .from('user_projects')
     .insert(userProjects)
@@ -364,6 +434,14 @@ export async function saveStep4(authId: string, data: {
   if (error) {
     console.error('Error saving step 4:', error)
     return { success: false, error: 'Failed to save projects' }
+  }
+
+  // Only delete old records after successful insert
+  if (existingIds.length > 0) {
+    await supabase
+      .from('user_projects')
+      .delete()
+      .in('id', existingIds)
   }
 
   return { success: true }

@@ -91,14 +91,6 @@ interface SaveResult {
   error?: string
 }
 
-// Step data types for type-safe saveStepData
-export interface Step1Data { phoneNumber?: string; personalEmail?: string; ethnicity?: string; dateOfBirth?: Date }
-export interface Step2Data { neighborNetId?: string }
-export interface Step3Data { ymRoles?: YMRoleEntry[] }
-export interface Step4Data { ymProjects?: YMProjectEntry[] }
-export interface Step5Data { educationLevel?: EducationLevel; education?: EducationEntry[] }
-export interface Step6Data { skills?: string[] }
-
 interface OnboardingContextType {
   data: OnboardingData
   updateData: (partial: Partial<OnboardingData>) => void

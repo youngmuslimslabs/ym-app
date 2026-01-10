@@ -1,85 +1,455 @@
 import { createClient } from './client'
-import type { OnboardingData, YMRoleEntry, YMProjectEntry, EducationEntry } from '@/contexts/OnboardingContext'
+import type {
+  OnboardingData,
+  YMRoleEntry,
+  YMProjectEntry,
+  EducationEntry,
+  EducationLevel
+} from '@/contexts/OnboardingContext'
 
-/**
- * User profile data stored in the users table
- */
-interface UserProfileData {
-  phone?: string
-  personal_email?: string
-  ethnicity?: string
-  date_of_birth?: string // ISO date string
-  education_level?: string
-  education?: EducationEntry[]
-  skills?: string[]
-  onboarding_completed_at?: string
+// ============================================
+// TYPES
+// ============================================
+
+interface UserRow {
+  id: string
+  phone: string | null
+  personal_email: string | null
+  ethnicity: string | null
+  date_of_birth: string | null
+  education_level: string | null
+  education: EducationEntry[] | null
+  skills: string[] | null
+  onboarding_completed_at: string | null
 }
 
-/**
- * Membership data for geographic location
- */
-interface MembershipData {
-  user_id: string
-  neighbor_net_id?: string
-  status: 'active'
-  joined_at: string
+interface MembershipRow {
+  id: string
+  neighbor_net_id: string | null
+  neighbor_nets: {
+    id: string
+    subregion_id: string
+  } | null
 }
 
-/**
- * Role assignment data
- */
-interface RoleAssignmentData {
-  user_id: string
-  role_type_id?: string
-  role_type_custom?: string
-  amir_user_id?: string
-  amir_custom_name?: string
-  start_date?: string
-  end_date?: string
+interface RoleAssignmentRow {
+  id: string
+  role_type_id: string | null
+  role_type_custom: string | null
+  amir_user_id: string | null
+  amir_custom_name: string | null
+  start_date: string | null
+  end_date: string | null
   is_active: boolean
+  notes: string | null
 }
 
-/**
- * User project data
- */
-interface UserProjectData {
-  user_id: string
-  project_type?: string
-  project_type_custom?: string
-  role?: string
-  amir_user_id?: string
-  amir_custom_name?: string
-  start_month?: number
-  start_year?: number
-  end_month?: number
-  end_year?: number
+interface UserProjectRow {
+  id: string
+  project_type: string | null
+  project_type_custom: string | null
+  role: string | null
+  amir_user_id: string | null
+  amir_custom_name: string | null
+  start_month: number | null
+  start_year: number | null
+  end_month: number | null
+  end_year: number | null
   is_current: boolean
-  description?: string
+  description: string | null
 }
 
+// ============================================
+// FETCH EXISTING DATA
+// ============================================
+
 /**
- * Fetches the current user's profile from the users table
+ * Fetches all existing onboarding data for a user
+ * Used to pre-fill the onboarding form
  */
-export async function getUserProfile(authId: string) {
+export async function fetchOnboardingData(authId: string): Promise<{
+  data: OnboardingData | null
+  userId: string | null
+  isComplete: boolean
+  error?: string
+}> {
   const supabase = createClient()
 
+  try {
+    // Get user profile
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, phone, personal_email, ethnicity, date_of_birth, education_level, education, skills, onboarding_completed_at')
+      .eq('auth_id', authId)
+      .single()
+
+    if (userError || !user) {
+      return { data: null, userId: null, isComplete: false, error: 'User not found' }
+    }
+
+    const typedUser = user as UserRow
+
+    // Get active membership with neighbor_net info
+    const { data: membership } = await supabase
+      .from('memberships')
+      .select('id, neighbor_net_id, neighbor_nets(id, subregion_id)')
+      .eq('user_id', typedUser.id)
+      .eq('status', 'active')
+      .single()
+
+    const typedMembership = membership as MembershipRow | null
+
+    // Get role assignments
+    const { data: roles } = await supabase
+      .from('role_assignments')
+      .select('*')
+      .eq('user_id', typedUser.id)
+      .order('start_date', { ascending: false })
+
+    const typedRoles = (roles || []) as RoleAssignmentRow[]
+
+    // Get user projects
+    const { data: projects } = await supabase
+      .from('user_projects')
+      .select('*')
+      .eq('user_id', typedUser.id)
+      .order('start_year', { ascending: false })
+
+    const typedProjects = (projects || []) as UserProjectRow[]
+
+    // Map database data to OnboardingData format
+    const onboardingData: OnboardingData = {
+      // Step 1: Personal Info
+      phoneNumber: typedUser.phone || undefined,
+      personalEmail: typedUser.personal_email || undefined,
+      ethnicity: typedUser.ethnicity || undefined,
+      dateOfBirth: typedUser.date_of_birth ? new Date(typedUser.date_of_birth) : undefined,
+
+      // Step 2: Location
+      subregionId: typedMembership?.neighbor_nets?.subregion_id || undefined,
+      neighborNetId: typedMembership?.neighbor_net_id || undefined,
+
+      // Step 3: YM Roles
+      ymRoles: typedRoles.map((role): YMRoleEntry => {
+        const startDate = role.start_date ? new Date(role.start_date) : null
+        const endDate = role.end_date ? new Date(role.end_date) : null
+        return {
+          id: role.id,
+          roleTypeId: role.role_type_id || undefined,
+          roleTypeCustom: role.role_type_custom || undefined,
+          amirUserId: role.amir_user_id || undefined,
+          amirCustomName: role.amir_custom_name || undefined,
+          startMonth: startDate ? startDate.getMonth() + 1 : undefined,
+          startYear: startDate ? startDate.getFullYear() : undefined,
+          endMonth: endDate ? endDate.getMonth() + 1 : undefined,
+          endYear: endDate ? endDate.getFullYear() : undefined,
+          isCurrent: role.is_active,
+          description: role.notes || undefined
+        }
+      }),
+
+      // Step 4: YM Projects
+      ymProjects: typedProjects.map((project): YMProjectEntry => ({
+        id: project.id,
+        projectType: project.project_type || undefined,
+        projectTypeCustom: project.project_type_custom || undefined,
+        role: project.role || undefined,
+        amirUserId: project.amir_user_id || undefined,
+        amirCustomName: project.amir_custom_name || undefined,
+        startMonth: project.start_month || undefined,
+        startYear: project.start_year || undefined,
+        endMonth: project.end_month || undefined,
+        endYear: project.end_year || undefined,
+        isCurrent: project.is_current,
+        description: project.description || undefined
+      })),
+
+      // Step 5: Education
+      educationLevel: typedUser.education_level as EducationLevel || undefined,
+      education: typedUser.education || undefined,
+
+      // Step 6: Skills
+      skills: typedUser.skills || undefined
+    }
+
+    return {
+      data: onboardingData,
+      userId: typedUser.id,
+      isComplete: typedUser.onboarding_completed_at !== null
+    }
+  } catch (error) {
+    console.error('Error fetching onboarding data:', error)
+    return { data: null, userId: null, isComplete: false, error: 'Failed to fetch data' }
+  }
+}
+
+// ============================================
+// PER-STEP SAVE FUNCTIONS
+// ============================================
+
+/**
+ * Helper to get internal user ID from auth ID
+ */
+async function getUserId(authId: string): Promise<string | null> {
+  const supabase = createClient()
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id')
     .eq('auth_id', authId)
     .single()
 
-  if (error) {
-    console.error('Error fetching user profile:', error)
-    return null
-  }
-
-  return data
+  if (error || !data) return null
+  return data.id
 }
 
 /**
+ * Save Step 1: Personal Info
+ */
+export async function saveStep1(authId: string, data: {
+  phoneNumber?: string
+  personalEmail?: string
+  ethnicity?: string
+  dateOfBirth?: Date
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const userId = await getUserId(authId)
+  if (!userId) return { success: false, error: 'User not found' }
+
+  const { error } = await supabase
+    .from('users')
+    .update({
+      phone: data.phoneNumber || null,
+      personal_email: data.personalEmail || null,
+      ethnicity: data.ethnicity || null,
+      date_of_birth: data.dateOfBirth ? data.dateOfBirth.toISOString().split('T')[0] : null
+    })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('Error saving step 1:', error)
+    return { success: false, error: 'Failed to save personal info' }
+  }
+
+  return { success: true }
+}
+
+/**
+ * Save Step 2: Location (Membership)
+ */
+export async function saveStep2(authId: string, data: {
+  neighborNetId?: string
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const userId = await getUserId(authId)
+  if (!userId) return { success: false, error: 'User not found' }
+
+  if (!data.neighborNetId) {
+    return { success: true } // No location to save
+  }
+
+  // Deactivate existing active memberships
+  await supabase
+    .from('memberships')
+    .update({ status: 'inactive' })
+    .eq('user_id', userId)
+    .eq('status', 'active')
+
+  // Create new membership
+  const { error } = await supabase
+    .from('memberships')
+    .insert({
+      user_id: userId,
+      neighbor_net_id: data.neighborNetId,
+      status: 'active',
+      joined_at: new Date().toISOString().split('T')[0]
+    })
+
+  if (error) {
+    console.error('Error saving step 2:', error)
+    return { success: false, error: 'Failed to save location' }
+  }
+
+  return { success: true }
+}
+
+/**
+ * Save Step 3: YM Roles
+ */
+export async function saveStep3(authId: string, data: {
+  ymRoles?: YMRoleEntry[]
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const userId = await getUserId(authId)
+  if (!userId) return { success: false, error: 'User not found' }
+
+  // Delete existing role assignments
+  await supabase
+    .from('role_assignments')
+    .delete()
+    .eq('user_id', userId)
+
+  if (!data.ymRoles || data.ymRoles.length === 0) {
+    return { success: true } // No roles to save
+  }
+
+  // Helper to convert month/year to date string
+  const toDateString = (month?: number, year?: number): string | null => {
+    if (!month || !year) return null
+    return `${year}-${String(month).padStart(2, '0')}-01`
+  }
+
+  const roleAssignments = data.ymRoles.map(role => ({
+    user_id: userId,
+    role_type_id: role.roleTypeId || null,
+    role_type_custom: role.roleTypeCustom || null,
+    amir_user_id: role.amirUserId || null,
+    amir_custom_name: role.amirCustomName || null,
+    start_date: toDateString(role.startMonth, role.startYear),
+    end_date: role.isCurrent ? null : toDateString(role.endMonth, role.endYear),
+    is_active: role.isCurrent,
+    notes: role.description || null
+  }))
+
+  const { error } = await supabase
+    .from('role_assignments')
+    .insert(roleAssignments)
+
+  if (error) {
+    console.error('Error saving step 3:', error)
+    return { success: false, error: 'Failed to save roles' }
+  }
+
+  return { success: true }
+}
+
+/**
+ * Save Step 4: YM Projects
+ */
+export async function saveStep4(authId: string, data: {
+  ymProjects?: YMProjectEntry[]
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const userId = await getUserId(authId)
+  if (!userId) return { success: false, error: 'User not found' }
+
+  // Delete existing projects
+  await supabase
+    .from('user_projects')
+    .delete()
+    .eq('user_id', userId)
+
+  if (!data.ymProjects || data.ymProjects.length === 0) {
+    return { success: true } // No projects to save
+  }
+
+  const userProjects = data.ymProjects.map(project => ({
+    user_id: userId,
+    project_type: project.projectType || null,
+    project_type_custom: project.projectTypeCustom || null,
+    role: project.role || null,
+    amir_user_id: project.amirUserId || null,
+    amir_custom_name: project.amirCustomName || null,
+    start_month: project.startMonth || null,
+    start_year: project.startYear || null,
+    end_month: project.isCurrent ? null : (project.endMonth || null),
+    end_year: project.isCurrent ? null : (project.endYear || null),
+    is_current: project.isCurrent,
+    description: project.description || null
+  }))
+
+  const { error } = await supabase
+    .from('user_projects')
+    .insert(userProjects)
+
+  if (error) {
+    console.error('Error saving step 4:', error)
+    return { success: false, error: 'Failed to save projects' }
+  }
+
+  return { success: true }
+}
+
+/**
+ * Save Step 5: Education
+ */
+export async function saveStep5(authId: string, data: {
+  educationLevel?: EducationLevel
+  education?: EducationEntry[]
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const userId = await getUserId(authId)
+  if (!userId) return { success: false, error: 'User not found' }
+
+  const { error } = await supabase
+    .from('users')
+    .update({
+      education_level: data.educationLevel || null,
+      education: data.education || []
+    })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('Error saving step 5:', error)
+    return { success: false, error: 'Failed to save education' }
+  }
+
+  return { success: true }
+}
+
+/**
+ * Save Step 6: Skills
+ */
+export async function saveStep6(authId: string, data: {
+  skills?: string[]
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const userId = await getUserId(authId)
+  if (!userId) return { success: false, error: 'User not found' }
+
+  const { error } = await supabase
+    .from('users')
+    .update({
+      skills: data.skills || []
+    })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('Error saving step 6:', error)
+    return { success: false, error: 'Failed to save skills' }
+  }
+
+  return { success: true }
+}
+
+/**
+ * Mark onboarding as complete (Step 7)
+ */
+export async function completeOnboarding(authId: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const userId = await getUserId(authId)
+  if (!userId) return { success: false, error: 'User not found' }
+
+  const { error } = await supabase
+    .from('users')
+    .update({
+      onboarding_completed_at: new Date().toISOString()
+    })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('Error completing onboarding:', error)
+    return { success: false, error: 'Failed to complete onboarding' }
+  }
+
+  return { success: true }
+}
+
+// ============================================
+// ONBOARDING STATUS CHECK
+// ============================================
+
+/**
  * Checks if a user has completed onboarding
- * Returns true if onboarding_completed_at is set
  */
 export async function checkOnboardingComplete(authId: string): Promise<boolean> {
   const supabase = createClient()
@@ -90,252 +460,31 @@ export async function checkOnboardingComplete(authId: string): Promise<boolean> 
     .eq('auth_id', authId)
     .single()
 
-  if (error) {
-    console.error('Error checking onboarding status:', error)
-    return false
-  }
-
-  return data?.onboarding_completed_at !== null
+  if (error || !data) return false
+  return data.onboarding_completed_at !== null
 }
 
 /**
- * Converts a Date object to ISO date string (YYYY-MM-DD)
+ * Gets the first incomplete step for a user
+ * Returns 0 if onboarding is complete, or 1-7 for the step needed
  */
-function formatDateToISO(date: Date | undefined): string | undefined {
-  if (!date) return undefined
-  return date.toISOString().split('T')[0]
-}
+export async function getIncompleteStep(authId: string): Promise<number> {
+  const { data, isComplete } = await fetchOnboardingData(authId)
 
-/**
- * Converts month/year to ISO date string (first day of month)
- */
-function monthYearToDate(month?: number, year?: number): string | undefined {
-  if (!month || !year) return undefined
-  return `${year}-${String(month).padStart(2, '0')}-01`
-}
+  if (isComplete) return 0
+  if (!data) return 1
 
-/**
- * Saves all onboarding data to Supabase
- * This function handles:
- * 1. Updating the user profile (personal info, education, skills)
- * 2. Creating/updating membership (location)
- * 3. Creating role assignments (YM roles)
- * 4. Creating user projects (YM projects)
- */
-export async function saveOnboardingData(
-  authId: string,
-  data: OnboardingData
-): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClient()
+  // Step 1: Personal info - optional fields, always allow to proceed
+  // Step 2: Location - required
+  if (!data.neighborNetId) return 2
 
-  try {
-    // First, get the user's internal ID from auth_id
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_id', authId)
-      .single()
+  // Steps 3-4: Roles and projects - optional
+  // Step 5: Education level - required
+  if (!data.educationLevel) return 5
 
-    if (userError || !userData) {
-      console.error('Error finding user:', userError)
-      return { success: false, error: 'User not found' }
-    }
+  // Step 6: Skills - need at least 3
+  if (!data.skills || data.skills.length < 3) return 6
 
-    const userId = userData.id
-
-    // 1. Update user profile with personal info, education, and skills
-    const profileData: UserProfileData = {
-      phone: data.phoneNumber,
-      personal_email: data.personalEmail,
-      ethnicity: data.ethnicity,
-      date_of_birth: formatDateToISO(data.dateOfBirth),
-      education_level: data.educationLevel,
-      education: data.education?.map(edu => ({
-        id: edu.id,
-        schoolName: edu.schoolName || edu.schoolCustom,
-        degreeType: edu.degreeType,
-        fieldOfStudy: edu.fieldOfStudy,
-        graduationYear: edu.graduationYear
-      })) || [],
-      skills: data.skills || [],
-      onboarding_completed_at: new Date().toISOString()
-    }
-
-    const { error: updateError } = await supabase
-      .from('users')
-      .update(profileData)
-      .eq('id', userId)
-
-    if (updateError) {
-      console.error('Error updating user profile:', updateError)
-      return { success: false, error: 'Failed to update profile' }
-    }
-
-    // 2. Create membership for geographic location (if neighborNetId is provided)
-    if (data.neighborNetId) {
-      // First, deactivate any existing active memberships
-      await supabase
-        .from('memberships')
-        .update({ status: 'inactive' })
-        .eq('user_id', userId)
-        .eq('status', 'active')
-
-      // Create new membership
-      const membershipData: MembershipData = {
-        user_id: userId,
-        neighbor_net_id: data.neighborNetId,
-        status: 'active',
-        joined_at: new Date().toISOString().split('T')[0]
-      }
-
-      const { error: membershipError } = await supabase
-        .from('memberships')
-        .insert(membershipData)
-
-      if (membershipError) {
-        console.error('Error creating membership:', membershipError)
-        // Don't fail completely, just log the error
-      }
-    }
-
-    // 3. Create role assignments (YM Roles)
-    if (data.ymRoles && data.ymRoles.length > 0) {
-      // Delete existing role assignments for this user (to replace with new ones)
-      await supabase
-        .from('role_assignments')
-        .delete()
-        .eq('user_id', userId)
-
-      const roleAssignments: RoleAssignmentData[] = data.ymRoles.map((role: YMRoleEntry) => ({
-        user_id: userId,
-        role_type_id: role.roleTypeId || undefined,
-        role_type_custom: role.roleTypeCustom || undefined,
-        amir_user_id: role.amirUserId || undefined,
-        amir_custom_name: role.amirCustomName || undefined,
-        start_date: monthYearToDate(role.startMonth, role.startYear),
-        end_date: role.isCurrent ? undefined : monthYearToDate(role.endMonth, role.endYear),
-        is_active: role.isCurrent
-      }))
-
-      const { error: rolesError } = await supabase
-        .from('role_assignments')
-        .insert(roleAssignments)
-
-      if (rolesError) {
-        console.error('Error creating role assignments:', rolesError)
-        // Don't fail completely, just log the error
-      }
-    }
-
-    // 4. Create user projects (YM Projects)
-    if (data.ymProjects && data.ymProjects.length > 0) {
-      // Delete existing projects for this user (to replace with new ones)
-      await supabase
-        .from('user_projects')
-        .delete()
-        .eq('user_id', userId)
-
-      const userProjects: UserProjectData[] = data.ymProjects.map((project: YMProjectEntry) => ({
-        user_id: userId,
-        project_type: project.projectType || undefined,
-        project_type_custom: project.projectTypeCustom || undefined,
-        role: project.role || undefined,
-        amir_user_id: project.amirUserId || undefined,
-        amir_custom_name: project.amirCustomName || undefined,
-        start_month: project.startMonth,
-        start_year: project.startYear,
-        end_month: project.isCurrent ? undefined : project.endMonth,
-        end_year: project.isCurrent ? undefined : project.endYear,
-        is_current: project.isCurrent,
-        description: project.description || undefined
-      }))
-
-      const { error: projectsError } = await supabase
-        .from('user_projects')
-        .insert(userProjects)
-
-      if (projectsError) {
-        console.error('Error creating user projects:', projectsError)
-        // Don't fail completely, just log the error
-      }
-    }
-
-    return { success: true }
-  } catch (error) {
-    console.error('Unexpected error saving onboarding data:', error)
-    return { success: false, error: 'An unexpected error occurred' }
-  }
-}
-
-/**
- * Fetches all required data to determine if onboarding is complete
- * Checks if all required fields are filled
- */
-export async function getOnboardingStatus(authId: string): Promise<{
-  isComplete: boolean
-  missingFields: string[]
-  user: Record<string, unknown> | null
-}> {
-  const supabase = createClient()
-
-  // Get user profile
-  const { data: user, error: userError } = await supabase
-    .from('users')
-    .select(`
-      id,
-      phone,
-      personal_email,
-      ethnicity,
-      date_of_birth,
-      education_level,
-      education,
-      skills,
-      onboarding_completed_at
-    `)
-    .eq('auth_id', authId)
-    .single()
-
-  if (userError || !user) {
-    return { isComplete: false, missingFields: ['user_not_found'], user: null }
-  }
-
-  // If already marked as complete, return early
-  if (user.onboarding_completed_at) {
-    return { isComplete: true, missingFields: [], user }
-  }
-
-  // Check required fields
-  const missingFields: string[] = []
-
-  // Step 1: Personal Info (all optional for now, but we track them)
-  // Phone, email, ethnicity, DOB are all optional
-
-  // Step 2: Location - check if user has an active membership
-  const { data: membership } = await supabase
-    .from('memberships')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .single()
-
-  if (!membership) {
-    missingFields.push('location')
-  }
-
-  // Step 5: Education level is required
-  if (!user.education_level) {
-    missingFields.push('education_level')
-  }
-
-  // Step 6: At least 3 skills required
-  const skills = user.skills as string[] | null
-  if (!skills || skills.length < 3) {
-    missingFields.push('skills')
-  }
-
-  return {
-    isComplete: missingFields.length === 0,
-    missingFields,
-    user
-  }
+  // All required fields complete, just need to finalize
+  return 7
 }

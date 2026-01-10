@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -36,11 +37,17 @@ const SKILLS = [
 
 export default function Step6() {
   const router = useRouter()
-  const { data, updateData } = useOnboarding()
+  const { data, updateData, saveStepData, isSaving, isLoading } = useOnboarding()
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>(
     data.skills ?? []
   )
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Sync state when data loads from Supabase (pre-fill)
+  useEffect(() => {
+    if (data.skills?.length) setSelectedSkills(data.skills)
+  }, [data.skills])
 
   const progressPercentage = calculateProgress(6)
 
@@ -60,8 +67,17 @@ export default function Step6() {
     router.push("/onboarding?step=5")
   }
 
-  const handleNext = () => {
-    updateData({ skills: selectedSkills })
+  const handleNext = async () => {
+    setSaveError(null)
+    const stepData = { skills: selectedSkills }
+
+    updateData(stepData)
+    const result = await saveStepData(6, stepData)
+    if (!result.success) {
+      setSaveError(result.error || "Failed to save. Please try again.")
+      return
+    }
+
     router.push("/onboarding?step=7")
   }
 
@@ -109,13 +125,27 @@ export default function Step6() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {saveError && (
+        <div className="mb-4 w-full max-w-md mx-auto rounded-md bg-destructive/10 p-4 text-center text-sm text-destructive">
+          {saveError}
+        </div>
+      )}
+
       {/* Navigation Buttons */}
       <div className="flex w-full items-center justify-center gap-4 pb-4">
-        <Button variant="outline" onClick={handleBack} className="w-40">
+        <Button variant="outline" onClick={handleBack} disabled={isSaving} className="w-40">
           Back
         </Button>
-        <Button onClick={handleNext} disabled={!isValid} className="w-40">
-          Next
+        <Button onClick={handleNext} disabled={!isValid || isSaving || isLoading} className="w-40">
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Next"
+          )}
         </Button>
       </div>
     </div>

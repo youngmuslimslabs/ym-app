@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { PageLoader } from '@/components/ui/page-loader'
 
 export default function RootPage() {
   const { user, loading } = useAuth()
@@ -21,9 +22,5 @@ export default function RootPage() {
   }, [user, loading, router])
 
   // Show loading state while checking authentication
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <span className="text-muted-foreground">Loading...</span>
-    </div>
-  )
+  return <PageLoader />
 }

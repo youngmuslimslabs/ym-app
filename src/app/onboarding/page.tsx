@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { OnboardingProvider } from "@/contexts/OnboardingContext"
+import { PageLoader } from "@/components/ui/page-loader"
 import { ONBOARDING_TOTAL_STEPS } from "./constants"
 import Step1PersonalInfo from "./step1-personal-info"
 import Step2Location from "./step2-location"
@@ -53,11 +54,7 @@ function OnboardingContent() {
 export default function OnboardingPage() {
   return (
     <OnboardingProvider>
-      <Suspense fallback={
-        <div className="flex min-h-screen items-center justify-center bg-background">
-          <div className="text-muted-foreground">Loading...</div>
-        </div>
-      }>
+      <Suspense fallback={<PageLoader />}>
         <OnboardingContent />
       </Suspense>
     </OnboardingProvider>

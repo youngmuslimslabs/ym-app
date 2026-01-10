@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { YMLoginForm } from '@/components/auth/YMLoginForm'
+import { PageLoader } from '@/components/ui/page-loader'
 
 export default function LoginPage() {
   const { user, loading } = useAuth()
@@ -30,11 +31,7 @@ export default function LoginPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { User, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageLoader } from '@/components/ui/page-loader'
 import { useProfileForm, type ProfileFormState } from './hooks/useProfileForm'
 import { PersonalInfoSection } from './components/PersonalInfoSection'
 import { YMRolesSection } from './components/YMRolesSection'
@@ -135,11 +136,7 @@ export default function ProfilePage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-muted-foreground animate-pulse">Loading profile...</div>
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

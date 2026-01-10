@@ -33,7 +33,7 @@ interface UseProfileFormReturn {
   removeEducation: (index: number) => void
   toggleSkill: (skillId: string) => void
   resetForm: () => void
-  saveForm: () => Promise<boolean>
+  saveForm: () => Promise<{ success: boolean; error?: string }>
   setInitialData: (data: ProfileFormState) => void
 }
 
@@ -194,7 +194,7 @@ export function useProfileForm(initialData: ProfileFormState): UseProfileFormRet
     setFormData(data)
   }, [])
 
-  const saveForm = useCallback(async (): Promise<boolean> => {
+  const saveForm = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     setIsSaving(true)
     setSaveError(null)
 
@@ -205,10 +205,10 @@ export function useProfileForm(initialData: ProfileFormState): UseProfileFormRet
     if (result.success) {
       // After successful save, update originalData so hasChanges becomes false
       setOriginalData(formData)
-      return true
+      return { success: true }
     } else {
       setSaveError(result.error ?? 'Failed to save profile')
-      return false
+      return { success: false, error: result.error }
     }
   }, [formData])
 

@@ -44,8 +44,6 @@ export default function ProfilePage() {
     formData,
     hasChanges,
     changeCount,
-    isSaving,
-    saveError,
     updateField,
     updateRole,
     addRole,
@@ -64,9 +62,9 @@ export default function ProfilePage() {
 
   // Wrapper for saveForm that throws on error (for FloatingSaveBar error handling)
   const handleSave = async () => {
-    const success = await saveForm()
-    if (!success) {
-      throw new Error(saveError ?? 'Failed to save profile')
+    const result = await saveForm()
+    if (!result.success) {
+      throw new Error(result.error ?? 'Failed to save profile')
     }
   }
 
@@ -91,8 +89,8 @@ export default function ProfilePage() {
   }
 
   const handleSaveAndLeave = async () => {
-    const success = await saveForm()
-    if (success) {
+    const result = await saveForm()
+    if (result.success) {
       setShowUnsavedModal(false)
       if (pendingNavigation) {
         window.location.href = pendingNavigation

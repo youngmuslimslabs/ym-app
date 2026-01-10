@@ -19,25 +19,32 @@ interface UseProfileDataReturn {
   refetch: () => Promise<void>
 }
 
+// Parse date string (YYYY-MM-DD) without timezone issues
+function parseDateString(dateStr: string | null | undefined): { month: number; year: number } | null {
+  if (!dateStr) return null
+  const [yearStr, monthStr] = dateStr.split('-')
+  const year = parseInt(yearStr, 10)
+  const month = parseInt(monthStr, 10)
+  if (isNaN(year) || isNaN(month)) return null
+  return { month, year }
+}
+
+// Parse date string to Date object without timezone issues
+function parseDateToLocal(dateStr: string | null | undefined): Date | undefined {
+  if (!dateStr) return undefined
+  const [yearStr, monthStr, dayStr] = dateStr.split('-')
+  const year = parseInt(yearStr, 10)
+  const month = parseInt(monthStr, 10) - 1 // JS months are 0-indexed
+  const day = parseInt(dayStr, 10)
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return undefined
+  return new Date(year, month, day)
+}
+
 // Transform role assignments from DB to form format
 function transformRoles(roles: RoleAssignment[]): YMRoleEntry[] {
   return roles.map((role) => {
-    // Parse start_date and end_date into month/year
-    let startMonth: number | undefined
-    let startYear: number | undefined
-    let endMonth: number | undefined
-    let endYear: number | undefined
-
-    if (role.start_date) {
-      const start = new Date(role.start_date)
-      startMonth = start.getMonth() + 1
-      startYear = start.getFullYear()
-    }
-    if (role.end_date) {
-      const end = new Date(role.end_date)
-      endMonth = end.getMonth() + 1
-      endYear = end.getFullYear()
-    }
+    const startParsed = parseDateString(role.start_date)
+    const endParsed = parseDateString(role.end_date)
 
     return {
       id: role.id,
@@ -45,10 +52,10 @@ function transformRoles(roles: RoleAssignment[]): YMRoleEntry[] {
       roleTypeCustom: role.role_type_custom ?? undefined,
       amirUserId: role.amir_user_id ?? undefined,
       amirCustomName: role.amir_custom_name ?? undefined,
-      startMonth,
-      startYear,
-      endMonth,
-      endYear,
+      startMonth: startParsed?.month,
+      startYear: startParsed?.year,
+      endMonth: endParsed?.month,
+      endYear: endParsed?.year,
       isCurrent: role.is_active,
       description: role.notes ?? undefined,
     }
@@ -178,7 +185,7 @@ export function useProfileData(): UseProfileDataReturn {
         phoneNumber: user.phone ?? undefined,
         personalEmail: user.personal_email ?? undefined,
         ethnicity: user.ethnicity ?? undefined,
-        dateOfBirth: user.date_of_birth ? new Date(user.date_of_birth) : undefined,
+        dateOfBirth: parseDateToLocal(user.date_of_birth),
         subregionId,
         neighborNetId,
         ymRoles: transformRoles(rolesResult.data ?? []),

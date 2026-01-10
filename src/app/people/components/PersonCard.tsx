@@ -1,20 +1,11 @@
 'use client'
 
+import type { KeyboardEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { PersonListItem } from '../types'
-
-// Role category colors for visual distinction
-const ROLE_CATEGORY_STYLES: Record<string, string> = {
-  ns: 'bg-amber-100 text-amber-800 border-amber-200',
-  council: 'bg-purple-100 text-purple-800 border-purple-200',
-  regional: 'bg-blue-100 text-blue-800 border-blue-200',
-  subregional: 'bg-cyan-100 text-cyan-800 border-cyan-200',
-  neighbor_net: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  cabinet: 'bg-rose-100 text-rose-800 border-rose-200',
-  cloud: 'bg-violet-100 text-violet-800 border-violet-200',
-}
+import { ROLE_CATEGORY_STYLES } from '../constants'
 
 interface PersonCardProps {
   person: PersonListItem
@@ -27,6 +18,13 @@ export function PersonCard({ person }: PersonCardProps) {
     router.push(`/people/${person.id}`)
   }
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleClick()
+    }
+  }
+
   // Get location display (prefer subregion, fallback to region)
   const location = person.subregion?.name ?? person.region.name
 
@@ -36,7 +34,11 @@ export function PersonCard({ person }: PersonCardProps) {
   return (
     <Card
       onClick={handleClick}
-      className="group relative h-full cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg hover:scale-[1.02] hover:border-primary/20 active:scale-[0.99]"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="link"
+      aria-label={`View profile of ${person.firstName} ${person.lastName}`}
+      className="group relative h-full cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg hover:scale-[1.02] hover:border-primary/20 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     >
       {/* Subtle gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

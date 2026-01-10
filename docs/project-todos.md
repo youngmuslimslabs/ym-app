@@ -90,11 +90,31 @@
 ### People Page
 - [x] Build people page — `/people` placeholder with "Coming soon"
 - [x] Design people directory — `docs/plans/2026-01-09-people-directory-design.md`
-- [ ] Browse/search all YM members
-- [ ] Filter by region/subregion/NN/role
-- [ ] Advanced filtering: project type, project role, skills, years in YM
-- [ ] Switchable card/table views
-- [ ] Copy emails to clipboard action
+
+#### Phase 1-3: Core Features ✅ COMPLETE
+- [x] Browse/search all YM members — Search by name implemented
+- [x] Filter by region/subregion/NN/role — Dropdown with nested submenus
+- [x] Advanced filtering: project type, project role, skills, years in YM — All filter categories working
+- [x] Filter pills with counts + clear actions
+- [x] Switchable card/table views — ViewToggle with shadcn Tabs
+- [x] Copy emails to clipboard action — CopyEmailsButton with toast
+
+#### Phase 4: Polish (Partial)
+- [x] Empty states ("No people found")
+- [x] Loading skeletons — PersonCardSkeleton + PersonCardGridSkeleton
+- [x] Hide filters on mobile — Search-only on mobile
+- [ ] **Pagination** — See design doc Phase 4: `docs/plans/2026-01-09-people-directory-design.md#L355-L360`
+
+#### Phase 5: Profile View
+- [ ] **`/people/[id]` route** — Read-only profile view when clicking a person
+- [ ] **Reuse profile components** with `isEditable={false}` prop
+- [ ] **Back to directory navigation**
+- See design doc Phase 5: `docs/plans/2026-01-09-people-directory-design.md#L362-L365`
+
+#### Cleanup Before Production
+- [ ] Remove `/people-preview` test route
+- [ ] Remove middleware exception for `/people-preview`
+- [ ] Connect to real Supabase data (blocked by Integration section below)
 
 #### Future: Org Chart (Deferred)
 - [ ] Org Chart — visual hierarchy explorer (separate from directory)

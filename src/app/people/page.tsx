@@ -1,29 +1,88 @@
-import { redirect } from 'next/navigation'
-import { Users } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState } from 'react'
 import { AppShell } from '@/components/layout'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { useIsMobile } from '@/hooks/use-mobile'
+import {
+  PeopleSearch,
+  PeopleFilters,
+  PersonCardGrid,
+  PeopleTable,
+  ViewToggle,
+  CopyEmailsButton,
+} from './components'
+import { usePeopleFilters } from './hooks/usePeopleFilters'
+import { MOCK_PEOPLE, FILTER_CATEGORIES } from './mock-data'
+import type { ViewMode } from './types'
 
-export default async function PeoplePage() {
-  const supabase = await createClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
+export default function PeoplePage() {
+  const isMobile = useIsMobile()
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
 
-  if (error || !user) {
-    redirect('/login')
-  }
+  const {
+    filters,
+    setSearch,
+    setFilterValues,
+    clearCategory,
+    clearAllFilters,
+    filteredPeople,
+  } = usePeopleFilters(MOCK_PEOPLE)
 
   return (
     <AppShell>
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] md:min-h-screen px-4">
-        <div className="text-center space-y-4">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <Users className="h-8 w-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">People</h1>
-          <p className="text-muted-foreground max-w-md">
-            Browse and search YM members. Coming soon.
-          </p>
+      <TooltipProvider>
+        <div className="flex flex-col min-h-[calc(100vh-3.5rem)] md:min-h-screen">
+          {/* Header */}
+          <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="px-4 md:px-6 py-4">
+              {/* Single row: Search + Filters + Controls */}
+              <div className="flex items-center gap-4">
+                <PeopleSearch
+                  value={filters.search}
+                  onChange={setSearch}
+                  placeholder="Search people..."
+                />
+
+                {/* Filters - desktop only */}
+                {!isMobile && (
+                  <PeopleFilters
+                    filters={filters}
+                    filterCategories={FILTER_CATEGORIES}
+                    onFilterChange={setFilterValues}
+                    onClearCategory={clearCategory}
+                    onClearAll={clearAllFilters}
+                  />
+                )}
+
+                {/* Spacer to push controls right */}
+                <div className="flex-1" />
+
+                {/* View toggle + Copy emails - desktop only */}
+                {!isMobile && (
+                  <div className="flex items-center gap-1">
+                    <ViewToggle view={viewMode} onChange={setViewMode} />
+                    <CopyEmailsButton people={filteredPeople} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+
+          {/* Main content */}
+          <main className="flex-1 px-4 md:px-6 py-6">
+            {/* Cards view (default, always on mobile) */}
+            {(viewMode === 'cards' || isMobile) && (
+              <PersonCardGrid people={filteredPeople} />
+            )}
+
+            {/* Table view (desktop only) */}
+            {viewMode === 'table' && !isMobile && (
+              <PeopleTable people={filteredPeople} />
+            )}
+          </main>
         </div>
-      </div>
+      </TooltipProvider>
     </AppShell>
   )
 }

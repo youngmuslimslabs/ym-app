@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin } from "lucide-react"
+import { Loader2, MapPin } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -70,10 +70,17 @@ const NEIGHBOR_NETS: Record<string, { id: string; name: string }[]> = {
 
 export default function Step2() {
   const router = useRouter()
-  const { data, updateData } = useOnboarding()
+  const { data, updateData, saveStepData, isSaving, isLoading } = useOnboarding()
 
   const [subregionId, setSubregionId] = useState(data.subregionId ?? "")
   const [neighborNetId, setNeighborNetId] = useState(data.neighborNetId ?? "")
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Sync state when data loads from Supabase (pre-fill)
+  useEffect(() => {
+    if (data.subregionId) setSubregionId(data.subregionId)
+    if (data.neighborNetId) setNeighborNetId(data.neighborNetId)
+  }, [data.subregionId, data.neighborNetId])
 
   const progressPercentage = calculateProgress(2)
 
@@ -94,8 +101,17 @@ export default function Step2() {
     router.push("/onboarding?step=1")
   }
 
-  const handleNext = () => {
-    updateData({ subregionId, neighborNetId })
+  const handleNext = async () => {
+    setSaveError(null)
+    const stepData = { subregionId, neighborNetId }
+
+    updateData(stepData)
+    const result = await saveStepData(2, stepData)
+    if (!result.success) {
+      setSaveError(result.error || "Failed to save. Please try again.")
+      return
+    }
+
     router.push("/onboarding?step=3")
   }
 
@@ -172,13 +188,27 @@ export default function Step2() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {saveError && (
+        <div className="mb-4 w-full max-w-md mx-auto rounded-md bg-destructive/10 p-4 text-center text-sm text-destructive">
+          {saveError}
+        </div>
+      )}
+
       {/* Navigation Buttons */}
       <div className="flex w-full items-center justify-center gap-4 pb-4">
-        <Button variant="outline" onClick={handleBack} className="w-40">
+        <Button variant="outline" onClick={handleBack} disabled={isSaving} className="w-40">
           Back
         </Button>
-        <Button onClick={handleNext} disabled={!isValid} className="w-40">
-          Next
+        <Button onClick={handleNext} disabled={!isValid || isSaving || isLoading} className="w-40">
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Next"
+          )}
         </Button>
       </div>
     </div>

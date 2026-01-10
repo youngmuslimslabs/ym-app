@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, X } from "lucide-react"
+import { Loader2, Plus, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -59,12 +59,20 @@ function createEmptyRole(): YMRoleEntry {
 
 export default function Step3() {
   const router = useRouter()
-  const { data, updateData } = useOnboarding()
+  const { data, updateData, saveStepData, isSaving, isLoading } = useOnboarding()
 
   // Initialize with one empty role entry or from context
   const [roles, setRoles] = useState<YMRoleEntry[]>(
     data.ymRoles?.length ? data.ymRoles : [createEmptyRole()]
   )
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Sync state when data loads from Supabase (pre-fill)
+  useEffect(() => {
+    if (data.ymRoles?.length) {
+      setRoles(data.ymRoles)
+    }
+  }, [data.ymRoles])
 
   const progressPercentage = calculateProgress(3)
 
@@ -96,8 +104,17 @@ export default function Step3() {
     router.push("/onboarding?step=2")
   }
 
-  const handleNext = () => {
-    updateData({ ymRoles: roles })
+  const handleNext = async () => {
+    setSaveError(null)
+    const stepData = { ymRoles: roles }
+
+    updateData(stepData)
+    const result = await saveStepData(3, stepData)
+    if (!result.success) {
+      setSaveError(result.error || "Failed to save. Please try again.")
+      return
+    }
+
     router.push("/onboarding?step=4")
   }
 
@@ -244,13 +261,27 @@ export default function Step3() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {saveError && (
+        <div className="mb-4 w-full max-w-md mx-auto rounded-md bg-destructive/10 p-4 text-center text-sm text-destructive">
+          {saveError}
+        </div>
+      )}
+
       {/* Navigation Buttons */}
       <div className="flex w-full items-center justify-center gap-4 pb-4">
-        <Button variant="outline" onClick={handleBack} className="w-40">
+        <Button variant="outline" onClick={handleBack} disabled={isSaving} className="w-40">
           Back
         </Button>
-        <Button onClick={handleNext} disabled={!isValid} className="w-40">
-          Next
+        <Button onClick={handleNext} disabled={!isValid || isSaving || isLoading} className="w-40">
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Next"
+          )}
         </Button>
       </div>
     </div>

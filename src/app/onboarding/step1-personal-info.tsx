@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Calendar as CalendarIcon, Globe, Mail, Phone } from "lucide-react"
+import { Calendar as CalendarIcon, Globe, Loader2, Mail, Phone } from "lucide-react"
 import { format } from "date-fns"
 
 import { Button } from "@/components/ui/button"
@@ -86,13 +86,22 @@ function isValidPhone(phone: string): boolean {
 
 export default function PersonalInfo() {
   const router = useRouter()
-  const { data, updateData } = useOnboarding()
+  const { data, updateData, saveStepData, isSaving, isLoading } = useOnboarding()
 
-  // Initialize from context (supports back navigation)
+  // Initialize from context (supports back navigation and pre-fill)
   const [phoneNumber, setPhoneNumber] = useState(data.phoneNumber ?? "")
   const [personalEmail, setPersonalEmail] = useState(data.personalEmail ?? "")
   const [ethnicity, setEthnicity] = useState(data.ethnicity ?? "")
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(data.dateOfBirth)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Sync state when data loads from Supabase (pre-fill)
+  useEffect(() => {
+    if (data.phoneNumber) setPhoneNumber(data.phoneNumber)
+    if (data.personalEmail) setPersonalEmail(data.personalEmail)
+    if (data.ethnicity) setEthnicity(data.ethnicity)
+    if (data.dateOfBirth) setDateOfBirth(data.dateOfBirth)
+  }, [data.phoneNumber, data.personalEmail, data.ethnicity, data.dateOfBirth])
 
   // Track which fields have been touched (blurred)
   const [touched, setTouched] = useState({
@@ -123,9 +132,18 @@ export default function PersonalInfo() {
                   ethnicity !== "" &&
                   dateOfBirth !== undefined
 
-  const handleNext = () => {
-    // Save to context before navigating
-    updateData({ phoneNumber, personalEmail, ethnicity, dateOfBirth })
+  const handleNext = async () => {
+    setSaveError(null)
+    const stepData = { phoneNumber, personalEmail, ethnicity, dateOfBirth }
+
+    // Update context and save to Supabase
+    updateData(stepData)
+    const result = await saveStepData(1, stepData)
+    if (!result.success) {
+      setSaveError(result.error || "Failed to save. Please try again.")
+      return
+    }
+
     router.push("/onboarding?step=2")
   }
 
@@ -262,11 +280,25 @@ export default function PersonalInfo() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {saveError && (
+        <div className="mb-4 w-full max-w-md mx-auto rounded-md bg-destructive/10 p-4 text-center text-sm text-destructive">
+          {saveError}
+        </div>
+      )}
+
       {/* Navigation Buttons */}
       <div className="flex w-full items-center justify-center gap-4 pb-4">
         {/* No previous button for first step */}
-        <Button onClick={handleNext} disabled={!isValid} className="w-40">
-          Next
+        <Button onClick={handleNext} disabled={!isValid || isSaving || isLoading} className="w-40">
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Next"
+          )}
         </Button>
       </div>
     </div>

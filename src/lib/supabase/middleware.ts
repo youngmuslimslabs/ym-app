@@ -93,6 +93,30 @@ export async function updateSession(request: NextRequest) {
             url.searchParams.set('error', 'invalid_domain')
             return NextResponse.redirect(url)
         }
+
+        // Onboarding Check - ensure users complete onboarding before accessing protected routes
+        // Skip this check for public pages, login, auth, and onboarding routes
+        const isProtectedRoute = !request.nextUrl.pathname.startsWith('/login') &&
+            !request.nextUrl.pathname.startsWith('/auth') &&
+            !request.nextUrl.pathname.startsWith('/onboarding') &&
+            request.nextUrl.pathname !== '/'
+
+        if (user && isProtectedRoute) {
+            // Check if user has completed onboarding
+            const { data: userData } = await supabase
+                .from('users')
+                .select('onboarding_completed_at')
+                .eq('auth_id', user.id)
+                .single()
+
+            if (!userData?.onboarding_completed_at) {
+                // User hasn't completed onboarding, redirect to onboarding
+                const url = request.nextUrl.clone()
+                url.pathname = '/onboarding'
+                url.searchParams.set('step', '1')
+                return NextResponse.redirect(url)
+            }
+        }
     } catch (error) {
         // Catch any unexpected errors in middleware
         if (process.env.NODE_ENV === 'development') {

@@ -112,8 +112,8 @@
 - See design doc Phase 5: `docs/plans/2026-01-09-people-directory-design.md#L362-L365`
 
 #### Cleanup Before Production
-- [ ] Remove `/people-preview` test route
-- [ ] Remove middleware exception for `/people-preview`
+- [x] Remove `/people-preview` test route
+- [x] Remove middleware exception for `/people-preview`
 - [ ] Connect to real Supabase data (blocked by Integration section below)
 
 #### Future: Org Chart (Deferred)

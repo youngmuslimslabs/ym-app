@@ -9,6 +9,7 @@ import { PageLoader } from '@/components/ui/page-loader'
 export default function LoginPage() {
   const { user, loading } = useAuth()
   const [error, setError] = useState<string | null>(null)
+  const [showLoader, setShowLoader] = useState(false)
   const router = useRouter()
 
   // Redirect if already logged in
@@ -21,6 +22,16 @@ export default function LoginPage() {
     }
   }, [user, loading, router])
 
+  // Only show loader if auth check takes more than 150ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setShowLoader(true)
+      }
+    }, 150)
+    return () => clearTimeout(timer)
+  }, [loading])
+
   const handleGoogleSuccess = () => {
     // TODO: Make this dynamic based on onboarding completion status
     router.push('/onboarding?step=1')
@@ -30,8 +41,13 @@ export default function LoginPage() {
     setError(errorMessage)
   }
 
-  if (loading) {
+  if (loading && showLoader) {
     return <PageLoader />
+  }
+
+  // Don't render login form until we know auth state
+  if (loading) {
+    return null
   }
 
   return (

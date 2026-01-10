@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { User, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { PageLoader } from '@/components/ui/page-loader'
 import { useProfileForm, type ProfileFormState } from './hooks/useProfileForm'
 import { PersonalInfoSection } from './components/PersonalInfoSection'
 import { YMRolesSection } from './components/YMRolesSection'
@@ -73,7 +72,6 @@ const MOCK_PROFILE_DATA: ProfileFormState = {
 }
 
 export default function ProfilePage() {
-  const [isLoading, setIsLoading] = useState(true)
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
 
@@ -98,12 +96,6 @@ export default function ProfilePage() {
 
   // Handle browser-level navigation warning (beforeunload)
   useUnsavedChangesWarning(hasChanges)
-
-  // Simulate loading
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500)
-    return () => clearTimeout(timer)
-  }, [])
 
   const handleNavigationAttempt = (href: string) => {
     if (hasChanges) {
@@ -133,10 +125,6 @@ export default function ProfilePage() {
   const handleStay = () => {
     setShowUnsavedModal(false)
     setPendingNavigation(null)
-  }
-
-  if (isLoading) {
-    return <PageLoader />
   }
 
   return (

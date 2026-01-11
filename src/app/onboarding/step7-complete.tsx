@@ -1,7 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -10,19 +11,31 @@ import { calculateProgress } from "./constants"
 
 export default function Step7() {
   const router = useRouter()
-  const { clearData } = useOnboarding()
+  const { completeOnboarding, clearData, isSaving } = useOnboarding()
+  const [error, setError] = useState<string | null>(null)
 
   const progressPercentage = calculateProgress(7)
 
   const handleComplete = async () => {
-    // TODO: Save all onboarding data to Supabase
-    // TODO: Set onboarding_completed_at timestamp on user record
+    setError(null)
+
+    // Mark onboarding as complete
+    const result = await completeOnboarding()
+
+    if (!result.success) {
+      setError(result.error || "Failed to complete onboarding. Please try again.")
+      return
+    }
 
     // Clear context data after saving
     clearData()
 
     // Navigate to home/dashboard
     router.push("/home")
+  }
+
+  const handleBack = () => {
+    router.push("/onboarding?step=6")
   }
 
   return (
@@ -50,10 +63,31 @@ export default function Step7() {
         </div>
       </div>
 
-      {/* Navigation Button */}
-      <div className="flex w-full items-center justify-center pb-4">
-        <Button onClick={handleComplete} className="w-60">
-          Go to Dashboard
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 w-full max-w-md mx-auto rounded-md bg-destructive/10 p-4 text-center text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {/* Navigation Buttons */}
+      <div className="flex w-full items-center justify-center gap-4 pb-4">
+        <Button variant="outline" onClick={handleBack} disabled={isSaving} className="w-40">
+          Back
+        </Button>
+        <Button
+          onClick={handleComplete}
+          className="w-40"
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Complete"
+          )}
         </Button>
       </div>
     </div>

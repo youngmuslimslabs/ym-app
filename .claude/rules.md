@@ -336,6 +336,13 @@ When continuing from a previous session:
 - Check git status to see uncommitted changes
 - Review recent commits to understand context
 
+## CI/CD
+
+- **CI workflow**: `.github/workflows/ci.yml` — lint → type-check → test → build
+- **Netlify config**: `netlify.toml` — ensures Netlify uses same Bun version as CI
+- **TypeScript in CI**: `bunx tsc --noEmit` catches type errors ESLint misses
+- **Keep versions in sync**: `BUN_VERSION` in both `ci.yml` and `netlify.toml`
+
 ## Testing
 
 - **Test users:** Create via Supabase Dashboard (MCP is read-only)

@@ -18,12 +18,14 @@
 - [x] Apply migrations to Supabase — All 10 tables live with RLS enabled
 
 ### Seed Data (Partial)
+> ⚠️ **Note:** Current seed data is placeholder/sample data. Real production data (regions, subregions, NNs, users) needs to be obtained from Umar/Nooh.
+
 - [x] Seed `role_types` (19 roles) — `supabase/migrations/00004_seed_data.sql`
 - [x] Seed `departments` (8 departments)
 - [ ] Seed `teams` (per department)
-- [x] Seed `regions` (sample: Texas)
-- [x] Seed `subregions` (sample: Houston, Dallas)
-- [x] Seed `neighbor_nets` (sample: Katy NN, Sugar Land NN, Downtown NN)
+- [x] Seed `regions` (sample: Texas) — ⚠️ placeholder
+- [x] Seed `subregions` (sample: Houston, Dallas) — ⚠️ placeholder
+- [x] Seed `neighbor_nets` (sample: Katy NN, Sugar Land NN, Downtown NN) — ⚠️ placeholder
 - [ ] Pre-populate `users` from NN database + alumni
 - [ ] Pre-populate `role_assignments` (current leadership)
 - [ ] Pre-populate `memberships`
@@ -39,6 +41,7 @@
 ### Security ✅ COMPLETE
 - [x] Add RLS policies — `supabase/migrations/00006_rls_policies.sql`
 - [x] Code review fixes — `supabase/migrations/00007_review_fixes.sql` (run this in Supabase!)
+- [ ] **Manual review of RLS policies** — verify policies work as expected with real usage patterns
 
 ---
 
@@ -56,36 +59,34 @@
 - [x] Profile icon with dropdown (avatar, name, logout) — User dropdown in sidebar footer
 - [x] Logout functionality — `signOut` in user dropdown
 
-### Onboarding
+### Onboarding ✅ COMPLETE
 - [x] Design onboarding flow (steps, fields) — 7 steps defined in `docs/plans/2026-01-03-onboarding-expansion-design.md`
 - [x] Build onboarding pages (multi-step form) — Steps 1-7 implemented with validation
 - [x] Form validation with blur error states (phone/email)
-- [ ] Handle onboarding state (redirect if incomplete)
-- [ ] Save onboarding data to Supabase
+- [x] Handle onboarding state (redirect if incomplete)
+- [x] Save onboarding data to Supabase
 
-### Onboarding Data Integration ⚡ READY TO CONNECT
-> **Database is live!** These can now be implemented.
-
-- [ ] Step 2: Fetch subregions from Supabase (table: `subregions`)
-- [ ] Step 2: Fetch NeighborNets from Supabase filtered by subregion (table: `neighbor_nets`)
-- [ ] Step 3: Fetch Amir/Manager list from Supabase users table
-- [ ] Step 4: Fetch Amir/Manager list from Supabase users table
-- [ ] Step 5: Education data saves to `users.education` JSONB field
-- [ ] Step 6: Skills save to `users.skills` TEXT[] field
-- [ ] Step 7: Set `users.onboarding_completed_at` on completion
+### Onboarding Data Integration ✅ COMPLETE
+- [x] Step 2: Fetch subregions from Supabase (table: `subregions`)
+- [x] Step 2: Fetch NeighborNets from Supabase filtered by subregion (table: `neighbor_nets`)
+- [x] Step 3: Fetch Amir/Manager list from Supabase users table
+- [x] Step 4: Fetch Amir/Manager list from Supabase users table
+- [x] Step 5: Education data saves to `users.education` JSONB field
+- [x] Step 6: Skills save to `users.skills` TEXT[] field
+- [x] Step 7: Set `users.onboarding_completed_at` on completion
 
 ### Landing Page (Home)
 - [x] Design landing page (what does user see after onboarding?) — Personal context card + quick actions
 - [x] Build landing page — `/home` with `AppShell`, `PersonalContextCard`, `QuickActionCard`
 - [ ] Show user's role(s) — currently mock data, needs DB integration
 
-### Profile Page
+### Profile Page ✅ COMPLETE
 - [x] Design profile page — Expandable card sections with inline editing
 - [x] Build profile page — `/profile` with personal info, YM roles, projects, education, skills
 - [x] Display user info from onboarding — Personal info section with inline edit
 - [x] Display role assignments — YM Roles section with expandable cards
 - [x] Display geographic association (NN/SR/Region) — In personal info section
-- [ ] Connect to Supabase — currently using mock data
+- [x] Connect to Supabase
 
 ### People Page
 - [x] Build people page — `/people` placeholder with "Coming soon"
@@ -125,13 +126,11 @@
 
 ---
 
-## Integration (When DB + UI Converge) ⚡ NEXT PRIORITY
+## Integration (When DB + UI Converge)
 
-> **Database is deployed.** Start connecting UI to Supabase.
-
+- [x] Connect onboarding form to users table
+- [x] Connect profile page to user data
 - [ ] **Generate TypeScript types from schema** — `npx supabase gen types typescript`
-- [ ] Connect onboarding form to users table
-- [ ] Connect profile page to user data
 - [ ] Connect people page to users + roles
 - [ ] Connect landing page to role_assignments
 - [ ] Test end-to-end auth flow
@@ -180,6 +179,16 @@
 ### E2E Tests (Eventually)
 - [ ] E2E tests for onboarding flow
 - [ ] E2E tests for auth flow
+
+---
+
+## CI/CD Enhancements (Future)
+
+- [ ] Add test coverage threshold (fail CI if coverage drops below 80%)
+- [ ] Add bundle size check (warn if build output grows significantly)
+- [ ] Add E2E tests with Playwright to CI
+- [ ] Add accessibility checks (axe-core) to CI
+- [ ] Add security scanning (dependency audit) to CI
 
 ---
 

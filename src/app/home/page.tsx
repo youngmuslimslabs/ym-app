@@ -1,17 +1,9 @@
 import { redirect } from 'next/navigation'
 import { Users, DollarSign, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { fetchUserContext } from '@/lib/supabase/queries'
 import { AppShell } from '@/components/layout'
 import { PersonalContextCard, QuickActionCard } from '@/components/home'
-
-// Mock data - will be replaced with real data from DB
-const MOCK_USER_CONTEXT = {
-  name: 'Ahmad Khan',
-  roles: ['NNC', 'Katy NN'],
-  neighborNetName: 'Katy NN',
-  subregionName: 'Houston Subregion',
-  yearJoined: 2021,
-}
 
 const QUICK_ACTIONS = [
   {
@@ -42,6 +34,16 @@ export default async function HomePage() {
     redirect('/login')
   }
 
+  // Fetch real user context
+  const userContext = await fetchUserContext(user.id)
+
+  // Fallback values if user context not found
+  const displayName = userContext?.name || user.email?.split('@')[0] || 'Member'
+  const displayRoles = userContext?.roles.length ? userContext.roles : []
+  const displayNN = userContext?.neighborNetName || 'No NeighborNet'
+  const displaySR = userContext?.subregionName || ''
+  const displayYear = userContext?.yearJoined || new Date().getFullYear()
+
   return (
     <AppShell>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] md:min-h-screen px-4 py-12">
@@ -52,11 +54,11 @@ export default async function HomePage() {
             style={{ animationDelay: '0ms' }}
           >
             <PersonalContextCard
-              name={MOCK_USER_CONTEXT.name}
-              roles={MOCK_USER_CONTEXT.roles}
-              neighborNetName={MOCK_USER_CONTEXT.neighborNetName}
-              subregionName={MOCK_USER_CONTEXT.subregionName}
-              yearJoined={MOCK_USER_CONTEXT.yearJoined}
+              name={displayName}
+              roles={displayRoles}
+              neighborNetName={displayNN}
+              subregionName={displaySR}
+              yearJoined={displayYear}
             />
           </div>
 

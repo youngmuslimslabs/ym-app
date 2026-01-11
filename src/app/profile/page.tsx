@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { User, ArrowLeft } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { User, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useProfileForm, type ProfileFormState } from './hooks/useProfileForm'
+import { useProfileData } from './hooks/useProfileData'
 import { PersonalInfoSection } from './components/PersonalInfoSection'
 import { YMRolesSection } from './components/YMRolesSection'
 import { YMProjectsSection } from './components/YMProjectsSection'
@@ -14,66 +15,31 @@ import {
   UnsavedChangesModal,
   useUnsavedChangesWarning,
 } from './components/UnsavedChangesModal'
-import type { EducationLevel } from '@/contexts/OnboardingContext'
 
-// Mock data for development - in production, this would come from API
-const MOCK_PROFILE_DATA: ProfileFormState = {
-  googleEmail: 'omar.khan@youngmuslims.com',
-  phoneNumber: '(555) 123-4567',
-  personalEmail: 'omar.personal@gmail.com',
-  ethnicity: 'pakistani',
-  dateOfBirth: new Date(1995, 5, 15),
-  subregionId: 'sr-1',
-  neighborNetId: 'nn-1',
-  ymRoles: [
-    {
-      id: '1',
-      roleTypeId: 'nnc',
-      amirUserId: 'user-1',
-      startMonth: 3,
-      startYear: 2023,
-      isCurrent: true,
-      description: 'Leading local community engagement initiatives',
-    },
-    {
-      id: '2',
-      roleTypeId: 'team_member',
-      amirUserId: 'user-2',
-      startMonth: 6,
-      startYear: 2021,
-      endMonth: 2,
-      endYear: 2023,
-      isCurrent: false,
-    },
-  ],
-  ymProjects: [
-    {
-      id: '1',
-      projectType: 'youth-camp',
-      role: 'Volunteer Coordinator',
-      startMonth: 7,
-      startYear: 2024,
-      isCurrent: false,
-      endMonth: 8,
-      endYear: 2024,
-    },
-  ],
-  educationLevel: 'college' as EducationLevel,
-  education: [
-    {
-      id: '1',
-      schoolName: 'University of Texas at Austin',
-      degreeType: 'bachelors',
-      fieldOfStudy: 'Computer Science',
-      graduationYear: 2018,
-    },
-  ],
-  skills: ['leadership', 'project-management', 'public-speaking', 'mentoring'],
+// Empty initial state for form (will be populated from Supabase)
+const EMPTY_PROFILE_DATA: ProfileFormState = {
+  googleEmail: '',
+  phoneNumber: '',
+  personalEmail: '',
+  ethnicity: '',
+  dateOfBirth: undefined,
+  subregionId: '',
+  neighborNetId: '',
+  ymRoles: [],
+  ymProjects: [],
+  educationLevel: undefined,
+  education: [],
+  skills: [],
 }
 
 export default function ProfilePage() {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [saveAndLeaveError, setSaveAndLeaveError] = useState<string | null>(null)
+
+  // Fetch profile data from Supabase
+  const { profileData, isLoading, error } = useProfileData()
 
   const {
     formData,
@@ -92,7 +58,24 @@ export default function ProfilePage() {
     toggleSkill,
     resetForm,
     saveForm,
-  } = useProfileForm(MOCK_PROFILE_DATA)
+    setInitialData,
+  } = useProfileForm(EMPTY_PROFILE_DATA)
+
+  // Wrapper for saveForm that throws on error (for FloatingSaveBar error handling)
+  const handleSave = async () => {
+    const result = await saveForm()
+    if (!result.success) {
+      throw new Error(result.error ?? 'Failed to save profile')
+    }
+  }
+
+  // Update form when profile data is loaded
+  useEffect(() => {
+    if (profileData && !isInitialized) {
+      setInitialData(profileData)
+      setIsInitialized(true)
+    }
+  }, [profileData, isInitialized, setInitialData])
 
   // Handle browser-level navigation warning (beforeunload)
   useUnsavedChangesWarning(hasChanges)
@@ -100,6 +83,7 @@ export default function ProfilePage() {
   const handleNavigationAttempt = (href: string) => {
     if (hasChanges) {
       setPendingNavigation(href)
+      setSaveAndLeaveError(null) // Clear any previous errors
       setShowUnsavedModal(true)
     } else {
       window.location.href = href
@@ -107,16 +91,23 @@ export default function ProfilePage() {
   }
 
   const handleSaveAndLeave = async () => {
-    await saveForm()
-    setShowUnsavedModal(false)
-    if (pendingNavigation) {
-      window.location.href = pendingNavigation
+    setSaveAndLeaveError(null) // Clear error before attempting save
+    const result = await saveForm()
+    if (result.success) {
+      setShowUnsavedModal(false)
+      if (pendingNavigation) {
+        window.location.href = pendingNavigation
+      }
+    } else {
+      // Show error to user instead of silently failing
+      setSaveAndLeaveError(result.error || 'Failed to save profile. Please try again.')
     }
   }
 
   const handleDiscardAndLeave = () => {
     resetForm()
     setShowUnsavedModal(false)
+    setSaveAndLeaveError(null)
     if (pendingNavigation) {
       window.location.href = pendingNavigation
     }
@@ -125,6 +116,7 @@ export default function ProfilePage() {
   const handleStay = () => {
     setShowUnsavedModal(false)
     setPendingNavigation(null)
+    setSaveAndLeaveError(null)
   }
 
   return (
@@ -159,71 +151,98 @@ export default function ProfilePage() {
       {/* Main Content */}
       <main className="flex-1 px-6 py-8 pb-24">
         <div className="mx-auto max-w-2xl space-y-12">
-          {/* Sections with staggered animation */}
-          <div
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: '0ms' }}
-          >
-            <PersonalInfoSection
-              phoneNumber={formData.phoneNumber}
-              personalEmail={formData.personalEmail}
-              googleEmail={formData.googleEmail}
-              ethnicity={formData.ethnicity}
-              dateOfBirth={formData.dateOfBirth}
-              onPhoneChange={(v) => updateField('phoneNumber', v)}
-              onPersonalEmailChange={(v) => updateField('personalEmail', v)}
-              onEthnicityChange={(v) => updateField('ethnicity', v)}
-              onDateOfBirthChange={(v) => updateField('dateOfBirth', v)}
-            />
-          </div>
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="mt-4 text-sm text-muted-foreground">Loading your profile...</p>
+            </div>
+          )}
 
-          <div
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: '100ms' }}
-          >
-            <YMRolesSection
-              roles={formData.ymRoles ?? []}
-              onUpdateRole={updateRole}
-              onAddRole={addRole}
-              onRemoveRole={removeRole}
-            />
-          </div>
+          {/* Error State */}
+          {error && !isLoading && (
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
+              <p className="text-sm text-destructive">{error}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => window.location.reload()}
+              >
+                Try Again
+              </Button>
+            </div>
+          )}
 
-          <div
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: '200ms' }}
-          >
-            <YMProjectsSection
-              projects={formData.ymProjects ?? []}
-              onUpdateProject={updateProject}
-              onAddProject={addProject}
-              onRemoveProject={removeProject}
-            />
-          </div>
+          {/* Profile Sections - only show when loaded */}
+          {!isLoading && !error && isInitialized && (
+            <>
+              <div
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                style={{ animationDelay: '0ms' }}
+              >
+                <PersonalInfoSection
+                  phoneNumber={formData.phoneNumber}
+                  personalEmail={formData.personalEmail}
+                  googleEmail={formData.googleEmail}
+                  ethnicity={formData.ethnicity}
+                  dateOfBirth={formData.dateOfBirth}
+                  onPhoneChange={(v) => updateField('phoneNumber', v)}
+                  onPersonalEmailChange={(v) => updateField('personalEmail', v)}
+                  onEthnicityChange={(v) => updateField('ethnicity', v)}
+                  onDateOfBirthChange={(v) => updateField('dateOfBirth', v)}
+                />
+              </div>
 
-          <div
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: '300ms' }}
-          >
-            <EducationSection
-              educationLevel={formData.educationLevel}
-              education={formData.education ?? []}
-              onEducationLevelChange={(v) => updateField('educationLevel', v)}
-              onUpdateEducation={updateEducation}
-              onAddEducation={addEducation}
-              onRemoveEducation={removeEducation}
-            />
-          </div>
+              <div
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                style={{ animationDelay: '100ms' }}
+              >
+                <YMRolesSection
+                  roles={formData.ymRoles ?? []}
+                  onUpdateRole={updateRole}
+                  onAddRole={addRole}
+                  onRemoveRole={removeRole}
+                />
+              </div>
 
-          <div
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: '400ms' }}
-          >
-            <SkillsChipSelector
-              selectedSkills={formData.skills ?? []}
-              onToggle={toggleSkill}
-            />
-          </div>
+              <div
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                style={{ animationDelay: '200ms' }}
+              >
+                <YMProjectsSection
+                  projects={formData.ymProjects ?? []}
+                  onUpdateProject={updateProject}
+                  onAddProject={addProject}
+                  onRemoveProject={removeProject}
+                />
+              </div>
+
+              <div
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                style={{ animationDelay: '300ms' }}
+              >
+                <EducationSection
+                  educationLevel={formData.educationLevel}
+                  education={formData.education ?? []}
+                  onEducationLevelChange={(v) => updateField('educationLevel', v)}
+                  onUpdateEducation={updateEducation}
+                  onAddEducation={addEducation}
+                  onRemoveEducation={removeEducation}
+                />
+              </div>
+
+              <div
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                style={{ animationDelay: '400ms' }}
+              >
+                <SkillsChipSelector
+                  selectedSkills={formData.skills ?? []}
+                  onToggle={toggleSkill}
+                />
+              </div>
+            </>
+          )}
         </div>
       </main>
 
@@ -231,7 +250,7 @@ export default function ProfilePage() {
       <SaveButton
         hasChanges={hasChanges}
         changeCount={changeCount}
-        onSave={saveForm}
+        onSave={handleSave}
       />
 
       {/* Unsaved Changes Modal */}
@@ -241,6 +260,7 @@ export default function ProfilePage() {
         onDiscardAndLeave={handleDiscardAndLeave}
         onStay={handleStay}
         changeCount={changeCount}
+        error={saveAndLeaveError}
       />
     </div>
   )

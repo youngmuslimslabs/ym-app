@@ -7,6 +7,7 @@ import type {
   YMProjectEntry,
   EducationEntry,
 } from '@/contexts/OnboardingContext'
+import { saveProfile } from '../services/profileService'
 
 export interface ProfileFormState extends OnboardingData {
   // Google auth email (read-only)
@@ -18,6 +19,8 @@ interface UseProfileFormReturn {
   originalData: ProfileFormState
   hasChanges: boolean
   changeCount: number
+  isSaving: boolean
+  saveError: string | null
   updateField: <K extends keyof ProfileFormState>(key: K, value: ProfileFormState[K]) => void
   updateRole: (index: number, updates: Partial<YMRoleEntry>) => void
   addRole: () => void
@@ -30,7 +33,8 @@ interface UseProfileFormReturn {
   removeEducation: (index: number) => void
   toggleSkill: (skillId: string) => void
   resetForm: () => void
-  saveForm: () => Promise<void>
+  saveForm: () => Promise<{ success: boolean; error?: string }>
+  setInitialData: (data: ProfileFormState) => void
 }
 
 // Helper to create empty entries
@@ -78,6 +82,8 @@ function countChanges(original: ProfileFormState, current: ProfileFormState): nu
 export function useProfileForm(initialData: ProfileFormState): UseProfileFormReturn {
   const [originalData, setOriginalData] = useState<ProfileFormState>(initialData)
   const [formData, setFormData] = useState<ProfileFormState>(initialData)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const hasChanges = useMemo(
     () => hasDeepChanges(originalData, formData),
@@ -183,11 +189,27 @@ export function useProfileForm(initialData: ProfileFormState): UseProfileFormRet
     setFormData(originalData)
   }, [originalData])
 
-  const saveForm = useCallback(async () => {
-    // TODO: Implement API call to save profile
-    console.log('Saving profile:', formData)
-    // After successful save, update originalData so hasChanges becomes false
-    setOriginalData(formData)
+  const setInitialData = useCallback((data: ProfileFormState) => {
+    setOriginalData(data)
+    setFormData(data)
+  }, [])
+
+  const saveForm = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    setIsSaving(true)
+    setSaveError(null)
+
+    const result = await saveProfile(formData)
+
+    setIsSaving(false)
+
+    if (result.success) {
+      // After successful save, update originalData so hasChanges becomes false
+      setOriginalData(formData)
+      return { success: true }
+    } else {
+      setSaveError(result.error ?? 'Failed to save profile')
+      return { success: false, error: result.error }
+    }
   }, [formData])
 
   return {
@@ -195,6 +217,8 @@ export function useProfileForm(initialData: ProfileFormState): UseProfileFormRet
     originalData,
     hasChanges,
     changeCount,
+    isSaving,
+    saveError,
     updateField,
     updateRole,
     addRole,
@@ -208,5 +232,6 @@ export function useProfileForm(initialData: ProfileFormState): UseProfileFormRet
     toggleSkill,
     resetForm,
     saveForm,
+    setInitialData,
   }
 }

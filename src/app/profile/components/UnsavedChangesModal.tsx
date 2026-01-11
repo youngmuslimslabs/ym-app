@@ -16,6 +16,7 @@ interface UnsavedChangesModalProps {
   onDiscardAndLeave: () => void
   onStay: () => void
   changeCount: number
+  error?: string | null
 }
 
 export function UnsavedChangesModal({
@@ -24,6 +25,7 @@ export function UnsavedChangesModal({
   onDiscardAndLeave,
   onStay,
   changeCount,
+  error,
 }: UnsavedChangesModalProps) {
   // Clicking outside or pressing Escape = stay on page
   const handleOpenChange = (open: boolean) => {
@@ -41,6 +43,12 @@ export function UnsavedChangesModal({
             You have {changeCount} unsaved {changeCount === 1 ? 'change' : 'changes'}.
           </DialogDescription>
         </DialogHeader>
+
+        {error && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
         <div className="flex gap-3 mt-2">
           <Button

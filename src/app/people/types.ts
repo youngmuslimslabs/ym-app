@@ -1,23 +1,9 @@
 // Types for People Directory
-// TODO: These types should eventually be generated from the Supabase schema
+// Import shared types from the query layer
+import type { PersonListItem, FilterOption } from '@/lib/supabase/queries/people'
 
-export interface PersonListItem {
-  id: string
-  firstName: string
-  lastName: string
-  avatarUrl?: string
-  email: string // For copy emails feature
-  region: { id: string; name: string } | null
-  subregion: { id: string; name: string } | null
-  neighborNet: { id: string; name: string } | null
-  roles: {
-    id: string
-    name: string
-    category: string
-  }[]
-  skills: string[]
-  yearsInYM?: number // Calculated from membership.joined_at
-}
+// Re-export for consumers
+export type { PersonListItem, FilterOption }
 
 export interface PeopleFilters {
   search: string
@@ -34,7 +20,8 @@ export interface PeopleFilters {
   }
 }
 
-export interface FilterOption {
+// Extended FilterOption with optional count (extends the base from queries)
+export interface FilterOptionWithCount {
   id: string
   name: string
   count?: number

@@ -59,7 +59,7 @@ export async function fetchPeopleForDirectory(): Promise<PersonListItem[]> {
   const userIds = users.map((u) => u.id)
 
   // Fetch role assignments for these users
-  const { data: roleAssignments } = await supabase
+  const { data: roleAssignments, error: rolesError } = await supabase
     .from('role_assignments')
     .select(`
       *,
@@ -68,8 +68,12 @@ export async function fetchPeopleForDirectory(): Promise<PersonListItem[]> {
     .in('user_id', userIds)
     .eq('is_active', true)
 
+  if (rolesError) {
+    console.error('Error fetching role assignments:', rolesError)
+  }
+
   // Fetch memberships for these users
-  const { data: memberships } = await supabase
+  const { data: memberships, error: membershipsError } = await supabase
     .from('memberships')
     .select(`
       *,
@@ -83,6 +87,10 @@ export async function fetchPeopleForDirectory(): Promise<PersonListItem[]> {
     `)
     .in('user_id', userIds)
     .eq('status', 'active')
+
+  if (membershipsError) {
+    console.error('Error fetching memberships:', membershipsError)
+  }
 
   // Build the PersonListItem array
   return users.map((user) => {

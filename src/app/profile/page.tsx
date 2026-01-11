@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [saveAndLeaveError, setSaveAndLeaveError] = useState<string | null>(null)
 
   // Fetch profile data from Supabase
   const { profileData, isLoading, error } = useProfileData()
@@ -82,6 +83,7 @@ export default function ProfilePage() {
   const handleNavigationAttempt = (href: string) => {
     if (hasChanges) {
       setPendingNavigation(href)
+      setSaveAndLeaveError(null) // Clear any previous errors
       setShowUnsavedModal(true)
     } else {
       window.location.href = href
@@ -89,18 +91,23 @@ export default function ProfilePage() {
   }
 
   const handleSaveAndLeave = async () => {
+    setSaveAndLeaveError(null) // Clear error before attempting save
     const result = await saveForm()
     if (result.success) {
       setShowUnsavedModal(false)
       if (pendingNavigation) {
         window.location.href = pendingNavigation
       }
+    } else {
+      // Show error to user instead of silently failing
+      setSaveAndLeaveError(result.error || 'Failed to save profile. Please try again.')
     }
   }
 
   const handleDiscardAndLeave = () => {
     resetForm()
     setShowUnsavedModal(false)
+    setSaveAndLeaveError(null)
     if (pendingNavigation) {
       window.location.href = pendingNavigation
     }
@@ -109,6 +116,7 @@ export default function ProfilePage() {
   const handleStay = () => {
     setShowUnsavedModal(false)
     setPendingNavigation(null)
+    setSaveAndLeaveError(null)
   }
 
   return (
@@ -252,6 +260,7 @@ export default function ProfilePage() {
         onDiscardAndLeave={handleDiscardAndLeave}
         onStay={handleStay}
         changeCount={changeCount}
+        error={saveAndLeaveError}
       />
     </div>
   )

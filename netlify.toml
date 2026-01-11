@@ -1,0 +1,20 @@
+[build]
+  command = "bun run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  BUN_VERSION = "1.2"
+
+# Deploy Preview settings (for PRs)
+[context.deploy-preview]
+  command = "bun run build"
+
+# Production settings
+[context.production]
+  command = "bun run build"
+
+# Local development with Netlify Dev CLI
+[dev]
+  command = "bun run dev"
+  port = 3000

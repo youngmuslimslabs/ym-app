@@ -21,6 +21,22 @@
 - File conventions: `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`
 - Props interface above component, use destructuring
 
+**useEffect dependencies - use primitives to prevent infinite loops:**
+```typescript
+// ✅ Extract primitive value before useEffect
+const userId = user?.id
+useEffect(() => {
+  if (!userId) return
+  fetchData(userId)
+}, [userId])  // Primitive string - stable reference
+
+// ❌ Object dependency can cause infinite re-renders
+useEffect(() => {
+  if (!user?.id) return
+  fetchData(user.id)
+}, [user?.id])  // May create new reference each render
+```
+
 ### UI Components (shadcn/ui)
 1. **Check shadcn first**: https://ui.shadcn.com/docs/components
 2. Install: `npx shadcn@latest add [component]`
@@ -117,10 +133,132 @@ src/
 └── middleware.ts    # Next.js middleware
 ```
 
+### Database Operations
+
+**✅ Correct - Insert-First-Then-Delete Pattern:**
+```typescript
+// 1. Get existing record IDs
+const { data: existing } = await supabase.from('table').select('id').eq('user_id', userId)
+const existingIds = existing.map(r => r.id)
+
+// 2. Insert new records FIRST
+const { error } = await supabase.from('table').insert(newRecords)
+if (error) return { success: false, error: 'Failed to save' }
+
+// 3. Only delete old records AFTER successful insert
+if (existingIds.length > 0) {
+  await supabase.from('table').delete().in('id', existingIds)
+}
+```
+
+**✅ Correct - Upsert Pattern (when applicable):**
+```typescript
+const { error } = await supabase
+  .from('table')
+  .upsert(records, { onConflict: 'user_id' })
+```
+
+**❌ NEVER - Delete-All-Then-Insert:**
+```typescript
+// DANGEROUS: If insert fails after delete, all data is lost permanently
+await supabase.from('table').delete().eq('user_id', userId)
+await supabase.from('table').insert(newRecords) // ← Network error here = data loss
+```
+
+### Supabase Query Patterns
+
+**Use `.maybeSingle()` for safer error handling:**
+```typescript
+// ✅ Graceful handling of 0 or >1 results
+const { data, error } = await supabase
+  .from('memberships')
+  .select('id')
+  .eq('user_id', userId)
+  .maybeSingle()
+
+if (error) {
+  // Handle actual errors
+  return { success: false, error: 'Database error' }
+}
+
+if (data) {
+  // Update existing
+} else {
+  // Create new
+}
+```
+
+**❌ Avoid `.single()` when multiple results possible:**
+```typescript
+// THROWS ERROR if 0 or >1 results (e.g., data corruption)
+const { data } = await supabase
+  .from('memberships')
+  .select('id')
+  .eq('user_id', userId)
+  .single()  // ❌ Fails ungracefully
+```
+
+### Database Migrations
+
+**Create migrations for schema changes:**
+
+1. **Create migration file:**
+   ```bash
+   # Format: supabase/migrations/XXXXX_descriptive_name.sql
+   # Example: 00008_add_unique_constraints.sql
+   ```
+
+2. **Include in migration:**
+   - New tables/columns
+   - Indexes and unique constraints
+   - RLS policies
+   - Comments for documentation
+
+3. **Apply migration:**
+   ```bash
+   cd supabase
+   supabase db push
+   ```
+
+**Race condition prevention:**
+```sql
+-- Use unique constraints to prevent duplicate inserts from double-clicks
+CREATE UNIQUE INDEX idx_table_unique
+  ON table_name(user_id, field1, field2)
+  WHERE condition IS NOT NULL;
+```
+
 ### Error Handling
-- try-catch for async operations
-- User-friendly error messages
-- Display errors with UI components (Alert)
+
+**Database helper functions should return specific errors:**
+```typescript
+// ✅ Return different errors for different failure modes
+async function getUserId(authId: string): Promise<{ id: string | null; error?: string }> {
+  const { data, error } = await supabase.from('users').select('id').eq('auth_id', authId).single()
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return { id: null, error: 'User not found' }
+    }
+    console.error('Database error:', error)
+    return { id: null, error: 'Database connection error' }
+  }
+
+  return { id: data.id }
+}
+
+// Usage - propagate specific errors to UI
+const userResult = await getUserId(authId)
+if (!userResult.id) {
+  return { success: false, error: userResult.error || 'Unknown error' }
+}
+```
+
+**General rules:**
+- All database functions return `{ success: boolean; error?: string }`
+- Check errors at every operation - don't assume success
+- Display errors in UI (Alert, Dialog) - never fail silently
+- Distinguish between "not found" vs "connection error" for better debugging
 
 ### Environment Variables
 - Use `.env.local` (git-ignored)
@@ -147,6 +285,79 @@ src/
 - `feature/descriptive-name` - new features
 - `fix/bug-description` - bug fixes
 - `hotfix/urgent-fix` - production hotfixes
+
+## Code Review & Merge Workflow
+
+### Before Merging to Main
+
+**ALWAYS run comprehensive code review:**
+
+1. **Invoke code-review superpower:**
+   ```bash
+   # Get git commit range
+   git merge-base main HEAD  # Base SHA
+   git rev-parse HEAD        # Head SHA
+   ```
+
+2. **Use Skill tool to launch code-reviewer:**
+   - `subagent_type: superpowers:code-reviewer`
+   - Fill template with: what was implemented, requirements, base/head SHAs
+   - Agent will categorize issues: Critical, Important, Minor
+
+3. **Fix issues before merging:**
+   - **Critical** (MUST fix): Data loss, security, broken functionality
+   - **Important** (SHOULD fix): Architecture problems, missing features, poor error handling
+   - **Minor** (NICE to have): Code style, optimizations, documentation
+
+4. **Verify fixes:**
+   ```bash
+   npx tsc --noEmit  # TypeScript check
+   npm run lint      # Linting check
+   ```
+
+### Merging Feature Branches
+
+**After code review approval:**
+
+1. **Verify you're on the right branch:**
+   ```bash
+   git branch --show-current  # Should show your feature branch
+   git status                 # Clean working tree
+   ```
+
+2. **Switch to main and merge:**
+   ```bash
+   git checkout main
+   git pull origin main
+   git merge feature-branch --no-ff -m "Merge: descriptive message"
+   ```
+   - Use `--no-ff` to preserve feature branch history
+   - Write clear merge commit message with bullet points
+
+3. **Push to origin:**
+   ```bash
+   git push origin main
+   ```
+
+4. **Clean up branches:**
+   ```bash
+   git branch -d feature-branch              # Delete local
+   git push origin --delete feature-branch   # Delete remote
+   ```
+
+### Session Continuity
+
+When continuing from a previous session:
+- **ALWAYS verify current branch** before making edits
+- Check git status to see uncommitted changes
+- Review recent commits to understand context
+
+## Testing
+
+- **Test users:** Create via Supabase Dashboard (MCP is read-only)
+  - Email: `test.user@youngmuslims.com`
+  - Must set `onboarding_completed_at` to access protected routes
+- **Browser testing:** Chrome DevTools MCP (primary), Playwright (backup)
 
 ## Best Practices
 - **Performance**: Optimize images, minimize client JS

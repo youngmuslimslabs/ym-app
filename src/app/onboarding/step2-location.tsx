@@ -16,57 +16,7 @@ import {
 } from "@/components/ui/select"
 import { useOnboarding } from "@/contexts/OnboardingContext"
 import { calculateProgress } from "./constants"
-
-// TODO: Fetch from Supabase - these are placeholder values
-const SUBREGIONS = [
-  { id: "houston", name: "Houston", regionName: "Texas" },
-  { id: "dallas", name: "Dallas", regionName: "Texas" },
-  { id: "austin", name: "Austin", regionName: "Texas" },
-  { id: "nyc-east", name: "NYC East", regionName: "New York" },
-  { id: "nyc-west", name: "NYC West", regionName: "New York" },
-  { id: "la-central", name: "LA Central", regionName: "California" },
-  { id: "la-south", name: "LA South", regionName: "California" },
-  { id: "chicago", name: "Chicago", regionName: "Midwest" },
-]
-
-// TODO: Fetch from Supabase - these are placeholder values
-// NeighborNets are filtered by subregion_id
-const NEIGHBOR_NETS: Record<string, { id: string; name: string }[]> = {
-  houston: [
-    { id: "katy-nn", name: "Katy NN" },
-    { id: "sugar-land-nn", name: "Sugar Land NN" },
-    { id: "downtown-houston-nn", name: "Downtown Houston NN" },
-  ],
-  dallas: [
-    { id: "plano-nn", name: "Plano NN" },
-    { id: "irving-nn", name: "Irving NN" },
-    { id: "richardson-nn", name: "Richardson NN" },
-  ],
-  austin: [
-    { id: "ut-austin-nn", name: "UT Austin NN" },
-    { id: "round-rock-nn", name: "Round Rock NN" },
-  ],
-  "nyc-east": [
-    { id: "queens-nn", name: "Queens NN" },
-    { id: "brooklyn-nn", name: "Brooklyn NN" },
-  ],
-  "nyc-west": [
-    { id: "manhattan-nn", name: "Manhattan NN" },
-    { id: "jersey-city-nn", name: "Jersey City NN" },
-  ],
-  "la-central": [
-    { id: "downtown-la-nn", name: "Downtown LA NN" },
-    { id: "pasadena-nn", name: "Pasadena NN" },
-  ],
-  "la-south": [
-    { id: "irvine-nn", name: "Irvine NN" },
-    { id: "anaheim-nn", name: "Anaheim NN" },
-  ],
-  chicago: [
-    { id: "north-chicago-nn", name: "North Chicago NN" },
-    { id: "south-chicago-nn", name: "South Chicago NN" },
-  ],
-}
+import { fetchSubregions, fetchAllNeighborNets, type Subregion, type NeighborNet } from "@/lib/supabase/queries/location"
 
 export default function Step2() {
   const router = useRouter()
@@ -75,6 +25,43 @@ export default function Step2() {
   const [subregionId, setSubregionId] = useState(data.subregionId ?? "")
   const [neighborNetId, setNeighborNetId] = useState(data.neighborNetId ?? "")
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Fetch location data from Supabase
+  const [subregions, setSubregions] = useState<Subregion[]>([])
+  const [allNeighborNets, setAllNeighborNets] = useState<NeighborNet[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  // Fetch subregions and neighbor nets on mount
+  useEffect(() => {
+    const loadLocationData = async () => {
+      setIsLoadingData(true)
+      setLoadError(null)
+
+      const [subregionsResult, neighborNetsResult] = await Promise.all([
+        fetchSubregions(),
+        fetchAllNeighborNets(),
+      ])
+
+      if (subregionsResult.error) {
+        setLoadError(subregionsResult.error)
+        setIsLoadingData(false)
+        return
+      }
+
+      if (neighborNetsResult.error) {
+        setLoadError(neighborNetsResult.error)
+        setIsLoadingData(false)
+        return
+      }
+
+      setSubregions(subregionsResult.data || [])
+      setAllNeighborNets(neighborNetsResult.data || [])
+      setIsLoadingData(false)
+    }
+
+    loadLocationData()
+  }, [])
 
   // Sync state when data loads from Supabase (pre-fill)
   useEffect(() => {
@@ -85,7 +72,9 @@ export default function Step2() {
   const progressPercentage = calculateProgress(2)
 
   // Get available NeighborNets based on selected subregion
-  const availableNeighborNets = subregionId ? NEIGHBOR_NETS[subregionId] || [] : []
+  const availableNeighborNets = subregionId
+    ? allNeighborNets.filter(nn => nn.subregion_id === subregionId)
+    : []
 
   // Validation: both fields required
   const isValid = subregionId !== "" && neighborNetId !== ""
@@ -113,6 +102,35 @@ export default function Step2() {
     }
 
     router.push("/onboarding?step=3")
+  }
+
+  // Show loading state while fetching location data
+  if (isLoadingData) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="mt-4 text-sm text-muted-foreground">Loading locations...</p>
+      </div>
+    )
+  }
+
+  // Show error state if data failed to load
+  if (loadError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center max-w-md">
+          <p className="text-sm text-destructive">{loadError}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -146,9 +164,10 @@ export default function Step2() {
                   <SelectValue placeholder="Select your subregion" />
                 </SelectTrigger>
                 <SelectContent>
-                  {SUBREGIONS.map((subregion) => (
+                  {subregions.map((subregion) => (
                     <SelectItem key={subregion.id} value={subregion.id}>
-                      {subregion.name} ({subregion.regionName})
+                      {subregion.name}
+                      {subregion.regions?.name && ` (${subregion.regions.name})`}
                     </SelectItem>
                   ))}
                 </SelectContent>

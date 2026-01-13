@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProfileModeProvider } from '@/contexts/ProfileModeContext'
@@ -16,7 +16,11 @@ import { ProfileNotFound } from './components/ProfileNotFound'
 export default function PersonProfilePage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const userId = params?.id as string
+
+  // Get back URL from query params, fallback to /people
+  const backUrl = searchParams.get('back') ?? '/people'
 
   const { personData, isLoading, error } = usePersonProfile(userId)
 
@@ -40,7 +44,7 @@ export default function PersonProfilePage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.push('/people')}
+              onClick={() => router.push(backUrl)}
               className="shrink-0"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -53,7 +57,9 @@ export default function PersonProfilePage() {
               </div>
               <div>
                 <h1 className="text-lg font-semibold tracking-tight">
-                  {personData.googleEmail?.split('@')[0] || 'Profile'}
+                  {personData.firstName && personData.lastName
+                    ? `${personData.firstName} ${personData.lastName}`
+                    : personData.googleEmail?.split('@')[0] || 'Profile'}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   View profile

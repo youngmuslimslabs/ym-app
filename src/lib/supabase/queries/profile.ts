@@ -168,6 +168,8 @@ export async function fetchUserProfileById(userId: string): Promise<{
     // Transform database data to form state
     const formState: ProfileFormState = {
       googleEmail: user.email,
+      firstName: user.first_name ?? undefined,
+      lastName: user.last_name ?? undefined,
       phoneNumber: user.phone ?? undefined,
       personalEmail: user.personal_email ?? undefined,
       ethnicity: user.ethnicity ?? undefined,

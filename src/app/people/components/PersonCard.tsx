@@ -1,7 +1,7 @@
 'use client'
 
 import type { KeyboardEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { PersonListItem } from '../types'
@@ -13,9 +13,13 @@ interface PersonCardProps {
 
 export function PersonCard({ person }: PersonCardProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   const handleClick = () => {
-    router.push(`/people/${person.id}`)
+    // Preserve current filters by passing them as back URL
+    const currentUrl = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
+    router.push(`/people/${person.id}?back=${encodeURIComponent(currentUrl)}`)
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {

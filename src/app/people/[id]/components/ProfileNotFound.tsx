@@ -35,7 +35,7 @@ export function ProfileNotFound() {
               Profile Not Found
             </h2>
             <p className="text-muted-foreground">
-              This person doesn't exist or their profile isn't available yet.
+              This person doesn&apos;t exist or their profile isn&apos;t available yet.
             </p>
           </div>
 

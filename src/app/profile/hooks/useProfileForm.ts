@@ -12,6 +12,9 @@ import { saveProfile } from '../services/profileService'
 export interface ProfileFormState extends OnboardingData {
   // Google auth email (read-only)
   googleEmail?: string
+  // Display name fields (read-only for viewing profiles)
+  firstName?: string
+  lastName?: string
 }
 
 interface UseProfileFormReturn {

@@ -170,13 +170,17 @@
 - [x] Example unit test for `cn()` utility
 - [x] Migrate from npm to Bun package manager
 
-### Unit Tests (Next)
-- [ ] Unit tests for validation functions (phone, email)
+### Unit Tests ✅ COMPLETE
+- [x] Unit tests for validation functions (phone, email) — `src/lib/validation.test.ts` (23 test cases)
+- [x] Extract duplicated validation functions to shared module — `src/lib/validation.ts`
 
 ### Component Tests (Later)
 - [ ] Component tests for onboarding steps
 
-### E2E Tests (Eventually)
+### E2E Tests (Foundation Ready)
+- [x] Set up Playwright E2E framework — `playwright.config.ts`, `e2e/` directory
+- [x] Add test:e2e scripts to package.json
+- [x] Create example smoke tests — `e2e/example.spec.ts`
 - [ ] E2E tests for onboarding flow
 - [ ] E2E tests for auth flow
 

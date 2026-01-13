@@ -16,38 +16,9 @@ import {
 } from "@/components/searchable-combobox"
 import { DateRangeInput } from "@/components/date-range-input"
 import { useOnboarding, YMRoleEntry } from "@/contexts/OnboardingContext"
-import { calculateProgress, PLACEHOLDER_AMIRS } from "./constants"
-
-// YM Role types from role_types table in database schema
-// Based on ym-hierarchy.md organizational structure
-const YM_ROLES: ComboboxOption[] = [
-  // NS roles
-  { value: "nc", label: "National Coordinator" },
-  { value: "ns_sg", label: "NS Secretary General" },
-  { value: "cabinet_chair", label: "Cabinet Chair" },
-  { value: "council_coord", label: "Council Coordinator" },
-  { value: "nat_cloud_rep", label: "National Cloud Rep" },
-  { value: "ns_member", label: "NS Member" },
-  // Council/Regional roles
-  { value: "rc", label: "Regional Coordinator" },
-  { value: "reg_cloud_rep", label: "Regional Cloud Rep" },
-  { value: "reg_special_proj", label: "Regional Special Projects" },
-  // Subregional roles
-  { value: "src", label: "Sub-Regional Coordinator" },
-  { value: "sr_sg", label: "SR Secretary General" },
-  // NeighborNet roles
-  { value: "nnc", label: "NeighborNet Coordinator" },
-  { value: "ct_member", label: "Core Team Member" },
-  { value: "member", label: "Member" },
-  // Cloud roles
-  { value: "cloud_coord", label: "Cloud Coordinator" },
-  { value: "cloud_member", label: "Cloud Member" },
-  // Cabinet roles
-  { value: "cabinet_sg", label: "Cabinet Secretary General" },
-  { value: "dept_head", label: "Department Head" },
-  { value: "team_lead", label: "Team Lead" },
-  { value: "team_member", label: "Team Member" },
-]
+import { calculateProgress } from "./constants"
+import { fetchRoleTypes, type RoleType } from "@/lib/supabase/queries/roles"
+import { fetchCompletedUsers, type UserOption } from "@/lib/supabase/queries/users"
 
 
 function createEmptyRole(): YMRoleEntry {
@@ -67,6 +38,38 @@ export default function Step3() {
   )
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // Fetch role types and users from Supabase
+  const [roleTypes, setRoleTypes] = useState<RoleType[]>([])
+  const [users, setUsers] = useState<UserOption[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  // Fetch role types and users on mount
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoadingData(true)
+      setLoadError(null)
+
+      const [roleTypesResult, usersResult] = await Promise.all([
+        fetchRoleTypes(),
+        fetchCompletedUsers(),
+      ])
+
+      if (roleTypesResult.error) {
+        setLoadError(roleTypesResult.error)
+        setIsLoadingData(false)
+        return
+      }
+
+      // Users can be empty (no one completed onboarding yet) - that's OK
+      setRoleTypes(roleTypesResult.data || [])
+      setUsers(usersResult.data || [])
+      setIsLoadingData(false)
+    }
+
+    loadData()
+  }, [])
+
   // Sync state when data loads from Supabase (pre-fill)
   useEffect(() => {
     if (data.ymRoles?.length) {
@@ -75,6 +78,18 @@ export default function Step3() {
   }, [data.ymRoles])
 
   const progressPercentage = calculateProgress(3)
+
+  // Convert role types to combobox options
+  const roleOptions: ComboboxOption[] = roleTypes.map(rt => ({
+    value: rt.id,
+    label: rt.name,
+  }))
+
+  // Convert users to combobox options
+  const userOptions: ComboboxOption[] = users.map(user => ({
+    value: user.id,
+    label: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
+  }))
 
   // Validation: at least one role with required fields filled
   const isRoleValid = (role: YMRoleEntry): boolean => {
@@ -140,7 +155,7 @@ export default function Step3() {
 
   const getRoleComboboxValue = (role: YMRoleEntry): ComboboxValue | undefined => {
     if (role.roleTypeId) {
-      const option = YM_ROLES.find((r) => r.value === role.roleTypeId)
+      const option = roleOptions.find((r) => r.value === role.roleTypeId)
       return { type: "existing", value: role.roleTypeId, label: option?.label }
     }
     if (role.roleTypeCustom) {
@@ -151,13 +166,42 @@ export default function Step3() {
 
   const getAmirComboboxValue = (role: YMRoleEntry): ComboboxValue | undefined => {
     if (role.amirUserId) {
-      const option = PLACEHOLDER_AMIRS.find((a) => a.value === role.amirUserId)
+      const option = userOptions.find((a) => a.value === role.amirUserId)
       return { type: "existing", value: role.amirUserId, label: option?.label }
     }
     if (role.amirCustomName) {
       return { type: "custom", value: role.amirCustomName }
     }
     return undefined
+  }
+
+  // Show loading state while fetching data
+  if (isLoadingData) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="mt-4 text-sm text-muted-foreground">Loading roles...</p>
+      </div>
+    )
+  }
+
+  // Show error state if data failed to load
+  if (loadError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center max-w-md">
+          <p className="text-sm text-destructive">{loadError}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -197,7 +241,7 @@ export default function Step3() {
                 <div className="space-y-1.5">
                   <Label>Role</Label>
                   <SearchableCombobox
-                    options={YM_ROLES}
+                    options={roleOptions}
                     value={getRoleComboboxValue(role)}
                     onChange={(value) => handleRoleTypeChange(index, value)}
                     placeholder="Select or add a role"
@@ -210,7 +254,7 @@ export default function Step3() {
                 <div className="space-y-1.5">
                   <Label>Amir / Manager</Label>
                   <SearchableCombobox
-                    options={PLACEHOLDER_AMIRS}
+                    options={userOptions}
                     value={getAmirComboboxValue(role)}
                     onChange={(value) => handleAmirChange(index, value)}
                     placeholder="Select or add a person"

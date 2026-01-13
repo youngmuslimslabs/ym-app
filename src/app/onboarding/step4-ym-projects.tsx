@@ -17,7 +17,8 @@ import {
 } from "@/components/searchable-combobox"
 import { DateRangeInput } from "@/components/date-range-input"
 import { useOnboarding, YMProjectEntry } from "@/contexts/OnboardingContext"
-import { calculateProgress, PLACEHOLDER_AMIRS } from "./constants"
+import { calculateProgress } from "./constants"
+import { fetchCompletedUsers, type UserOption } from "@/lib/supabase/queries/users"
 
 // Common YM project types
 const PROJECT_TYPES: ComboboxOption[] = [
@@ -51,6 +52,33 @@ export default function Step4() {
   )
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // Fetch users from Supabase
+  const [users, setUsers] = useState<UserOption[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  // Fetch users on mount
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoadingData(true)
+      setLoadError(null)
+
+      const usersResult = await fetchCompletedUsers()
+
+      if (usersResult.error) {
+        setLoadError(usersResult.error)
+        setIsLoadingData(false)
+        return
+      }
+
+      // Users can be empty (no one completed onboarding yet) - that's OK
+      setUsers(usersResult.data || [])
+      setIsLoadingData(false)
+    }
+
+    loadData()
+  }, [])
+
   // Sync state when data loads from Supabase (pre-fill)
   useEffect(() => {
     if (data.ymProjects?.length) {
@@ -59,6 +87,12 @@ export default function Step4() {
   }, [data.ymProjects])
 
   const progressPercentage = calculateProgress(4)
+
+  // Convert users to combobox options
+  const userOptions: ComboboxOption[] = users.map(user => ({
+    value: user.id,
+    label: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
+  }))
 
   // Validation: at least one project with required fields filled
   const isProjectValid = (project: YMProjectEntry): boolean => {
@@ -135,13 +169,42 @@ export default function Step4() {
 
   const getAmirValue = (project: YMProjectEntry): ComboboxValue | undefined => {
     if (project.amirUserId) {
-      const option = PLACEHOLDER_AMIRS.find((a) => a.value === project.amirUserId)
+      const option = userOptions.find((a) => a.value === project.amirUserId)
       return { type: "existing", value: project.amirUserId, label: option?.label }
     }
     if (project.amirCustomName) {
       return { type: "custom", value: project.amirCustomName }
     }
     return undefined
+  }
+
+  // Show loading state while fetching data
+  if (isLoadingData) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="mt-4 text-sm text-muted-foreground">Loading users...</p>
+      </div>
+    )
+  }
+
+  // Show error state if data failed to load
+  if (loadError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center max-w-md">
+          <p className="text-sm text-destructive">{loadError}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -206,7 +269,7 @@ export default function Step4() {
                 <div className="space-y-1.5">
                   <Label>Amir / Manager</Label>
                   <SearchableCombobox
-                    options={PLACEHOLDER_AMIRS}
+                    options={userOptions}
                     value={getAmirValue(project)}
                     onChange={(value) => handleAmirChange(index, value)}
                     placeholder="Select or add a person"

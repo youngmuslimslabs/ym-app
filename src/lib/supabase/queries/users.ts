@@ -45,22 +45,29 @@ export async function fetchAllUsersForSelection(): Promise<{
   data: ComboboxOption[] | null
   error: string | null
 }> {
-  const supabase = createClient()
+  try {
+    const supabase = createClient()
 
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, first_name, last_name')
-    .order('first_name', { ascending: true })
-    .order('last_name', { ascending: true })
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, first_name, last_name')
+      .order('first_name', { ascending: true })
+      .order('last_name', { ascending: true })
 
-  if (error) {
-    return { data: null, error: error.message }
+    if (error) {
+      console.error('Error fetching users for selection:', error)
+      return { data: null, error: error.message }
+    }
+
+    const options: ComboboxOption[] = data.map(user => ({
+      value: user.id,
+      label: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User',
+    }))
+
+    return { data: options, error: null }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch users'
+    console.error('Users selection fetch error:', err)
+    return { data: null, error: message }
   }
-
-  const options: ComboboxOption[] = data.map(user => ({
-    value: user.id,
-    label: `${user.first_name} ${user.last_name}`,
-  }))
-
-  return { data: options, error: null }
 }

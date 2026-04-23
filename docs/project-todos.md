@@ -1,5 +1,7 @@
 # YM App - Project Todos
 
+> **`[LAUNCH]` prefix** marks items required before going live to real users. Grep `[LAUNCH]` to see the full launch-blocking punch list.
+
 ## Stakeholder Input (Blocking)
 
 - [ ] Review data model with Umar Khattak
@@ -22,13 +24,14 @@
 
 - [x] Seed `role_types` (19 roles) — `supabase/migrations/00004_seed_data.sql`
 - [x] Seed `departments` (8 departments)
-- [ ] Seed `teams` (per department)
+- [ ] [LAUNCH] Seed `teams` (per department)
 - [x] Seed `regions` (sample: Texas) — ⚠️ placeholder
 - [x] Seed `subregions` (sample: Houston, Dallas) — ⚠️ placeholder
 - [x] Seed `neighbor_nets` (sample: Katy NN, Sugar Land NN, Downtown NN) — ⚠️ placeholder
-- [ ] Pre-populate `users` from NN database + alumni
-- [ ] Pre-populate `role_assignments` (current leadership)
-- [ ] Pre-populate `memberships`
+- [ ] [LAUNCH] Pre-populate `users` from NN database + alumni
+- [ ] [LAUNCH] Pre-populate `role_assignments` (current leadership)
+- [ ] [LAUNCH] Pre-populate `memberships`
+- [ ] [LAUNCH] Replace placeholder seeds (`regions`, `subregions`, `neighbor_nets`) with real data from NN database
 
 ### Static Data Prepared
 - [x] US Universities list — 6,429 universities in `src/data/us-universities.json` (converted from CSV)
@@ -36,12 +39,12 @@
 ### Auth ✅ COMPLETE
 - [x] Implement GSuite auth trigger (link users on first login) — `supabase/migrations/00005_auth_trigger.sql`
 - [x] Multi-layer domain validation (Google OAuth hint, client-side, middleware) — sufficient for internal app
-- [ ] Update OAuth client IDs for production
+- [ ] [LAUNCH] Update OAuth client IDs for production
 
 ### Security ✅ COMPLETE
 - [x] Add RLS policies — `supabase/migrations/00006_rls_policies.sql`
 - [x] Code review fixes — `supabase/migrations/00007_review_fixes.sql` (run this in Supabase!)
-- [ ] **Manual review of RLS policies** — verify policies work as expected with real usage patterns
+- [ ] [LAUNCH] **Manual review of RLS policies** — verify policies work as expected with real usage patterns
 
 ---
 
@@ -133,7 +136,7 @@
 - [x] **Generate TypeScript types from schema** — `bun run db:types`
 - [x] Connect people page to users + roles
 - [x] Connect landing page to role_assignments
-- [ ] Test end-to-end auth flow
+- [ ] [LAUNCH] Test end-to-end auth flow
 
 ---
 
@@ -159,7 +162,38 @@
 
 ## Product Analytics
 
-- [ ] Integrate PostHog for event tracking and user analytics
+- [ ] [LAUNCH] Integrate PostHog for event tracking and user analytics
+
+---
+
+## Environments & Deployment
+
+> Currently only one Supabase environment exists — production changes have no safety net. These items establish dev/prod separation, an automated deployment pipeline, and backup/restore.
+
+### Environments
+- [ ] [LAUNCH] Stand up a separate **dev** Supabase project (distinct from prod)
+  - Separate project ref, URL, and anon/service keys
+  - Mirror schema via `supabase db push` from `supabase/migrations/`
+  - Seed with placeholder/sample data (prod gets real data only)
+- [ ] [LAUNCH] Split env vars per environment (`.env.development`, `.env.production`) and wire into Netlify contexts (Deploy Previews + Branch Deploys → dev, Production → prod)
+- [ ] [LAUNCH] Document environment switching + onboarding for new contributors in `README.md`
+- [ ] Decide whether a **staging** env is needed in addition to dev/prod (defer unless prod bugs leak through)
+
+### CI/CD Pipeline
+- [ ] [LAUNCH] Define branch strategy: `feature/*` → `dev` → `main` (prod)
+  - `feature/*` PRs auto-deploy Netlify preview pointed at **dev** Supabase
+  - Merges to `dev` auto-deploy the dev Netlify site
+  - Merges to `main` auto-deploy prod after CI passes
+- [ ] [LAUNCH] Branch protection on `main` and `dev`: require passing CI + 1 review, no direct pushes
+- [ ] [LAUNCH] Migration promotion flow: apply to dev first, verify, then apply to prod (no direct-to-prod migrations)
+- [ ] [LAUNCH] Rollback plan documented (Netlify rollback + migration down-scripts or point-in-time restore)
+
+### Database Backups
+- [ ] [LAUNCH] Confirm Supabase automated daily backups are enabled on prod (check plan — Pro tier required for PITR)
+- [ ] [LAUNCH] Set up scheduled logical backups (`pg_dump` via GitHub Actions cron → secure storage like S3/R2) as a provider-independent fallback
+- [ ] [LAUNCH] Document + **test** the restore procedure on the dev environment (an untested backup is not a backup)
+- [ ] [LAUNCH] Retention policy: daily for 7 days, weekly for 4 weeks, monthly for 12 months (adjust per storage cost)
+- [ ] Consider alerting if a scheduled backup fails (cron job health check)
 
 ---
 
@@ -177,24 +211,24 @@
 - [x] Extract duplicated validation functions to shared module — `src/lib/validation.ts`
 
 ### Component Tests (Later)
-- [ ] Component tests for onboarding steps
+- [ ] [LAUNCH] Component tests for onboarding steps
 
 ### E2E Tests (Foundation Ready)
 - [x] Set up Playwright E2E framework — `playwright.config.ts`, `e2e/` directory
 - [x] Add test:e2e scripts to package.json
 - [x] Create example smoke tests — `e2e/example.spec.ts`
-- [ ] E2E tests for onboarding flow
-- [ ] E2E tests for auth flow
+- [ ] [LAUNCH] E2E tests for onboarding flow
+- [ ] [LAUNCH] E2E tests for auth flow
 
 ---
 
-## CI/CD Enhancements (Future)
+## CI/CD Enhancements
 
-- [ ] Add test coverage threshold (fail CI if coverage drops below 80%)
-- [ ] Add bundle size check (warn if build output grows significantly)
-- [ ] Add E2E tests with Playwright to CI
-- [ ] Add accessibility checks (axe-core) to CI
-- [ ] Add security scanning (dependency audit) to CI
+- [ ] [LAUNCH] Add test coverage threshold (fail CI if coverage drops below 80%)
+- [ ] [LAUNCH] Add bundle size check (warn if build output grows significantly)
+- [ ] [LAUNCH] Add E2E tests with Playwright to CI
+- [ ] [LAUNCH] Add accessibility checks (axe-core) to CI
+- [ ] [LAUNCH] Add security scanning (dependency audit) to CI
 
 ---
 

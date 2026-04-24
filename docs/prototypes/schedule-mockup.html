@@ -1,0 +1,1268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Schedule — Design Prototype (YM App)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: ['class'],
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Geist', 'system-ui', 'sans-serif'] },
+        borderRadius: {
+          lg: 'var(--radius)',
+          md: 'calc(var(--radius) - 2px)',
+          sm: 'calc(var(--radius) - 4px)',
+        },
+        colors: {
+          background: 'oklch(var(--background) / <alpha-value>)',
+          foreground: 'oklch(var(--foreground) / <alpha-value>)',
+          card: { DEFAULT: 'oklch(var(--card) / <alpha-value>)', foreground: 'oklch(var(--card-foreground) / <alpha-value>)' },
+          popover: { DEFAULT: 'oklch(var(--popover) / <alpha-value>)', foreground: 'oklch(var(--popover-foreground) / <alpha-value>)' },
+          primary: { DEFAULT: 'oklch(var(--primary) / <alpha-value>)', foreground: 'oklch(var(--primary-foreground) / <alpha-value>)' },
+          secondary: { DEFAULT: 'oklch(var(--secondary) / <alpha-value>)', foreground: 'oklch(var(--secondary-foreground) / <alpha-value>)' },
+          muted: { DEFAULT: 'oklch(var(--muted) / <alpha-value>)', foreground: 'oklch(var(--muted-foreground) / <alpha-value>)' },
+          accent: { DEFAULT: 'oklch(var(--accent) / <alpha-value>)', foreground: 'oklch(var(--accent-foreground) / <alpha-value>)' },
+          destructive: { DEFAULT: 'oklch(var(--destructive) / <alpha-value>)', foreground: 'oklch(var(--destructive-foreground) / <alpha-value>)' },
+          border: 'oklch(var(--border) / <alpha-value>)',
+          input: 'oklch(var(--input) / <alpha-value>)',
+          ring: 'oklch(var(--ring) / <alpha-value>)',
+          sidebar: {
+            DEFAULT: 'hsl(var(--sidebar-background))',
+            foreground: 'hsl(var(--sidebar-foreground))',
+            primary: 'hsl(var(--sidebar-primary))',
+            'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+            accent: 'hsl(var(--sidebar-accent))',
+            'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+            border: 'hsl(var(--sidebar-border))',
+            ring: 'hsl(var(--sidebar-ring))',
+          },
+        },
+      },
+    },
+  }
+</script>
+
+<style>
+  :root {
+    --radius: 0.625rem;
+    --background: 1 0 0;
+    --foreground: 0.145 0 0;
+    --card: 1 0 0;
+    --card-foreground: 0.145 0 0;
+    --popover: 1 0 0;
+    --popover-foreground: 0.145 0 0;
+    --primary: 0.445 0.14 261.872;
+    --primary-foreground: 0.985 0 0;
+    --secondary: 0.97 0 0;
+    --secondary-foreground: 0.205 0 0;
+    --muted: 0.97 0 0;
+    --muted-foreground: 0.556 0 0;
+    --accent: 0.97 0 0;
+    --accent-foreground: 0.205 0 0;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.922 0 0;
+    --input: 0.922 0 0;
+    --ring: 0.445 0.14 261.872;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 217 62% 39%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  body { font-family: 'Geist', system-ui, sans-serif; }
+  .lucide { display: inline-block; stroke-width: 2; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+
+<body class="bg-muted/40 text-foreground antialiased">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- lucide icons (same names/paths as lucide-react) -->
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-dollar" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+    <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></symbol>
+    <symbol id="i-chevron-up" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+    <symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><path d="m16 15-3-3 3-3"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></symbol>
+    <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+    <symbol id="i-coffee" viewBox="0 0 24 24"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></symbol>
+    <symbol id="i-utensils" viewBox="0 0 24 24"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+  </defs>
+</svg>
+
+<!-- ========================================================================== -->
+<!-- Reusable markup blocks (inline duplicated for prototype simplicity)         -->
+<!-- ========================================================================== -->
+
+<div class="max-w-[1320px] mx-auto px-6 md:px-8 py-16 pb-40">
+
+  <!-- ============================== INTRO ============================== -->
+  <section class="mb-16 pb-12 border-b border-border flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+    <div class="max-w-2xl">
+      <div class="text-xs uppercase tracking-widest text-muted-foreground mb-3">YM App · Design Prototype</div>
+      <h1 class="text-4xl md:text-5xl font-semibold tracking-tight mb-3">Conference Schedule</h1>
+      <p class="text-sm text-muted-foreground leading-relaxed">Grounded in the real <code class="text-xs bg-muted px-1.5 py-0.5 rounded">AppShell</code> — same collapsible <code class="text-xs bg-muted px-1.5 py-0.5 rounded">AppSidebar</code> with Home / People / Schedule / Finance / Docs, same mobile <code class="text-xs bg-muted px-1.5 py-0.5 rounded">SidebarTrigger</code> header, same tokens. Every attendee screen has a mobile counterpart. Interactions are static.</p>
+    </div>
+    <div class="text-xs text-muted-foreground shrink-0 flex md:flex-col gap-3 md:gap-1">
+      <div>Shell: <span class="text-foreground">AppSidebar · SidebarInset</span></div>
+      <div>Tokens: <span class="text-foreground">OKLCH + sidebar HSL</span></div>
+      <div>Font: <span class="text-foreground">Geist</span> · Icons: <span class="text-foreground">lucide-react</span></div>
+    </div>
+  </section>
+
+
+  <!-- =========================================================================
+       01 · ATTENDEE SCHEDULE (DESKTOP)
+       ========================================================================= -->
+  <div class="flex items-baseline gap-4 mt-20 mb-4 pb-3 border-b border-border">
+    <span class="text-xs text-muted-foreground font-mono">01</span>
+    <h2 class="text-base font-semibold tracking-tight flex-1">Attendee — Schedule (desktop)</h2>
+    <span class="text-xs text-muted-foreground">real AppSidebar · SidebarInset</span>
+  </div>
+
+  <div class="rounded-xl border border-border bg-background shadow-lg overflow-hidden">
+    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/50">
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="ml-auto text-xs text-muted-foreground font-mono">ym-app · /schedule</span>
+    </div>
+
+    <!-- APP SHELL -->
+    <div class="grid grid-cols-[16rem_1fr] min-h-[820px]">
+
+      <!-- ===== Sidebar (real AppSidebar) ===== -->
+      <aside class="bg-sidebar border-r border-sidebar-border flex flex-col">
+        <!-- Header: logo + collapse button -->
+        <div class="flex items-center justify-between p-2 relative">
+          <button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground">
+            <span class="size-6 shrink-0 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">YM</span>
+            <span class="truncate font-semibold">Young Muslims</span>
+          </button>
+          <button class="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent flex items-center justify-center">
+            <svg class="lucide w-4 h-4"><use href="#i-panel-left-close"/></svg>
+          </button>
+        </div>
+
+        <!-- Nav -->
+        <div class="flex-1 p-2">
+          <ul class="space-y-1">
+            <li><a href="#" class="flex w-full items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><svg class="lucide w-4 h-4"><use href="#i-home"/></svg><span>Home</span></a></li>
+            <li><a href="#" class="flex w-full items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><svg class="lucide w-4 h-4"><use href="#i-users"/></svg><span>People</span></a></li>
+            <li><a href="#" class="flex w-full items-center gap-2 p-2 rounded-md text-sm bg-sidebar-accent text-sidebar-accent-foreground font-medium"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+            <li><a href="#" class="flex w-full items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><svg class="lucide w-4 h-4"><use href="#i-dollar"/></svg><span>Finance</span></a></li>
+            <li><a href="#" class="flex w-full items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><svg class="lucide w-4 h-4"><use href="#i-file-text"/></svg><span>Docs</span></a></li>
+          </ul>
+        </div>
+
+        <!-- Footer: user dropdown trigger -->
+        <div class="p-2 border-t border-sidebar-border">
+          <button class="flex w-full items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+            <div class="size-6 shrink-0 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center">O</div>
+            <span class="truncate font-semibold">Omar</span>
+            <svg class="lucide w-4 h-4 ml-auto"><use href="#i-chevron-up"/></svg>
+          </button>
+        </div>
+      </aside>
+
+      <!-- ===== Main content (SidebarInset) ===== -->
+      <main class="bg-background overflow-hidden">
+        <!-- Masthead -->
+        <div class="px-8 pt-12 pb-6 border-b border-border">
+          <div class="text-xs uppercase tracking-widest text-muted-foreground mb-2">National Convention · 2026</div>
+          <h1 class="text-3xl md:text-4xl font-semibold tracking-tight">Building together, believing together.</h1>
+          <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span class="inline-flex items-center gap-1.5"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg>April 24–26</span>
+            <span class="inline-flex items-center gap-1.5"><svg class="lucide w-4 h-4"><use href="#i-map-pin"/></svg>Chicago Hilton</span>
+            <span class="inline-flex items-center gap-1.5"><svg class="lucide w-4 h-4"><use href="#i-users"/></svg>1,240 attendees</span>
+            <span class="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-0.5 shadow-sm text-xs"><span class="h-1.5 w-1.5 rounded-full bg-primary"></span>In 3 days</span>
+          </div>
+        </div>
+
+        <!-- Day tabs -->
+        <div class="px-8 pt-6">
+          <div class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+            <button class="rounded-md px-4 py-1 text-sm font-medium">Fri Apr 24</button>
+            <button class="rounded-md px-4 py-1 text-sm font-medium bg-background text-foreground shadow">Sat Apr 25</button>
+            <button class="rounded-md px-4 py-1 text-sm font-medium">Sun Apr 26</button>
+          </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="px-8 py-8 space-y-8">
+          <!-- Slot 1 -->
+          <section>
+            <div class="flex items-baseline gap-3 mb-3">
+              <div class="text-sm font-semibold tabular-nums">9:00 AM</div>
+              <div class="text-xs text-muted-foreground">–</div>
+              <div class="text-sm text-muted-foreground tabular-nums">10:15 AM</div>
+              <div class="h-px bg-border flex-1 ml-2"></div>
+            </div>
+            <div class="grid gap-3">
+              <!-- Selected -->
+              <div class="rounded-xl border-2 border-primary bg-primary/5 p-6 shadow-sm relative">
+                <div class="absolute top-4 right-4 inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold gap-1"><svg class="lucide w-3 h-3"><use href="#i-check"/></svg>Selected</div>
+                <div class="flex items-start justify-between gap-6 pr-24">
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-base tracking-tight mb-1">The Ethics of Community Building</h3>
+                    <p class="text-sm text-muted-foreground mb-3">Dr. Sameer Ansari · moderated by Maryam Yusuf</p>
+                    <p class="text-sm text-foreground/80 leading-relaxed max-w-prose">Frameworks for making principled decisions in youth-led organizations, drawn from 20 years of field work across the Midwest.</p>
+                    <div class="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+                      <span class="inline-flex items-center gap-1.5"><svg class="lucide w-3.5 h-3.5"><use href="#i-map-pin"/></svg>Ballroom A</span>
+                      <span>·</span><span>Keynote · 75 min</span>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div class="text-sm font-semibold tabular-nums">32 <span class="text-muted-foreground font-normal">/ 80</span></div>
+                    <div class="w-20 h-1 bg-muted rounded-full mt-2 overflow-hidden"><div class="h-full bg-primary rounded-full" style="width:40%"></div></div>
+                    <div class="text-xs text-muted-foreground mt-2">seats filled</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Unselected -->
+              <div class="rounded-xl border border-border bg-card p-6 shadow-sm hover:border-foreground/20 hover:shadow-md transition-all duration-200 cursor-pointer">
+                <div class="flex items-start justify-between gap-6">
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-base tracking-tight mb-1">Organizing Across Generations</h3>
+                    <p class="text-sm text-muted-foreground mb-3">Ustadha Aisha Khan</p>
+                    <p class="text-sm text-foreground/80 leading-relaxed max-w-prose">A workshop for bridging understanding between NN coordinators and senior leadership, with role-play exercises.</p>
+                    <div class="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+                      <span class="inline-flex items-center gap-1.5"><svg class="lucide w-3.5 h-3.5"><use href="#i-map-pin"/></svg>Room 204</span>
+                      <span>·</span><span>Workshop</span>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div class="text-sm font-semibold tabular-nums">18 <span class="text-muted-foreground font-normal">/ 40</span></div>
+                    <div class="w-20 h-1 bg-muted rounded-full mt-2 overflow-hidden"><div class="h-full bg-foreground/40 rounded-full" style="width:45%"></div></div>
+                    <div class="text-xs text-muted-foreground mt-2">seats filled</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Full -->
+              <div class="rounded-xl border border-border bg-card p-6 opacity-60 cursor-not-allowed">
+                <div class="flex items-start justify-between gap-6">
+                  <div class="flex-1 min-w-0">
+                    <div class="inline-flex items-center rounded-md bg-destructive text-destructive-foreground px-2.5 py-0.5 text-xs font-semibold mb-3">Full</div>
+                    <h3 class="font-semibold text-base tracking-tight mb-1">Digital Organizing: Beyond WhatsApp</h3>
+                    <p class="text-sm text-muted-foreground mb-3">Omar Malik</p>
+                    <p class="text-sm text-foreground/80 leading-relaxed max-w-prose">Tooling, workflows, and pitfalls from three years running YM's comms stack.</p>
+                    <div class="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+                      <span class="inline-flex items-center gap-1.5"><svg class="lucide w-3.5 h-3.5"><use href="#i-map-pin"/></svg>Room 118</span>
+                      <span>·</span><span>Technical</span>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div class="text-sm font-semibold tabular-nums">25 <span class="text-muted-foreground font-normal">/ 25</span></div>
+                    <div class="w-20 h-1 bg-muted rounded-full mt-2 overflow-hidden"><div class="h-full bg-destructive rounded-full w-full"></div></div>
+                    <div class="text-xs text-muted-foreground mt-2">full</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Break -->
+          <section>
+            <div class="flex items-baseline gap-3 mb-3">
+              <div class="text-sm font-semibold text-muted-foreground tabular-nums">10:15 AM</div>
+              <div class="text-xs text-muted-foreground">–</div>
+              <div class="text-sm text-muted-foreground tabular-nums">10:45 AM</div>
+              <div class="h-px bg-border flex-1 ml-2"></div>
+            </div>
+            <div class="rounded-xl border border-dashed border-border bg-muted/40 py-6 px-6 flex items-center gap-4">
+              <div class="rounded-full bg-muted/50 p-4"><svg class="lucide w-5 h-5 text-muted-foreground"><use href="#i-coffee"/></svg></div>
+              <div><h3 class="font-medium text-sm">Coffee &amp; Conversation</h3><p class="text-xs text-muted-foreground mt-0.5">Mezzanine Foyer</p></div>
+            </div>
+          </section>
+
+          <!-- Slot 3 -->
+          <section>
+            <div class="flex items-baseline gap-3 mb-3">
+              <div class="text-sm font-semibold tabular-nums">10:45 AM</div>
+              <div class="text-xs text-muted-foreground">–</div>
+              <div class="text-sm text-muted-foreground tabular-nums">12:00 PM</div>
+              <div class="h-px bg-border flex-1 ml-2"></div>
+            </div>
+            <div class="grid gap-3">
+              <div class="rounded-xl border border-border bg-card p-6 shadow-sm hover:border-foreground/20 hover:shadow-md transition-all duration-200 cursor-pointer">
+                <div class="flex items-start justify-between gap-6">
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-base tracking-tight mb-1">Budgeting a NeighborNet</h3>
+                    <p class="text-sm text-muted-foreground mb-3">Finance Cabinet · panel format</p>
+                    <p class="text-sm text-foreground/80 leading-relaxed max-w-prose">A practical session on annual planning, fundraising asks, and staying accountable to your members.</p>
+                    <div class="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+                      <span class="inline-flex items-center gap-1.5"><svg class="lucide w-3.5 h-3.5"><use href="#i-map-pin"/></svg>Ballroom B</span>
+                      <span>·</span><span>Panel</span>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div class="text-sm font-semibold tabular-nums">41 <span class="text-muted-foreground font-normal">/ 60</span></div>
+                    <div class="w-20 h-1 bg-muted rounded-full mt-2 overflow-hidden"><div class="h-full bg-foreground/40 rounded-full" style="width:68%"></div></div>
+                    <div class="text-xs text-muted-foreground mt-2">seats filled</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Lunch -->
+          <section>
+            <div class="flex items-baseline gap-3 mb-3">
+              <div class="text-sm font-semibold text-muted-foreground tabular-nums">12:00 PM</div>
+              <div class="text-xs text-muted-foreground">–</div>
+              <div class="text-sm text-muted-foreground tabular-nums">1:30 PM</div>
+              <div class="h-px bg-border flex-1 ml-2"></div>
+            </div>
+            <div class="rounded-xl border border-dashed border-border bg-muted/40 py-6 px-6 flex items-center gap-4">
+              <div class="rounded-full bg-muted/50 p-4"><svg class="lucide w-5 h-5 text-muted-foreground"><use href="#i-utensils"/></svg></div>
+              <div><h3 class="font-medium text-sm">Lunch</h3><p class="text-xs text-muted-foreground mt-0.5">Grand Ballroom · halal &amp; vegetarian options available</p></div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       02 · ATTENDEE SESSION DETAIL + VERIFY (DESKTOP)
+       ========================================================================= -->
+  <div class="flex items-baseline gap-4 mt-20 mb-4 pb-3 border-b border-border">
+    <span class="text-xs text-muted-foreground font-mono">02</span>
+    <h2 class="text-base font-semibold tracking-tight flex-1">Attendee — Session detail + verify (desktop)</h2>
+    <span class="text-xs text-muted-foreground">Sheet side="right"</span>
+  </div>
+
+  <div class="rounded-xl border border-border bg-background shadow-lg overflow-hidden">
+    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/50">
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="ml-auto text-xs text-muted-foreground font-mono">ym-app · /schedule (session open)</span>
+    </div>
+
+    <div class="grid grid-cols-[16rem_1fr_480px] min-h-[720px]">
+      <!-- Sidebar -->
+      <aside class="bg-sidebar border-r border-sidebar-border flex flex-col">
+        <div class="flex items-center p-2"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground"><span class="size-6 shrink-0 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">YM</span><span class="truncate font-semibold">Young Muslims</span></button></div>
+        <div class="flex-1 p-2">
+          <ul class="space-y-1">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-home"/></svg><span>Home</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-users"/></svg><span>People</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm bg-sidebar-accent text-sidebar-accent-foreground font-medium"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-dollar"/></svg><span>Finance</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-file-text"/></svg><span>Docs</span></a></li>
+          </ul>
+        </div>
+        <div class="p-2 border-t border-sidebar-border"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground hover:bg-sidebar-accent"><div class="size-6 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center">O</div><span class="truncate font-semibold">Omar</span><svg class="lucide w-4 h-4 ml-auto"><use href="#i-chevron-up"/></svg></button></div>
+      </aside>
+
+      <!-- Main (dimmed under overlay) -->
+      <main class="bg-background p-8 relative">
+        <div class="absolute inset-0 bg-foreground/40 z-10"></div>
+        <div class="text-xs uppercase tracking-widest text-muted-foreground mb-2">National Convention · 2026</div>
+        <h1 class="text-3xl font-semibold tracking-tight mb-6">Building together.</h1>
+        <div class="rounded-xl border-2 border-primary bg-primary/5 p-6 shadow-sm max-w-xl">
+          <div class="inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold gap-1 mb-3"><svg class="lucide w-3 h-3"><use href="#i-check"/></svg>Selected</div>
+          <h3 class="font-semibold text-base tracking-tight mb-1">The Ethics of Community Building</h3>
+          <p class="text-sm text-muted-foreground">Dr. Sameer Ansari</p>
+        </div>
+      </main>
+
+      <!-- Sheet -->
+      <aside class="bg-background border-l border-border flex flex-col shadow-2xl z-20">
+        <div class="p-6 border-b border-border">
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div class="text-xs uppercase tracking-widest text-primary font-medium">Saturday · 9:00 – 10:15 AM</div>
+            <button class="h-6 w-6 rounded-md text-muted-foreground hover:bg-accent flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-x"/></svg></button>
+          </div>
+          <h2 class="text-2xl font-semibold tracking-tight mb-2">The Ethics of Community Building</h2>
+          <p class="text-sm text-muted-foreground">Dr. Sameer Ansari, moderated by Maryam Yusuf</p>
+        </div>
+        <div class="grid grid-cols-3 border-b border-border">
+          <div class="p-4 border-r border-border"><div class="text-xs text-muted-foreground uppercase tracking-wider mb-1">Room</div><div class="text-sm font-medium flex items-center gap-1.5"><svg class="lucide w-3.5 h-3.5 text-muted-foreground"><use href="#i-map-pin"/></svg>Ballroom A</div></div>
+          <div class="p-4 border-r border-border"><div class="text-xs text-muted-foreground uppercase tracking-wider mb-1">Format</div><div class="text-sm font-medium">Keynote</div></div>
+          <div class="p-4"><div class="text-xs text-muted-foreground uppercase tracking-wider mb-1">Seats</div><div class="text-sm font-medium tabular-nums">32 <span class="text-muted-foreground font-normal">/ 80</span></div></div>
+        </div>
+        <div class="p-6 flex-1 overflow-y-auto">
+          <p class="text-sm text-foreground/80 leading-relaxed mb-6">Frameworks for making principled decisions in youth-led organizations, drawn from twenty years of field work across the Midwest. Case studies include consensus-building, cross-generational disagreement, and the ethics of speaking publicly on behalf of a collective.</p>
+          <div class="rounded-lg border border-border bg-card p-4">
+            <div class="flex items-start gap-3">
+              <div class="rounded-full bg-primary/10 p-2 shrink-0"><svg class="lucide w-4 h-4 text-primary"><use href="#i-lock"/></svg></div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-medium mb-1">Verify your attendance</h3>
+                <p class="text-xs text-muted-foreground mb-3">The speaker will share a code at the end of the session.</p>
+                <div class="flex gap-2">
+                  <input type="text" placeholder="••••" class="flex h-9 w-32 rounded-md border border-input bg-background px-3 py-1 text-center tracking-[0.5em] font-mono text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"/>
+                  <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4">Verify</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-6 border-t border-border bg-muted/30 flex gap-2">
+          <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-input bg-background shadow-sm h-9 px-4 flex-1"><svg class="lucide w-4 h-4 text-primary"><use href="#i-check-circle"/></svg>You're signed up</button>
+          <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent h-9 px-4">Change</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       03 · ATTENDEE FEEDBACK (DESKTOP)
+       ========================================================================= -->
+  <div class="flex items-baseline gap-4 mt-20 mb-4 pb-3 border-b border-border">
+    <span class="text-xs text-muted-foreground font-mono">03</span>
+    <h2 class="text-base font-semibold tracking-tight flex-1">Attendee — Feedback after session (desktop)</h2>
+    <span class="text-xs text-muted-foreground">same Sheet shell, form swap</span>
+  </div>
+
+  <div class="rounded-xl border border-border bg-background shadow-lg overflow-hidden">
+    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/50">
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="ml-auto text-xs text-muted-foreground font-mono">ym-app · /schedule (session ended)</span>
+    </div>
+
+    <div class="grid grid-cols-[16rem_1fr_480px] min-h-[620px]">
+      <!-- Sidebar (collapsed) -->
+      <aside class="bg-sidebar border-r border-sidebar-border flex flex-col">
+        <div class="flex items-center p-2"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground"><span class="size-6 shrink-0 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">YM</span><span class="truncate font-semibold">Young Muslims</span></button></div>
+        <div class="flex-1 p-2">
+          <ul class="space-y-1">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-home"/></svg><span>Home</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-users"/></svg><span>People</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm bg-sidebar-accent text-sidebar-accent-foreground font-medium"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-dollar"/></svg><span>Finance</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-file-text"/></svg><span>Docs</span></a></li>
+          </ul>
+        </div>
+        <div class="p-2 border-t border-sidebar-border"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground hover:bg-sidebar-accent"><div class="size-6 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center">O</div><span class="truncate font-semibold">Omar</span><svg class="lucide w-4 h-4 ml-auto"><use href="#i-chevron-up"/></svg></button></div>
+      </aside>
+
+      <!-- Main (dimmed) -->
+      <main class="bg-background p-8 opacity-40"><div class="text-xs uppercase tracking-widest text-muted-foreground">(schedule behind)</div></main>
+
+      <!-- Sheet -->
+      <aside class="bg-background border-l border-border flex flex-col shadow-2xl">
+        <div class="p-6 border-b border-border">
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div class="text-xs uppercase tracking-widest text-muted-foreground font-medium">Ended Saturday 10:15 AM</div>
+            <button class="h-6 w-6 rounded-md text-muted-foreground hover:bg-accent flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-x"/></svg></button>
+          </div>
+          <h2 class="text-2xl font-semibold tracking-tight mb-2">The Ethics of Community Building</h2>
+          <p class="text-sm text-muted-foreground flex items-center gap-1.5"><svg class="lucide w-4 h-4 text-primary"><use href="#i-check-circle"/></svg>Attended · verified at 10:14 AM</p>
+        </div>
+        <div class="p-6 flex-1">
+          <div class="mb-6">
+            <label class="text-sm font-medium mb-3 block">How was it?</label>
+            <div class="flex gap-2">
+              <button class="h-10 w-10 rounded-md border border-primary bg-primary text-primary-foreground flex items-center justify-center"><svg class="lucide w-5 h-5" fill="currentColor"><use href="#i-star"/></svg></button>
+              <button class="h-10 w-10 rounded-md border border-primary bg-primary text-primary-foreground flex items-center justify-center"><svg class="lucide w-5 h-5" fill="currentColor"><use href="#i-star"/></svg></button>
+              <button class="h-10 w-10 rounded-md border border-primary bg-primary text-primary-foreground flex items-center justify-center"><svg class="lucide w-5 h-5" fill="currentColor"><use href="#i-star"/></svg></button>
+              <button class="h-10 w-10 rounded-md border border-primary bg-primary text-primary-foreground flex items-center justify-center"><svg class="lucide w-5 h-5" fill="currentColor"><use href="#i-star"/></svg></button>
+              <button class="h-10 w-10 rounded-md border border-input bg-background text-muted-foreground flex items-center justify-center hover:bg-accent"><svg class="lucide w-5 h-5"><use href="#i-star"/></svg></button>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-medium mb-2 block">Comment <span class="text-muted-foreground font-normal">(optional)</span></label>
+            <textarea rows="4" placeholder="The case studies on cross-generational disagreement were especially useful…" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"></textarea>
+          </div>
+        </div>
+        <div class="p-6 border-t border-border bg-muted/30 flex gap-2 justify-end">
+          <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium hover:bg-accent h-9 px-4">Skip</button>
+          <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4">Submit feedback</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       04 · MOBILE — ATTENDEE (4 screens)
+       ========================================================================= -->
+  <div class="flex items-baseline gap-4 mt-20 mb-4 pb-3 border-b border-border">
+    <span class="text-xs text-muted-foreground font-mono">04</span>
+    <h2 class="text-base font-semibold tracking-tight flex-1">Attendee — Mobile (schedule · session · verify · feedback)</h2>
+    <span class="text-xs text-muted-foreground">real mobile header · SidebarTrigger · Sheet side="bottom"</span>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 py-6">
+
+    <!-- Mobile 04a: Schedule -->
+    <div class="flex flex-col items-center">
+      <div class="w-[320px] h-[660px] border-[8px] border-foreground rounded-[36px] overflow-hidden bg-background relative shadow-2xl">
+        <div class="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-5 bg-foreground rounded-b-2xl z-20"></div>
+        <!-- Real mobile header: min-h-14 border-b px-4 + SidebarTrigger hamburger -->
+        <header class="flex min-h-14 items-end pb-3 gap-2 border-b border-border px-4 pt-7">
+          <button class="-ml-1 h-7 w-7 rounded-md text-foreground/70 hover:bg-accent flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-menu"/></svg></button>
+        </header>
+        <main class="overflow-y-auto h-[calc(100%-56px)]">
+          <div class="px-4 pt-4 pb-3 border-b border-border">
+            <div class="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">National Convention</div>
+            <h1 class="text-lg font-semibold tracking-tight">Building together.</h1>
+            <p class="text-xs text-muted-foreground mt-1 flex items-center gap-1.5"><svg class="lucide w-3 h-3"><use href="#i-map-pin"/></svg>Chicago Hilton · Apr 24–26</p>
+          </div>
+          <div class="px-4 pt-3">
+            <div class="inline-flex h-8 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground text-xs">
+              <button class="rounded-md px-3 py-0.5">Fri 24</button>
+              <button class="rounded-md px-3 py-0.5 bg-background text-foreground shadow font-medium">Sat 25</button>
+              <button class="rounded-md px-3 py-0.5">Sun 26</button>
+            </div>
+          </div>
+          <div class="px-4 py-4 space-y-5">
+            <section>
+              <div class="flex items-baseline gap-2 mb-2">
+                <div class="text-xs font-semibold tabular-nums">9:00 AM</div>
+                <div class="text-[10px] text-muted-foreground tabular-nums">– 10:15</div>
+                <div class="h-px bg-border flex-1"></div>
+              </div>
+              <div class="rounded-xl border-2 border-primary bg-primary/5 p-3 shadow-sm">
+                <div class="inline-flex items-center rounded-md bg-primary text-primary-foreground px-1.5 py-0.5 text-[10px] font-semibold gap-1 mb-2"><svg class="lucide w-2.5 h-2.5"><use href="#i-check"/></svg>Selected</div>
+                <h3 class="font-semibold text-sm tracking-tight mb-0.5">The Ethics of Community Building</h3>
+                <p class="text-xs text-muted-foreground mb-2">Dr. Sameer Ansari</p>
+                <div class="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                  <span class="inline-flex items-center gap-1"><svg class="lucide w-3 h-3"><use href="#i-map-pin"/></svg>Ballroom A</span>
+                  <span class="font-semibold tabular-nums text-foreground">32 <span class="text-muted-foreground font-normal">/ 80</span></span>
+                </div>
+              </div>
+            </section>
+            <section>
+              <div class="flex items-baseline gap-2 mb-2">
+                <div class="text-xs font-semibold text-muted-foreground tabular-nums">10:15 AM</div>
+                <div class="h-px bg-border flex-1"></div>
+              </div>
+              <div class="rounded-xl border border-dashed border-border bg-muted/40 py-2.5 px-3 flex items-center gap-3">
+                <div class="rounded-full bg-muted/50 p-2"><svg class="lucide w-4 h-4 text-muted-foreground"><use href="#i-coffee"/></svg></div>
+                <div><h3 class="font-medium text-xs">Coffee &amp; Conversation</h3><p class="text-[10px] text-muted-foreground">Mezzanine Foyer</p></div>
+              </div>
+            </section>
+            <section>
+              <div class="flex items-baseline gap-2 mb-2">
+                <div class="text-xs font-semibold tabular-nums">10:45 AM</div>
+                <div class="text-[10px] text-muted-foreground tabular-nums">– 12:00</div>
+                <div class="h-px bg-border flex-1"></div>
+              </div>
+              <div class="grid gap-2">
+                <div class="rounded-xl border border-border bg-card p-3 shadow-sm">
+                  <h3 class="font-semibold text-sm tracking-tight mb-0.5">Mental Health &amp; Leadership</h3>
+                  <p class="text-xs text-muted-foreground mb-2">Dr. Yasmin Rahman</p>
+                  <div class="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                    <span class="inline-flex items-center gap-1"><svg class="lucide w-3 h-3"><use href="#i-map-pin"/></svg>Room 206</span>
+                    <span class="font-semibold tabular-nums text-foreground">22 / 30</span>
+                  </div>
+                </div>
+                <div class="rounded-xl border border-border bg-card p-3 opacity-60">
+                  <div class="inline-flex items-center rounded-md bg-destructive text-destructive-foreground px-1.5 py-0.5 text-[10px] font-semibold mb-2">Full</div>
+                  <h3 class="font-semibold text-sm tracking-tight mb-0.5">Budgeting a NeighborNet</h3>
+                  <p class="text-xs text-muted-foreground mb-2">Finance Cabinet</p>
+                  <div class="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                    <span class="inline-flex items-center gap-1"><svg class="lucide w-3 h-3"><use href="#i-map-pin"/></svg>Ballroom B</span>
+                    <span class="font-semibold tabular-nums text-destructive">60 / 60</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+      <div class="mt-3 text-xs text-muted-foreground text-center">04a · Schedule view</div>
+    </div>
+
+    <!-- Mobile 04b: Session detail (bottom sheet) -->
+    <div class="flex flex-col items-center">
+      <div class="w-[320px] h-[660px] border-[8px] border-foreground rounded-[36px] overflow-hidden bg-background relative shadow-2xl">
+        <div class="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-5 bg-foreground rounded-b-2xl z-20"></div>
+        <!-- Dimmed schedule behind -->
+        <div class="absolute inset-0 bg-background">
+          <header class="flex min-h-14 items-end pb-3 gap-2 border-b border-border px-4 pt-7"><button class="-ml-1 h-7 w-7 rounded-md flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-menu"/></svg></button></header>
+          <div class="px-4 pt-4">
+            <div class="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">National Convention</div>
+            <h1 class="text-lg font-semibold tracking-tight">Building together.</h1>
+          </div>
+        </div>
+        <!-- Dim overlay -->
+        <div class="absolute inset-0 bg-foreground/50 z-10"></div>
+        <!-- Bottom sheet (Sheet side="bottom") -->
+        <div class="absolute inset-x-0 bottom-0 z-20 bg-background border-t border-border rounded-t-xl shadow-2xl max-h-[88%] flex flex-col">
+          <!-- drag handle -->
+          <div class="flex justify-center pt-2 pb-1"><div class="h-1 w-10 rounded-full bg-border"></div></div>
+          <div class="px-5 pt-2 pb-4 border-b border-border">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="text-[10px] uppercase tracking-widest text-primary font-medium">Sat · 9:00 – 10:15 AM</div>
+              <button class="h-6 w-6 rounded-md text-muted-foreground hover:bg-accent flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-x"/></svg></button>
+            </div>
+            <h2 class="text-lg font-semibold tracking-tight">The Ethics of Community Building</h2>
+            <p class="text-xs text-muted-foreground mt-1">Dr. Sameer Ansari · moderated by Maryam Yusuf</p>
+          </div>
+          <div class="grid grid-cols-3 border-b border-border text-[10px]">
+            <div class="p-2.5 border-r border-border"><div class="text-muted-foreground uppercase tracking-wider mb-0.5">Room</div><div class="text-xs font-medium">Ballroom A</div></div>
+            <div class="p-2.5 border-r border-border"><div class="text-muted-foreground uppercase tracking-wider mb-0.5">Format</div><div class="text-xs font-medium">Keynote</div></div>
+            <div class="p-2.5"><div class="text-muted-foreground uppercase tracking-wider mb-0.5">Seats</div><div class="text-xs font-medium tabular-nums">32 / 80</div></div>
+          </div>
+          <div class="p-5 flex-1 overflow-y-auto">
+            <p class="text-xs text-foreground/80 leading-relaxed">Frameworks for making principled decisions in youth-led organizations, drawn from twenty years of field work across the Midwest.</p>
+          </div>
+          <div class="p-4 border-t border-border bg-muted/30 flex gap-2">
+            <button class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md text-xs font-medium border border-input bg-background shadow-sm h-9 px-3"><svg class="lucide w-3.5 h-3.5 text-primary"><use href="#i-check-circle"/></svg>Signed up</button>
+            <button class="inline-flex items-center justify-center rounded-md text-xs font-medium text-muted-foreground hover:bg-accent h-9 px-3">Change</button>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 text-xs text-muted-foreground text-center">04b · Session detail (bottom sheet)</div>
+    </div>
+
+    <!-- Mobile 04c: Verification -->
+    <div class="flex flex-col items-center">
+      <div class="w-[320px] h-[660px] border-[8px] border-foreground rounded-[36px] overflow-hidden bg-background relative shadow-2xl">
+        <div class="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-5 bg-foreground rounded-b-2xl z-20"></div>
+        <div class="absolute inset-0 bg-background">
+          <header class="flex min-h-14 items-end pb-3 gap-2 border-b border-border px-4 pt-7"><button class="-ml-1 h-7 w-7 rounded-md flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-menu"/></svg></button></header>
+        </div>
+        <div class="absolute inset-0 bg-foreground/50 z-10"></div>
+        <div class="absolute inset-x-0 bottom-0 z-20 bg-background border-t border-border rounded-t-xl shadow-2xl max-h-[88%] flex flex-col">
+          <div class="flex justify-center pt-2 pb-1"><div class="h-1 w-10 rounded-full bg-border"></div></div>
+          <div class="px-5 pt-2 pb-4 border-b border-border">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="text-[10px] uppercase tracking-widest text-primary font-medium flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>Happening now</div>
+              <button class="h-6 w-6 rounded-md text-muted-foreground hover:bg-accent flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-x"/></svg></button>
+            </div>
+            <h2 class="text-lg font-semibold tracking-tight">The Ethics of Community Building</h2>
+            <p class="text-xs text-muted-foreground mt-1">Ballroom A · ends 10:15 AM</p>
+          </div>
+          <div class="p-5 flex-1">
+            <div class="rounded-lg border border-border bg-card p-4">
+              <div class="flex items-start gap-3 mb-4">
+                <div class="rounded-full bg-primary/10 p-2 shrink-0"><svg class="lucide w-4 h-4 text-primary"><use href="#i-lock"/></svg></div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-medium">Verify attendance</h3>
+                  <p class="text-xs text-muted-foreground mt-0.5">Enter the 4-digit code from the speaker.</p>
+                </div>
+              </div>
+              <!-- Big pin-style input -->
+              <div class="flex gap-2 justify-center mb-3">
+                <input class="h-12 w-10 rounded-md border border-input bg-background text-center font-mono text-lg shadow-sm" value="4"/>
+                <input class="h-12 w-10 rounded-md border border-input bg-background text-center font-mono text-lg shadow-sm" value="2"/>
+                <input class="h-12 w-10 rounded-md border border-input bg-background text-center font-mono text-lg shadow-sm" value="8"/>
+                <input class="h-12 w-10 rounded-md border-2 border-primary bg-background text-center font-mono text-lg shadow-sm" placeholder="_"/>
+              </div>
+              <button class="w-full inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4">Verify</button>
+            </div>
+          </div>
+          <div class="p-4 border-t border-border bg-muted/30 flex justify-end">
+            <button class="inline-flex items-center justify-center rounded-md text-xs font-medium text-muted-foreground hover:bg-accent h-9 px-3">Not ready yet</button>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 text-xs text-muted-foreground text-center">04c · Attendance verify</div>
+    </div>
+
+    <!-- Mobile 04d: Feedback -->
+    <div class="flex flex-col items-center">
+      <div class="w-[320px] h-[660px] border-[8px] border-foreground rounded-[36px] overflow-hidden bg-background relative shadow-2xl">
+        <div class="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-5 bg-foreground rounded-b-2xl z-20"></div>
+        <div class="absolute inset-0 bg-background">
+          <header class="flex min-h-14 items-end pb-3 gap-2 border-b border-border px-4 pt-7"><button class="-ml-1 h-7 w-7 rounded-md flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-menu"/></svg></button></header>
+        </div>
+        <div class="absolute inset-0 bg-foreground/50 z-10"></div>
+        <div class="absolute inset-x-0 bottom-0 z-20 bg-background border-t border-border rounded-t-xl shadow-2xl max-h-[88%] flex flex-col">
+          <div class="flex justify-center pt-2 pb-1"><div class="h-1 w-10 rounded-full bg-border"></div></div>
+          <div class="px-5 pt-2 pb-4 border-b border-border">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Ended 10:15 AM</div>
+              <button class="h-6 w-6 rounded-md text-muted-foreground hover:bg-accent flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-x"/></svg></button>
+            </div>
+            <h2 class="text-lg font-semibold tracking-tight">The Ethics of Community Building</h2>
+            <p class="text-xs text-muted-foreground mt-1 flex items-center gap-1.5"><svg class="lucide w-3.5 h-3.5 text-primary"><use href="#i-check-circle"/></svg>Attended · verified 10:14 AM</p>
+          </div>
+          <div class="p-5 flex-1">
+            <label class="text-xs font-medium mb-2 block">How was it?</label>
+            <div class="flex gap-1.5 mb-4">
+              <button class="h-9 w-9 rounded-md border border-primary bg-primary text-primary-foreground flex items-center justify-center"><svg class="lucide w-4 h-4" fill="currentColor"><use href="#i-star"/></svg></button>
+              <button class="h-9 w-9 rounded-md border border-primary bg-primary text-primary-foreground flex items-center justify-center"><svg class="lucide w-4 h-4" fill="currentColor"><use href="#i-star"/></svg></button>
+              <button class="h-9 w-9 rounded-md border border-primary bg-primary text-primary-foreground flex items-center justify-center"><svg class="lucide w-4 h-4" fill="currentColor"><use href="#i-star"/></svg></button>
+              <button class="h-9 w-9 rounded-md border border-primary bg-primary text-primary-foreground flex items-center justify-center"><svg class="lucide w-4 h-4" fill="currentColor"><use href="#i-star"/></svg></button>
+              <button class="h-9 w-9 rounded-md border border-input bg-background text-muted-foreground flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-star"/></svg></button>
+            </div>
+            <label class="text-xs font-medium mb-2 block">Comment <span class="text-muted-foreground font-normal">(optional)</span></label>
+            <textarea rows="4" placeholder="The case studies were especially useful…" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm placeholder:text-muted-foreground resize-none"></textarea>
+          </div>
+          <div class="p-4 border-t border-border bg-muted/30 flex gap-2 justify-end">
+            <button class="inline-flex items-center justify-center rounded-md text-xs font-medium hover:bg-accent h-9 px-3">Skip</button>
+            <button class="inline-flex items-center justify-center gap-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4">Submit</button>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 text-xs text-muted-foreground text-center">04d · Feedback</div>
+    </div>
+  </div>
+
+  <div class="text-sm text-muted-foreground px-2 mt-2">Mobile uses the real <code class="text-xs bg-muted px-1 rounded">min-h-14 border-b px-4 pt-safe</code> header with a hamburger <code class="text-xs bg-muted px-1 rounded">SidebarTrigger</code> (the sidebar is a Sheet on mobile, accessed via the hamburger). Session details use <code class="text-xs bg-muted px-1 rounded">Sheet side="bottom"</code> with a drag handle — more thumb-friendly than side="right" on phones.</div>
+
+
+  <!-- =========================================================================
+       05 · ADMIN DASHBOARD (DESKTOP)
+       ========================================================================= -->
+  <div class="flex items-baseline gap-4 mt-20 mb-4 pb-3 border-b border-border">
+    <span class="text-xs text-muted-foreground font-mono">05</span>
+    <h2 class="text-base font-semibold tracking-tight flex-1">Admin — Conferences dashboard</h2>
+    <span class="text-xs text-muted-foreground">Admin nav group in sidebar · Table primitive</span>
+  </div>
+
+  <div class="rounded-xl border border-border bg-background shadow-lg overflow-hidden">
+    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/50">
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="ml-auto text-xs text-muted-foreground font-mono">ym-app · /admin/schedule</span>
+    </div>
+
+    <div class="grid grid-cols-[16rem_1fr] min-h-[740px]">
+      <!-- Sidebar with Admin group -->
+      <aside class="bg-sidebar border-r border-sidebar-border flex flex-col">
+        <div class="flex items-center p-2"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground"><span class="size-6 shrink-0 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">YM</span><span class="truncate font-semibold">Young Muslims</span></button></div>
+        <div class="flex-1 p-2 overflow-y-auto">
+          <ul class="space-y-1 mb-4">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-home"/></svg><span>Home</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-users"/></svg><span>People</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-dollar"/></svg><span>Finance</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-file-text"/></svg><span>Docs</span></a></li>
+          </ul>
+          <!-- Admin group (SidebarGroupLabel pattern) -->
+          <div class="px-2 pt-2 pb-1 text-[11px] uppercase tracking-wider text-sidebar-foreground/60 flex items-center gap-1.5"><svg class="lucide w-3 h-3"><use href="#i-shield"/></svg>Admin</div>
+          <ul class="space-y-1">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm bg-sidebar-accent text-sidebar-accent-foreground font-medium"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+          </ul>
+        </div>
+        <div class="p-2 border-t border-sidebar-border"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground hover:bg-sidebar-accent"><div class="size-6 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center">O</div><span class="truncate font-semibold">Omar</span><svg class="lucide w-4 h-4 ml-auto"><use href="#i-chevron-up"/></svg></button></div>
+      </aside>
+
+      <!-- Main -->
+      <main class="bg-background overflow-hidden">
+        <div class="px-8 pt-12 pb-6 border-b border-border flex items-end justify-between gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Event Administration</div>
+            <h1 class="text-3xl font-semibold tracking-tight">Conferences</h1>
+            <p class="text-sm text-muted-foreground mt-1">Create and manage schedules, attendees, and rosters.</p>
+          </div>
+          <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"><svg class="lucide w-4 h-4"><use href="#i-plus"/></svg>New conference</button>
+        </div>
+
+        <div class="p-8 space-y-6">
+          <section>
+            <h2 class="text-sm font-medium mb-3">Active</h2>
+            <div class="rounded-xl border border-border overflow-hidden">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-border bg-muted/40 text-muted-foreground">
+                    <th class="text-left font-medium px-4 py-2.5">Conference</th>
+                    <th class="text-left font-medium px-4 py-2.5">When</th>
+                    <th class="text-left font-medium px-4 py-2.5">Attendees</th>
+                    <th class="text-left font-medium px-4 py-2.5">Status</th>
+                    <th class="px-4 py-2.5 w-10"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-border hover:bg-muted/30 cursor-pointer">
+                    <td class="px-4 py-3"><div class="font-medium">National Convention 2026</div><div class="text-xs text-muted-foreground">Chicago Hilton · 24–26 April</div></td>
+                    <td class="px-4 py-3 text-muted-foreground">In 3 days</td>
+                    <td class="px-4 py-3 tabular-nums">1,240 <span class="text-muted-foreground">/ 1,500</span></td>
+                    <td class="px-4 py-3"><div class="inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold">Live</div></td>
+                    <td class="px-4 py-3 text-muted-foreground"><svg class="lucide w-4 h-4"><use href="#i-arrow-right"/></svg></td>
+                  </tr>
+                  <tr class="hover:bg-muted/30 cursor-pointer">
+                    <td class="px-4 py-3"><div class="font-medium">NE Regional Retreat</div><div class="text-xs text-muted-foreground">Boston · 16–17 May</div></td>
+                    <td class="px-4 py-3 text-muted-foreground">In 24 days</td>
+                    <td class="px-4 py-3 text-muted-foreground tabular-nums">— <span class="text-xs">not invited</span></td>
+                    <td class="px-4 py-3"><div class="inline-flex items-center rounded-md border border-border text-foreground px-2.5 py-0.5 text-xs font-semibold">Draft</div></td>
+                    <td class="px-4 py-3 text-muted-foreground"><svg class="lucide w-4 h-4"><use href="#i-arrow-right"/></svg></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section>
+            <h2 class="text-sm font-medium mb-3">Past</h2>
+            <div class="rounded-xl border border-border overflow-hidden opacity-80">
+              <table class="w-full text-sm">
+                <tbody>
+                  <tr class="border-b border-border hover:bg-muted/30 cursor-pointer">
+                    <td class="px-4 py-3"><div class="font-medium">Cabinet Summit 2025</div><div class="text-xs text-muted-foreground">Dallas · Nov 2025</div></td>
+                    <td class="px-4 py-3 text-muted-foreground">5 months ago</td>
+                    <td class="px-4 py-3 tabular-nums">78 <span class="text-muted-foreground text-xs">· 71 verified</span></td>
+                    <td class="px-4 py-3"><div class="inline-flex items-center rounded-md bg-muted text-muted-foreground px-2.5 py-0.5 text-xs font-semibold">Past</div></td>
+                    <td class="px-4 py-3 text-muted-foreground"><svg class="lucide w-4 h-4"><use href="#i-arrow-right"/></svg></td>
+                  </tr>
+                  <tr class="hover:bg-muted/30 cursor-pointer">
+                    <td class="px-4 py-3"><div class="font-medium">National Convention 2025</div><div class="text-xs text-muted-foreground">Minneapolis · Apr 2025</div></td>
+                    <td class="px-4 py-3 text-muted-foreground">12 months ago</td>
+                    <td class="px-4 py-3 tabular-nums">1,109 <span class="text-muted-foreground text-xs">· 942 verified</span></td>
+                    <td class="px-4 py-3"><div class="inline-flex items-center rounded-md bg-muted text-muted-foreground px-2.5 py-0.5 text-xs font-semibold">Past</div></td>
+                    <td class="px-4 py-3 text-muted-foreground"><svg class="lucide w-4 h-4"><use href="#i-arrow-right"/></svg></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       06 · ADMIN CONFERENCE EDITOR (DESKTOP)
+       ========================================================================= -->
+  <div class="flex items-baseline gap-4 mt-20 mb-4 pb-3 border-b border-border">
+    <span class="text-xs text-muted-foreground font-mono">06</span>
+    <h2 class="text-base font-semibold tracking-tight flex-1">Admin — Conference editor (Schedule tab)</h2>
+    <span class="text-xs text-muted-foreground">attendee time-gutter reused · inline icon actions</span>
+  </div>
+
+  <div class="rounded-xl border border-border bg-background shadow-lg overflow-hidden">
+    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/50">
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="ml-auto text-xs text-muted-foreground font-mono">ym-app · /admin/schedule/national-convention-2026</span>
+    </div>
+
+    <div class="grid grid-cols-[16rem_1fr] min-h-[820px]">
+      <aside class="bg-sidebar border-r border-sidebar-border flex flex-col">
+        <div class="flex items-center p-2"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground"><span class="size-6 shrink-0 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">YM</span><span class="truncate font-semibold">Young Muslims</span></button></div>
+        <div class="flex-1 p-2">
+          <ul class="space-y-1 mb-4">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-home"/></svg><span>Home</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-users"/></svg><span>People</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-dollar"/></svg><span>Finance</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-file-text"/></svg><span>Docs</span></a></li>
+          </ul>
+          <div class="px-2 pt-2 pb-1 text-[11px] uppercase tracking-wider text-sidebar-foreground/60 flex items-center gap-1.5"><svg class="lucide w-3 h-3"><use href="#i-shield"/></svg>Admin</div>
+          <ul class="space-y-1">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm bg-sidebar-accent text-sidebar-accent-foreground font-medium"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+          </ul>
+        </div>
+        <div class="p-2 border-t border-sidebar-border"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground hover:bg-sidebar-accent"><div class="size-6 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center">O</div><span class="truncate font-semibold">Omar</span><svg class="lucide w-4 h-4 ml-auto"><use href="#i-chevron-up"/></svg></button></div>
+      </aside>
+
+      <main class="bg-background overflow-hidden">
+        <div class="px-8 pt-10 pb-4 border-b border-border">
+          <a href="#" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-3"><svg class="lucide w-3 h-3"><use href="#i-chevron-left"/></svg>All conferences</a>
+          <div class="flex items-end justify-between gap-4">
+            <div>
+              <h1 class="text-3xl font-semibold tracking-tight mb-1">National Convention 2026</h1>
+              <div class="text-sm text-muted-foreground flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5"><svg class="lucide w-4 h-4"><use href="#i-map-pin"/></svg>Chicago Hilton</span><span>·</span>
+                <span class="inline-flex items-center gap-1.5"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg>April 24–26</span><span>·</span>
+                <div class="inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold">Live</div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-input bg-background shadow-sm hover:bg-accent h-9 px-4">Preview as attendee</button>
+              <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"><svg class="lucide w-4 h-4"><use href="#i-plus"/></svg>Add session</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-8 pt-5">
+          <div class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+            <button class="rounded-md px-3 py-1 text-sm font-medium">Info</button>
+            <button class="rounded-md px-3 py-1 text-sm font-medium bg-background text-foreground shadow">Schedule</button>
+            <button class="rounded-md px-3 py-1 text-sm font-medium">Attendees <span class="ml-1 text-muted-foreground">1,240</span></button>
+            <button class="rounded-md px-3 py-1 text-sm font-medium">Feedback</button>
+          </div>
+        </div>
+
+        <div class="px-8 pt-5">
+          <div class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+            <button class="rounded-md px-4 py-1 text-sm font-medium">Fri Apr 24</button>
+            <button class="rounded-md px-4 py-1 text-sm font-medium bg-background text-foreground shadow">Sat Apr 25</button>
+            <button class="rounded-md px-4 py-1 text-sm font-medium">Sun Apr 26</button>
+            <button class="rounded-md px-3 py-1 text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><svg class="lucide w-3 h-3"><use href="#i-plus"/></svg>Day</button>
+          </div>
+        </div>
+
+        <!-- Primary "Add session" button — replaces per-slot creation -->
+        <div class="px-8 pt-6 pb-2 flex items-center justify-between">
+          <div class="text-sm text-muted-foreground">4 sessions · Saturday</div>
+          <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"><svg class="lucide w-4 h-4"><use href="#i-plus"/></svg>Add session</button>
+        </div>
+
+        <div class="px-8 pb-8 pt-2 space-y-6">
+          <!-- Grouped by matching (start_time, end_time) at render -->
+          <section>
+            <div class="flex items-baseline gap-3 mb-3">
+              <div class="text-sm font-semibold tabular-nums">9:00 AM</div>
+              <div class="text-xs text-muted-foreground">–</div>
+              <div class="text-sm text-muted-foreground tabular-nums">10:15 AM</div>
+              <div class="h-px bg-border flex-1 ml-2"></div>
+            </div>
+            <div class="grid gap-2">
+              <div class="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-4 hover:border-foreground/20 transition-colors">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-sm">The Ethics of Community Building</div>
+                  <div class="text-xs text-muted-foreground mt-0.5">Dr. Sameer Ansari · Ballroom A · Keynote</div>
+                </div>
+                <div class="flex items-center gap-6 text-sm">
+                  <div class="text-right"><div class="font-semibold tabular-nums">32</div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Signed</div></div>
+                  <div class="text-right"><div class="font-semibold tabular-nums text-muted-foreground">—</div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Verified</div></div>
+                </div>
+                <div class="flex gap-0.5">
+                  <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-list"/></svg></button>
+                  <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-edit"/></svg></button>
+                  <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-destructive flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-trash"/></svg></button>
+                </div>
+              </div>
+              <div class="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-4 hover:border-foreground/20 transition-colors">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-sm">Organizing Across Generations</div>
+                  <div class="text-xs text-muted-foreground mt-0.5">Ustadha Aisha Khan · Room 204 · Workshop</div>
+                </div>
+                <div class="flex items-center gap-6 text-sm">
+                  <div class="text-right"><div class="font-semibold tabular-nums">18</div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Signed</div></div>
+                  <div class="text-right"><div class="font-semibold tabular-nums text-muted-foreground">—</div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Verified</div></div>
+                </div>
+                <div class="flex gap-0.5">
+                  <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-list"/></svg></button>
+                  <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-edit"/></svg></button>
+                  <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-destructive flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-trash"/></svg></button>
+                </div>
+              </div>
+              <div class="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-4 hover:border-foreground/20 transition-colors">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-sm">Digital Organizing: Beyond WhatsApp</div>
+                  <div class="text-xs text-muted-foreground mt-0.5">Omar Malik · Room 118 · Capacity 25</div>
+                </div>
+                <div class="flex items-center gap-6 text-sm">
+                  <div class="text-right"><div class="font-semibold tabular-nums text-destructive">25</div><div class="text-[10px] uppercase tracking-wider text-destructive">Full</div></div>
+                  <div class="text-right"><div class="font-semibold tabular-nums text-muted-foreground">—</div><div class="text-[10px] uppercase tracking-wider text-muted-foreground">Verified</div></div>
+                </div>
+                <div class="flex gap-0.5">
+                  <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-list"/></svg></button>
+                  <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-edit"/></svg></button>
+                  <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-destructive flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-trash"/></svg></button>
+                </div>
+              </div>
+              <!-- Quick action: new session pre-filled to this time -->
+              <button class="rounded-lg border border-dashed border-border bg-transparent px-4 py-2 text-xs text-muted-foreground hover:border-foreground/40 hover:text-foreground hover:bg-muted/40 transition-colors inline-flex items-center justify-center gap-1.5"><svg class="lucide w-3 h-3"><use href="#i-plus"/></svg>Add another at 9:00–10:15</button>
+            </div>
+          </section>
+
+          <!-- Break -->
+          <section>
+            <div class="flex items-baseline gap-3 mb-3">
+              <div class="text-sm font-semibold text-muted-foreground tabular-nums">10:15 AM</div>
+              <div class="text-xs text-muted-foreground">–</div>
+              <div class="text-sm text-muted-foreground tabular-nums">10:45 AM</div>
+              <div class="h-px bg-border flex-1 ml-2"></div>
+            </div>
+            <div class="rounded-xl border border-dashed border-border bg-muted/40 py-4 px-5 flex items-center gap-4">
+              <div class="rounded-full bg-muted/50 p-4"><svg class="lucide w-5 h-5 text-muted-foreground"><use href="#i-coffee"/></svg></div>
+              <div class="flex-1"><h3 class="font-medium text-sm">Coffee &amp; Conversation</h3><p class="text-xs text-muted-foreground mt-0.5">Mezzanine Foyer · break</p></div>
+              <div class="flex gap-0.5">
+                <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-edit"/></svg></button>
+                <button class="h-8 w-8 rounded-md text-muted-foreground hover:bg-accent hover:text-destructive flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-trash"/></svg></button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       07 · ADMIN ROSTER (DESKTOP)
+       ========================================================================= -->
+  <div class="flex items-baseline gap-4 mt-20 mb-4 pb-3 border-b border-border">
+    <span class="text-xs text-muted-foreground font-mono">07</span>
+    <h2 class="text-base font-semibold tracking-tight flex-1">Admin — Live roster</h2>
+    <span class="text-xs text-muted-foreground">Sheet side="right"</span>
+  </div>
+
+  <div class="rounded-xl border border-border bg-background shadow-lg overflow-hidden">
+    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/50">
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="ml-auto text-xs text-muted-foreground font-mono">roster sheet</span>
+    </div>
+
+    <div class="grid grid-cols-[16rem_1fr_520px] min-h-[740px]">
+      <aside class="bg-sidebar border-r border-sidebar-border flex flex-col">
+        <div class="flex items-center p-2"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground"><span class="size-6 shrink-0 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">YM</span><span class="truncate font-semibold">Young Muslims</span></button></div>
+        <div class="flex-1 p-2">
+          <ul class="space-y-1 mb-4">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-home"/></svg><span>Home</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-users"/></svg><span>People</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-dollar"/></svg><span>Finance</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-file-text"/></svg><span>Docs</span></a></li>
+          </ul>
+          <div class="px-2 pt-2 pb-1 text-[11px] uppercase tracking-wider text-sidebar-foreground/60 flex items-center gap-1.5"><svg class="lucide w-3 h-3"><use href="#i-shield"/></svg>Admin</div>
+          <ul class="space-y-1">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm bg-sidebar-accent text-sidebar-accent-foreground font-medium"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+          </ul>
+        </div>
+        <div class="p-2 border-t border-sidebar-border"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground hover:bg-sidebar-accent"><div class="size-6 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center">O</div><span class="truncate font-semibold">Omar</span><svg class="lucide w-4 h-4 ml-auto"><use href="#i-chevron-up"/></svg></button></div>
+      </aside>
+
+      <main class="bg-background p-8 opacity-40"><div class="text-xs uppercase tracking-widest text-muted-foreground">(editor behind, dimmed)</div></main>
+
+      <aside class="bg-background border-l border-border flex flex-col shadow-2xl">
+        <div class="p-6 border-b border-border">
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <div class="text-xs uppercase tracking-widest text-primary font-medium">Saturday 9:00 AM · Ballroom A</div>
+            <button class="h-6 w-6 rounded-md text-muted-foreground hover:bg-accent flex items-center justify-center"><svg class="lucide w-4 h-4"><use href="#i-x"/></svg></button>
+          </div>
+          <h2 class="text-xl font-semibold tracking-tight">The Ethics of Community Building</h2>
+          <p class="text-sm text-muted-foreground mt-1">Dr. Sameer Ansari · 75 min</p>
+          <p class="text-xs text-muted-foreground mt-2 flex items-center gap-1.5"><span class="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>Updated 2s ago</p>
+        </div>
+        <div class="grid grid-cols-2 border-b border-border">
+          <div class="p-5 border-r border-border"><div class="text-2xl font-semibold tabular-nums">32</div><div class="text-xs text-muted-foreground mt-1">Signed up</div></div>
+          <div class="p-5"><div class="text-2xl font-semibold tabular-nums text-primary">21</div><div class="text-xs text-muted-foreground mt-1 flex items-center gap-1"><svg class="lucide w-3 h-3 text-primary"><use href="#i-check"/></svg>Verified</div></div>
+        </div>
+        <div class="p-4 border-b border-border">
+          <div class="relative mb-3">
+            <svg class="lucide w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"><use href="#i-search"/></svg>
+            <input placeholder="Search attendees..." class="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"/>
+          </div>
+          <div class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground text-xs">
+            <button class="rounded-md px-3 py-1 font-medium bg-background text-foreground shadow">All <span class="text-muted-foreground ml-1">32</span></button>
+            <button class="rounded-md px-3 py-1 font-medium">Verified <span class="text-muted-foreground ml-1">21</span></button>
+            <button class="rounded-md px-3 py-1 font-medium">Unverified <span class="text-muted-foreground ml-1">11</span></button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+          <div class="divide-y divide-border">
+            <div class="flex items-center gap-3 px-6 py-3 hover:bg-muted/40"><div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-border flex items-center justify-center text-[11px] font-semibold text-primary/70">AA</div><div class="flex-1 min-w-0"><div class="font-medium text-sm">Aisha Ahmed</div><div class="text-xs text-muted-foreground truncate">aisha.ahmed@example.com</div></div><div class="inline-flex items-center rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium gap-1"><svg class="lucide w-3 h-3"><use href="#i-check"/></svg>Verified</div></div>
+            <div class="flex items-center gap-3 px-6 py-3 hover:bg-muted/40"><div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-border flex items-center justify-center text-[11px] font-semibold text-primary/70">BK</div><div class="flex-1 min-w-0"><div class="font-medium text-sm">Bilal Khan</div><div class="text-xs text-muted-foreground truncate">bilal.khan@example.com</div></div><div class="inline-flex items-center rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium gap-1"><svg class="lucide w-3 h-3"><use href="#i-check"/></svg>Verified</div></div>
+            <div class="flex items-center gap-3 px-6 py-3 hover:bg-muted/40"><div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-border flex items-center justify-center text-[11px] font-semibold text-primary/70">OA</div><div class="flex-1 min-w-0"><div class="font-medium text-sm">Omar Anees</div><div class="text-xs text-muted-foreground truncate">an.omar.ees@gmail.com</div></div><div class="inline-flex items-center rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium gap-1"><svg class="lucide w-3 h-3"><use href="#i-check"/></svg>Verified</div></div>
+            <div class="flex items-center gap-3 px-6 py-3 hover:bg-muted/40"><div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-border flex items-center justify-center text-[11px] font-semibold text-primary/70">FM</div><div class="flex-1 min-w-0"><div class="font-medium text-sm">Fatima Malik</div><div class="text-xs text-muted-foreground truncate">fatima.malik@example.com</div></div><div class="text-xs text-muted-foreground">Not verified</div></div>
+            <div class="flex items-center gap-3 px-6 py-3 hover:bg-muted/40"><div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-border flex items-center justify-center text-[11px] font-semibold text-primary/70">HQ</div><div class="flex-1 min-w-0"><div class="font-medium text-sm">Hassan Qureshi</div><div class="text-xs text-muted-foreground truncate">hassan.qureshi@example.com</div></div><div class="text-xs text-muted-foreground">Not verified</div></div>
+            <div class="flex items-center gap-3 px-6 py-3 hover:bg-muted/40"><div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-border flex items-center justify-center text-[11px] font-semibold text-primary/70">IR</div><div class="flex-1 min-w-0"><div class="font-medium text-sm">Iman Rahman</div><div class="text-xs text-muted-foreground truncate">iman.rahman@example.com</div></div><div class="inline-flex items-center rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium gap-1"><svg class="lucide w-3 h-3"><use href="#i-check"/></svg>Verified</div></div>
+            <div class="flex items-center gap-3 px-6 py-3 hover:bg-muted/40"><div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-border flex items-center justify-center text-[11px] font-semibold text-primary/70">MY</div><div class="flex-1 min-w-0"><div class="font-medium text-sm">Maryam Yusuf</div><div class="text-xs text-muted-foreground truncate">maryam@example.com</div></div><div class="inline-flex items-center rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium gap-1"><svg class="lucide w-3 h-3"><use href="#i-check"/></svg>Verified</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       08 · CREATE CONFERENCE FLOW
+       ========================================================================= -->
+  <div class="flex items-baseline gap-4 mt-20 mb-4 pb-3 border-b border-border">
+    <span class="text-xs text-muted-foreground font-mono">08</span>
+    <h2 class="text-base font-semibold tracking-tight flex-1">Admin — Create conference flow</h2>
+    <span class="text-xs text-muted-foreground">Dialog → empty editor</span>
+  </div>
+
+  <div class="text-sm text-muted-foreground mb-4 max-w-3xl">
+    <strong class="text-foreground font-medium">Flow:</strong> Click <em>+ New conference</em> on the dashboard → shadcn <code class="text-xs bg-muted px-1 rounded">Dialog</code> collects minimum info (name, dates, timezone) → submit inserts the <code class="text-xs bg-muted px-1 rounded">conferences</code> row and redirects to <code class="text-xs bg-muted px-1 rounded">/admin/schedule/{id}</code> on the Schedule tab's empty state. Everything else (sessions, attendees, passwords) is built iteratively in the editor's tabs.
+  </div>
+
+  <!-- 08a: Create Dialog -->
+  <div class="rounded-xl border border-border bg-background shadow-lg overflow-hidden mb-8">
+    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/50">
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="ml-auto text-xs text-muted-foreground font-mono">ym-app · /admin/schedule (new dialog open)</span>
+    </div>
+
+    <div class="grid grid-cols-[16rem_1fr] min-h-[680px] relative">
+      <aside class="bg-sidebar border-r border-sidebar-border flex flex-col">
+        <div class="flex items-center p-2"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground"><span class="size-6 shrink-0 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">YM</span><span class="truncate font-semibold">Young Muslims</span></button></div>
+        <div class="flex-1 p-2">
+          <ul class="space-y-1 mb-4">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-home"/></svg><span>Home</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-users"/></svg><span>People</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-dollar"/></svg><span>Finance</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-file-text"/></svg><span>Docs</span></a></li>
+          </ul>
+          <div class="px-2 pt-2 pb-1 text-[11px] uppercase tracking-wider text-sidebar-foreground/60 flex items-center gap-1.5"><svg class="lucide w-3 h-3"><use href="#i-shield"/></svg>Admin</div>
+          <ul class="space-y-1">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm bg-sidebar-accent text-sidebar-accent-foreground font-medium"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+          </ul>
+        </div>
+        <div class="p-2 border-t border-sidebar-border"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground hover:bg-sidebar-accent"><div class="size-6 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center">O</div><span class="truncate font-semibold">Omar</span><svg class="lucide w-4 h-4 ml-auto"><use href="#i-chevron-up"/></svg></button></div>
+      </aside>
+
+      <!-- Dashboard shown dimmed under dialog -->
+      <main class="bg-background overflow-hidden">
+        <div class="px-8 pt-12 pb-6 border-b border-border flex items-end justify-between gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Event Administration</div>
+            <h1 class="text-3xl font-semibold tracking-tight">Conferences</h1>
+          </div>
+          <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"><svg class="lucide w-4 h-4"><use href="#i-plus"/></svg>New conference</button>
+        </div>
+        <div class="p-8 opacity-60">
+          <div class="rounded-xl border border-border overflow-hidden">
+            <table class="w-full text-sm">
+              <tbody>
+                <tr class="border-b border-border"><td class="px-4 py-3"><div class="font-medium">National Convention 2026</div><div class="text-xs text-muted-foreground">Chicago Hilton · 24–26 April</div></td><td class="px-4 py-3 text-muted-foreground">In 3 days</td></tr>
+                <tr><td class="px-4 py-3"><div class="font-medium">NE Regional Retreat</div><div class="text-xs text-muted-foreground">Boston · 16–17 May</div></td><td class="px-4 py-3 text-muted-foreground">In 24 days</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      <!-- Dialog overlay -->
+      <div class="absolute inset-0 bg-foreground/50 z-10 flex items-center justify-center p-8">
+        <div class="bg-background rounded-lg border border-border shadow-2xl w-full max-w-[520px] overflow-hidden">
+          <div class="p-6 pb-4">
+            <h2 class="text-lg font-semibold tracking-tight">New conference</h2>
+            <p class="text-sm text-muted-foreground mt-1">Just the essentials to get started. You can edit everything else after.</p>
+          </div>
+          <div class="px-6 pb-6 space-y-4">
+            <div>
+              <label class="text-sm font-medium mb-1.5 block">Name</label>
+              <input class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="National Convention 2027"/>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-sm font-medium mb-1.5 block">Start date</label>
+                <button class="flex items-center justify-between w-full rounded-md border border-input bg-background px-3 h-9 text-sm text-muted-foreground shadow-sm hover:bg-accent"><span>Pick a date</span><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg></button>
+              </div>
+              <div>
+                <label class="text-sm font-medium mb-1.5 block">End date</label>
+                <button class="flex items-center justify-between w-full rounded-md border border-input bg-background px-3 h-9 text-sm text-muted-foreground shadow-sm hover:bg-accent"><span>Pick a date</span><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg></button>
+              </div>
+            </div>
+            <div>
+              <label class="text-sm font-medium mb-1.5 block">Timezone</label>
+              <button class="flex items-center justify-between w-full rounded-md border border-input bg-background px-3 h-9 text-sm shadow-sm hover:bg-accent">
+                <span>America/New_York <span class="text-muted-foreground">(EDT)</span></span>
+                <svg class="lucide w-4 h-4 text-muted-foreground"><use href="#i-chevron-up" transform="rotate(180 12 12)"/></svg>
+              </button>
+            </div>
+            <div>
+              <label class="text-sm font-medium mb-1.5 block">Location <span class="text-muted-foreground font-normal">(optional)</span></label>
+              <input class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Chicago Hilton"/>
+            </div>
+            <div>
+              <label class="text-sm font-medium mb-1.5 block">Description <span class="text-muted-foreground font-normal">(optional)</span></label>
+              <textarea rows="2" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none" placeholder="Short blurb attendees see at the top of the schedule…"></textarea>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-border bg-muted/30 flex justify-end gap-2">
+            <button class="inline-flex items-center justify-center rounded-md text-sm font-medium hover:bg-accent h-9 px-4">Cancel</button>
+            <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 disabled:opacity-50" disabled>Create conference</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-sm text-muted-foreground mb-8 px-2">Dialog uses standard shadcn <code class="text-xs bg-muted px-1 rounded">Dialog</code> / <code class="text-xs bg-muted px-1 rounded">Input</code> / <code class="text-xs bg-muted px-1 rounded">Button</code> primitives. Date pickers use your existing <code class="text-xs bg-muted px-1 rounded">calendar.tsx</code> inside <code class="text-xs bg-muted px-1 rounded">popover.tsx</code> (already installed). "Create" button disabled until name + both dates are filled. No server validation shown here — handled at submit with the standard <code class="text-xs bg-muted px-1 rounded">{ success, error? }</code> DB-function return.</div>
+
+  <!-- 08b: Empty editor just after creation -->
+  <div class="rounded-xl border border-border bg-background shadow-lg overflow-hidden">
+    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/50">
+      <span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span><span class="w-2.5 h-2.5 rounded-full bg-border"></span>
+      <span class="ml-auto text-xs text-muted-foreground font-mono">ym-app · /admin/schedule/national-convention-2027 (just created)</span>
+    </div>
+
+    <div class="grid grid-cols-[16rem_1fr] min-h-[640px]">
+      <aside class="bg-sidebar border-r border-sidebar-border flex flex-col">
+        <div class="flex items-center p-2"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground"><span class="size-6 shrink-0 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">YM</span><span class="truncate font-semibold">Young Muslims</span></button></div>
+        <div class="flex-1 p-2">
+          <ul class="space-y-1 mb-4">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-home"/></svg><span>Home</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-users"/></svg><span>People</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-dollar"/></svg><span>Finance</span></a></li>
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent"><svg class="lucide w-4 h-4"><use href="#i-file-text"/></svg><span>Docs</span></a></li>
+          </ul>
+          <div class="px-2 pt-2 pb-1 text-[11px] uppercase tracking-wider text-sidebar-foreground/60 flex items-center gap-1.5"><svg class="lucide w-3 h-3"><use href="#i-shield"/></svg>Admin</div>
+          <ul class="space-y-1">
+            <li><a href="#" class="flex items-center gap-2 p-2 rounded-md text-sm bg-sidebar-accent text-sidebar-accent-foreground font-medium"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg><span>Schedule</span></a></li>
+          </ul>
+        </div>
+        <div class="p-2 border-t border-sidebar-border"><button class="flex items-center gap-2 p-2 rounded-md text-sm w-full text-sidebar-foreground hover:bg-sidebar-accent"><div class="size-6 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center">O</div><span class="truncate font-semibold">Omar</span><svg class="lucide w-4 h-4 ml-auto"><use href="#i-chevron-up"/></svg></button></div>
+      </aside>
+
+      <main class="bg-background overflow-hidden">
+        <div class="px-8 pt-10 pb-4 border-b border-border">
+          <a href="#" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-3"><svg class="lucide w-3 h-3"><use href="#i-chevron-left"/></svg>All conferences</a>
+          <div class="flex items-end justify-between gap-4">
+            <div>
+              <h1 class="text-3xl font-semibold tracking-tight mb-1">National Convention 2027</h1>
+              <div class="text-sm text-muted-foreground flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5"><svg class="lucide w-4 h-4"><use href="#i-map-pin"/></svg>Chicago Hilton</span><span>·</span>
+                <span class="inline-flex items-center gap-1.5"><svg class="lucide w-4 h-4"><use href="#i-calendar"/></svg>April 16–18, 2027</span><span>·</span>
+                <div class="inline-flex items-center rounded-md border border-border text-foreground px-2.5 py-0.5 text-xs font-semibold">Draft</div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-input bg-background shadow-sm hover:bg-accent h-9 px-4">Edit info</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-8 pt-5">
+          <div class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+            <button class="rounded-md px-3 py-1 text-sm font-medium">Info</button>
+            <button class="rounded-md px-3 py-1 text-sm font-medium bg-background text-foreground shadow">Schedule</button>
+            <button class="rounded-md px-3 py-1 text-sm font-medium">Attendees <span class="ml-1 text-muted-foreground">0</span></button>
+            <button class="rounded-md px-3 py-1 text-sm font-medium">Feedback</button>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="px-8 py-16 flex items-center justify-center">
+          <div class="max-w-md text-center">
+            <div class="mx-auto rounded-full bg-muted/50 p-4 w-fit mb-5"><svg class="lucide w-6 h-6 text-muted-foreground"><use href="#i-calendar"/></svg></div>
+            <h2 class="text-lg font-semibold tracking-tight mb-1.5">No sessions yet</h2>
+            <p class="text-sm text-muted-foreground mb-6 leading-relaxed">Add sessions one at a time — each gets its own day, time, speaker, room, and capacity. Parallel tracks? Add two sessions at the same time. Breaks? Mark a session as a break.</p>
+            <div class="flex items-center gap-2 justify-center">
+              <button class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"><svg class="lucide w-4 h-4"><use href="#i-plus"/></svg>Add first session</button>
+              <button class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background shadow-sm hover:bg-accent h-9 px-4">Copy from past conference</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="text-sm text-muted-foreground mt-4 px-2">Empty state uses your canonical pattern — Lucide icon in <code class="text-xs bg-muted px-1 rounded">rounded-full bg-muted/50 p-4</code>, headline + description, primary action + one secondary. "Copy from past conference" is a natural affordance for recurring events (you'll build most conferences by copying last year's).</div>
+
+
+  <!-- ============================== FOOTER ============================== -->
+  <div class="mt-24 pt-8 border-t border-border text-center text-xs text-muted-foreground">
+    YM AppShell · AppSidebar · OKLCH tokens · Geist · Lucide<br/>
+    <span class="text-[11px] mt-1 inline-block">Classes map 1:1 to your real shadcn components. Prototype is a spec, not aesthetic exploration.</span>
+  </div>
+
+</div>
+
+</body>
+</html>

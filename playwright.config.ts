@@ -52,9 +52,10 @@ export default defineConfig({
     // },
   ],
 
-  // Run local dev server before starting the tests
+  // Run local dev server before starting the tests.
+  // CI uses the production build (faster + closer to prod); local dev uses next dev.
   webServer: {
-    command: 'bun run dev',
+    command: process.env.CI ? 'bun run start' : 'bun run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-04-25T21:32:55.385Z",
+  "totalsByRoute": {
+    "/_not-found/page": 351564,
+    "/global-error": 351542,
+    "/layout": 662560,
+    "/error": 391837,
+    "/auth/callback/route": 349043,
+    "/api/legal-lol/route": 349043,
+    "/legal-lol/page": 360842,
+    "/login/page": 613414,
+    "/onboarding/page": 1058972,
+    "/page": 568969,
+    "/people/loading": 737230,
+    "/people/[id]/loading": 349043,
+    "/people/[id]/page": 1041806,
+    "/profile/loading": 349043,
+    "/profile/page": 1050451,
+    "/people/page": 831432,
+    "/(app)/layout": 735086,
+    "/(app)/finance/loading": 349043,
+    "/(app)/finance/page": 405812,
+    "/(app)/docs/loading": 349043,
+    "/(app)/docs/page": 414733,
+    "/(app)/home/loading": 357618,
+    "/(app)/home/page": 357618
+  }
+}

@@ -4,8 +4,8 @@
 
 YM currently uses sched.com to run its National Convention and other events, but it's glitchy and the UX is poor. This plan builds an in-app replacement that:
 
-- Lets attendees browse a multi-day schedule, pick non-overlapping sessions, verify attendance with a password, and leave 1–5 star + comment feedback after sessions end.
-- Lets admins build conferences end-to-end: sessions (each with its own time), capacities, attendance passwords, attendee invite lists, and live rosters.
+- Lets attendees browse a multi-day schedule, pick non-overlapping sessions, check in to sessions with a code, and leave 1–5 star + comment feedback after sessions end.
+- Lets admins build conferences end-to-end: sessions (each with its own time), capacities, check-in codes, attendee invite lists, and live rosters.
 - Reuses existing YM infrastructure: the People page's filterable table for attendee selection, the `role_assignments` system for admin access, and the existing server-page → client-content component pattern.
 - Starts as a single upcoming National Convention but is schema-ready for concurrent / historical conferences without future migrations.
 
@@ -19,14 +19,17 @@ The outcome: a self-hosted, sched.com-style feature that integrates cleanly with
 |---|---|---|
 | 1 | Scope | Multi-conference schema (`conferences` parent table); all children FK to conference. |
 | 2 | Admin access | New `"Event Admin"` row in `role_types`, assigned via existing `role_assignments`. Global (not per-conference). |
-| 3 | Route layout | Two siloed routes: `/schedule` (attendee), `/admin/schedule` (admin). Admin reuses attendee components as a preview pane with edit affordances overlaid. |
+| 3 | Route layout | Two siloed routes: `/conferences` (attendee), `/admin/conferences` (admin). Admin reuses attendee components as a preview pane with edit affordances overlaid. |
 | 4 | Attendee assignment | Explicit invite via `conference_attendees` junction. Admin picker reuses `PeoplePageClient` in a new "select mode" with a bulk "Add filtered" action. |
-| 5 | Session model | **Sessions carry their own times** (`day_date`, `start_time`, `end_time`). No `time_slots` table. Breaks are sessions with `is_break=true`, `capacity=NULL`, `attendance_password=NULL`. The attendee UI groups sessions by matching `(start_time, end_time)` at render. |
+| 5 | Session model | **Sessions carry their own times** (`day_date`, `start_time`, `end_time`). No `time_slots` table. Breaks are sessions with `is_break=true`, `capacity=NULL`, `check_in_code=NULL`. The attendee UI groups sessions by matching `(start_time, end_time)` at render. |
 | 6 | Admin build flow | Admin adds sessions directly — no "create slot then add session" step. "Add parallel" quick-action on any grouped time copies `start_time`/`end_time` into a new session form. |
 | 7 | Capacity enforcement | Postgres function `signup_for_session(session_id)` with `SELECT ... FOR UPDATE`, atomic capacity check, and automatic replacement of any existing signup for this user that **overlaps in time** on the same day. |
-| 8 | Password storage | Plaintext TEXT on `sessions.attendance_password`. Low-stakes, admin-readable. |
+| 8 | Check-in code storage | Plaintext TEXT on `sessions.check_in_code`. Low-stakes (used to confirm physical attendance), admin-readable so they can read it aloud / display it at session end. |
 | 9 | Feedback gate | Server-enforced via RLS `WITH CHECK`: inserts rejected before `sessions.end_time`. Client also hides form until then. |
 | 10 | Realtime updates | Supabase realtime subscription on `session_signups`, filtered by `conference_id`. Updates live seat counts. Degrades cleanly to manual refetch if it flakes. |
+| 11 | Conference lifecycle | `status` column with values `'draft' \| 'published'`. **Publishing is one-way** — no Unpublish action. Draft mode shows tabs (Info / Schedule / Attendees) for setup; Published mode collapses to Schedule-as-page with Info/Attendees as icon-button Sheets. To take a conference offline, admin deletes it (type-to-confirm guard). |
+| 12 | Sidebar nav per conference | A **"Conferences" sidebar section** (a `SidebarGroup` with calendar icon, like the existing Admin section) appears when the user is invited to ≥1 conference. Inside that section, each invited conference appears as its own named nav item (no special tint/border — just regular nav styling). Zero invites + non-admin → no Conferences section at all. Admins additionally see a "Conferences" link under the **Admin** section (separate; the management dashboard at `/admin/conferences`). The generic "Conferences" link as main-nav does not exist — the section + named items pattern replaces it. |
+| 13 | Destructive deletes | All deletes use a single Dialog pattern with **type-to-confirm**. Sessions: type `delete`. Conferences: type the full conference name. Same component, different confirmation strings — guard friction scales with blast radius. |
 
 ---
 
@@ -35,6 +38,8 @@ The outcome: a self-hosted, sched.com-style feature that integrates cleanly with
 All new tables. Naming follows existing convention (snake_case, UUID PKs via `gen_random_uuid()`, `created_at` / `updated_at` timestamptz).
 
 ```sql
+CREATE TYPE conference_status AS ENUM ('draft', 'published');
+
 CREATE TABLE conferences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
@@ -43,10 +48,28 @@ CREATE TABLE conferences (
   timezone TEXT NOT NULL DEFAULT 'America/New_York',
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
+  status conference_status NOT NULL DEFAULT 'draft',
+  published_at TIMESTAMPTZ,            -- Set when status flips to 'published'; immutable after
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-  CHECK (end_date >= start_date)
+  CHECK (end_date >= start_date),
+  CHECK ((status = 'published') = (published_at IS NOT NULL))
 );
+
+-- Trigger or function ensures status can only go draft → published, never back.
+CREATE OR REPLACE FUNCTION enforce_one_way_publish()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.status = 'published' AND NEW.status = 'draft' THEN
+    RAISE EXCEPTION 'Cannot unpublish a conference. Delete it instead.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER conferences_one_way_publish
+  BEFORE UPDATE OF status ON conferences
+  FOR EACH ROW EXECUTE FUNCTION enforce_one_way_publish();
 
 CREATE TABLE conference_attendees (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -68,11 +91,11 @@ CREATE TABLE sessions (
   room TEXT,
   is_break BOOLEAN NOT NULL DEFAULT false,
   capacity INTEGER,                    -- NULL = unlimited / break
-  attendance_password TEXT,            -- Plaintext; NULL = no verification required
+  check_in_code TEXT,            -- Plaintext; NULL = no check-in required
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   CHECK (end_time > start_time),
-  CHECK (NOT is_break OR (capacity IS NULL AND attendance_password IS NULL)),
+  CHECK (NOT is_break OR (capacity IS NULL AND check_in_code IS NULL)),
   CHECK (capacity IS NULL OR capacity > 0)
 );
 
@@ -84,11 +107,11 @@ CREATE TABLE session_signups (
   UNIQUE (session_id, user_id)
 );
 
-CREATE TABLE session_attendance_verifications (
+CREATE TABLE session_check_ins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  verified_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  checked_in_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   UNIQUE (session_id, user_id)
 );
 
@@ -159,10 +182,10 @@ SELECT EXISTS (
 - Inserts the new signup.
 - Returns `{ success: true }` or `{ success: false, error: 'Session full' }` etc.
 
-### `verify_session_attendance(p_session_id UUID, p_password TEXT) RETURNS JSONB`
-- Fetches session's `attendance_password`.
+### `check_in_to_session(p_session_id UUID, p_password TEXT) RETURNS JSONB`
+- Fetches session's `check_in_code`.
 - Compares (constant-time comparison via `pg_crypto.crypt_memcmp` or simple `=`; plaintext so direct equality is fine).
-- Inserts verification row (idempotent via UNIQUE).
+- Inserts check-in row (idempotent via UNIQUE).
 - Returns `{ success, error? }`.
 
 ---
@@ -175,51 +198,51 @@ Pattern matches existing `is_authenticated()` helper. New helper: `is_event_admi
 |---|---|---|---|
 | `conferences` | Only conferences they attend (via `conference_attendees` EXISTS) | None | Full CRUD |
 | `conference_attendees` | Own row only | None | Full CRUD |
-| `sessions` | Attendees of parent conference; `attendance_password` column restricted server-side (not returned in attendee reads — use explicit SELECT lists) | None | Full CRUD |
+| `sessions` | Attendees of parent conference; `check_in_code` column restricted server-side (not returned in attendee reads — use explicit SELECT lists) | None | Full CRUD |
 | `session_signups` | Own rows + rows of sessions they can see (for seat counts) | Only via `signup_for_session()` function | Read all, write all |
-| `session_attendance_verifications` | Own rows | Only via `verify_session_attendance()` function | Read all |
+| `session_check_ins` | Own rows | Only via `check_in_to_session()` function | Read all |
 | `session_feedback` | Own rows + aggregate (for admin views) | `WITH CHECK`: user matches + `(SELECT (day_date + end_time) FROM sessions WHERE id = session_id) < NOW()` | Read all |
 
-**Password non-leak:** Attendee queries select columns explicitly, omitting `attendance_password`. Admin queries include it. Enforced in the query layer (`src/lib/supabase/queries/schedule.ts`), not by column-level RLS (which Postgres doesn't support natively per-role in the same way).
+**Password non-leak:** Attendee queries select columns explicitly, omitting `check_in_code`. Admin queries include it. Enforced in the query layer (`src/lib/supabase/queries/conferences.ts`), not by column-level RLS (which Postgres doesn't support natively per-role in the same way).
 
 ---
 
 ## Routes & Component Layout
 
-### Attendee: `/schedule`
+### Attendee: `/conferences`
 
-- `src/app/schedule/page.tsx` — Server component. Fetches user's `conference_attendees` + joined conference list.
+- `src/app/conferences/page.tsx` — Server component. Fetches user's `conference_attendees` + joined conference list.
   - No conferences → empty state.
   - One conference → render its schedule directly.
   - Multiple → render a small conference picker.
-- `src/app/schedule/ScheduleContent.tsx` — Client wrapper, owns state.
-- `src/app/schedule/components/`:
+- `src/app/conferences/ScheduleContent.tsx` — Client wrapper, owns state.
+- `src/app/conferences/components/`:
   - `DayTabs.tsx` — Uses shadcn `Tabs`. One tab per distinct `day_date` derived from sessions.
   - `DaySchedule.tsx` — Groups sessions by `(start_time, end_time)` tuple. Renders each group with a time header ("9:00 AM – 10:15 AM") followed by the parallel session cards beneath.
   - `SessionCard.tsx` — Shows title, speaker, room, capacity ("12 / 30 seats"), signup CTA. Disabled + muted if full and not user's selection. If `is_break`, renders as non-interactive info card with icon.
-  - `SessionSheet.tsx` — shadcn `Sheet` for session details; contains signup button, attendance password entry (after session starts), feedback form (after session ends).
-  - `AttendancePasswordDialog.tsx` — shadcn `Dialog` with a single `Input` + submit.
+  - `SessionSheet.tsx` — shadcn `Sheet` for session details; contains signup button, check-in code entry (after session starts), feedback form (after session ends).
+  - `CheckInDialog.tsx` — shadcn `Dialog` with a single `Input` + submit.
   - `FeedbackForm.tsx` — 1–5 star picker + textarea + submit; disabled until `end_time`.
-- `src/app/schedule/hooks/`:
+- `src/app/conferences/hooks/`:
   - `useScheduleData.ts` — Initial fetch + provides refetch.
   - `useRealtimeSeatCounts.ts` — Subscribes to `session_signups` changes filtered by conference_id. Provides live per-session counts; falls back to refetch on disconnect.
 
-### Admin: `/admin/schedule`
+### Admin: `/admin/conferences`
 
-- `src/app/admin/schedule/page.tsx` — Server component. Guards via `isEventAdmin()`; redirects to `/schedule` if not an admin. Lists all conferences.
-- `src/app/admin/schedule/[conferenceId]/page.tsx` — Server component for one conference editor.
-- `src/app/admin/schedule/[conferenceId]/components/`:
+- `src/app/admin/conferences/page.tsx` — Server component. Guards via `isEventAdmin()`; redirects to `/conferences` if not an admin. Lists all conferences.
+- `src/app/admin/conferences/[conferenceId]/page.tsx` — Server component for one conference editor.
+- `src/app/admin/conferences/[conferenceId]/components/`:
   - `ConferenceEditor.tsx` — Tab navigation: Info | Schedule | Attendees.
   - `ConferenceInfoForm.tsx` — Name, description, dates, timezone, location.
   - `ScheduleBuilder.tsx` — Reuses attendee's `DayTabs` / `DaySchedule` / `SessionCard` in "admin mode" (prop: `isAdmin=true`). Admin mode adds per-row edit/delete icons; a single "+ Add session" button per day; a small "+ Add parallel" affordance below any time-grouping to pre-fill the time.
-  - `SessionEditor.tsx` — Dialog for creating/editing sessions (day, start_time, end_time, title, description, speaker, room, capacity, attendance password, is_break toggle). Smart defaults: on create, `day_date` = active tab; `start_time` defaults to the `end_time` of the latest session on that day; 75-minute duration suggested.
+  - `SessionEditor.tsx` — Dialog for creating/editing sessions (day, start_time, end_time, title, description, speaker, room, capacity, check-in code, is_break toggle). Smart defaults: on create, `day_date` = active tab; `start_time` defaults to the `end_time` of the latest session on that day; 75-minute duration suggested.
   - `AttendeePicker.tsx` — Wraps `PeoplePageClient` in select mode (new checkbox column + `AddSelectedToConference` button replacing `CopyEmailsButton`). Exposes `filteredPeople` for a bulk "Add all filtered" action.
-  - `RosterSheet.tsx` — shadcn `Sheet` per session: two tabs, "Signed Up (N)" and "Verified (M)", each a searchable list of users with name/email.
+  - `RosterSheet.tsx` — shadcn `Sheet` per session: two tabs, "Signed Up (N)" and "Checked in (M)", each a searchable list of users with name/email.
 
 ### Shared
 
 - `src/lib/auth/isEventAdmin.ts` — Server-side check calling the RPC; single source of truth for admin gating.
-- `src/lib/supabase/queries/schedule.ts` — Attendee queries (conferences by user, time_slots, sessions, signups, feedback).
+- `src/lib/supabase/queries/conferences.ts` — Attendee queries (conferences by user, time_slots, sessions, signups, feedback).
 - `src/lib/supabase/queries/adminSchedule.ts` — Admin queries (all conferences, rosters, CRUD mutations via direct table writes).
 - `src/components/layout/AppSidebar.tsx` — Add "Schedule" nav link always; add "Admin" link conditional on `isEventAdmin`.
 
@@ -248,12 +271,12 @@ Pattern matches existing `is_authenticated()` helper. New helper: `is_event_admi
 ## Critical Files
 
 **New:**
-- `supabase/migrations/00012_schedule_feature.sql` — All new tables, enum addition, role insert, functions, RLS, realtime enable.
+- `supabase/migrations/00012_conferences_feature.sql` — All new tables, enum addition, role insert, functions, RLS, realtime enable.
 - `src/lib/auth/isEventAdmin.ts`
-- `src/lib/supabase/queries/schedule.ts`
+- `src/lib/supabase/queries/conferences.ts`
 - `src/lib/supabase/queries/adminSchedule.ts`
-- `src/app/schedule/page.tsx` + `ScheduleContent.tsx` + all components/hooks listed above.
-- `src/app/admin/schedule/page.tsx` + `[conferenceId]/page.tsx` + all components.
+- `src/app/conferences/page.tsx` + `ScheduleContent.tsx` + all components/hooks listed above.
+- `src/app/admin/conferences/page.tsx` + `[conferenceId]/page.tsx` + all components.
 
 **Modified:**
 - `src/components/layout/AppSidebar.tsx` — Add nav entries.
@@ -279,7 +302,7 @@ Pattern matches existing `is_authenticated()` helper. New helper: `is_event_admi
 
 ---
 
-## Verification Plan
+## Testing Plan
 
 1. **Apply migration:** `npx supabase db push` (or run the SQL file directly against the remote DB).
 2. **Grant yourself admin:**
@@ -289,16 +312,16 @@ Pattern matches existing `is_authenticated()` helper. New helper: `is_event_admi
    FROM users u, role_types rt
    WHERE u.email = 'an.omar.ees@gmail.com' AND rt.code = 'event_admin';
    ```
-3. **Seed a test conference** via `/admin/schedule`: create conference, then add sessions on Day 1: one break session, two parallel sessions at 9:00-10:15 (one with capacity=1 to force the full-state UX), one session at 10:45-12:00.
+3. **Seed a test conference** via `/admin/conferences`: create conference, then add sessions on Day 1: one break session, two parallel sessions at 9:00-10:15 (one with capacity=1 to force the full-state UX), one session at 10:45-12:00.
 4. **Invite attendees:** in the admin Attendees tab, filter People by region, bulk-add; verify `conference_attendees` rows land.
-5. **Attendee flow (primary browser):** visit `/schedule`, see the conference, pick a session → seat count shows "1 / 1", card becomes "Selected". Click a different session whose time overlaps → previous signup replaced (verified in DB: no two signups for this user with overlapping time ranges on the same day).
+5. **Attendee flow (primary browser):** visit `/conferences`, see the conference, pick a session → seat count shows "1 / 1", card becomes "Selected". Click a different session whose time overlaps → previous signup replaced (verified in DB: no two signups for this user with overlapping time ranges on the same day).
 6. **Concurrency test (second browser, different user):** Try to sign up for the capacity-1 session that's already full → sees "Session full" error from the RPC.
 7. **Realtime:** In browser A, sign up for a session. In browser B (on the same page, no refresh), the seat count updates live within ~1s.
-8. **Attendance verification:** After session's `start_time`, enter the password in browser A. A `session_attendance_verifications` row is created. Incorrect password returns error.
+8. **Check-in:** After session's `start_time`, enter the check-in code in browser A. A `session_check_ins` row is created. Incorrect code returns error.
 9. **Feedback gate:** Before `end_time`, try to POST feedback via curl/devtools — RLS rejects. After `end_time`, submit 1–5 stars + comment → row created. Re-submit to verify idempotency via UPSERT logic or blocked via UNIQUE (design choice: treat the UNIQUE as "update existing feedback").
-10. **Admin roster:** In `/admin/schedule`, open a session's Roster sheet → see signup count + verified count, both lists populated.
+10. **Admin roster:** In `/admin/conferences`, open a session's Roster sheet → see signup count + checked-in count, both lists populated.
 11. **RLS negative test:** As a user NOT in `conference_attendees` for this conference, call `GET /rest/v1/conferences?id=eq.{id}` — returns empty.
-12. **Password non-leak:** As attendee, fetch `/rest/v1/sessions` — `attendance_password` column is absent from the response (enforced by explicit column lists in `queries/schedule.ts`).
+12. **Password non-leak:** As attendee, fetch `/rest/v1/sessions` — `check_in_code` column is absent from the response (enforced by explicit column lists in `queries/conferences.ts`).
 
 ---
 

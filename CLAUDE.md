@@ -61,7 +61,8 @@ All profile list sections use `ExpandableCardList` → `ExpandableCard` and must
 ## Git
 - Conventional commits: `feat:`, `fix:`, `docs:`, etc.
 - **NEVER include Claude as co-author or add AI-generated footers**
-- Branches: `main` ← `dev` ← `feature/*`, merge with `--no-ff`
+- Branches: `main` is the integration branch; cut `feature/*` from `main` and merge back to `main`
+- Pre-prod, no `dev` or staging branch — revisit when we go to production
 - Always verify current branch before making edits
 
 ## CI/CD

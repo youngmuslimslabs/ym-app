@@ -3,12 +3,13 @@ import { expect, test as base } from '@playwright/test'
 type AnyTest = typeof base
 
 /**
- * Why this exists: the unauthenticated middleware (src/lib/supabase/middleware.ts)
- * has TWO paths that both redirect to /login — the no-user path and the
- * getUserError fallback path. With placeholder Supabase env vars, getUser()
- * errors and the fallback path runs, so a redirect-to-login test would pass
- * even with broken credentials. By asserting that real env vars are present,
- * we ensure these tests exercise the no-user redirect, not the error fallback.
+ * Why this exists: with placeholder/missing Supabase env vars, the middleware
+ * still redirects unauthenticated requests to /login (via the getUserError
+ * fallback path), so a bare redirect-to-login test would pass even with
+ * broken credentials and never actually exercise the real auth client.
+ * Asserting that real env vars are present is the cheapest way to prove the
+ * test environment is wired correctly — the test is otherwise identical
+ * regardless of env validity, since both middleware paths converge on /login.
  */
 export function assertSupabaseEnvConfigured(test: AnyTest) {
   test.beforeAll(() => {

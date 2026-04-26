@@ -13,16 +13,16 @@ import { assertSupabaseEnvConfigured } from './helpers'
 assertSupabaseEnvConfigured(test)
 
 test.describe('Onboarding gate', () => {
-  test('/onboarding redirects unauthenticated users to /login (no-user path)', async ({ page }) => {
+  // See comment in e2e/auth.spec.ts about why we don't assert the URL lacks
+  // ?error=session_expired — that param is part of the normal logged-out flow.
+  test('/onboarding redirects unauthenticated users to /login', async ({ page }) => {
     await page.goto('/onboarding')
     await expect(page).toHaveURL(/\/login/)
-    expect(page.url()).not.toMatch(/error=session_expired/)
   })
 
   test('/onboarding?step=3 redirects unauthenticated users to /login', async ({ page }) => {
     await page.goto('/onboarding?step=3')
     await expect(page).toHaveURL(/\/login/)
-    expect(page.url()).not.toMatch(/error=session_expired/)
   })
 })
 

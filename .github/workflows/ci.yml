@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Manual trigger so any branch can run CI without opening a PR.
+  # Useful for verifying CI/test-infra work on a feature branch.
+  workflow_dispatch:
 
 env:
   # Pin to a concrete version so audit/build/bundle outputs are deterministic.

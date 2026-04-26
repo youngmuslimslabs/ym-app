@@ -108,10 +108,7 @@ describe('OnboardingLayout', () => {
 
     expect(screen.getByText(/Step 3 didn.t save/i)).toBeInTheDocument()
 
-    const buttons = screen.getAllByRole('button')
-    const retry = buttons.find((b) => b !== screen.getByRole('button', { name: /next/i }))
-    expect(retry).toBeDefined()
-    await user.click(retry!)
+    await user.click(screen.getByRole('button', { name: /retry save/i }))
 
     expect(mockClearPendingSaveError).toHaveBeenCalledOnce()
     expect(mockSaveStepInBackground).toHaveBeenCalledWith(3, { skills: ['leadership'] })

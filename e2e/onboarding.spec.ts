@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { assertSupabaseEnvConfigured } from './helpers'
 
 /**
  * Onboarding flow E2E tests.
@@ -9,15 +10,19 @@ import { test, expect } from '@playwright/test'
  * is described in skipped specs as a follow-up.
  */
 
+assertSupabaseEnvConfigured(test)
+
 test.describe('Onboarding gate', () => {
-  test('/onboarding redirects unauthenticated users to /login', async ({ page }) => {
+  test('/onboarding redirects unauthenticated users to /login (no-user path)', async ({ page }) => {
     await page.goto('/onboarding')
     await expect(page).toHaveURL(/\/login/)
+    expect(page.url()).not.toMatch(/error=session_expired/)
   })
 
   test('/onboarding?step=3 redirects unauthenticated users to /login', async ({ page }) => {
     await page.goto('/onboarding?step=3')
     await expect(page).toHaveURL(/\/login/)
+    expect(page.url()).not.toMatch(/error=session_expired/)
   })
 })
 

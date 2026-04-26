@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { assertSupabaseEnvConfigured } from './helpers'
 
 /**
  * Auth flow E2E tests.
@@ -9,17 +10,25 @@ import { test, expect } from '@playwright/test'
  * follow-up rather than implemented here.
  */
 
+assertSupabaseEnvConfigured(test)
+
 test.describe('Unauthenticated redirects', () => {
   for (const path of ['/home', '/profile', '/people', '/onboarding']) {
-    test(`${path} redirects to /login when unauthenticated`, async ({ page }) => {
+    test(`${path} redirects to /login via the no-user path`, async ({ page }) => {
       await page.goto(path)
       await expect(page).toHaveURL(/\/login/)
+      // Must hit the no-user redirect (middleware.ts:66-78), not the
+      // getUserError fallback (middleware.ts:43-64). The fallback would tag
+      // the URL with ?error=session_expired; absence of that param means we
+      // exercised the real auth path.
+      expect(page.url()).not.toMatch(/error=session_expired/)
     })
   }
 
-  test('root path redirects to /login when unauthenticated', async ({ page }) => {
+  test('root path redirects to /login via client-side router', async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/login/)
+    expect(page.url()).not.toMatch(/error=session_expired/)
   })
 })
 

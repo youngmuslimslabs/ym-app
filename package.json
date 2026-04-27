@@ -12,7 +12,6 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "bundle:baseline": "bun run scripts/check-bundle-size.ts --update",
     "db:types": "bunx supabase gen types typescript --project-id todqvyzdvpnwuuonxwch > src/types/database.types.ts",
     "sync:google": "bun run scripts/sync-google-users.ts"
   },

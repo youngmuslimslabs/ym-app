@@ -69,7 +69,12 @@ export function OnboardingLayout({
         <div className="mt-3 flex w-full max-w-md mx-auto items-center gap-2 rounded-md bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span className="flex-1">Step {pendingSaveError.step} didn&apos;t save. Your data is safe locally.</span>
-          <button onClick={handleRetry} className="shrink-0 rounded-sm p-1 hover:bg-destructive/10">
+          <button
+            type="button"
+            aria-label="Retry save"
+            onClick={handleRetry}
+            className="shrink-0 rounded-sm p-1 hover:bg-destructive/10"
+          >
             <RotateCw className="h-3.5 w-3.5" />
           </button>
         </div>

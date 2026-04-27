@@ -5,11 +5,46 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
-    // Use 'node' for unit tests (faster). Switch to 'jsdom' when adding component tests.
-    environment: 'node',
-    // Include test files with these patterns
+    environment: 'jsdom',
+    // src/lib unit tests are pure-node and faster under the node env. Runtime DOM
+    // primitives still resolve via jsdom default; this just speeds up node-only files.
+    environmentMatchGlobs: [['src/lib/**', 'node']],
+    setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.{js,ts,jsx,tsx}'],
-    // Exclude node_modules and build output
-    exclude: ['node_modules', '.next', 'dist'],
+    exclude: ['node_modules', '.next', 'dist', 'e2e'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json-summary'],
+      // Broad include: every TS/TSX in src is measured, so adding an untested
+      // file drags the global average down (rather than silently slipping past
+      // an allowlist). Excludes call out things that are intentionally not
+      // covered here — keep this list honest, not aspirational.
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        // Test scaffolding
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.spec.{ts,tsx}',
+        'src/**/*.d.ts',
+        // Generated / vendored
+        'src/types/database.types.ts',
+        'src/components/ui/**', // shadcn primitives, vendored
+        // Requires a real Supabase project + auth — out of scope for unit tests.
+        // Covered (partially) by E2E gate tests once a test project exists.
+        'src/lib/supabase/**',
+        'src/middleware.ts',
+        'src/contexts/AuthContext.tsx',
+      ],
+      // Thresholds are floors at the *current* honest coverage so any PR that
+      // drops coverage fails CI. Ratchet these up as new tests land — bump after
+      // any PR that lifts the actual numbers. The launch goal of 80% global
+      // coverage is tracked in docs/project-todos.md as a separate work stream.
+      // Do NOT raise these speculatively; the gate's value is being a true ratchet.
+      thresholds: {
+        lines: 4,
+        branches: 6,
+        functions: 4,
+        statements: 4,
+      },
+    },
   },
 })

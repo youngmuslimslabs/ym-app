@@ -211,25 +211,30 @@
 - [x] Unit tests for validation functions (phone, email) — `src/lib/validation.test.ts` (23 test cases)
 - [x] Extract duplicated validation functions to shared module — `src/lib/validation.ts`
 
-### Component Tests (Later)
-- [ ] [LAUNCH] Component tests for onboarding steps
+### Component Tests
+- [x] Component tests for onboarding step 1 (personal info) — `src/app/onboarding/step1-personal-info.test.tsx`
+- [x] Component tests for onboarding step 6 (skills) — `src/app/onboarding/step6-skills.test.tsx`
+- [x] Component tests for `OnboardingLayout` — `src/app/onboarding/components/OnboardingLayout.test.tsx`
+- [ ] [LAUNCH] Component tests for onboarding steps 2–5, 7
 
-### E2E Tests (Foundation Ready)
+### E2E Tests
 - [x] Set up Playwright E2E framework — `playwright.config.ts`, `e2e/` directory
 - [x] Add test:e2e scripts to package.json
-- [x] Create example smoke tests — `e2e/example.spec.ts`
-- [ ] [LAUNCH] E2E tests for onboarding flow
-- [ ] [LAUNCH] E2E tests for auth flow
+- [x] Auth flow gate tests (unauthenticated redirects, login UI, public routes) — `e2e/auth.spec.ts`
+- [x] Onboarding gate tests (unauthenticated redirects) — `e2e/onboarding.spec.ts`
+- [ ] [LAUNCH] Authenticated onboarding flow (requires test Supabase project + test user) — skipped block in `e2e/onboarding.spec.ts`
+- [ ] [LAUNCH] Authenticated auth flow (signed-in redirect rules, domain validation) — skipped block in `e2e/auth.spec.ts`
 
 ---
 
 ## CI/CD Enhancements
 
-- [ ] [LAUNCH] Add test coverage threshold (fail CI if coverage drops below 80%)
+- [x] Coverage threshold mechanism — vitest measures all `src/**/*.{ts,tsx}` (with explicit excludes for vendored shadcn primitives, generated types, supabase wrappers, and contexts requiring real Supabase). Floors are set at the current honest values (~4–6%) so any PR that drops coverage fails CI. Ratchet up the floors in `vitest.config.mts` as more tests land.
+- [ ] [LAUNCH] Raise coverage thresholds to 80% — currently ~5%; depends on broader component test coverage. Track ratchet in commits to `vitest.config.mts`.
 - [ ] [LAUNCH] Add bundle size check (warn if build output grows significantly)
-- [ ] [LAUNCH] Add E2E tests with Playwright to CI
-- [ ] [LAUNCH] Add accessibility checks (axe-core) to CI
-- [ ] [LAUNCH] Add security scanning (dependency audit) to CI
+- [x] E2E tests with Playwright to CI — separate `e2e` job in `.github/workflows/ci.yml`, browsers cached by Playwright version (not `bun.lock` hash), runs against `next start`.
+- [x] Security scanning (dependency audit) — `bun audit --audit-level=critical` blocks; `--audit-level=high` runs as a non-blocking warning step. `BUN_VERSION` pinned to `1.2.21` in CI + `netlify.toml`.
+- ~~Add accessibility checks (axe-core) to CI~~ — descoped per product call (2026-04-25)
 
 ---
 

@@ -4,7 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  BUN_VERSION = "1.2"
+  # Keep in lockstep with .github/workflows/ci.yml BUN_VERSION
+  BUN_VERSION = "1.2.21"
 
 # Deploy Preview settings (for PRs)
 [context.deploy-preview]

@@ -52,11 +52,15 @@ export default defineConfig({
     // },
   ],
 
-  // Run local dev server before starting the tests
+  // CI=1: build then start (production parity, self-contained — works whether
+  //   or not a fresh `.next` exists, so local `CI=1 bun run test:e2e` does not
+  //   require a manual prebuild).
+  // Local: dev server, fast feedback.
   webServer: {
-    command: 'bun run dev',
+    command: process.env.CI ? 'bun run build && bun run start' : 'bun run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    // Build can take ~30s; keep generous for cold CI caches.
+    timeout: 180 * 1000,
   },
 })

@@ -1,15 +1,9 @@
-// Curated list of timezones the org actually runs events in. Keeping this
-// short on purpose — admins don't want to scroll past Africa/Lagos to find
-// America/New_York. Add more as the org expands internationally.
+// US-only timezone list. The org's events run domestically; non-US zones
+// were removed to keep the dropdown short and unambiguous.
 export const TIMEZONE_OPTIONS = [
-  { value: 'America/New_York', label: 'America/New_York (Eastern)' },
-  { value: 'America/Chicago', label: 'America/Chicago (Central)' },
-  { value: 'America/Denver', label: 'America/Denver (Mountain)' },
-  { value: 'America/Phoenix', label: 'America/Phoenix (Mountain — no DST)' },
-  { value: 'America/Los_Angeles', label: 'America/Los_Angeles (Pacific)' },
-  { value: 'America/Toronto', label: 'America/Toronto (Eastern)' },
-  { value: 'Europe/London', label: 'Europe/London' },
-  { value: 'Asia/Dubai', label: 'Asia/Dubai' },
-  { value: 'Asia/Karachi', label: 'Asia/Karachi' },
-  { value: 'UTC', label: 'UTC' },
+  { value: 'America/New_York', label: 'Eastern (New York)' },
+  { value: 'America/Chicago', label: 'Central (Chicago)' },
+  { value: 'America/Denver', label: 'Mountain (Denver)' },
+  { value: 'America/Phoenix', label: 'Mountain — no DST (Phoenix)' },
+  { value: 'America/Los_Angeles', label: 'Pacific (Los Angeles)' },
 ]

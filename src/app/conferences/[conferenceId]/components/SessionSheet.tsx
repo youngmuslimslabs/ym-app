@@ -1,7 +1,16 @@
 'use client'
 
+import { useState } from 'react'
 import { CheckCircle2, MapPin } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { CheckInDialog } from './CheckInDialog'
 import { FeedbackForm } from './FeedbackForm'
@@ -46,6 +55,8 @@ export function SessionSheet({
   onCheckIn,
   onSubmitFeedback,
 }: Props) {
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
+
   if (!session) {
     return (
       <Sheet open={false} onOpenChange={(open) => !open && onClose()}>
@@ -166,29 +177,20 @@ export function SessionSheet({
           </div>
         )}
 
-        <div className="p-6 border-t bg-muted/30 flex gap-2">
+        <div className="p-6 border-t bg-muted/30 flex justify-center gap-2">
           {isBreak ? (
             <Button variant="outline" className="flex-1" onClick={onClose}>
               Close
             </Button>
-          ) : signedUp ? (
-            <>
-              <Button variant="outline" className="flex-1" disabled>
-                <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                You're signed up
-              </Button>
-              {!ended && !inProgress && (
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground"
-                  disabled={pending}
-                  onClick={() => onCancel(session.id)}
-                >
-                  Remove RSVP
-                </Button>
-              )}
-            </>
-          ) : ended ? (
+          ) : signedUp && !ended && !inProgress ? (
+            <Button
+              variant="destructive"
+              disabled={pending}
+              onClick={() => setConfirmRemoveOpen(true)}
+            >
+              Remove RSVP
+            </Button>
+          ) : signedUp ? null : ended ? (
             <Button variant="outline" className="flex-1" disabled>
               Session has ended
             </Button>
@@ -207,6 +209,43 @@ export function SessionSheet({
           )}
         </div>
       </SheetContent>
+
+      <Dialog
+        open={confirmRemoveOpen}
+        onOpenChange={(open) => !pending && setConfirmRemoveOpen(open)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove your RSVP?</DialogTitle>
+            <DialogDescription>
+              You'll lose your spot for{' '}
+              <span className="font-medium text-foreground">{session.title}</span>
+              {capacity != null
+                ? '. If the session fills up before you re-RSVP, you may not get a seat back.'
+                : '.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              disabled={pending}
+              onClick={() => setConfirmRemoveOpen(false)}
+            >
+              Keep RSVP
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={pending}
+              onClick={async () => {
+                await onCancel(session.id)
+                setConfirmRemoveOpen(false)
+              }}
+            >
+              {pending ? 'Removing…' : 'Remove RSVP'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   )
 }

@@ -5,8 +5,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from '@/components/ui/table'
 import { ConferenceStatusBadge } from './ConferenceStatusBadge'
@@ -14,8 +12,7 @@ import type { AdminConferenceRow } from '../types'
 
 interface Props {
   rows: AdminConferenceRow[]
-  // "active" hides the "invited" column header label cosmetic: same columns,
-  // both variants. Past rows are dimmed.
+  // Past rows are dimmed; otherwise the two variants render identically.
   variant: 'active' | 'past'
 }
 
@@ -30,15 +27,6 @@ export function AdminConferencesTable({ rows, variant }: Props) {
       }
     >
       <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/40">
-            <TableHead>Conference</TableHead>
-            <TableHead>When</TableHead>
-            <TableHead>Attendees</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-10" />
-          </TableRow>
-        </TableHeader>
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.id} className="hover:bg-muted/30">

@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { decomposeTzIso } from '../../lib/datetime'
 import { deleteSession } from '../../actions'
-import { DeleteConfirmDialog } from '../../components/DeleteConfirmDialog'
+import { TypeToConfirmDialog } from '../../components/TypeToConfirmDialog'
 import { SessionEditor } from './SessionEditor'
 import type { AdminSession, ConferenceEditorView } from '../../types'
 
@@ -150,7 +150,7 @@ export function ScheduleEditor({ view }: Props) {
         defaultDate={editorDefaultDate}
       />
 
-      <DeleteConfirmDialog
+      <TypeToConfirmDialog
         open={deletingSession !== null}
         onOpenChange={(next) => !next && setDeletingSession(null)}
         title={
@@ -166,9 +166,11 @@ export function ScheduleEditor({ view }: Props) {
           ) : null
         }
         confirmText="delete"
-        destructiveLabel={
+        confirmLabel={
           deletingSession?.is_break ? 'Delete break' : 'Delete session'
         }
+        pendingLabel="Deleting…"
+        tone="destructive"
         pending={deletePending}
         onConfirm={handleDeleteConfirmed}
       />

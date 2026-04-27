@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -19,34 +19,43 @@ interface Props {
   onOpenChange: (open: boolean) => void
   title: string
   description: React.ReactNode
-  // The exact string the user must type to enable the destructive button.
+  // The exact string the user must type to enable the confirm button.
   // Sessions: "delete". Conferences: their full name verbatim.
   confirmText: string
-  destructiveLabel: string
+  // Button label in the resting state.
+  confirmLabel: string
+  // Button label while the action is in flight.
+  pendingLabel?: string
+  // Visual treatment. Destructive = red icon + destructive button (delete).
+  // Primary = blue icon + primary button (publish, anything else permanent).
+  tone?: 'destructive' | 'primary'
   pending?: boolean
   onConfirm: () => Promise<void> | void
 }
 
-export function DeleteConfirmDialog({
+export function TypeToConfirmDialog({
   open,
   onOpenChange,
   title,
   description,
   confirmText,
-  destructiveLabel,
+  confirmLabel,
+  pendingLabel = 'Working…',
+  tone = 'destructive',
   pending = false,
   onConfirm,
 }: Props) {
   const [typed, setTyped] = useState('')
 
   // Reset the typed value whenever the dialog re-opens. Without this, a
-  // previous correct input would keep the destructive button enabled when
+  // previous correct input would keep the confirm button enabled when
   // re-opening for a different target.
   useEffect(() => {
     if (open) setTyped('')
   }, [open])
 
   const matches = typed === confirmText
+  const Icon = tone === 'destructive' ? AlertTriangle : CheckCircle2
 
   return (
     <Dialog
@@ -59,8 +68,20 @@ export function DeleteConfirmDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-start gap-3">
-            <div className="rounded-full bg-destructive/10 p-2 shrink-0">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
+            <div
+              className={
+                tone === 'destructive'
+                  ? 'rounded-full bg-destructive/10 p-2 shrink-0'
+                  : 'rounded-full bg-primary/10 p-2 shrink-0'
+              }
+            >
+              <Icon
+                className={
+                  tone === 'destructive'
+                    ? 'w-5 h-5 text-destructive'
+                    : 'w-5 h-5 text-primary'
+                }
+              />
             </div>
             <div className="flex-1 min-w-0 text-left">
               <DialogTitle className="text-base">{title}</DialogTitle>
@@ -71,13 +92,13 @@ export function DeleteConfirmDialog({
           </div>
         </DialogHeader>
         <div>
-          <Label htmlFor="delete-confirm" className="text-xs">
+          <Label htmlFor="type-confirm" className="text-xs">
             Type{' '}
             <span className="font-mono text-foreground">{confirmText}</span> to
             confirm
           </Label>
           <Input
-            id="delete-confirm"
+            id="type-confirm"
             autoFocus
             autoComplete="off"
             value={typed}
@@ -95,13 +116,13 @@ export function DeleteConfirmDialog({
             Cancel
           </Button>
           <Button
-            variant="destructive"
+            variant={tone === 'destructive' ? 'destructive' : 'default'}
             disabled={!matches || pending}
             onClick={async () => {
               await onConfirm()
             }}
           >
-            {pending ? 'Deleting…' : destructiveLabel}
+            {pending ? pendingLabel : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

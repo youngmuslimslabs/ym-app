@@ -18,7 +18,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs'
 import { ConferenceStatusBadge } from '../components/ConferenceStatusBadge'
-import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
+import { TypeToConfirmDialog } from '../components/TypeToConfirmDialog'
 import { deleteConference, publishConference } from '../actions'
 import { ConferenceInfoForm } from './components/ConferenceInfoForm'
 import { ScheduleEditor } from './components/ScheduleEditor'
@@ -36,6 +36,7 @@ export function ConferenceEditor({ initialView }: Props) {
   const isDraft = conference.status === 'draft'
 
   const [publishPending, setPublishPending] = useState(false)
+  const [publishOpen, setPublishOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletePending, setDeletePending] = useState(false)
 
@@ -49,6 +50,7 @@ export function ConferenceEditor({ initialView }: Props) {
         return
       }
       toast.success('Conference published')
+      setPublishOpen(false)
       router.refresh()
     } finally {
       setPublishPending(false)
@@ -115,7 +117,10 @@ export function ConferenceEditor({ initialView }: Props) {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {isDraft && (
-              <Button onClick={handlePublish} disabled={publishPending}>
+              <Button
+                onClick={() => setPublishOpen(true)}
+                disabled={publishPending}
+              >
                 {publishPending ? 'Publishing…' : 'Publish'}
               </Button>
             )}
@@ -165,7 +170,7 @@ export function ConferenceEditor({ initialView }: Props) {
         </TabsContent>
       </Tabs>
 
-      <DeleteConfirmDialog
+      <TypeToConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Delete this conference?"
@@ -183,9 +188,34 @@ export function ConferenceEditor({ initialView }: Props) {
           </>
         }
         confirmText={conference.name}
-        destructiveLabel="Delete conference"
+        confirmLabel="Delete conference"
+        pendingLabel="Deleting…"
+        tone="destructive"
         pending={deletePending}
         onConfirm={handleDelete}
+      />
+
+      <TypeToConfirmDialog
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+        title="Publish this conference?"
+        description={
+          <>
+            Once published,{' '}
+            <span className="text-foreground font-medium">
+              {conference.name}
+            </span>{' '}
+            becomes visible to all {invitedCount} invited attendee
+            {invitedCount === 1 ? '' : 's'}. Publishing is one-way — you
+            cannot revert to draft.
+          </>
+        }
+        confirmText={conference.name}
+        confirmLabel="Publish conference"
+        pendingLabel="Publishing…"
+        tone="primary"
+        pending={publishPending}
+        onConfirm={handlePublish}
       />
     </div>
   )

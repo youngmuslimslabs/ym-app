@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Calendar,
+  Shield,
   X,
 } from 'lucide-react'
 import {
@@ -60,10 +61,12 @@ export function AppSidebar() {
   // Using shadcn's useSidebar hook for state and toggle
   const { isMobile, setOpenMobile, state, toggleSidebar } = useSidebar()
   const [conferences, setConferences] = useState<InvitedConference[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
 
-  // Load conferences the user is invited to. RLS already filters to their
-  // own attendee rows, so this is just "give me the conferences this user
-  // can see". Empty array if not invited to any.
+  // Load conferences the user is invited to + admin status. RLS already
+  // filters attendee rows to their own. The admin check uses the same
+  // is_event_admin() function the DB policies use, so the sidebar visibility
+  // matches what they're actually allowed to do.
   useEffect(() => {
     if (!user) return
     let cancelled = false
@@ -75,16 +78,20 @@ export function AppSidebar() {
         .eq('auth_id', user.id)
         .maybeSingle()
       if (!userRow || cancelled) return
-      const { data } = await (supabase as any)
-        .from('conference_attendees')
-        .select('conferences(id, name)')
-        .eq('user_id', userRow.id)
+      const [confRes, adminRes] = await Promise.all([
+        (supabase as any)
+          .from('conference_attendees')
+          .select('conferences(id, name)')
+          .eq('user_id', userRow.id),
+        (supabase as any).rpc('is_event_admin', { p_user_id: userRow.id }),
+      ])
       if (cancelled) return
-      const list = ((data ?? []) as { conferences: InvitedConference | null }[])
+      const list = ((confRes.data ?? []) as { conferences: InvitedConference | null }[])
         .map((r) => r.conferences)
         .filter((c): c is InvitedConference => c !== null)
         .sort((a, b) => a.name.localeCompare(b.name))
       setConferences(list)
+      setIsAdmin(Boolean(adminRes.data))
     })()
     return () => {
       cancelled = true
@@ -263,6 +270,32 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <Shield className="mr-1.5 size-3" />
+              Admin
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith('/admin/conferences')}
+                    tooltip="Conferences"
+                    onClick={handleNavClick}
+                  >
+                    <Link href="/admin/conferences">
+                      <Calendar />
+                      <span>Conferences</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

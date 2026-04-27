@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -15,6 +15,7 @@ import {
   ChevronUp,
   PanelLeftClose,
   PanelLeft,
+  Calendar,
   X,
 } from 'lucide-react'
 import {
@@ -23,12 +24,14 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { createClient } from '@/lib/supabase/client'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,12 +48,48 @@ const NAV_ITEMS = [
   { href: '/docs', label: 'Docs', icon: FileText },
 ]
 
+interface InvitedConference {
+  id: string
+  name: string
+}
+
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut } = useAuth()
   // Using shadcn's useSidebar hook for state and toggle
   const { isMobile, setOpenMobile, state, toggleSidebar } = useSidebar()
+  const [conferences, setConferences] = useState<InvitedConference[]>([])
+
+  // Load conferences the user is invited to. RLS already filters to their
+  // own attendee rows, so this is just "give me the conferences this user
+  // can see". Empty array if not invited to any.
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    const supabase = createClient()
+    void (async () => {
+      const { data: userRow } = await (supabase as any)
+        .from('users')
+        .select('id')
+        .eq('auth_id', user.id)
+        .maybeSingle()
+      if (!userRow || cancelled) return
+      const { data } = await (supabase as any)
+        .from('conference_attendees')
+        .select('conferences(id, name)')
+        .eq('user_id', userRow.id)
+      if (cancelled) return
+      const list = ((data ?? []) as { conferences: InvitedConference | null }[])
+        .map((r) => r.conferences)
+        .filter((c): c is InvitedConference => c !== null)
+        .sort((a, b) => a.name.localeCompare(b.name))
+      setConferences(list)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   // Custom state for hover effect on entire collapsed sidebar
   const [isHoveringCollapsed, setIsHoveringCollapsed] = useState(false)
@@ -200,6 +239,34 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {conferences.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <Calendar className="mr-1.5 size-3" />
+              Conferences
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {conferences.map((c) => (
+                  <SidebarMenuItem key={c.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === `/conferences/${c.id}`}
+                      tooltip={c.name}
+                      onClick={handleNavClick}
+                    >
+                      <Link href={`/conferences/${c.id}`}>
+                        <Calendar />
+                        <span className="truncate">{c.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {/* Footer - User Profile + Feedback */}

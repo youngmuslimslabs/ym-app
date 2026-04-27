@@ -4,6 +4,11 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import {
+  DatePicker,
+  parseDateInput,
+  toDateInputString,
+} from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -121,23 +126,21 @@ export function ConferenceInfoForm({ conference, onDeleteClick }: Props) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="info-start">Start date</Label>
-          <Input
-            id="info-start"
-            type="date"
-            value={form.start_date}
-            onChange={(e) => field('start_date', e.target.value)}
+          <Label>Start date</Label>
+          <DatePicker
+            value={form.start_date ? parseDateInput(form.start_date) : undefined}
+            onChange={(d) => field('start_date', toDateInputString(d))}
+            placeholder="Select date"
             className="mt-1.5"
           />
         </div>
         <div>
-          <Label htmlFor="info-end">End date</Label>
-          <Input
-            id="info-end"
-            type="date"
-            min={form.start_date || undefined}
-            value={form.end_date}
-            onChange={(e) => field('end_date', e.target.value)}
+          <Label>End date</Label>
+          <DatePicker
+            value={form.end_date ? parseDateInput(form.end_date) : undefined}
+            onChange={(d) => field('end_date', toDateInputString(d))}
+            placeholder="Select date"
+            fromDate={form.start_date ? parseDateInput(form.start_date) : undefined}
             className="mt-1.5"
           />
         </div>

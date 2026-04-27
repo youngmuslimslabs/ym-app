@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { DatePicker, toDateInputString } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -36,8 +37,8 @@ export function ConferenceCreateDialog() {
 
   const [name, setName] = useState('')
   const [tagline, setTagline] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [timezone, setTimezone] = useState(DEFAULT_TZ)
   const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
@@ -45,8 +46,8 @@ export function ConferenceCreateDialog() {
   function reset() {
     setName('')
     setTagline('')
-    setStartDate('')
-    setEndDate('')
+    setStartDate(undefined)
+    setEndDate(undefined)
     setTimezone(DEFAULT_TZ)
     setLocation('')
     setDescription('')
@@ -56,18 +57,18 @@ export function ConferenceCreateDialog() {
   // valid — this matches the prototype's affordance and saves the user a
   // round-trip to find out something is missing.
   const datesValid =
-    startDate.length === 10 && endDate.length === 10 && endDate >= startDate
+    !!startDate && !!endDate && endDate.getTime() >= startDate.getTime()
   const canCreate = name.trim().length > 0 && datesValid
 
   async function handleCreate() {
-    if (!canCreate || pending) return
+    if (!canCreate || pending || !startDate || !endDate) return
     setPending(true)
     try {
       const result = await createConference({
         name: name.trim(),
         tagline: tagline.trim() || null,
-        start_date: startDate,
-        end_date: endDate,
+        start_date: toDateInputString(startDate),
+        end_date: toDateInputString(endDate),
         timezone,
         location: location.trim() || null,
         description: description.trim() || null,
@@ -136,23 +137,21 @@ export function ConferenceCreateDialog() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="conf-start">Start date</Label>
-              <Input
-                id="conf-start"
-                type="date"
+              <Label>Start date</Label>
+              <DatePicker
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={setStartDate}
+                placeholder="Select date"
                 className="mt-1.5"
               />
             </div>
             <div>
-              <Label htmlFor="conf-end">End date</Label>
-              <Input
-                id="conf-end"
-                type="date"
+              <Label>End date</Label>
+              <DatePicker
                 value={endDate}
-                min={startDate || undefined}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={setEndDate}
+                placeholder="Select date"
+                fromDate={startDate}
                 className="mt-1.5"
               />
             </div>

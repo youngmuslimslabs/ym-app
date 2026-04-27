@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Calendar as CalendarIcon, Globe, Mail, Phone } from "lucide-react"
-import { format } from "date-fns"
+import { Globe, Mail, Phone } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -15,12 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
+import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 import { formatPhoneNumber, isValidPhone, isValidEmail } from "@/lib/validation"
 import { useOnboarding } from "@/contexts/OnboardingContext"
@@ -204,31 +197,13 @@ export default function PersonalInfo() {
           {/* Date of Birth */}
           <div className="flex flex-col gap-1.5">
             <Label>Date of Birth</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dateOfBirth && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateOfBirth ? format(dateOfBirth, "PPP") : "Select your date of birth"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateOfBirth}
-                  onSelect={setDateOfBirth}
-                  initialFocus
-                  captionLayout="dropdown"
-                  fromYear={1940}
-                  toYear={new Date().getFullYear() - 10}
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+              value={dateOfBirth}
+              onChange={setDateOfBirth}
+              placeholder="Select your date of birth"
+              fromYear={1940}
+              toYear={new Date().getFullYear() - 10}
+            />
           </div>
       </OnboardingContent>
     </OnboardingLayout>

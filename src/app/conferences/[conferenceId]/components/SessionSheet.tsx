@@ -174,14 +174,14 @@ export function SessionSheet({
               Close
             </Button>
           ) : signedUp && !ended && !inProgress ? (
-            <button
-              type="button"
+            <Button
+              variant="link-destructive"
+              size="sm"
               disabled={pending}
               onClick={() => setConfirmRemoveOpen(true)}
-              className="text-sm text-muted-foreground hover:text-destructive underline-offset-4 hover:underline disabled:opacity-50 transition-colors"
             >
               Remove RSVP
-            </button>
+            </Button>
           ) : signedUp ? null : ended ? (
             <Button variant="outline" className="flex-1" disabled>
               Session has ended

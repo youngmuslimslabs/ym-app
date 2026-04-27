@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { CheckCircle2, MapPin } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
   Dialog,
@@ -54,6 +56,7 @@ export function SessionSheet({
   onSubmitFeedback,
 }: Props) {
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
+  const isMobile = useIsMobile()
 
   if (!session) {
     return (
@@ -87,9 +90,25 @@ export function SessionSheet({
     timezone
   )}`
 
+  // Bottom sheet on mobile (more thumb-friendly), right sheet on tablet+.
+  const side = isMobile ? 'bottom' : 'right'
+
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0">
+      <SheetContent
+        side={side}
+        className={cn(
+          'flex flex-col p-0',
+          isMobile
+            ? 'h-auto max-h-[90vh] rounded-t-xl'
+            : 'w-full sm:max-w-md'
+        )}
+      >
+        {isMobile && (
+          <div className="flex justify-center pt-2 pb-1 shrink-0">
+            <div className="h-1 w-10 rounded-full bg-border" />
+          </div>
+        )}
         <SheetHeader className="p-6 border-b text-left space-y-2">
           <div className="text-xs uppercase tracking-widest text-primary font-medium">
             {dateLabel} · {timeRangeLabel}
@@ -108,21 +127,13 @@ export function SessionSheet({
           )}
         </SheetHeader>
 
-        <div className="grid grid-cols-3 border-b text-xs">
+        <div className={cn('grid border-b text-xs', session.room ? 'grid-cols-2' : 'grid-cols-1')}>
           {session.room && (
             <div className="p-4 border-r">
               <div className="text-muted-foreground uppercase tracking-wider mb-1">Room</div>
               <div className="text-sm font-medium flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
                 {session.room}
-              </div>
-            </div>
-          )}
-          {capacity != null && (
-            <div className="p-4 border-r">
-              <div className="text-muted-foreground uppercase tracking-wider mb-1">Seats</div>
-              <div className="text-sm font-medium tabular-nums">
-                {seatCount} <span className="text-muted-foreground font-normal">/ {capacity}</span>
               </div>
             </div>
           )}
@@ -168,7 +179,7 @@ export function SessionSheet({
           )}
         </div>
 
-        <div className="p-6 border-t bg-muted/30 flex justify-center gap-2">
+        <div className="p-6 border-t bg-muted/30 flex justify-center gap-2 shrink-0">
           {isBreak ? (
             <Button variant="outline" className="flex-1" onClick={onClose}>
               Close

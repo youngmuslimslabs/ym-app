@@ -139,7 +139,7 @@ export function ScheduleContent({ initialView }: Props) {
     setPending(true)
     try {
       const wasEdit = sessionId in view.myFeedback
-      const result = await upsertFeedback(sessionId, view.currentUserId, rating, comment)
+      const result = await upsertFeedback(sessionId, rating, comment)
       if (!result.success || !result.feedback) {
         toast.error(result.error ?? 'Could not save feedback')
         return

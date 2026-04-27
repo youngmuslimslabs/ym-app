@@ -74,74 +74,46 @@ export function SessionCard({
         </span>
       )}
 
-      <div className="flex items-start justify-between gap-6 pr-24">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-base tracking-tight mb-1">{session.title}</h3>
-          {session.speaker && (
-            <p className="text-sm text-muted-foreground mb-2">{session.speaker}</p>
+      <div className="pr-24">
+        <h3 className="font-semibold text-base tracking-tight mb-1">{session.title}</h3>
+        {session.speaker && (
+          <p className="text-sm text-muted-foreground mb-2">{session.speaker}</p>
+        )}
+        {session.description && upcoming && (
+          <p className="text-sm text-foreground/80 leading-relaxed max-w-prose mb-3">
+            {session.description}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-muted-foreground">
+          {session.room && (
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" />
+              {session.room}
+            </span>
           )}
-          {session.description && upcoming && (
-            <p className="text-sm text-foreground/80 leading-relaxed max-w-prose mb-3">
-              {session.description}
-            </p>
+          {checkedIn && (
+            <span className="inline-flex items-center gap-1.5 text-primary font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Checked in
+            </span>
           )}
-          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-            {session.room && (
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" />
-                {session.room}
+          {ended && signedUp && !checkedIn && (
+            <span className="text-muted-foreground">You didn't check in</span>
+          )}
+          {ended && checkedIn && !feedback && (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2 py-0.5 font-medium text-foreground">
+              <Star className="w-3 h-3" />
+              Leave feedback
+            </span>
+          )}
+          {feedback && (
+            <span className="inline-flex items-center gap-1 text-muted-foreground">
+              You rated
+              <span className="text-primary font-medium tabular-nums">
+                {feedback.rating}/5
               </span>
-            )}
-            {checkedIn && (
-              <span className="inline-flex items-center gap-1.5 text-primary font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Checked in
-              </span>
-            )}
-            {ended && signedUp && !checkedIn && (
-              <span className="text-muted-foreground">You didn't check in</span>
-            )}
-            {ended && checkedIn && !feedback && (
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2 py-0.5 font-medium text-foreground">
-                <Star className="w-3 h-3" />
-                Leave feedback
-              </span>
-            )}
-            {feedback && (
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                You rated
-                <span className="text-primary font-medium tabular-nums">
-                  {feedback.rating}/5
-                </span>
-                <Star className="w-3 h-3 text-primary" fill="currentColor" />
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="text-right shrink-0">
-          {capacity != null ? (
-            <>
-              <div className="text-sm font-semibold tabular-nums">
-                {seatCount}{' '}
-                <span className="text-muted-foreground font-normal">/ {capacity}</span>
-              </div>
-              <div className="w-20 h-1 bg-muted rounded-full mt-2 overflow-hidden">
-                <div
-                  className={cn(
-                    'h-full rounded-full',
-                    full ? 'bg-destructive' : signedUp ? 'bg-primary' : 'bg-foreground/40'
-                  )}
-                  style={{ width: `${Math.min(100, (seatCount / capacity) * 100)}%` }}
-                />
-              </div>
-              <div className="text-xs text-muted-foreground mt-2">
-                {full ? 'full' : 'seats filled'}
-              </div>
-            </>
-          ) : (
-            <div className="text-xs text-muted-foreground">
-              {seatCount} signed up
-            </div>
+              <Star className="w-3 h-3 text-primary" fill="currentColor" />
+            </span>
           )}
         </div>
       </div>

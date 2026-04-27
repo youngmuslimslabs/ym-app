@@ -63,10 +63,25 @@ export function CheckInDialog({
   }
 
   function handleChange(i: number, e: ChangeEvent<HTMLInputElement>) {
-    const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(-1)
+    const raw = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+    // SMS / paste autofill writes the entire code into one input — splay it out.
+    if (raw.length > 1) {
+      setDigits((prev) => {
+        const next = [...prev]
+        for (let j = 0; j < CODE_LENGTH; j++) {
+          // Take from the autofill string starting at the current input index.
+          next[j] = j < i ? prev[j] : raw[j - i] ?? ''
+        }
+        return next
+      })
+      const lastFilled = Math.min(i + raw.length, CODE_LENGTH) - 1
+      focusIndex(Math.min(lastFilled + 1, CODE_LENGTH - 1))
+      return
+    }
+    const cleaned = raw.slice(-1)
     setDigits((prev) => {
       const next = [...prev]
-      next[i] = cleaned.toUpperCase()
+      next[i] = cleaned
       return next
     })
     if (cleaned && i < CODE_LENGTH - 1) focusIndex(i + 1)
@@ -163,8 +178,8 @@ export function CheckInDialog({
             onFocus={(e) => e.currentTarget.select()}
             aria-label={`Code character ${i + 1} of ${CODE_LENGTH}`}
             className={cn(
-              'h-12 w-10 rounded-md bg-background text-center font-mono text-lg shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50',
-              error ? 'border-2 border-destructive' : 'border border-input'
+              'h-12 w-11 rounded-md bg-background text-center font-mono text-lg shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50',
+              error ? 'ring-2 ring-destructive border border-destructive' : 'border border-input'
             )}
           />
         ))}

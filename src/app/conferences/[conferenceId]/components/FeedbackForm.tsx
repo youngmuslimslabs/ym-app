@@ -35,24 +35,32 @@ export function FeedbackForm({ existing, pending, onSubmit }: Props) {
       rating !== existing.rating ||
       (comment.trim() || null) !== (existing.comment ?? null))
 
+  // Hover preview only kicks in before any rating is committed. After commit,
+  // hover does nothing so the user's choice doesn't appear to change under the
+  // cursor as they read the form.
+  const previewActive = rating === 0
+
   return (
     <div className="space-y-5">
       <div>
         <label className="text-sm font-medium mb-3 block">How was it?</label>
-        <div className="flex gap-2" onMouseLeave={() => setHover(0)}>
+        <div
+          className="flex gap-2"
+          onMouseLeave={() => previewActive && setHover(0)}
+        >
           {[1, 2, 3, 4, 5].map((n) => {
-            const filled = (hover || rating) >= n
+            const filled = previewActive ? hover >= n : rating >= n
             return (
               <button
                 key={n}
                 type="button"
                 disabled={pending}
                 onClick={() => setRating(n)}
-                onMouseEnter={() => setHover(n)}
+                onMouseEnter={() => previewActive && setHover(n)}
                 aria-label={`${n} star${n > 1 ? 's' : ''}`}
                 aria-pressed={rating === n}
                 className={cn(
-                  'h-10 w-10 rounded-md flex items-center justify-center transition-colors disabled:opacity-50',
+                  'h-11 w-11 rounded-md flex items-center justify-center transition-colors disabled:opacity-50',
                   filled
                     ? 'border border-primary bg-primary text-primary-foreground'
                     : 'border border-input bg-background text-muted-foreground hover:bg-accent'

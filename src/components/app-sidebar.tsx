@@ -67,15 +67,22 @@ export function AppSidebar() {
   // filters attendee rows to their own. The admin check uses the same
   // is_event_admin() function the DB policies use, so the sidebar visibility
   // matches what they're actually allowed to do.
+  //
+  // Re-fetched on every pathname change (so a newly granted admin sees the
+  // Admin group as soon as they navigate anywhere) and on window focus
+  // (catches the long-idle-tab case). Real-time push for instant deltas
+  // would need a Supabase realtime subscription on conference_attendees +
+  // role_assignments; we'll add that in the realtime stage.
   useEffect(() => {
     if (!user) return
     let cancelled = false
     const supabase = createClient()
-    void (async () => {
+
+    async function fetchSidebarData() {
       const { data: userRow } = await (supabase as any)
         .from('users')
         .select('id')
-        .eq('auth_id', user.id)
+        .eq('auth_id', user!.id)
         .maybeSingle()
       if (!userRow || cancelled) return
       const [confRes, adminRes] = await Promise.all([
@@ -92,11 +99,18 @@ export function AppSidebar() {
         .sort((a, b) => a.name.localeCompare(b.name))
       setConferences(list)
       setIsAdmin(Boolean(adminRes.data))
-    })()
+    }
+
+    void fetchSidebarData()
+    const onFocus = () => {
+      void fetchSidebarData()
+    }
+    window.addEventListener('focus', onFocus)
     return () => {
       cancelled = true
+      window.removeEventListener('focus', onFocus)
     }
-  }, [user])
+  }, [user, pathname])
 
   // Custom state for hover effect on entire collapsed sidebar
   const [isHoveringCollapsed, setIsHoveringCollapsed] = useState(false)

@@ -5,7 +5,12 @@ import { Calendar, MapPin, Users } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { DaySchedule } from './components/DaySchedule'
 import { SessionSheet } from './components/SessionSheet'
-import { signupForSession, cancelSignup } from './actions'
+import {
+  cancelSignup,
+  checkInToSession,
+  signupForSession,
+  upsertFeedback,
+} from './actions'
 import type { ScheduleView, Session } from './types'
 
 interface Props {
@@ -17,6 +22,7 @@ export function ScheduleContent({ initialView }: Props) {
   const [openSessionId, setOpenSessionId] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [checkInError, setCheckInError] = useState<string | null>(null)
   const [now, setNow] = useState<Date>(() => new Date())
 
   // Tick `now` every 60s so time-derived states (in_progress / ended) update.
@@ -30,6 +36,18 @@ export function ScheduleContent({ initialView }: Props) {
     [view.sessions, openSessionId]
   )
 
+  function closeSheet() {
+    setOpenSessionId(null)
+    setStatusMessage(null)
+    setCheckInError(null)
+  }
+
+  function selectSession(id: string) {
+    setStatusMessage(null)
+    setCheckInError(null)
+    setOpenSessionId(id)
+  }
+
   async function handleSignup(sessionId: string) {
     setPending(true)
     setStatusMessage(null)
@@ -40,8 +58,6 @@ export function ScheduleContent({ initialView }: Props) {
         return
       }
 
-      // Update local state: add this signup, remove any replaced overlapping signups,
-      // and adjust seat counts accordingly.
       setView((prev) => {
         const newSignups = new Set(prev.mySignupSessionIds)
         const newCounts = { ...prev.signupCounts }
@@ -94,6 +110,53 @@ export function ScheduleContent({ initialView }: Props) {
     }
   }
 
+  async function handleCheckIn(sessionId: string, code: string) {
+    setPending(true)
+    setStatusMessage(null)
+    setCheckInError(null)
+    try {
+      const result = await checkInToSession(sessionId, code)
+      if (!result.success) {
+        setCheckInError(result.error ?? 'Invalid code')
+        return
+      }
+      setView((prev) => {
+        const next = new Set(prev.myCheckInSessionIds)
+        next.add(sessionId)
+        return { ...prev, myCheckInSessionIds: next }
+      })
+      setStatusMessage(
+        result.alreadyCheckedIn ? 'You were already checked in' : "You're checked in"
+      )
+    } finally {
+      setPending(false)
+    }
+  }
+
+  async function handleSubmitFeedback(
+    sessionId: string,
+    rating: number,
+    comment: string
+  ) {
+    setPending(true)
+    setStatusMessage(null)
+    try {
+      const wasEdit = sessionId in view.myFeedback
+      const result = await upsertFeedback(sessionId, view.currentUserId, rating, comment)
+      if (!result.success || !result.feedback) {
+        setStatusMessage(result.error ?? 'Could not save feedback')
+        return
+      }
+      setView((prev) => ({
+        ...prev,
+        myFeedback: { ...prev.myFeedback, [sessionId]: result.feedback! },
+      }))
+      setStatusMessage(wasEdit ? 'Feedback updated' : 'Thanks for the feedback')
+    } finally {
+      setPending(false)
+    }
+  }
+
   const { conference } = view
   const dateRangeLabel = formatDateRange(conference.start_date, conference.end_date)
 
@@ -138,26 +201,25 @@ export function ScheduleContent({ initialView }: Props) {
         myFeedback={view.myFeedback}
         timezone={conference.timezone}
         now={now}
-        onSelectSession={(id) => {
-          setStatusMessage(null)
-          setOpenSessionId(id)
-        }}
+        onSelectSession={selectSession}
       />
 
       <SessionSheet
         session={openSession}
         timezone={conference.timezone}
         signedUp={openSession ? view.mySignupSessionIds.has(openSession.id) : false}
+        checkedIn={openSession ? view.myCheckInSessionIds.has(openSession.id) : false}
+        feedback={openSession ? view.myFeedback[openSession.id] ?? null : null}
         seatCount={openSession ? view.signupCounts[openSession.id] ?? 0 : 0}
         statusMessage={statusMessage}
+        checkInError={checkInError}
         pending={pending}
         now={now}
-        onClose={() => {
-          setOpenSessionId(null)
-          setStatusMessage(null)
-        }}
+        onClose={closeSheet}
         onSignup={handleSignup}
         onCancel={handleCancel}
+        onCheckIn={handleCheckIn}
+        onSubmitFeedback={handleSubmitFeedback}
       />
     </div>
   )

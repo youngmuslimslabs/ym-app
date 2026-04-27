@@ -64,3 +64,17 @@ export interface SignupResult {
   error?: string
   replaced_session_ids?: string[]
 }
+
+export interface CheckInResult {
+  success: boolean
+  error?: string
+  // True when the row already existed (idempotent re-check-in).
+  alreadyCheckedIn?: boolean
+}
+
+export interface FeedbackResult {
+  success: boolean
+  error?: string
+  // The persisted row, echoed back so the client can update local state.
+  feedback?: { rating: number; comment: string | null }
+}

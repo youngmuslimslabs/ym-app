@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Calendar, MapPin, Users } from 'lucide-react'
+import { Calendar, MapPin } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
 import { DaySchedule } from './components/DaySchedule'
@@ -183,10 +183,6 @@ export function ScheduleContent({ initialView }: Props) {
               {conference.location}
             </span>
           )}
-          <span className="inline-flex items-center gap-1.5">
-            <Users className="w-4 h-4" />
-            You're invited
-          </span>
         </div>
       </header>
 

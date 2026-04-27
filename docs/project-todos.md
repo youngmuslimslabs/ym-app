@@ -142,6 +142,7 @@
 
 ## Polish
 
+- [ ] Finalize loading state and error state patterns
 - [ ] Error handling
 - [ ] Loading states
 - [ ] Mobile responsiveness

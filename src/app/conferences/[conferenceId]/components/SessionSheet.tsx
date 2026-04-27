@@ -23,7 +23,6 @@ interface Props {
   checkedIn: boolean
   feedback: { rating: number; comment: string | null } | null
   seatCount: number
-  statusMessage: string | null
   checkInError: string | null
   pending: boolean
   now: Date
@@ -45,7 +44,6 @@ export function SessionSheet({
   checkedIn,
   feedback,
   seatCount,
-  statusMessage,
   checkInError,
   pending,
   now,
@@ -170,26 +168,20 @@ export function SessionSheet({
           )}
         </div>
 
-        {statusMessage && (
-          <div className="px-6 py-3 border-t bg-muted/40 text-sm flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-            <span>{statusMessage}</span>
-          </div>
-        )}
-
         <div className="p-6 border-t bg-muted/30 flex justify-center gap-2">
           {isBreak ? (
             <Button variant="outline" className="flex-1" onClick={onClose}>
               Close
             </Button>
           ) : signedUp && !ended && !inProgress ? (
-            <Button
-              variant="destructive"
+            <button
+              type="button"
               disabled={pending}
               onClick={() => setConfirmRemoveOpen(true)}
+              className="text-sm text-muted-foreground hover:text-destructive underline-offset-4 hover:underline disabled:opacity-50 transition-colors"
             >
               Remove RSVP
-            </Button>
+            </button>
           ) : signedUp ? null : ended ? (
             <Button variant="outline" className="flex-1" disabled>
               Session has ended

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Calendar, MapPin, Users } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
+import { toast } from 'sonner'
 import { DaySchedule } from './components/DaySchedule'
 import { SessionSheet } from './components/SessionSheet'
 import {
@@ -21,7 +22,8 @@ export function ScheduleContent({ initialView }: Props) {
   const [view, setView] = useState<ScheduleView>(initialView)
   const [openSessionId, setOpenSessionId] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  // Wrong-code state lives inline in the CheckInDialog (it owns the destructive
+  // chrome around the pin input). Everything else surfaces via Sonner toasts.
   const [checkInError, setCheckInError] = useState<string | null>(null)
   const [now, setNow] = useState<Date>(() => new Date())
 
@@ -38,23 +40,20 @@ export function ScheduleContent({ initialView }: Props) {
 
   function closeSheet() {
     setOpenSessionId(null)
-    setStatusMessage(null)
     setCheckInError(null)
   }
 
   function selectSession(id: string) {
-    setStatusMessage(null)
     setCheckInError(null)
     setOpenSessionId(id)
   }
 
   async function handleSignup(sessionId: string) {
     setPending(true)
-    setStatusMessage(null)
     try {
       const result = await signupForSession(sessionId)
       if (!result.success) {
-        setStatusMessage(result.error ?? 'Could not sign up')
+        toast.error(result.error ?? 'Could not sign up')
         return
       }
 
@@ -78,9 +77,9 @@ export function ScheduleContent({ initialView }: Props) {
         const replacedTitle =
           view.sessions.find((s) => s.id === result.replaced_session_ids![0])?.title ??
           'previous session'
-        setStatusMessage(`Switched from "${replacedTitle}"`)
+        toast.success(`Switched from "${replacedTitle}"`)
       } else {
-        setStatusMessage("You're signed up")
+        toast.success("You're signed up")
       }
     } finally {
       setPending(false)
@@ -89,11 +88,10 @@ export function ScheduleContent({ initialView }: Props) {
 
   async function handleCancel(sessionId: string) {
     setPending(true)
-    setStatusMessage(null)
     try {
       const result = await cancelSignup(sessionId)
       if (!result.success) {
-        setStatusMessage(result.error ?? 'Could not cancel')
+        toast.error(result.error ?? 'Could not cancel')
         return
       }
       setView((prev) => {
@@ -104,7 +102,7 @@ export function ScheduleContent({ initialView }: Props) {
         }
         return { ...prev, mySignupSessionIds: newSignups, signupCounts: newCounts }
       })
-      setStatusMessage('RSVP removed')
+      toast.success('RSVP removed')
     } finally {
       setPending(false)
     }
@@ -112,11 +110,11 @@ export function ScheduleContent({ initialView }: Props) {
 
   async function handleCheckIn(sessionId: string, code: string) {
     setPending(true)
-    setStatusMessage(null)
     setCheckInError(null)
     try {
       const result = await checkInToSession(sessionId, code)
       if (!result.success) {
+        // Inline error stays in the dialog — it's a validation correction, not a notification.
         setCheckInError(result.error ?? 'Invalid code')
         return
       }
@@ -125,7 +123,7 @@ export function ScheduleContent({ initialView }: Props) {
         next.add(sessionId)
         return { ...prev, myCheckInSessionIds: next }
       })
-      setStatusMessage(
+      toast.success(
         result.alreadyCheckedIn ? 'You were already checked in' : "You're checked in"
       )
     } finally {
@@ -139,19 +137,18 @@ export function ScheduleContent({ initialView }: Props) {
     comment: string
   ) {
     setPending(true)
-    setStatusMessage(null)
     try {
       const wasEdit = sessionId in view.myFeedback
       const result = await upsertFeedback(sessionId, view.currentUserId, rating, comment)
       if (!result.success || !result.feedback) {
-        setStatusMessage(result.error ?? 'Could not save feedback')
+        toast.error(result.error ?? 'Could not save feedback')
         return
       }
       setView((prev) => ({
         ...prev,
         myFeedback: { ...prev.myFeedback, [sessionId]: result.feedback! },
       }))
-      setStatusMessage(wasEdit ? 'Feedback updated' : 'Thanks for the feedback')
+      toast.success(wasEdit ? 'Feedback updated' : 'Thanks for the feedback')
     } finally {
       setPending(false)
     }
@@ -211,7 +208,6 @@ export function ScheduleContent({ initialView }: Props) {
         checkedIn={openSession ? view.myCheckInSessionIds.has(openSession.id) : false}
         feedback={openSession ? view.myFeedback[openSession.id] ?? null : null}
         seatCount={openSession ? view.signupCounts[openSession.id] ?? 0 : 0}
-        statusMessage={statusMessage}
         checkInError={checkInError}
         pending={pending}
         now={now}

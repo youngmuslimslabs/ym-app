@@ -7,6 +7,7 @@ export type ConferenceStatus = 'draft' | 'published'
 export interface Conference {
   id: string
   name: string
+  tagline: string | null
   description: string | null
   location: string | null
   timezone: string

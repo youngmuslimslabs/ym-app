@@ -163,15 +163,9 @@ export function ScheduleContent({ initialView }: Props) {
         <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
           {conference.name}
         </div>
-        {conference.description ? (
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-            {conference.description.split('.')[0]}
-          </h1>
-        ) : (
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-            {conference.name}
-          </h1>
-        )}
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          {conference.tagline ?? conference.name}
+        </h1>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <Calendar className="w-4 h-4" />

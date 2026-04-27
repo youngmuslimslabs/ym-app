@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { CheckCircle2, MapPin } from 'lucide-react'
+import { type TouchEvent, useRef, useState } from 'react'
+import { CheckCircle2, CircleSlash, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -57,6 +57,19 @@ export function SessionSheet({
 }: Props) {
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
   const isMobile = useIsMobile()
+  // Drag-to-dismiss: track touchstart Y on the bottom-sheet drag handle. If
+  // the user swipes down more than 60px, treat it as a dismiss gesture.
+  const dragStartY = useRef<number | null>(null)
+
+  function handleDragStart(e: TouchEvent<HTMLDivElement>) {
+    dragStartY.current = e.touches[0]?.clientY ?? null
+  }
+  function handleDragEnd(e: TouchEvent<HTMLDivElement>) {
+    if (dragStartY.current === null) return
+    const deltaY = (e.changedTouches[0]?.clientY ?? 0) - dragStartY.current
+    dragStartY.current = null
+    if (deltaY > 60) onClose()
+  }
 
   if (!session) {
     return (
@@ -80,6 +93,7 @@ export function SessionSheet({
   //  - everything else          → description only
   const showCheckIn = !isBreak && inProgress && signedUp
   const showFeedback = !isBreak && ended && checkedIn
+  const showMissedNotice = !isBreak && ended && signedUp && !checkedIn
 
   const dateLabel = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
@@ -105,7 +119,12 @@ export function SessionSheet({
         )}
       >
         {isMobile && (
-          <div className="flex justify-center pt-2 pb-1 shrink-0">
+          <div
+            className="flex justify-center pt-2 pb-1 shrink-0 touch-none"
+            onTouchStart={handleDragStart}
+            onTouchEnd={handleDragEnd}
+            aria-hidden="true"
+          >
             <div className="h-1 w-10 rounded-full bg-border" />
           </div>
         )}
@@ -152,11 +171,26 @@ export function SessionSheet({
             </p>
           ) : (
             !showCheckIn &&
-            !showFeedback && (
+            !showFeedback &&
+            !showMissedNotice && (
               <p className="text-sm text-muted-foreground italic">
                 No description.
               </p>
             )
+          )}
+
+          {showMissedNotice && (
+            <div className="rounded-lg border bg-muted/40 p-4 flex items-start gap-3">
+              <div className="rounded-full bg-muted p-2 shrink-0">
+                <CircleSlash className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-medium">You didn't check in</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  No worries — feedback isn't open without a check-in.
+                </p>
+              </div>
+            </div>
           )}
 
           {showCheckIn && (

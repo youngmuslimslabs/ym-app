@@ -35,7 +35,7 @@ export default async function AdminConferencesPage() {
         <section>
           <h2 className="text-sm font-medium mb-3">Active</h2>
           {active.length > 0 ? (
-            <AdminConferencesTable rows={active} variant="active" />
+            <AdminConferencesTable rows={active} />
           ) : (
             <ActiveEmptyState />
           )}
@@ -43,7 +43,7 @@ export default async function AdminConferencesPage() {
         {past.length > 0 && (
           <section>
             <h2 className="text-sm font-medium mb-3">Past</h2>
-            <AdminConferencesTable rows={past} variant="past" />
+            <AdminConferencesTable rows={past} />
           </section>
         )}
       </div>

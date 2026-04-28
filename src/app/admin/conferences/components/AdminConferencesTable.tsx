@@ -1,74 +1,52 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@/components/ui/table'
 import { ConferenceStatusBadge } from './ConferenceStatusBadge'
 import type { AdminConferenceRow } from '../types'
 
 interface Props {
   rows: AdminConferenceRow[]
-  // Past rows are dimmed; otherwise the two variants render identically.
-  variant: 'active' | 'past'
 }
 
-export function AdminConferencesTable({ rows, variant }: Props) {
+export function AdminConferencesTable({ rows }: Props) {
   if (rows.length === 0) return null
 
   return (
-    <div
-      className={
-        'rounded-xl border overflow-hidden ' +
-        (variant === 'past' ? 'opacity-80' : '')
-      }
-    >
-      <Table>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id} className="hover:bg-muted/30">
-              <TableCell className="p-0">
-                <Link
-                  href={`/admin/conferences/${row.id}`}
-                  className="block px-4 py-3"
-                >
-                  <div className="font-medium">{row.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {row.location ? `${row.location} · ` : ''}
-                    {formatDateRange(row.start_date, row.end_date)}
-                  </div>
-                </Link>
-              </TableCell>
-              <TableCell className="text-muted-foreground text-sm">
-                {formatRelativeWindow(row.start_date, row.end_date)}
-              </TableCell>
-              <TableCell className="tabular-nums text-sm">
-                {row.invitedCount.toLocaleString()} invited
-              </TableCell>
-              <TableCell>
-                <ConferenceStatusBadge
-                  status={row.status}
-                  start_date={row.start_date}
-                  end_date={row.end_date}
-                />
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                <Link
-                  href={`/admin/conferences/${row.id}`}
-                  className="block"
-                  aria-label={`Open ${row.name}`}
-                >
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <ul className="rounded-xl border overflow-hidden divide-y">
+      {rows.map((row) => (
+        <li key={row.id}>
+          <Link
+            href={`/admin/conferences/${row.id}`}
+            className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors"
+          >
+            <div className="min-w-0">
+              <div className="font-medium truncate">{row.name}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {row.location ? `${row.location} · ` : ''}
+                {formatDateRange(row.start_date, row.end_date)}
+              </div>
+            </div>
+            <div className="text-muted-foreground text-sm whitespace-nowrap">
+              {formatRelativeWindow(row.start_date, row.end_date)}
+            </div>
+            <div className="tabular-nums text-sm whitespace-nowrap">
+              {row.invitedCount.toLocaleString()} invited
+            </div>
+            <div>
+              <ConferenceStatusBadge
+                status={row.status}
+                start_date={row.start_date}
+                end_date={row.end_date}
+              />
+            </div>
+            <ArrowRight
+              className="w-4 h-4 text-muted-foreground"
+              aria-hidden
+            />
+          </Link>
+        </li>
+      ))}
+    </ul>
   )
 }
 

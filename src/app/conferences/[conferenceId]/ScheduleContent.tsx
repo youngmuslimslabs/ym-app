@@ -1,9 +1,18 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Calendar, MapPin } from 'lucide-react'
+import { ArrowLeftRight, Calendar, MapPin } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { DaySchedule } from './components/DaySchedule'
 import { SessionSheet } from './components/SessionSheet'
 import {
@@ -26,6 +35,14 @@ export function ScheduleContent({ initialView }: Props) {
   // chrome around the pin input). Everything else surfaces via Sonner toasts.
   const [checkInError, setCheckInError] = useState<string | null>(null)
   const [now, setNow] = useState<Date>(() => new Date())
+  // Pending swap when the user tries to sign up for a session that overlaps
+  // existing signups. The DB function does an atomic swap, but we surface the
+  // replacement up-front so the user explicitly opts in instead of finding out
+  // via a post-hoc toast.
+  const [pendingSwap, setPendingSwap] = useState<{
+    targetId: string
+    conflicts: Session[]
+  } | null>(null)
 
   // Tick `now` every 60s so time-derived states (in_progress / ended) update.
   useEffect(() => {
@@ -49,6 +66,22 @@ export function ScheduleContent({ initialView }: Props) {
   }
 
   async function handleSignup(sessionId: string) {
+    const target = view.sessions.find((s) => s.id === sessionId)
+    if (!target) return
+    const conflicts = view.sessions.filter(
+      (s) =>
+        s.id !== sessionId &&
+        view.mySignupSessionIds.has(s.id) &&
+        rangesOverlap(s.start_at, s.end_at, target.start_at, target.end_at)
+    )
+    if (conflicts.length > 0) {
+      setPendingSwap({ targetId: sessionId, conflicts })
+      return
+    }
+    await performSignup(sessionId)
+  }
+
+  async function performSignup(sessionId: string) {
     setPending(true)
     try {
       const result = await signupForSession(sessionId)
@@ -72,15 +105,7 @@ export function ScheduleContent({ initialView }: Props) {
         return { ...prev, mySignupSessionIds: newSignups, signupCounts: newCounts }
       })
 
-      const replacedCount = result.replaced_session_ids?.length ?? 0
-      if (replacedCount > 0) {
-        const replacedTitle =
-          view.sessions.find((s) => s.id === result.replaced_session_ids![0])?.title ??
-          'previous session'
-        toast.success(`Switched from "${replacedTitle}"`)
-      } else {
-        toast.success("You're signed up")
-      }
+      toast.success("You're signed up")
     } finally {
       setPending(false)
     }
@@ -207,8 +232,77 @@ export function ScheduleContent({ initialView }: Props) {
         onCheckIn={handleCheckIn}
         onSubmitFeedback={handleSubmitFeedback}
       />
+
+      <Dialog
+        open={pendingSwap !== null}
+        onOpenChange={(next) => {
+          if (pending) return
+          if (!next) setPendingSwap(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-primary/10 p-2 shrink-0">
+                <ArrowLeftRight className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <DialogTitle className="text-base">
+                  Replace your current signup?
+                </DialogTitle>
+                <DialogDescription className="mt-1">
+                  {pendingSwap && (
+                    <>
+                      Signing up for{' '}
+                      <span className="text-foreground font-medium">
+                        {view.sessions.find((s) => s.id === pendingSwap.targetId)?.title}
+                      </span>{' '}
+                      will remove your signup for{' '}
+                      <span className="text-foreground font-medium">
+                        {pendingSwap.conflicts
+                          .map((c) => `"${c.title}"`)
+                          .join(' and ')}
+                      </span>
+                      .
+                    </>
+                  )}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="ghost"
+              disabled={pending}
+              onClick={() => setPendingSwap(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={pending}
+              onClick={async () => {
+                if (!pendingSwap) return
+                const targetId = pendingSwap.targetId
+                setPendingSwap(null)
+                await performSignup(targetId)
+              }}
+            >
+              {pending ? 'Signing up…' : 'Yes, replace'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
+}
+
+function rangesOverlap(
+  aStart: string,
+  aEnd: string,
+  bStart: string,
+  bEnd: string
+): boolean {
+  return new Date(aStart) < new Date(bEnd) && new Date(bStart) < new Date(aEnd)
 }
 
 function formatDateRange(startISO: string, endISO: string): string {

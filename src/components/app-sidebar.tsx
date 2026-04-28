@@ -79,18 +79,18 @@ export function AppSidebar() {
     const supabase = createClient()
 
     async function fetchSidebarData() {
-      const { data: userRow } = await (supabase as any)
+      const { data: userRow } = await supabase
         .from('users')
         .select('id')
         .eq('auth_id', user!.id)
         .maybeSingle()
       if (!userRow || cancelled) return
       const [confRes, adminRes] = await Promise.all([
-        (supabase as any)
+        supabase
           .from('conference_attendees')
           .select('conferences(id, name)')
           .eq('user_id', userRow.id),
-        (supabase as any).rpc('is_event_admin', { p_user_id: userRow.id }),
+        supabase.rpc('is_event_admin', { p_user_id: userRow.id }),
       ])
       if (cancelled) return
       const list = ((confRes.data ?? []) as { conferences: InvitedConference | null }[])

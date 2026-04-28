@@ -15,7 +15,7 @@ export async function getConferenceEditorView(
 ): Promise<ConferenceEditorView | null> {
   const supabase = await createClient()
 
-  const { data: confRow } = await (supabase as any)
+  const { data: confRow } = await supabase
     .from('conferences')
     .select('*')
     .eq('id', conferenceId)
@@ -24,12 +24,12 @@ export async function getConferenceEditorView(
   const conference = confRow as Conference
 
   const [sessionsRes, attendeesRes] = await Promise.all([
-    (supabase as any)
+    supabase
       .from('sessions')
       .select(ADMIN_SESSION_COLUMNS)
       .eq('conference_id', conferenceId)
       .order('start_at', { ascending: true }),
-    (supabase as any)
+    supabase
       .from('conference_attendees')
       .select('user_id')
       .eq('conference_id', conferenceId),
@@ -44,15 +44,15 @@ export async function getConferenceEditorView(
 
   if (sessionIds.length > 0) {
     const [signupsRes, checkInsRes, feedbackRes] = await Promise.all([
-      (supabase as any)
+      supabase
         .from('session_signups')
         .select('session_id')
         .in('session_id', sessionIds),
-      (supabase as any)
+      supabase
         .from('session_check_ins')
         .select('session_id')
         .in('session_id', sessionIds),
-      (supabase as any)
+      supabase
         .from('session_feedback')
         .select('id', { count: 'exact', head: true })
         .in('session_id', sessionIds),

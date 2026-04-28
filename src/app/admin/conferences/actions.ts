@@ -21,7 +21,7 @@ export async function createConference(
   input: CreateConferenceInput
 ): Promise<{ success: true; id: string } | { success: false; error: string }> {
   const supabase = createClient()
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('conferences')
     .insert({
       name: input.name,
@@ -54,7 +54,7 @@ export async function updateConference(
   patch: UpdateConferenceInput
 ): Promise<SimpleResult> {
   const supabase = createClient()
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('conferences')
     .update(patch)
     .eq('id', id)
@@ -64,18 +64,18 @@ export async function updateConference(
 
 export async function deleteConference(id: string): Promise<SimpleResult> {
   const supabase = createClient()
-  const { error } = await (supabase as any).from('conferences').delete().eq('id', id)
+  const { error } = await supabase.from('conferences').delete().eq('id', id)
   if (error) return { success: false, error: error.message }
   return { success: true }
 }
 
 export async function publishConference(id: string): Promise<SimpleResult> {
   const supabase = createClient()
-  const { data, error } = await (supabase as any).rpc('publish_conference', {
+  const { data, error } = await supabase.rpc('publish_conference', {
     p_id: id,
   })
   if (error) return { success: false, error: error.message }
-  return data as SimpleResult
+  return data as unknown as SimpleResult
 }
 
 // Sessions ------------------------------------------------------------------
@@ -97,7 +97,7 @@ export async function createSession(
   input: SessionInput
 ): Promise<{ success: true; id: string } | { success: false; error: string }> {
   const supabase = createClient()
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('sessions')
     .insert(input)
     .select('id')
@@ -112,14 +112,14 @@ export async function updateSession(
   patch: Partial<SessionInput>
 ): Promise<SimpleResult> {
   const supabase = createClient()
-  const { error } = await (supabase as any).from('sessions').update(patch).eq('id', id)
+  const { error } = await supabase.from('sessions').update(patch).eq('id', id)
   if (error) return { success: false, error: friendlySessionError(error.message) }
   return { success: true }
 }
 
 export async function deleteSession(id: string): Promise<SimpleResult> {
   const supabase = createClient()
-  const { error } = await (supabase as any).from('sessions').delete().eq('id', id)
+  const { error } = await supabase.from('sessions').delete().eq('id', id)
   if (error) return { success: false, error: error.message }
   return { success: true }
 }

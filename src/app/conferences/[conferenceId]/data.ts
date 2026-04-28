@@ -37,7 +37,7 @@ export async function getConferenceScheduleData(
   const currentUserId = userRow.id as string
 
   // RLS will return zero rows if the user is not invited.
-  const { data: conferenceRow, error: confErr } = await (supabase as any)
+  const { data: conferenceRow, error: confErr } = await supabase
     .from('conferences')
     .select('*')
     .eq('id', conferenceId)
@@ -46,7 +46,7 @@ export async function getConferenceScheduleData(
   const conference = conferenceRow as Conference
 
   // All sessions for this conference (excluding check_in_code)
-  const { data: sessionRows } = await (supabase as any)
+  const { data: sessionRows } = await supabase
     .from('sessions')
     .select(SESSION_COLUMNS)
     .eq('conference_id', conferenceId)
@@ -69,16 +69,16 @@ export async function getConferenceScheduleData(
   // All signups for these sessions (so we can count seats per session).
   // RLS allows attendees to see signups for sessions in their conferences.
   const [signupsRes, myCheckInsRes, myFeedbackRes] = await Promise.all([
-    (supabase as any)
+    supabase
       .from('session_signups')
       .select('session_id, user_id')
       .in('session_id', sessionIds),
-    (supabase as any)
+    supabase
       .from('session_check_ins')
       .select('session_id')
       .in('session_id', sessionIds)
       .eq('user_id', currentUserId),
-    (supabase as any)
+    supabase
       .from('session_feedback')
       .select('session_id, rating, comment')
       .in('session_id', sessionIds)

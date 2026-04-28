@@ -23,7 +23,7 @@ export async function resolveAdminContext(): Promise<
 
   // is_event_admin() function is the single source of truth — same one RLS
   // policies use, so what we check here matches what the DB will allow.
-  const { data: adminFlag } = await (supabase as any).rpc('is_event_admin', {
+  const { data: adminFlag } = await supabase.rpc('is_event_admin', {
     p_user_id: userRow.id,
   })
   if (!adminFlag) {
@@ -46,13 +46,13 @@ export async function getAdminConferenceList(): Promise<AdminConferenceRow[]> {
   // We hand-count attendees because PostgREST's count modifier on a join
   // requires extra round-trips. One pass through conference_attendees gives
   // us a Map<conference_id, count> for free.
-  const { data: confRows, error: confErr } = await (supabase as any)
+  const { data: confRows, error: confErr } = await supabase
     .from('conferences')
     .select('id, name, tagline, location, start_date, end_date, status')
     .order('start_date', { ascending: false })
   if (confErr || !confRows) return []
 
-  const { data: attendeeRows } = await (supabase as any)
+  const { data: attendeeRows } = await supabase
     .from('conference_attendees')
     .select('conference_id')
   const counts: Record<string, number> = {}

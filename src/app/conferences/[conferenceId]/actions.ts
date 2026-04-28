@@ -5,24 +5,24 @@ import type { CheckInResult, FeedbackResult, SignupResult } from './types'
 
 export async function signupForSession(sessionId: string): Promise<SignupResult> {
   const supabase = createClient()
-  const { data, error } = await (supabase as any).rpc('signup_for_session', {
+  const { data, error } = await supabase.rpc('signup_for_session', {
     p_session_id: sessionId,
   })
   if (error) {
     return { success: false, error: error.message }
   }
-  return data as SignupResult
+  return data as unknown as SignupResult
 }
 
 export async function cancelSignup(sessionId: string): Promise<SignupResult> {
   const supabase = createClient()
-  const { data, error } = await (supabase as any).rpc('cancel_signup', {
+  const { data, error } = await supabase.rpc('cancel_signup', {
     p_session_id: sessionId,
   })
   if (error) {
     return { success: false, error: error.message }
   }
-  return data as SignupResult
+  return data as unknown as SignupResult
 }
 
 export async function checkInToSession(
@@ -30,14 +30,14 @@ export async function checkInToSession(
   code: string
 ): Promise<CheckInResult> {
   const supabase = createClient()
-  const { data, error } = await (supabase as any).rpc('check_in_to_session', {
+  const { data, error } = await supabase.rpc('check_in_to_session', {
     p_session_id: sessionId,
     p_code: code,
   })
   if (error) {
     return { success: false, error: error.message }
   }
-  return data as CheckInResult
+  return data as unknown as CheckInResult
 }
 
 // UPSERT direct to session_feedback. RLS gates INSERT on end_at < NOW();
@@ -57,7 +57,7 @@ export async function upsertFeedback(
   if (!authUser) {
     return { success: false, error: 'Not signed in' }
   }
-  const { data: userRow } = await (supabase as any)
+  const { data: userRow } = await supabase
     .from('users')
     .select('id')
     .eq('auth_id', authUser.id)
@@ -73,7 +73,7 @@ export async function upsertFeedback(
     rating,
     comment: trimmed.length > 0 ? trimmed : null,
   }
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('session_feedback')
     .upsert(payload, { onConflict: 'session_id,user_id' })
     .select('rating, comment')

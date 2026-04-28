@@ -2,9 +2,9 @@
 // Mirrors the locked decision in 2026-04-25-conference-staged-build.md:
 // admin pages CAN show seat counts; attendee pages cannot.
 
-import type { Conference, Session } from '@/app/conferences/[conferenceId]/types'
+import type { Conference, Session } from '@/app/(app)/conferences/[conferenceId]/types'
 import type { PersonListItem } from '@/lib/supabase/queries/people'
-import type { FilterCategory } from '@/app/people/types'
+import type { FilterCategory } from '@/app/(app)/people/types'
 
 export type { Conference, Session }
 

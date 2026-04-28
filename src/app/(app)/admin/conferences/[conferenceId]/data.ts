@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getPeoplePageData } from '@/app/people/data'
+import { getPeoplePageData } from '@/app/(app)/people/data'
 import type {
   AdminSession,
   Conference,

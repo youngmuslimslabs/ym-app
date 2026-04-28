@@ -1,5 +1,4 @@
 import { Calendar } from 'lucide-react'
-import { AppShell } from '@/components/layout'
 import { AdminConferencesTable } from './components/AdminConferencesTable'
 import { ConferenceCreateDialog } from './components/ConferenceCreateDialog'
 import { isActiveConference } from './lib/lifecycle'
@@ -15,7 +14,7 @@ export default async function AdminConferencesPage() {
   const past = conferences.filter((c) => !isActiveConference(c))
 
   return (
-    <AppShell>
+    <>
       <div className="px-6 md:px-8 pt-10 md:pt-12 pb-6 border-b flex items-end justify-between gap-4 flex-wrap">
         <div>
           <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
@@ -47,7 +46,7 @@ export default async function AdminConferencesPage() {
           </section>
         )}
       </div>
-    </AppShell>
+    </>
   )
 }
 

@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { AppShell } from '@/components/layout'
 import { requireAdmin } from '../data'
 import { getConferenceEditorView } from './data'
 import { ConferenceEditor } from './ConferenceEditor'
@@ -16,9 +15,5 @@ export default async function ConferenceEditorPage({ params }: PageProps) {
   const view = await getConferenceEditorView(conferenceId)
   if (!view) notFound()
 
-  return (
-    <AppShell>
-      <ConferenceEditor initialView={view} />
-    </AppShell>
-  )
+  return <ConferenceEditor initialView={view} />
 }

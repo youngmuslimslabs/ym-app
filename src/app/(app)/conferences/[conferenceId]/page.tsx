@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { AppShell } from '@/components/layout'
 import { getConferenceScheduleData } from './data'
 import { ScheduleContent } from './ScheduleContent'
 
@@ -15,9 +14,5 @@ export default async function ConferenceSchedulePage({ params }: PageProps) {
     notFound()
   }
 
-  return (
-    <AppShell>
-      <ScheduleContent initialView={data} />
-    </AppShell>
-  )
+  return <ScheduleContent initialView={data} />
 }

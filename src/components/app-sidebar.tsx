@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Calendar,
+  CalendarDays,
   Shield,
   X,
 } from 'lucide-react'
@@ -264,7 +265,7 @@ export function AppSidebar() {
         {conferences.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>
-              <Calendar className="mr-1.5 size-3" />
+              <CalendarDays className="mr-1.5 size-3" />
               Conferences
             </SidebarGroupLabel>
             <SidebarGroupContent>

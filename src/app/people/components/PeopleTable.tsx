@@ -23,21 +23,52 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import type { PersonListItem } from '../types'
 import { ROLE_CATEGORY_STYLES } from '../constants'
 
-interface PeopleTableProps {
-  people: PersonListItem[]
+// Column ids managed by this component. `hiddenColumns` accepts any of these.
+type DefaultColumnId = 'name' | 'roles' | 'region' | 'subregion' | 'skills'
+
+export interface PeopleTableSelection {
+  // Set of selected person ids — managed externally so "select all" can mean
+  // "all filtered rows" rather than "all rows on this paginated page".
+  selected: Set<string>
+  onToggle: (id: string) => void
+  // Header checkbox state, also externally computed.
+  allSelected: boolean
+  someSelected: boolean
+  onToggleAll: () => void
 }
 
-export function PeopleTable({ people }: PeopleTableProps) {
+interface PeopleTableProps {
+  people: PersonListItem[]
+  // When provided, the table renders in selection mode: prepends a checkbox
+  // column, replaces row-click navigation with selection toggle, and shades
+  // selected rows. Caller owns the state.
+  selection?: PeopleTableSelection
+  // Drop default columns the caller doesn't need (e.g. the attendee picker
+  // hides roles + skills to keep rows scannable).
+  hiddenColumns?: DefaultColumnId[]
+  // Optional column appended after the defaults — for context-specific cells
+  // like the "Invited" pill on the attendee picker.
+  trailingColumn?: ColumnDef<PersonListItem>
+}
+
+export function PeopleTable({
+  people,
+  selection,
+  hiddenColumns,
+  trailingColumn,
+}: PeopleTableProps) {
   const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'name', desc: false },
   ])
 
-  const columns = useMemo<ColumnDef<PersonListItem>[]>(
-    () => [
+  const columns = useMemo<ColumnDef<PersonListItem>[]>(() => {
+    const hidden = new Set(hiddenColumns ?? [])
+    const defaults: ColumnDef<PersonListItem>[] = [
       {
         id: 'name',
         accessorFn: (row) => `${row.firstName} ${row.lastName}`,
@@ -169,9 +200,42 @@ export function PeopleTable({ people }: PeopleTableProps) {
         ),
         enableSorting: false,
       },
-    ],
-    []
-  )
+    ]
+    const result = defaults.filter(
+      (c) => !hidden.has(c.id as DefaultColumnId)
+    )
+    if (selection) {
+      result.unshift({
+        id: 'select',
+        header: () => (
+          <Checkbox
+            checked={
+              selection.allSelected
+                ? true
+                : selection.someSelected
+                  ? 'indeterminate'
+                  : false
+            }
+            onCheckedChange={selection.onToggleAll}
+            aria-label={
+              selection.allSelected ? 'Deselect all' : 'Select all'
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={selection.selected.has(row.original.id)}
+            onCheckedChange={() => selection.onToggle(row.original.id)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Select ${row.original.firstName} ${row.original.lastName}`}
+          />
+        ),
+        enableSorting: false,
+      })
+    }
+    if (trailingColumn) result.push(trailingColumn)
+    return result
+  }, [hiddenColumns, selection, trailingColumn])
 
   const table = useReactTable({
     data: people,
@@ -220,24 +284,45 @@ export function PeopleTable({ people }: PeopleTableProps) {
           <TableBody>
             {table.getRowModel().rows.map((row) => {
               const isClaimed = row.original.isClaimed
+              const isSelected = selection?.selected.has(row.original.id) ?? false
+              // In selection mode: row click toggles selection (always, even
+              // for unclaimed users — they're valid invite targets).
+              // In navigation mode: row click navigates to the profile page,
+              // but only for claimed users.
               const handleRowClick = () => {
-                if (isClaimed) router.push(`/people/${row.original.id}`)
+                if (selection) selection.onToggle(row.original.id)
+                else if (isClaimed) router.push(`/people/${row.original.id}`)
               }
               const handleRowKeyDown = (e: KeyboardEvent<HTMLTableRowElement>) => {
-                if (e.key === 'Enter' && isClaimed) {
+                if ((e.key === 'Enter' || (selection && e.key === ' ')) && (selection || isClaimed)) {
                   e.preventDefault()
                   handleRowClick()
                 }
               }
+              const interactive = selection ? true : isClaimed
+              const className = selection
+                ? `cursor-pointer focus:outline-none focus-visible:bg-muted/50 ${
+                    isSelected ? 'bg-primary/5 hover:bg-primary/10' : ''
+                  }`
+                : isClaimed
+                  ? 'cursor-pointer focus:outline-none focus-visible:bg-muted/50'
+                  : 'opacity-60'
               return (
                 <TableRow
                   key={row.id}
-                  onClick={isClaimed ? handleRowClick : undefined}
-                  onKeyDown={isClaimed ? handleRowKeyDown : undefined}
-                  tabIndex={isClaimed ? 0 : -1}
-                  role={isClaimed ? 'link' : undefined}
-                  aria-label={isClaimed ? `View profile of ${row.original.firstName} ${row.original.lastName}` : undefined}
-                  className={isClaimed ? 'cursor-pointer focus:outline-none focus-visible:bg-muted/50' : 'opacity-60'}
+                  onClick={interactive ? handleRowClick : undefined}
+                  onKeyDown={interactive ? handleRowKeyDown : undefined}
+                  tabIndex={interactive ? 0 : -1}
+                  role={interactive ? (selection ? 'button' : 'link') : undefined}
+                  aria-label={
+                    selection
+                      ? `Toggle ${row.original.firstName} ${row.original.lastName}`
+                      : isClaimed
+                        ? `View profile of ${row.original.firstName} ${row.original.lastName}`
+                        : undefined
+                  }
+                  aria-pressed={selection ? isSelected : undefined}
+                  className={className}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

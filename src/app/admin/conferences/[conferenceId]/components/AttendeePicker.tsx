@@ -4,10 +4,15 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Search, X } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { PeopleSearch, PeopleFilters } from '@/app/people/components'
+import {
+  PeopleSearch,
+  PeopleFilters,
+  PeopleTable,
+} from '@/app/people/components'
 import { usePeopleFilters } from '@/app/people/hooks/usePeopleFilters'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { TypeToConfirmDialog } from '../../components/TypeToConfirmDialog'
@@ -122,6 +127,31 @@ export function AttendeePicker({
   const someFilteredSelected =
     !allFilteredSelected && filteredPeople.some((p) => selected.has(p.id))
 
+  // Trailing "Invited" column for PeopleTable. Defined here (not in
+  // PeopleTable) because the pill click needs invitedSet + setRemoveTarget
+  // from this component's state.
+  const invitedColumn = useMemo<ColumnDef<PersonListItem>>(
+    () => ({
+      id: 'invited',
+      header: () => <div className="text-right">Status</div>,
+      cell: ({ row }) => {
+        if (!invitedSet.has(row.original.id)) return null
+        return (
+          <div className="flex justify-end">
+            <InvitedPill
+              onRemove={(e) => {
+                e.stopPropagation()
+                setRemoveTarget(row.original)
+              }}
+            />
+          </div>
+        )
+      },
+      enableSorting: false,
+    }),
+    [invitedSet]
+  )
+
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-4 pb-24">
@@ -155,15 +185,17 @@ export function AttendeePicker({
             onRemoveInvite={setRemoveTarget}
           />
         ) : (
-          <PickerTable
+          <PeopleTable
             people={filteredPeople}
-            invitedSet={invitedSet}
-            selected={selected}
-            onToggle={toggle}
-            onToggleAll={toggleAllFiltered}
-            allSelected={allFilteredSelected}
-            someSelected={someFilteredSelected}
-            onRemoveInvite={setRemoveTarget}
+            selection={{
+              selected,
+              onToggle: toggle,
+              allSelected: allFilteredSelected,
+              someSelected: someFilteredSelected,
+              onToggleAll: toggleAllFiltered,
+            }}
+            hiddenColumns={['roles', 'skills']}
+            trailingColumn={invitedColumn}
           />
         )}
 
@@ -218,80 +250,6 @@ export function AttendeePicker({
         onConfirm={handleRemove}
       />
     </TooltipProvider>
-  )
-}
-
-interface PickerTableProps {
-  people: PersonListItem[]
-  invitedSet: Set<string>
-  selected: Set<string>
-  onToggle: (id: string) => void
-  onToggleAll: () => void
-  allSelected: boolean
-  someSelected: boolean
-  onRemoveInvite: (person: PersonListItem) => void
-}
-
-function PickerTable({
-  people,
-  invitedSet,
-  selected,
-  onToggle,
-  onToggleAll,
-  allSelected,
-  someSelected,
-  onRemoveInvite,
-}: PickerTableProps) {
-  return (
-    <div className="rounded-xl border overflow-hidden">
-      <div className="grid grid-cols-[auto_2fr_1fr_auto] items-center gap-4 px-4 py-2.5 border-b bg-muted/30 text-xs font-medium text-muted-foreground">
-        <Checkbox
-          checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-          onCheckedChange={onToggleAll}
-          aria-label={allSelected ? 'Deselect all' : 'Select all'}
-        />
-        <div>Name</div>
-        <div>Region</div>
-        <div className="w-24 text-right">Status</div>
-      </div>
-      <ul className="divide-y">
-        {people.map((person) => {
-          const isInvited = invitedSet.has(person.id)
-          const isSelected = selected.has(person.id)
-          return (
-            <li
-              key={person.id}
-              className={`grid grid-cols-[auto_2fr_1fr_auto] items-center gap-4 px-4 py-3 cursor-pointer transition-colors ${
-                isSelected ? 'bg-primary/5' : 'hover:bg-muted/30'
-              }`}
-              onClick={() => onToggle(person.id)}
-            >
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={() => onToggle(person.id)}
-                onClick={(e) => e.stopPropagation()}
-                aria-label={`Select ${person.firstName} ${person.lastName}`}
-              />
-              <PersonNameCell person={person} />
-              <div className="text-sm text-muted-foreground truncate">
-                {person.region?.name ?? '—'}
-                {person.subregion ? ` · ${person.subregion.name}` : ''}
-              </div>
-              <div className="w-24 flex justify-end">
-                {isInvited && (
-                  <InvitedPill
-                    onRemove={(e) => {
-                      e.stopPropagation()
-                      onRemoveInvite(person)
-                    }}
-                  />
-                )}
-              </div>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
   )
 }
 

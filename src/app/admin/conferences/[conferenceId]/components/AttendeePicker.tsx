@@ -3,11 +3,17 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Search, X } from 'lucide-react'
+import { MoreHorizontal, Search, Trash2, X } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   PeopleSearch,
   PeopleFilters,
@@ -137,12 +143,10 @@ export function AttendeePicker({
       cell: ({ row }) => {
         if (!invitedSet.has(row.original.id)) return null
         return (
-          <div className="flex justify-end">
-            <InvitedPill
-              onRemove={(e) => {
-                e.stopPropagation()
-                setRemoveTarget(row.original)
-              }}
+          <div className="flex items-center justify-end gap-1">
+            <InvitedBadge />
+            <RowActionsMenu
+              onRemove={() => setRemoveTarget(row.original)}
             />
           </div>
         )
@@ -295,12 +299,10 @@ function CardList({
               </div>
             </div>
             {isInvited && (
-              <InvitedPill
-                onRemove={(e) => {
-                  e.stopPropagation()
-                  onRemoveInvite(person)
-                }}
-              />
+              <div className="flex items-center gap-1 shrink-0">
+                <InvitedBadge />
+                <RowActionsMenu onRemove={() => onRemoveInvite(person)} />
+              </div>
             )}
           </li>
         )
@@ -339,22 +341,41 @@ function PersonNameCell({ person }: { person: PersonListItem }) {
   )
 }
 
-function InvitedPill({
-  onRemove,
-}: {
-  onRemove: (e: React.MouseEvent) => void
-}) {
+function InvitedBadge() {
   return (
-    <button
-      type="button"
-      onClick={onRemove}
-      className="group inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-destructive/10 hover:text-destructive transition-colors"
-      aria-label="Remove invite"
-    >
-      <span className="group-hover:hidden">Invited</span>
-      <span className="hidden group-hover:inline">Remove</span>
-      <X className="w-3 h-3 hidden group-hover:inline" />
-    </button>
+    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+      Invited
+    </span>
+  )
+}
+
+// Per-row actions menu, opened via the trailing "..." button. Currently just
+// "Remove from conference"; future Stage 5 actions (resend invite, view
+// signups, etc.) slot in here without a UI rework.
+function RowActionsMenu({ onRemove }: { onRemove: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground"
+          onClick={(e) => e.stopPropagation()}
+          aria-label="Open row actions"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onSelect={onRemove}
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          Remove from conference
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

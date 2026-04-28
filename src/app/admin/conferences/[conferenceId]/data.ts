@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getPeoplePageData } from '@/app/people/data'
 import type {
   AdminSession,
   Conference,
@@ -23,7 +24,7 @@ export async function getConferenceEditorView(
   if (!confRow) return null
   const conference = confRow as Conference
 
-  const [sessionsRes, attendeesRes] = await Promise.all([
+  const [sessionsRes, attendeesRes, peopleData] = await Promise.all([
     supabase
       .from('sessions')
       .select(ADMIN_SESSION_COLUMNS)
@@ -33,10 +34,13 @@ export async function getConferenceEditorView(
       .from('conference_attendees')
       .select('user_id')
       .eq('conference_id', conferenceId),
+    getPeoplePageData(),
   ])
   const sessions = (sessionsRes.data ?? []) as AdminSession[]
   const sessionIds = sessions.map((s) => s.id)
-  const invitedCount = (attendeesRes.data ?? []).length
+  const attendeeRows = (attendeesRes.data ?? []) as { user_id: string }[]
+  const invitedCount = attendeeRows.length
+  const invitedUserIds = attendeeRows.map((r) => r.user_id)
 
   const signupCounts: Record<string, number> = {}
   const checkInCounts: Record<string, number> = {}
@@ -73,5 +77,10 @@ export async function getConferenceEditorView(
     checkInCounts,
     invitedCount,
     feedbackCount,
+    attendees: {
+      people: peopleData.people,
+      filterCategories: peopleData.filterCategories,
+      invitedUserIds,
+    },
   }
 }

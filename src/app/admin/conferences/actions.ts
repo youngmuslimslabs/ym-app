@@ -78,6 +78,45 @@ export async function publishConference(id: string): Promise<SimpleResult> {
   return data as unknown as SimpleResult
 }
 
+// Attendees -----------------------------------------------------------------
+
+// Bulk-invite. Rows that already exist are silently ignored thanks to the
+// (conference_id, user_id) UNIQUE constraint + ignoreDuplicates upsert.
+// Returns the count of rows actually inserted so the UI can toast accurately.
+export async function inviteAttendees(
+  conferenceId: string,
+  userIds: string[]
+): Promise<{ success: true; invited: number } | { success: false; error: string }> {
+  if (userIds.length === 0) return { success: true, invited: 0 }
+  const supabase = createClient()
+  const rows = userIds.map((user_id) => ({ conference_id: conferenceId, user_id }))
+  const { data, error } = await supabase
+    .from('conference_attendees')
+    .upsert(rows, {
+      onConflict: 'conference_id,user_id',
+      ignoreDuplicates: true,
+    })
+    .select('user_id')
+  if (error) return { success: false, error: error.message }
+  return { success: true, invited: (data ?? []).length }
+}
+
+// Wraps the remove_attendee RPC, which cascades signups, check-ins, and
+// feedback for the user's sessions in this conference before deleting the
+// junction row. All in one transaction at the DB layer.
+export async function removeAttendee(
+  conferenceId: string,
+  userId: string
+): Promise<SimpleResult> {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('remove_attendee', {
+    p_conference_id: conferenceId,
+    p_user_id: userId,
+  })
+  if (error) return { success: false, error: error.message }
+  return data as unknown as SimpleResult
+}
+
 // Sessions ------------------------------------------------------------------
 
 export interface SessionInput {

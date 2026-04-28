@@ -22,7 +22,7 @@ import { TypeToConfirmDialog } from '../components/TypeToConfirmDialog'
 import { deleteConference, publishConference } from '../actions'
 import { ConferenceInfoForm } from './components/ConferenceInfoForm'
 import { ScheduleEditor } from './components/ScheduleEditor'
-import { AttendeesPlaceholder } from './components/AttendeesPlaceholder'
+import { AttendeePicker } from './components/AttendeePicker'
 import { FeedbackPlaceholder } from './components/FeedbackPlaceholder'
 import type { ConferenceEditorView } from '../types'
 
@@ -163,7 +163,12 @@ export function ConferenceEditor({ initialView }: Props) {
           <ScheduleEditor view={initialView} />
         </TabsContent>
         <TabsContent value="attendees" className="py-6">
-          <AttendeesPlaceholder invitedCount={invitedCount} />
+          <AttendeePicker
+            conferenceId={conference.id}
+            people={initialView.attendees.people}
+            filterCategories={initialView.attendees.filterCategories}
+            invitedUserIds={initialView.attendees.invitedUserIds}
+          />
         </TabsContent>
         <TabsContent value="feedback" className="py-6">
           <FeedbackPlaceholder feedbackCount={feedbackCount} />

@@ -3,6 +3,8 @@
 // admin pages CAN show seat counts; attendee pages cannot.
 
 import type { Conference, Session } from '@/app/conferences/[conferenceId]/types'
+import type { PersonListItem } from '@/lib/supabase/queries/people'
+import type { FilterCategory } from '@/app/people/types'
 
 export type { Conference, Session }
 
@@ -33,6 +35,13 @@ export interface ConferenceEditorView {
   checkInCounts: Record<string, number>
   invitedCount: number
   feedbackCount: number
+  // Data backing the Attendees tab (AttendeePicker). Eager-loaded with the
+  // editor view since the user count is small; revisit if the directory grows.
+  attendees: {
+    people: PersonListItem[]
+    filterCategories: FilterCategory[]
+    invitedUserIds: string[]
+  }
 }
 
 export interface SimpleResult {

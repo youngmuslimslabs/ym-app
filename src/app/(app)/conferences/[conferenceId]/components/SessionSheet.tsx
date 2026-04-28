@@ -185,9 +185,9 @@ export function SessionSheet({
                 <CircleSlash className="w-4 h-4 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium">You didn't check in</h3>
+                <h3 className="text-sm font-medium">You didn&apos;t check in</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  No worries — feedback isn't open without a check-in.
+                  No worries — feedback isn&apos;t open without a check-in.
                 </p>
               </div>
             </div>
@@ -255,7 +255,7 @@ export function SessionSheet({
           <DialogHeader>
             <DialogTitle>Remove your RSVP?</DialogTitle>
             <DialogDescription>
-              You'll lose your spot for{' '}
+              You&apos;ll lose your spot for{' '}
               <span className="font-medium text-foreground">{session.title}</span>
               {capacity != null
                 ? '. If the session fills up before you re-RSVP, you may not get a seat back.'

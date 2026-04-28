@@ -98,7 +98,7 @@ export function SessionCard({
             </span>
           )}
           {ended && signedUp && !checkedIn && (
-            <span className="text-muted-foreground">You didn't check in</span>
+            <span className="text-muted-foreground">You didn&apos;t check in</span>
           )}
           {ended && checkedIn && !feedback && (
             <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2 py-0.5 font-medium text-foreground">

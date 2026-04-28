@@ -45,7 +45,7 @@ export function CheckInDialog({
           <CheckCircle2 className="w-6 h-6 text-primary" />
         </div>
         <h3 className="text-base font-semibold tracking-tight mb-1">
-          You're checked in
+          You&apos;re checked in
         </h3>
         <p className="text-sm text-muted-foreground">
           Feedback opens once the session ends.

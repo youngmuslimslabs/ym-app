@@ -328,6 +328,14 @@ git commit -m "feat(conferences): schema, RLS, functions, smoke test"
 
 ---
 
+## Polish backlog
+
+Optional small items that don't justify their own stage. Pick up between stages or in a dedicated polish session.
+
+- **Mobile drag-to-dismiss visual feedback.** Bottom sheets currently close on >60px swipe but don't render a drag preview during the gesture. Add a `translateY` transform on `touchmove` so the sheet visibly follows the finger, then snaps back if the swipe is below threshold. Makes mobile feel native.
+
+---
+
 ## Handoff prompt for a remote / cloud session
 
 To kick off Stage 0 in a fresh Claude session (laptop closed, agent running remotely or in another window), paste the following:

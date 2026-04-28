@@ -16,6 +16,7 @@
 - **shadcn/ui first** — only create custom components if shadcn doesn't have it
 - **Icons: lucide-react only** — never `@radix-ui/react-icons` or `react-icons`
 - **Only design system colors** — never arbitrary colors (`bg-amber-500`, etc.)
+- **Search before creating components** — Before writing any new component, grep the codebase for one that already does the job, or one you can extend with a prop/variant. Only create a new component if (a) no existing one fits AND (b) no existing one can be extended cleanly. Examples: people-table-with-selection → extend `PeopleTable` with a `selection` prop, don't write a `PickerTable`. New button style → add a CVA variant in `button.tsx`, don't fork.
 - **Reuse is a component, not a copy-paste** — add a variant to an existing CVA primitive when it fits, otherwise extract a new component before the second caller appears.
 - **Notifications: use Sonner via `import { toast } from 'sonner'`** — never inline status strips inside Sheets/Dialogs. Toaster is mounted globally in `src/app/layout.tsx` at `top-center`. Inline error chrome (e.g., destructive border around a wrong-input field) is the right pattern for validation correction; toasts are for transient confirmations and unexpected errors.
 - OKLCH color tokens in CSS variables, Tailwind wraps with `oklch(var(...) / <alpha-value>)`

@@ -6,9 +6,6 @@ export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
     environment: 'jsdom',
-    // src/lib unit tests are pure-node and faster under the node env. Runtime DOM
-    // primitives still resolve via jsdom default; this just speeds up node-only files.
-    environmentMatchGlobs: [['src/lib/**', 'node']],
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.{js,ts,jsx,tsx}'],
     exclude: ['node_modules', '.next', 'dist', 'e2e'],

@@ -258,15 +258,19 @@ Preserve `referrerPolicy="no-referrer"` for Google avatars. Either configure the
 
 ---
 
-## Open decisions (need a call before implementing)
+## Resolved decisions
 
-### [D-1] Inline error strip in `UnsavedChangesModal`
+### [D-1] Inline error strip in `UnsavedChangesModal` — **RESOLVED 2026-04-28: toast (Option B)**
 
-`src/app/profile/components/UnsavedChangesModal.tsx:47-51` shows save errors as an inline destructive strip. CLAUDE.md says "never inline status strips inside Sheets/Dialogs" but also "Inline error chrome … is the right pattern for validation correction."
+Originally flagged: `src/app/profile/components/UnsavedChangesModal.tsx:47-51` showed save errors as an inline destructive strip. CLAUDE.md says "never inline status strips inside Sheets/Dialogs" but also "Inline error chrome … is the right pattern for validation correction."
 
-A failed save mid-navigation sits between those two — defensible inline (user is mid-decision, the recovery action is right there in the modal) but also a candidate for toast.
+**Resolution:** Treat the rule as strict for save/unexpected failures, with a clean carve-out for validation correction. Save-failure errors inside dialogs route through `toast.error(toUserMessage(err))`. Validation correction (e.g., wrong check-in code) stays inline as destructive chrome around the input.
 
-**Decision needed:** Is the rule strict, or contextual? Resolve before **P1-1** lands so the translated copy goes to the right surface.
+**Implication for P1-1:** Toast infrastructure (`sonner` + `<Toaster position="top-center" />`) becomes a prerequisite. `feature/conferences` already ships this setup in commit `dad3b37`; replicate the same files on `feature/design` so the diffs match when branches converge on main.
+
+Two-line summary for future readers:
+- **Validation correction → inline destructive chrome** (CheckInDialog wrong-code pattern)
+- **Save failure / unexpected error → `toast.error()` at top-center**
 
 ---
 
@@ -303,7 +307,7 @@ Severity and effort don't always agree. This order maximizes downstream leverage
 5. **P2-5 + P3-1** together (extract `ConfirmDialog`, enter-to-confirm).
 6. **P2-4** (URL filter persistence) — biggest scope, highest test surface, do last in P2.
 7. **P3-2, P3-3** — pre-launch polish sweep.
-8. **D-1** decision — resolve before or during P1-1.
+8. ~~**D-1** decision — resolve before or during P1-1.~~ Resolved 2026-04-28 (toast for save-failures; see Resolved decisions section).
 
 ---
 

@@ -196,8 +196,9 @@ export default function PersonalInfo() {
 
           {/* Date of Birth */}
           <div className="flex flex-col gap-1.5">
-            <Label>Date of Birth</Label>
+            <Label htmlFor="onb-dob">Date of Birth</Label>
             <DatePicker
+              id="onb-dob"
               value={dateOfBirth}
               onChange={setDateOfBirth}
               placeholder="Select your date of birth"

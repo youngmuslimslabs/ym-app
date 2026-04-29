@@ -137,8 +137,9 @@ export function ConferenceCreateDialog() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Start date</Label>
+              <Label htmlFor="conf-start-date">Start date</Label>
               <DatePicker
+                id="conf-start-date"
                 value={startDate}
                 onChange={setStartDate}
                 placeholder="Select date"
@@ -146,8 +147,9 @@ export function ConferenceCreateDialog() {
               />
             </div>
             <div>
-              <Label>End date</Label>
+              <Label htmlFor="conf-end-date">End date</Label>
               <DatePicker
+                id="conf-end-date"
                 value={endDate}
                 onChange={setEndDate}
                 placeholder="Select date"

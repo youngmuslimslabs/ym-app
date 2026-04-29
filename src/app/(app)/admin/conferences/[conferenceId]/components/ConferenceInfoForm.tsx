@@ -126,8 +126,9 @@ export function ConferenceInfoForm({ conference, onDeleteClick }: Props) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label>Start date</Label>
+          <Label htmlFor="info-start-date">Start date</Label>
           <DatePicker
+            id="info-start-date"
             value={form.start_date ? parseDateInput(form.start_date) : undefined}
             onChange={(d) => field('start_date', toDateInputString(d))}
             placeholder="Select date"
@@ -135,8 +136,9 @@ export function ConferenceInfoForm({ conference, onDeleteClick }: Props) {
           />
         </div>
         <div>
-          <Label>End date</Label>
+          <Label htmlFor="info-end-date">End date</Label>
           <DatePicker
+            id="info-end-date"
             value={form.end_date ? parseDateInput(form.end_date) : undefined}
             onChange={(d) => field('end_date', toDateInputString(d))}
             placeholder="Select date"

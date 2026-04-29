@@ -28,6 +28,8 @@ export function toDateInputString(d: Date | undefined): string {
 }
 
 interface Props {
+  // Forwarded to the trigger so a sibling <Label htmlFor> focuses the picker.
+  id?: string
   value: Date | undefined
   onChange: (date: Date | undefined) => void
   placeholder?: string
@@ -43,6 +45,7 @@ interface Props {
 }
 
 export function DatePicker({
+  id,
   value,
   onChange,
   placeholder = 'Pick a date',
@@ -57,6 +60,7 @@ export function DatePicker({
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           type="button"
           variant="outline"
           disabled={disabled}

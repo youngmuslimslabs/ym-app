@@ -4,6 +4,7 @@ import type {
   AdminSession,
   Conference,
   ConferenceEditorView,
+  SessionFeedbackAggregate,
 } from '../types'
 
 // All columns admins are allowed to see — including check_in_code, which is
@@ -44,9 +45,14 @@ export async function getConferenceEditorView(
 
   const signupCounts: Record<string, number> = {}
   const checkInCounts: Record<string, number> = {}
+  const feedbackBySession: Record<string, SessionFeedbackAggregate> = {}
   let feedbackCount = 0
 
   if (sessionIds.length > 0) {
+    // Fetch full feedback rows so we can aggregate per session ourselves
+    // (avg + count). Volume is small — bounded by attendees * sessions — and
+    // the Stage 6 ranked list is the only consumer, so a single round trip
+    // beats one aggregate query per session.
     const [signupsRes, checkInsRes, feedbackRes] = await Promise.all([
       supabase
         .from('session_signups')
@@ -58,7 +64,7 @@ export async function getConferenceEditorView(
         .in('session_id', sessionIds),
       supabase
         .from('session_feedback')
-        .select('id', { count: 'exact', head: true })
+        .select('session_id, rating')
         .in('session_id', sessionIds),
     ])
     for (const r of (signupsRes.data ?? []) as { session_id: string }[]) {
@@ -67,7 +73,16 @@ export async function getConferenceEditorView(
     for (const r of (checkInsRes.data ?? []) as { session_id: string }[]) {
       checkInCounts[r.session_id] = (checkInCounts[r.session_id] ?? 0) + 1
     }
-    feedbackCount = feedbackRes.count ?? 0
+    for (const r of (feedbackRes.data ?? []) as {
+      session_id: string
+      rating: number
+    }[]) {
+      const agg = feedbackBySession[r.session_id] ?? { count: 0, sum: 0 }
+      agg.count += 1
+      agg.sum += r.rating
+      feedbackBySession[r.session_id] = agg
+    }
+    feedbackCount = (feedbackRes.data ?? []).length
   }
 
   return {
@@ -75,6 +90,7 @@ export async function getConferenceEditorView(
     sessions,
     signupCounts,
     checkInCounts,
+    feedbackBySession,
     invitedCount,
     feedbackCount,
     attendees: {

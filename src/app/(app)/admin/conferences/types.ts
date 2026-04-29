@@ -26,6 +26,14 @@ export interface AdminSession extends Session {
   check_in_code: string | null
 }
 
+// Map session_id → aggregate feedback metrics. Drives the ranked list in the
+// admin Feedback tab. `sum` lets the client compute avg = sum / count without
+// passing floats through Postgres aggregation.
+export interface SessionFeedbackAggregate {
+  count: number
+  sum: number
+}
+
 export interface ConferenceEditorView {
   conference: Conference
   sessions: AdminSession[]
@@ -33,6 +41,8 @@ export interface ConferenceEditorView {
   signupCounts: Record<string, number>
   // Map session_id → check-in count.
   checkInCounts: Record<string, number>
+  // Map session_id → { count, sum }. Sessions with no feedback are omitted.
+  feedbackBySession: Record<string, SessionFeedbackAggregate>
   invitedCount: number
   feedbackCount: number
   // Data backing the Attendees tab (AttendeePicker). Eager-loaded with the

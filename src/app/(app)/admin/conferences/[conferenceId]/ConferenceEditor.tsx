@@ -26,7 +26,7 @@ import { deleteConference, publishConference } from '../client-actions'
 import { ConferenceInfoForm } from './components/ConferenceInfoForm'
 import { ScheduleEditor } from './components/ScheduleEditor'
 import { AttendeePicker } from './components/AttendeePicker'
-import { FeedbackPlaceholder } from './components/FeedbackPlaceholder'
+import { AdminFeedbackTab } from './components/AdminFeedbackTab'
 import type { ConferenceEditorView } from '../types'
 
 interface Props {
@@ -207,7 +207,12 @@ export function ConferenceEditor({ initialView }: Props) {
           />
         </TabsContent>
         <TabsContent value="feedback" className="py-6">
-          <FeedbackPlaceholder feedbackCount={feedbackCount} />
+          <AdminFeedbackTab
+            sessions={initialView.sessions}
+            feedbackBySession={initialView.feedbackBySession}
+            timezone={conference.timezone}
+            totalResponses={feedbackCount}
+          />
         </TabsContent>
       </Tabs>
 

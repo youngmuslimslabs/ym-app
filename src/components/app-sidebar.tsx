@@ -77,9 +77,15 @@ export function AppSidebar() {
   useEffect(() => {
     if (!user) return
     let cancelled = false
+    // Coalesce focus-triggered refetches: tab-thrash should not fire
+    // back-to-back queries. Pathname-change refetches always go through
+    // because the effect itself re-runs and resets this closure.
+    let lastFetchStartedAt = 0
     const supabase = createClient()
 
     async function fetchSidebarData() {
+      if (Date.now() - lastFetchStartedAt < 2000) return
+      lastFetchStartedAt = Date.now()
       const { data: userRow } = await supabase
         .from('users')
         .select('id')

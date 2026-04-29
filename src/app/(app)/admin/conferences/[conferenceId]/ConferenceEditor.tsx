@@ -6,7 +6,10 @@ import { useState } from 'react'
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
+  Info,
   MapPin,
+  Star,
+  Users,
 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
@@ -128,27 +131,60 @@ export function ConferenceEditor({ initialView }: Props) {
         </div>
       </header>
 
-      <Tabs
-        defaultValue={isDraft ? 'schedule' : 'info'}
-        className="px-6 md:px-8 pt-6"
-      >
+      <Tabs defaultValue="schedule" className="px-6 md:px-8 pt-6">
+        {/* Once published, the conference goes live and Schedule becomes the
+            dominant surface (admins are running the event, not editing it).
+            Tabs collapse to icon-only buttons to stay out of the way; admins
+            still navigate the same four sections. */}
         <TabsList>
-          <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
-          <TabsTrigger value="attendees">
-            Attendees
-            <span className="ml-1.5 text-muted-foreground tabular-nums">
-              {invitedCount}
-            </span>
+          <TabsTrigger
+            value="info"
+            aria-label="Info"
+            className={isDraft ? '' : 'px-2.5'}
+          >
+            {isDraft ? 'Info' : <Info className="w-4 h-4" />}
+          </TabsTrigger>
+          <TabsTrigger
+            value="schedule"
+            aria-label="Schedule"
+            className={isDraft ? '' : 'px-2.5'}
+          >
+            {isDraft ? 'Schedule' : <CalendarIcon className="w-4 h-4" />}
+          </TabsTrigger>
+          <TabsTrigger
+            value="attendees"
+            aria-label="Attendees"
+            className={isDraft ? '' : 'px-2.5'}
+          >
+            {isDraft ? (
+              <>
+                Attendees
+                <span className="ml-1.5 text-muted-foreground tabular-nums">
+                  {invitedCount}
+                </span>
+              </>
+            ) : (
+              <Users className="w-4 h-4" />
+            )}
           </TabsTrigger>
           {/* Feedback tab is intentionally available even when empty so admins
               can find it; it shows an empty state until the first response. */}
-          <TabsTrigger value="feedback">
-            Feedback
-            {feedbackCount > 0 && (
-              <span className="ml-1.5 text-muted-foreground tabular-nums">
-                {feedbackCount}
-              </span>
+          <TabsTrigger
+            value="feedback"
+            aria-label="Feedback"
+            className={isDraft ? '' : 'px-2.5'}
+          >
+            {isDraft ? (
+              <>
+                Feedback
+                {feedbackCount > 0 && (
+                  <span className="ml-1.5 text-muted-foreground tabular-nums">
+                    {feedbackCount}
+                  </span>
+                )}
+              </>
+            ) : (
+              <Star className="w-4 h-4" />
             )}
           </TabsTrigger>
         </TabsList>

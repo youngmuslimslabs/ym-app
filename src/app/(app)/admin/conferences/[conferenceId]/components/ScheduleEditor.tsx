@@ -10,6 +10,7 @@ import { decomposeTzIso } from '../../lib/datetime'
 import { deleteSession } from '../../client-actions'
 import { TypeToConfirmDialog } from '../../components/TypeToConfirmDialog'
 import { SessionEditor } from './SessionEditor'
+import { RosterSheet } from './RosterSheet'
 import type { AdminSession, ConferenceEditorView } from '../../types'
 
 interface Props {
@@ -25,6 +26,9 @@ export function ScheduleEditor({ view }: Props) {
   const [editorDefaultDate, setEditorDefaultDate] = useState<string | undefined>()
   const [deletingSession, setDeletingSession] = useState<AdminSession | null>(null)
   const [deletePending, setDeletePending] = useState(false)
+  // Roster sheet target: clicking a session body opens it. Breaks have no
+  // roster so they skip this path; their click is a no-op.
+  const [rosterSession, setRosterSession] = useState<AdminSession | null>(null)
 
   // Group sessions by their wall-clock date in the conference timezone, then
   // by start time. The DaySchedule attendee component computes this same way
@@ -126,6 +130,7 @@ export function ScheduleEditor({ view }: Props) {
                 timezone={conference.timezone}
                 signupCount={signupCounts[s.id] ?? 0}
                 checkInCount={checkInCounts[s.id] ?? 0}
+                onOpenRoster={() => setRosterSession(s)}
                 onEdit={() => openEdit(s)}
                 onDelete={() => setDeletingSession(s)}
               />
@@ -148,6 +153,12 @@ export function ScheduleEditor({ view }: Props) {
         conference={conference}
         session={editingSession}
         defaultDate={editorDefaultDate}
+      />
+
+      <RosterSheet
+        session={rosterSession}
+        timezone={conference.timezone}
+        onClose={() => setRosterSession(null)}
       />
 
       <TypeToConfirmDialog
@@ -211,6 +222,7 @@ function SessionRow({
   timezone,
   signupCount,
   checkInCount,
+  onOpenRoster,
   onEdit,
   onDelete,
 }: {
@@ -218,6 +230,7 @@ function SessionRow({
   timezone: string
   signupCount: number
   checkInCount: number
+  onOpenRoster: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -244,49 +257,58 @@ function SessionRow({
   }
 
   return (
-    <div className="rounded-lg border bg-card px-4 py-3 flex items-center gap-4 hover:border-foreground/20 transition-colors">
-      <div className="flex-1 min-w-0">
-        <div className="font-medium text-sm truncate">{session.title}</div>
-        <div className="text-xs text-muted-foreground mt-0.5 truncate">
-          {formatTimeRange(startWall, endWall)}
-          {session.speaker ? ` · ${session.speaker}` : ''}
-          {session.room ? ` · ${session.room}` : ''}
+    <div className="rounded-lg border bg-card flex items-center gap-4 hover:border-foreground/20 transition-colors">
+      <button
+        type="button"
+        onClick={onOpenRoster}
+        aria-label={`Open roster for ${session.title}`}
+        className="flex-1 min-w-0 flex items-center gap-4 text-left px-4 py-3 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm truncate">{session.title}</div>
+          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+            {formatTimeRange(startWall, endWall)}
+            {session.speaker ? ` · ${session.speaker}` : ''}
+            {session.room ? ` · ${session.room}` : ''}
+          </div>
         </div>
+        <div className="hidden sm:flex items-center gap-6 text-sm">
+          <div className="text-right">
+            <div
+              className={
+                'font-semibold tabular-nums ' +
+                (isFull ? 'text-destructive' : '')
+              }
+            >
+              {signupCount}
+              {session.capacity != null && (
+                <span className="text-muted-foreground font-normal">
+                  {' '}/ {session.capacity}
+                </span>
+              )}
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {isFull ? 'Full' : 'Signed up'}
+            </div>
+          </div>
+          <div className="text-right">
+            <div
+              className={
+                'font-semibold tabular-nums ' +
+                (checkInCount === 0 ? 'text-muted-foreground' : '')
+              }
+            >
+              {checkInCount === 0 ? '—' : checkInCount}
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Checked in
+            </div>
+          </div>
+        </div>
+      </button>
+      <div className="pr-3">
+        <RowActions onEdit={onEdit} onDelete={onDelete} />
       </div>
-      <div className="hidden sm:flex items-center gap-6 text-sm">
-        <div className="text-right">
-          <div
-            className={
-              'font-semibold tabular-nums ' +
-              (isFull ? 'text-destructive' : '')
-            }
-          >
-            {signupCount}
-            {session.capacity != null && (
-              <span className="text-muted-foreground font-normal">
-                {' '}/ {session.capacity}
-              </span>
-            )}
-          </div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {isFull ? 'Full' : 'Signed up'}
-          </div>
-        </div>
-        <div className="text-right">
-          <div
-            className={
-              'font-semibold tabular-nums ' +
-              (checkInCount === 0 ? 'text-muted-foreground' : '')
-            }
-          >
-            {checkInCount === 0 ? '—' : checkInCount}
-          </div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Checked in
-          </div>
-        </div>
-      </div>
-      <RowActions onEdit={onEdit} onDelete={onDelete} />
     </div>
   )
 }

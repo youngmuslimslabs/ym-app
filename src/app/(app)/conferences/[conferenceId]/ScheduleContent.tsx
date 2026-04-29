@@ -20,7 +20,7 @@ import {
   checkInToSession,
   signupForSession,
   upsertFeedback,
-} from './actions'
+} from './client-actions'
 import type { ScheduleView, Session } from './types'
 
 interface Props {

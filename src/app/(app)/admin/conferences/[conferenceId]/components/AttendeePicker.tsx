@@ -22,7 +22,7 @@ import {
 import { usePeopleFilters } from '@/app/(app)/people/hooks/usePeopleFilters'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { TypeToConfirmDialog } from '../../components/TypeToConfirmDialog'
-import { inviteAttendees, removeAttendee } from '../../actions'
+import { inviteAttendees, removeAttendee } from '../../client-actions'
 import type { PersonListItem } from '@/lib/supabase/queries/people'
 import type { FilterCategory } from '@/app/(app)/people/types'
 

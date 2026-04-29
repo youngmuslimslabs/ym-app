@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select'
 import { FloatingSaveBar } from '@/components/ui/floating-save-bar'
 import { TIMEZONE_OPTIONS } from '../../lib/timezones'
-import { updateConference } from '../../actions'
+import { updateConference } from '../../client-actions'
 import type { Conference } from '../../types'
 
 interface Props {

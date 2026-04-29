@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/tabs'
 import { ConferenceStatusBadge } from '../components/ConferenceStatusBadge'
 import { TypeToConfirmDialog } from '../components/TypeToConfirmDialog'
-import { deleteConference, publishConference } from '../actions'
+import { deleteConference, publishConference } from '../client-actions'
 import { ConferenceInfoForm } from './components/ConferenceInfoForm'
 import { ScheduleEditor } from './components/ScheduleEditor'
 import { AttendeePicker } from './components/AttendeePicker'

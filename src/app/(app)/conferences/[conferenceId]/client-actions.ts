@@ -1,5 +1,10 @@
 'use client'
 
+// Client-side mutations called from attendee UI components. These are NOT
+// Next.js Server Actions — the file uses 'use client' and the browser
+// Supabase client. Authorization lives in the database (RLS + SECURITY
+// DEFINER RPCs like signup_for_session / cancel_signup / check_in_to_session).
+
 import { createClient } from '@/lib/supabase/client'
 import type { CheckInResult, FeedbackResult, SignupResult } from './types'
 

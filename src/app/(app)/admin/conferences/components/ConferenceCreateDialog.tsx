@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { TIMEZONE_OPTIONS } from '../lib/timezones'
-import { createConference } from '../actions'
+import { createConference } from '../client-actions'
 
 const DEFAULT_TZ = 'America/New_York'
 

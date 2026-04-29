@@ -3,9 +3,14 @@
 import { createClient } from '@/lib/supabase/client'
 import type { SimpleResult } from './types'
 
-// Admin client mutations. RLS gates everything to event_admin role. Server
-// only checks "is the user an event_admin" before rendering — the actual
-// authorization happens at the database layer (RLS + SECURITY DEFINER fns).
+// Client-side mutations called from admin UI components. These are NOT
+// Next.js Server Actions despite the directory layout — the file uses
+// 'use client' and the browser Supabase client. Authorization lives
+// entirely in the database (RLS policies + SECURITY DEFINER RPCs that
+// check is_event_admin). If you add a mutation here that touches a table
+// or column without admin RLS coverage, it will silently allow any
+// authenticated user to call it. Either add RLS, or convert this whole
+// file (and the rest of the conferences mutations) to real Server Actions.
 
 export interface CreateConferenceInput {
   name: string

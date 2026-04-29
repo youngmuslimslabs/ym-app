@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { createSession, updateSession } from '../../actions'
+import { createSession, updateSession } from '../../client-actions'
 import {
   composeTzIso,
   dateRangeInclusive,

@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
-import { Star } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ChevronRight, Star } from 'lucide-react'
 import { decomposeTzIso } from '../../lib/datetime'
+import { SessionCommentsSheet } from './SessionCommentsSheet'
 import type { AdminSession, SessionFeedbackAggregate } from '../../types'
 
 interface Props {
@@ -30,6 +31,7 @@ export function AdminFeedbackTab({
   timezone,
   totalResponses,
 }: Props) {
+  const [activeSession, setActiveSession] = useState<AdminSession | null>(null)
   const rows = useMemo(() => buildRows(sessions, feedbackBySession), [
     sessions,
     feedbackBySession,
@@ -80,9 +82,20 @@ export function AdminFeedbackTab({
 
       <ul className="rounded-xl border bg-card divide-y overflow-hidden">
         {rows.map((row) => (
-          <FeedbackRow key={row.session.id} row={row} timezone={timezone} />
+          <FeedbackRow
+            key={row.session.id}
+            row={row}
+            timezone={timezone}
+            onOpen={() => setActiveSession(row.session)}
+          />
         ))}
       </ul>
+
+      <SessionCommentsSheet
+        session={activeSession}
+        timezone={timezone}
+        onClose={() => setActiveSession(null)}
+      />
     </div>
   )
 }
@@ -90,40 +103,66 @@ export function AdminFeedbackTab({
 function FeedbackRow({
   row,
   timezone,
+  onOpen,
 }: {
   row: RankedRow
   timezone: string
+  onOpen: () => void
 }) {
   const startWall = decomposeTzIso(row.session.start_at, timezone)
   const dateLabel = formatDateLabel(startWall.date)
+  // Awaiting-first-response rows are kept visible (admins want to know
+  // what's pending) but they have nothing to drill into yet, so they don't
+  // open the sheet.
+  const interactive = row.avgRating !== null
+
+  if (!interactive) {
+    return (
+      <li className="flex items-center gap-4 px-5 py-4">
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm truncate">{row.session.title}</div>
+          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+            {dateLabel} · {formatTime(startWall.time)}
+            {row.session.speaker ? ` · ${row.session.speaker}` : ''}
+          </div>
+        </div>
+        <div className="text-xs text-muted-foreground italic shrink-0">
+          Awaiting first response
+        </div>
+      </li>
+    )
+  }
 
   return (
-    <li className="flex items-center gap-4 px-5 py-4">
-      <div className="flex-1 min-w-0">
-        <div className="font-medium text-sm truncate">{row.session.title}</div>
-        <div className="text-xs text-muted-foreground mt-0.5 truncate">
-          {dateLabel} · {formatTime(startWall.time)}
-          {row.session.speaker ? ` · ${row.session.speaker}` : ''}
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Open feedback for ${row.session.title}`}
+        className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-muted/40 transition-colors focus:outline-none focus-visible:bg-muted/40"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm truncate">{row.session.title}</div>
+          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+            {dateLabel} · {formatTime(startWall.time)}
+            {row.session.speaker ? ` · ${row.session.speaker}` : ''}
+          </div>
         </div>
-      </div>
 
-      {row.avgRating !== null ? (
         <div className="flex items-center gap-4 shrink-0">
           <div className="flex items-center gap-1">
             <Star className="w-4 h-4 fill-primary text-primary" />
             <span className="text-sm font-semibold tabular-nums">
-              {row.avgRating.toFixed(1)}
+              {row.avgRating!.toFixed(1)}
             </span>
           </div>
           <div className="text-xs text-muted-foreground tabular-nums w-20 text-right">
             {row.count === 1 ? '1 response' : `${row.count} responses`}
           </div>
         </div>
-      ) : (
-        <div className="text-xs text-muted-foreground italic shrink-0">
-          Awaiting first response
-        </div>
-      )}
+
+        <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+      </button>
     </li>
   )
 }

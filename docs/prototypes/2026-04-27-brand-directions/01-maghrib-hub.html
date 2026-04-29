@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YM App — Maghrib · Leadership Hub</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..125,300..800&family=Geist:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --c-bg-start: #061A2A;
+    --c-bg-mid:   #0A2E32;
+    --c-bg-end:   #0F3D2E;
+
+    --c-ink:      #F5EFE0;
+    --c-ink-soft: rgba(245, 239, 224, 0.62);
+    --c-ink-faint:rgba(245, 239, 224, 0.32);
+
+    --c-gold:     #E5B454;
+    --c-gold-soft:#C4943F;
+    --c-cobalt:   #4F7EE0;
+
+    --c-glass:    rgba(255, 255, 255, 0.04);
+    --c-glass-hi: rgba(255, 255, 255, 0.07);
+    --c-edge:     rgba(245, 239, 224, 0.10);
+    --c-edge-hi:  rgba(245, 239, 224, 0.18);
+
+    --serif: 'Bricolage Grotesque', system-ui, sans-serif;
+    --sans:  'Geist', ui-sans-serif, system-ui, sans-serif;
+    --arabic:'Amiri', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--sans);
+    color: var(--c-ink);
+    background: var(--c-bg-start);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* Atmospheric layers */
+  .atmosphere {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      linear-gradient(180deg, var(--c-bg-start) 0%, var(--c-bg-mid) 55%, var(--c-bg-end) 100%),
+      radial-gradient(ellipse 1200px 800px at 75% 10%, rgba(79, 126, 224, 0.12), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 15% 90%, rgba(229, 180, 84, 0.08), transparent 55%);
+  }
+  .atmosphere::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(245, 239, 224, 0.06) 1px, transparent 1px);
+    background-size: 22px 22px; background-position: -4px -4px;
+    mask-image: linear-gradient(180deg, black 0%, transparent 80%);
+    -webkit-mask-image: linear-gradient(180deg, black 0%, transparent 80%);
+  }
+  .orb { position: fixed; border-radius: 999px; filter: blur(120px); z-index: 1; pointer-events: none; opacity: 0.5; }
+  .orb--gold { width: 420px; height: 420px; background: var(--c-gold); top: -120px; right: -80px; animation: drift-1 28s ease-in-out infinite; }
+  .orb--cobalt { width: 520px; height: 520px; background: var(--c-cobalt); bottom: -180px; left: -160px; animation: drift-2 36s ease-in-out infinite; }
+  @keyframes drift-1 { 0%,100% { transform: translate(0,0) scale(1);} 50% { transform: translate(-30px,40px) scale(1.06);} }
+  @keyframes drift-2 { 0%,100% { transform: translate(0,0) scale(1);} 50% { transform: translate(40px,-30px) scale(1.08);} }
+
+  .mark-watermark {
+    position: fixed; z-index: 1; right: -8vw; bottom: -12vh;
+    font-family: var(--serif); font-weight: 700;
+    font-variation-settings: 'wdth' 75;
+    font-size: 70vh; line-height: 0.78;
+    color: rgba(245, 239, 224, 0.025);
+    letter-spacing: -0.04em; pointer-events: none; user-select: none;
+  }
+
+  .shell { position: relative; z-index: 2; min-height: 100vh; }
+
+  /* ==================== Top bar ==================== */
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 40px; border-bottom: 1px solid var(--c-edge);
+  }
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--serif); font-weight: 600;
+    font-variation-settings: 'wdth' 90;
+    letter-spacing: -0.01em;
+  }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 999px;
+    border: 1.5px solid var(--c-ink);
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
+  }
+  .top-nav { display: flex; gap: 32px; font-size: 13px; color: var(--c-ink-soft); }
+  .top-nav a {
+    color: inherit; text-decoration: none; padding: 6px 0;
+    border-bottom: 1px solid transparent; transition: color .2s, border-color .2s;
+  }
+  .top-nav a:hover { color: var(--c-ink); }
+  .top-nav a.is-active { color: var(--c-ink); border-bottom-color: var(--c-gold); }
+  .me-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px 6px 6px;
+    border: 1px solid var(--c-edge); border-radius: 999px;
+    background: var(--c-glass); font-size: 13px;
+  }
+  .me-chip-avatar {
+    width: 26px; height: 26px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--c-gold), var(--c-gold-soft));
+    color: #2A1B05; display: grid; place-items: center;
+    font-weight: 700; font-size: 11px;
+  }
+
+  /* ==================== Hero ==================== */
+  .hero {
+    padding: 96px 40px 56px;
+    max-width: 1280px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 80px; align-items: end;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--sans);
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--c-gold); margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 28px; height: 1px; background: var(--c-gold);
+  }
+  .hero-arabic {
+    font-family: var(--arabic);
+    font-size: 24px; color: var(--c-gold-soft);
+    margin-bottom: 16px;
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+  }
+  .greeting {
+    font-family: var(--serif);
+    font-variation-settings: 'opsz' 96, 'wdth' 80, 'wght' 500;
+    font-size: clamp(56px, 7.5vw, 104px);
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    color: var(--c-ink);
+    margin-bottom: 28px;
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  }
+  .greeting .name {
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'wdth' 75, 'wght' 400;
+  }
+  .identity-line {
+    font-family: var(--sans);
+    font-size: 16px;
+    color: var(--c-ink-soft);
+    letter-spacing: 0.01em;
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  }
+  .identity-line strong {
+    color: var(--c-ink); font-weight: 500;
+  }
+  .identity-line .sep {
+    color: var(--c-ink-faint); margin: 0 12px;
+  }
+
+  /* ==================== Org snapshot card ==================== */
+  .snapshot {
+    background: var(--c-glass); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--c-edge);
+    border-radius: 20px;
+    padding: 28px 32px;
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+  }
+  .snapshot-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--c-edge);
+  }
+  .snapshot-label {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--c-ink-faint);
+  }
+  .snapshot-pulse {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 0.05em;
+    color: var(--c-gold);
+  }
+  .snapshot-pulse-dot {
+    width: 6px; height: 6px; border-radius: 999px;
+    background: var(--c-gold);
+    box-shadow: 0 0 0 4px rgba(229, 180, 84, 0.18);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .snapshot-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px 24px;
+  }
+  .snap-stat {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .snap-num {
+    font-family: var(--serif);
+    font-variation-settings: 'wdth' 75, 'wght' 500;
+    font-size: 38px; line-height: 1;
+    color: var(--c-ink);
+    letter-spacing: -0.02em;
+    font-feature-settings: 'tnum';
+  }
+  .snap-num .unit {
+    font-size: 14px;
+    color: var(--c-ink-soft);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+  .snap-name {
+    font-size: 12px;
+    color: var(--c-ink-soft);
+    letter-spacing: 0.05em;
+  }
+
+  /* ==================== Quick-start actions ==================== */
+  .quick-start {
+    max-width: 1280px; margin: 0 auto;
+    padding: 48px 40px 16px;
+  }
+  .qs-row {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .qs-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 20px;
+    background: var(--c-glass);
+    border: 1px solid var(--c-edge);
+    border-radius: 999px;
+    color: var(--c-ink);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all .25s;
+    cursor: pointer;
+  }
+  .qs-btn:hover {
+    border-color: var(--c-gold);
+    color: var(--c-gold);
+    background: rgba(229, 180, 84, 0.06);
+    transform: translateY(-1px);
+  }
+  .qs-btn--primary {
+    background: var(--c-gold);
+    color: #1A0F00;
+    border-color: var(--c-gold);
+  }
+  .qs-btn--primary:hover {
+    background: #F2C66B;
+    color: #1A0F00;
+    border-color: #F2C66B;
+    box-shadow: 0 8px 24px rgba(229, 180, 84, 0.28);
+  }
+  .qs-btn svg { width: 14px; height: 14px; stroke-width: 2; }
+
+  /* ==================== Primary nav (4 tiles) ==================== */
+  .nav-section {
+    max-width: 1280px; margin: 0 auto;
+    padding: 32px 40px 80px;
+  }
+  .section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .section-head h2 {
+    font-family: var(--serif);
+    font-variation-settings: 'wdth' 85, 'wght' 500;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+  .section-head .meta {
+    font-size: 12px; color: var(--c-ink-faint);
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  .nav-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  }
+  .nav-tile {
+    position: relative;
+    background: var(--c-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--c-edge);
+    border-radius: 20px;
+    padding: 32px 28px 28px;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--c-ink);
+    display: flex; flex-direction: column;
+    min-height: 280px;
+    transition: transform .35s cubic-bezier(0.16, 1, 0.3, 1), border-color .25s, background .25s;
+  }
+  .nav-tile:hover {
+    transform: translateY(-4px);
+    border-color: rgba(229, 180, 84, 0.4);
+    background: var(--c-glass-hi);
+  }
+  .nav-tile::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(229, 180, 84, 0.16), transparent 50%);
+    opacity: 0; transition: opacity .35s; pointer-events: none;
+  }
+  .nav-tile:hover::after { opacity: 1; }
+
+  .nav-tile-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: rgba(229, 180, 84, 0.14);
+    color: var(--c-gold);
+    display: grid; place-items: center;
+    margin-bottom: auto;
+  }
+  .nav-tile-icon svg { width: 22px; height: 22px; stroke-width: 1.5; }
+
+  .nav-tile-stat {
+    font-family: var(--serif);
+    font-variation-settings: 'wdth' 75, 'wght' 500;
+    font-size: 32px;
+    line-height: 1;
+    color: var(--c-ink);
+    letter-spacing: -0.02em;
+    font-feature-settings: 'tnum';
+    margin-top: 56px;
+    margin-bottom: 4px;
+  }
+  .nav-tile-stat .unit {
+    font-size: 13px;
+    color: var(--c-ink-soft);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+  .nav-tile-name {
+    font-family: var(--serif);
+    font-variation-settings: 'wdth' 90, 'wght' 500;
+    font-size: 22px;
+    letter-spacing: -0.015em;
+    margin-bottom: 4px;
+  }
+  .nav-tile-desc {
+    font-size: 12px;
+    color: var(--c-ink-soft);
+    line-height: 1.5;
+  }
+
+  .nav-tile-arrow {
+    position: absolute;
+    right: 24px; top: 28px;
+    width: 32px; height: 32px;
+    border-radius: 999px;
+    border: 1px solid var(--c-edge);
+    display: grid; place-items: center;
+    color: var(--c-ink-soft);
+    transition: transform .35s, color .25s, border-color .25s;
+  }
+  .nav-tile:hover .nav-tile-arrow {
+    color: var(--c-gold);
+    border-color: var(--c-gold);
+    transform: rotate(-45deg);
+  }
+
+  /* ==================== System sample ==================== */
+  .system-sample {
+    max-width: 1280px; margin: 0 auto;
+    padding: 48px 40px 80px;
+    border-top: 1px solid var(--c-edge);
+    color: var(--c-ink-soft);
+    font-size: 12px; letter-spacing: 0.05em;
+  }
+  .system-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start;
+  }
+  .system-label {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--c-ink-faint); margin-bottom: 16px;
+  }
+  .system-note {
+    font-size: 12px; line-height: 1.6;
+    color: var(--c-ink-soft);
+    max-width: 50ch;
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Mobile */
+  @media (max-width: 1080px) {
+    .nav-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 720px) {
+    .top-bar, .hero, .quick-start, .nav-section, .system-sample { padding-left: 24px; padding-right: 24px; }
+    .top-nav { display: none; }
+    .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 56px; padding-bottom: 32px; }
+    .nav-grid { grid-template-columns: 1fr; }
+    .system-grid { grid-template-columns: 1fr; gap: 32px; }
+    .greeting { font-size: clamp(44px, 12vw, 64px); }
+    .nav-tile { min-height: 0; padding: 24px; }
+    .nav-tile-stat { margin-top: 32px; font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="atmosphere"></div>
+<div class="orb orb--gold"></div>
+<div class="orb orb--cobalt"></div>
+<div class="mark-watermark" aria-hidden="true">M</div>
+
+<div class="shell">
+
+  <!-- Top bar -->
+  <header class="top-bar">
+    <div class="logo">
+      <div class="logo-mark">YM</div>
+      <span>Young Muslims</span>
+    </div>
+    <nav class="top-nav">
+      <a href="#" class="is-active">Home</a>
+      <a href="#">People</a>
+      <a href="#">Conferences</a>
+      <a href="#">Finance</a>
+      <a href="#">Docs</a>
+    </nav>
+    <div class="me-chip">
+      <div class="me-chip-avatar">O</div>
+      <span>Omar</span>
+    </div>
+  </header>
+
+  <!-- Hero: identity LEFT, org snapshot RIGHT -->
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow">Leadership Hub</div>
+      <div class="hero-arabic">السلام عليكم</div>
+      <h1 class="greeting">
+        Welcome back,<br>
+        <span class="name">Omar.</span>
+      </h1>
+      <p class="identity-line">
+        <strong>Ameer</strong>
+        <span class="sep">·</span>
+        Heart of Texas
+        <span class="sep">·</span>
+        Houston sub-region
+      </p>
+    </div>
+
+    <aside class="snapshot">
+      <div class="snapshot-head">
+        <div class="snapshot-label">Your YM, today</div>
+        <div class="snapshot-pulse">
+          <span class="snapshot-pulse-dot"></span>
+          <span>Live</span>
+        </div>
+      </div>
+      <div class="snapshot-grid">
+        <div class="snap-stat">
+          <div class="snap-num">487</div>
+          <div class="snap-name">Brothers</div>
+        </div>
+        <div class="snap-stat">
+          <div class="snap-num">12</div>
+          <div class="snap-name">NeighborNets</div>
+        </div>
+        <div class="snap-stat">
+          <div class="snap-num">4</div>
+          <div class="snap-name">Active conferences</div>
+        </div>
+        <div class="snap-stat">
+          <div class="snap-num">87<span class="unit">%</span></div>
+          <div class="snap-name">Onboarded</div>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- Quick-start actions -->
+  <section class="quick-start">
+    <div class="qs-row">
+      <a class="qs-btn qs-btn--primary" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+        Create conference
+      </a>
+      <a class="qs-btn" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="4" stroke-linecap="round"/><path d="M19 8v6M22 11h-6" stroke-linecap="round"/></svg>
+        Invite attendees
+      </a>
+      <a class="qs-btn" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Submit reimbursement
+      </a>
+      <a class="qs-btn" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7" stroke-linecap="round"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+        Find a brother
+      </a>
+    </div>
+  </section>
+
+  <!-- Primary nav: 4 tiles -->
+  <section class="nav-section">
+    <div class="section-head">
+      <h2>Where to?</h2>
+      <span class="meta">Four destinations</span>
+    </div>
+
+    <div class="nav-grid">
+
+      <a class="nav-tile" href="#">
+        <div class="nav-tile-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="nav-tile-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M9 7h8v8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="nav-tile-stat">487<span class="unit">members</span></div>
+        <div class="nav-tile-name">People</div>
+        <div class="nav-tile-desc">Roster, search, profiles</div>
+      </a>
+
+      <a class="nav-tile" href="#">
+        <div class="nav-tile-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="nav-tile-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M9 7h8v8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="nav-tile-stat">4<span class="unit">active</span></div>
+        <div class="nav-tile-name">Conferences</div>
+        <div class="nav-tile-desc">Schedules, attendees, check-ins</div>
+      </a>
+
+      <a class="nav-tile" href="#">
+        <div class="nav-tile-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="nav-tile-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M9 7h8v8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="nav-tile-stat">3<span class="unit">pending</span></div>
+        <div class="nav-tile-name">Finance</div>
+        <div class="nav-tile-desc">Reimbursements and approvals</div>
+      </a>
+
+      <a class="nav-tile" href="#">
+        <div class="nav-tile-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="nav-tile-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M9 7h8v8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="nav-tile-stat">52<span class="unit">documents</span></div>
+        <div class="nav-tile-name">Docs</div>
+        <div class="nav-tile-desc">Halaqa curricula, SOPs, playbooks</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- System sample -->
+  <section class="system-sample">
+    <div class="system-grid">
+      <div>
+        <div class="system-label">Hub anatomy</div>
+        <p class="system-note">
+          Identity strip · org snapshot · quick-start verbs · 4 nav tiles. No prayer
+          times, no activity feed, no upcoming-event card. The page is meant to be
+          scanned in 2 seconds and clicked in 1 — composition does the work, not content.
+        </p>
+      </div>
+      <div>
+        <div class="system-label">Type · Bricolage Grotesque + Geist + Amiri</div>
+        <p class="system-note">
+          Stats use Bricolage's narrow-width axis (`wdth` 75) for the "newspaper headline"
+          density. Body is Geist. Arabic eyebrow is Amiri at gold for brand voice — kept
+          to the salaam only, not deployed system-wide.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

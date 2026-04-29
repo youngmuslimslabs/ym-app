@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YM App — Maghrib direction</title>
+
+<!-- Fonts: Bricolage Grotesque (display, variable) + Geist (body) + Amiri (Arabic) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..125,300..800&family=Geist:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    /* Maghrib palette — deep navy → forest green sunset transition */
+    --c-bg-start: #061A2A;        /* deep midnight navy */
+    --c-bg-mid:   #0A2E32;        /* twilight teal */
+    --c-bg-end:   #0F3D2E;        /* deep forest */
+
+    --c-ink:      #F5EFE0;        /* warm off-white (not pure white — paper-like) */
+    --c-ink-soft: rgba(245, 239, 224, 0.62);
+    --c-ink-faint:rgba(245, 239, 224, 0.32);
+
+    --c-gold:     #E5B454;        /* warm gold — restrained, not yellow */
+    --c-gold-soft:#C4943F;        /* gold underline */
+    --c-cobalt:   #4F7EE0;        /* lifted cobalt for the gradient context */
+
+    --c-glass:    rgba(255, 255, 255, 0.04);
+    --c-glass-hi: rgba(255, 255, 255, 0.07);
+    --c-edge:     rgba(245, 239, 224, 0.10);
+
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 8px;
+
+    --serif: 'Bricolage Grotesque', system-ui, sans-serif;
+    --sans:  'Geist', ui-sans-serif, system-ui, sans-serif;
+    --arabic:'Amiri', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--sans);
+    color: var(--c-ink);
+    background: var(--c-bg-start);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* Layered atmosphere: vertical sunset gradient + diagonal overlay + subtle dot grid */
+  .atmosphere {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg,
+        var(--c-bg-start) 0%,
+        var(--c-bg-mid) 55%,
+        var(--c-bg-end) 100%),
+      radial-gradient(ellipse 1200px 800px at 75% 10%,
+        rgba(79, 126, 224, 0.12), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 15% 90%,
+        rgba(229, 180, 84, 0.08), transparent 55%);
+  }
+
+  .atmosphere::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(245, 239, 224, 0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: -4px -4px;
+    mask-image: linear-gradient(180deg, black 0%, transparent 80%);
+    -webkit-mask-image: linear-gradient(180deg, black 0%, transparent 80%);
+  }
+
+  /* Two slow-drifting blurred orbs for atmosphere */
+  .orb {
+    position: fixed;
+    border-radius: 999px;
+    filter: blur(120px);
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .orb--gold {
+    width: 420px; height: 420px;
+    background: var(--c-gold);
+    top: -120px; right: -80px;
+    animation: drift-1 28s ease-in-out infinite;
+  }
+  .orb--cobalt {
+    width: 520px; height: 520px;
+    background: var(--c-cobalt);
+    bottom: -180px; left: -160px;
+    animation: drift-2 36s ease-in-out infinite;
+  }
+
+  @keyframes drift-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(-30px, 40px) scale(1.06); }
+  }
+  @keyframes drift-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(40px, -30px) scale(1.08); }
+  }
+
+  /* Oversized YM letterform watermark — pulled from the brothers-coordinators IG */
+  .mark-watermark {
+    position: fixed;
+    z-index: 1;
+    right: -8vw;
+    bottom: -12vh;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-variation-settings: 'wdth' 75;
+    font-size: 70vh;
+    line-height: 0.78;
+    color: rgba(245, 239, 224, 0.025);
+    letter-spacing: -0.04em;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* ========== Layout ========== */
+  .shell { position: relative; z-index: 2; min-height: 100vh; }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 40px;
+    border-bottom: 1px solid var(--c-edge);
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--serif);
+    font-weight: 600;
+    font-variation-settings: 'wdth' 90;
+    letter-spacing: -0.01em;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    border-radius: 999px;
+    border: 1.5px solid var(--c-ink);
+    display: grid; place-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .top-nav {
+    display: flex; gap: 32px;
+    font-size: 13px;
+    color: var(--c-ink-soft);
+  }
+  .top-nav a {
+    color: inherit; text-decoration: none;
+    padding: 6px 0;
+    border-bottom: 1px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  .top-nav a:hover { color: var(--c-ink); }
+  .top-nav a.is-active { color: var(--c-ink); border-bottom-color: var(--c-gold); }
+
+  .me-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px 6px 6px;
+    border: 1px solid var(--c-edge);
+    border-radius: 999px;
+    background: var(--c-glass);
+    font-size: 13px;
+  }
+  .me-chip-avatar {
+    width: 26px; height: 26px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--c-gold), var(--c-gold-soft));
+    color: #2A1B05;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 11px;
+  }
+
+  /* ========== Hero ========== */
+  .hero {
+    padding: 96px 40px 64px;
+    max-width: 1240px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 64px;
+    align-items: end;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 28px; height: 1px; background: var(--c-gold);
+  }
+
+  .greeting {
+    font-family: var(--serif);
+    font-variation-settings: 'opsz' 96, 'wdth' 80, 'wght' 500;
+    font-size: clamp(48px, 6.4vw, 88px);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    color: var(--c-ink);
+    margin-bottom: 24px;
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  }
+  .greeting .arabic {
+    font-family: var(--arabic);
+    font-weight: 700;
+    font-size: 0.78em;
+    letter-spacing: 0;
+    color: var(--c-gold);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .greeting .name {
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'wdth' 75, 'wght' 400;
+    color: var(--c-ink);
+  }
+
+  .hero-meta {
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--c-ink-soft);
+    max-width: 460px;
+    line-height: 1.6;
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+  }
+
+  /* Adhan card on the right */
+  .adhan-card {
+    background: var(--c-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--c-edge);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+  }
+  .adhan-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-ink-faint);
+    margin-bottom: 16px;
+  }
+  .adhan-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .adhan-item {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 12px 0;
+    text-align: left;
+    border-top: 1px solid var(--c-edge);
+  }
+  .adhan-item.is-next {
+    border-top-color: var(--c-gold);
+  }
+  .adhan-name {
+    font-size: 11px;
+    color: var(--c-ink-soft);
+    letter-spacing: 0.05em;
+  }
+  .adhan-time {
+    font-family: var(--serif);
+    font-variation-settings: 'wdth' 85, 'wght' 500;
+    font-size: 18px;
+    color: var(--c-ink);
+    font-feature-settings: 'tnum';
+  }
+  .adhan-item.is-next .adhan-time { color: var(--c-gold); }
+  .adhan-item.is-next .adhan-name {
+    color: var(--c-gold);
+    font-weight: 600;
+  }
+
+  /* ========== Quick actions ========== */
+  .actions {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 24px 40px 48px;
+  }
+  .section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .section-head h2 {
+    font-family: var(--serif);
+    font-variation-settings: 'wdth' 85, 'wght' 500;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+  .section-head .meta {
+    font-size: 12px; color: var(--c-ink-faint);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .action-card {
+    position: relative;
+    background: var(--c-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--c-edge);
+    border-radius: var(--radius-lg);
+    padding: 32px 28px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .35s cubic-bezier(0.16, 1, 0.3, 1), border-color .25s, background .25s;
+  }
+  .action-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(229, 180, 84, 0.4);
+    background: var(--c-glass-hi);
+  }
+  .action-card::after {
+    content: ''; position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(229, 180, 84, 0.18), transparent 50%);
+    opacity: 0;
+    transition: opacity .35s;
+    pointer-events: none;
+  }
+  .action-card:hover::after { opacity: 1; }
+
+  .action-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: rgba(229, 180, 84, 0.14);
+    color: var(--c-gold);
+    display: grid; place-items: center;
+    margin-bottom: 32px;
+  }
+  .action-icon svg { width: 22px; height: 22px; stroke-width: 1.5; }
+  .action-title {
+    font-family: var(--serif);
+    font-variation-settings: 'wdth' 90, 'wght' 500;
+    font-size: 24px;
+    letter-spacing: -0.015em;
+    margin-bottom: 6px;
+  }
+  .action-desc {
+    font-size: 13px;
+    color: var(--c-ink-soft);
+    line-height: 1.55;
+    max-width: 26ch;
+  }
+  .action-arrow {
+    position: absolute;
+    right: 28px; top: 32px;
+    width: 36px; height: 36px;
+    border-radius: 999px;
+    border: 1px solid var(--c-edge);
+    display: grid; place-items: center;
+    color: var(--c-ink-soft);
+    transition: transform .35s, color .25s, border-color .25s;
+  }
+  .action-card:hover .action-arrow {
+    color: var(--c-gold);
+    border-color: var(--c-gold);
+    transform: rotate(-45deg);
+  }
+
+  /* ========== Conference panel ========== */
+  .conf-section {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 24px 40px 96px;
+  }
+  .conf-card {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 0;
+    background: linear-gradient(135deg,
+      rgba(79, 126, 224, 0.18) 0%,
+      rgba(15, 61, 46, 0.4) 100%);
+    border: 1px solid var(--c-edge);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: relative;
+  }
+  .conf-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 100%, rgba(229, 180, 84, 0.18), transparent 50%);
+    pointer-events: none;
+  }
+  .conf-info { padding: 40px 44px; position: relative; z-index: 1; }
+  .conf-tag {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+    margin-bottom: 16px;
+  }
+  .conf-title {
+    font-family: var(--serif);
+    font-variation-settings: 'opsz' 72, 'wdth' 80, 'wght' 500;
+    font-size: 44px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .conf-tagline {
+    color: var(--c-ink-soft);
+    font-size: 15px;
+    margin-bottom: 32px;
+    max-width: 38ch;
+    line-height: 1.55;
+  }
+  .conf-meta {
+    display: flex; gap: 28px;
+    font-size: 13px;
+    color: var(--c-ink-soft);
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .conf-meta-item {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .conf-meta-item svg { width: 14px; height: 14px; opacity: 0.7; }
+  .conf-cta {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 14px 24px;
+    border-radius: 999px;
+    background: var(--c-gold);
+    color: #1A0F00;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    transition: transform .25s, box-shadow .25s;
+    box-shadow: 0 8px 24px rgba(229, 180, 84, 0.2);
+  }
+  .conf-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 36px rgba(229, 180, 84, 0.32);
+  }
+
+  .conf-stats {
+    padding: 40px 44px;
+    border-left: 1px solid var(--c-edge);
+    background: rgba(0, 0, 0, 0.18);
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    position: relative; z-index: 1;
+  }
+  .stat { padding: 16px 0; border-bottom: 1px solid var(--c-edge); }
+  .stat:last-child { border-bottom: 0; }
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--c-ink-faint);
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-family: var(--serif);
+    font-variation-settings: 'wdth' 75, 'wght' 500;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-feature-settings: 'tnum';
+  }
+  .stat-value .unit {
+    font-size: 14px;
+    color: var(--c-ink-soft);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+
+  /* ========== Type / palette sample ========== */
+  .system-sample {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 64px 40px 80px;
+    border-top: 1px solid var(--c-edge);
+    color: var(--c-ink-soft);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+  }
+  .system-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .system-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-ink-faint);
+    margin-bottom: 16px;
+  }
+  .type-stack > div { margin-bottom: 18px; }
+  .swatches {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .swatch {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    border: 1px solid var(--c-edge);
+    display: grid; place-items: end start;
+    padding: 8px;
+    color: var(--c-ink);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Mobile */
+  @media (max-width: 920px) {
+    .hero, .actions-grid, .conf-card, .system-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .hero { padding: 64px 24px 40px; gap: 40px; }
+    .top-bar, .actions, .conf-section, .system-sample { padding-left: 24px; padding-right: 24px; }
+    .top-nav { display: none; }
+    .conf-stats { border-left: 0; border-top: 1px solid var(--c-edge); }
+    .greeting { font-size: clamp(40px, 9vw, 56px); }
+    .conf-title { font-size: 32px; }
+    .adhan-list { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .adhan-time { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="atmosphere"></div>
+<div class="orb orb--gold"></div>
+<div class="orb orb--cobalt"></div>
+<div class="mark-watermark" aria-hidden="true">M</div>
+
+<div class="shell">
+
+  <!-- Top bar -->
+  <header class="top-bar">
+    <div class="logo">
+      <div class="logo-mark">YM</div>
+      <span>Young Muslims</span>
+    </div>
+    <nav class="top-nav">
+      <a href="#" class="is-active">Home</a>
+      <a href="#">People</a>
+      <a href="#">Conferences</a>
+      <a href="#">Finance</a>
+      <a href="#">Docs</a>
+    </nav>
+    <div class="me-chip">
+      <div class="me-chip-avatar">O</div>
+      <span>Omar</span>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow">Wednesday · Maghrib in 1h 24m</div>
+      <h1 class="greeting">
+        <span class="arabic">السلام عليكم</span>
+        Welcome back,<br>
+        <span class="name">Omar.</span>
+      </h1>
+      <p class="hero-meta">
+        You're an Ameer in NeighborNet Heart of Texas, and you have one upcoming
+        conference this month. Three brothers in your sub-region just joined this
+        week — say salaam.
+      </p>
+    </div>
+
+    <div class="adhan-card">
+      <div class="adhan-label">Today's Prayer Times · Houston</div>
+      <div class="adhan-list">
+        <div class="adhan-item"><span class="adhan-name">Fajr</span><span class="adhan-time">5:42</span></div>
+        <div class="adhan-item"><span class="adhan-name">Dhuhr</span><span class="adhan-time">12:38</span></div>
+        <div class="adhan-item"><span class="adhan-name">Asr</span><span class="adhan-time">3:51</span></div>
+        <div class="adhan-item is-next"><span class="adhan-name">Maghrib</span><span class="adhan-time">6:24</span></div>
+        <div class="adhan-item"><span class="adhan-name">Isha</span><span class="adhan-time">7:48</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick actions -->
+  <section class="actions">
+    <div class="section-head">
+      <h2>Quick Access</h2>
+      <span class="meta">Three shortcuts</span>
+    </div>
+    <div class="actions-grid">
+
+      <a class="action-card" href="#">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="action-title">People</div>
+        <div class="action-desc">Browse 487 brothers across 12 NeighborNets.</div>
+        <div class="action-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M9 7h8v8" stroke-linecap="round"/></svg>
+        </div>
+      </a>
+
+      <a class="action-card" href="#">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="action-title">Finance</div>
+        <div class="action-desc">Submit a reimbursement or check pending requests.</div>
+        <div class="action-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M9 7h8v8" stroke-linecap="round"/></svg>
+        </div>
+      </a>
+
+      <a class="action-card" href="#">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="action-title">Docs</div>
+        <div class="action-desc">Halaqa curricula, SOPs, and event playbooks.</div>
+        <div class="action-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M9 7h8v8" stroke-linecap="round"/></svg>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- Conference -->
+  <section class="conf-section">
+    <div class="section-head">
+      <h2>Up Next</h2>
+      <span class="meta">Conference you're invited to</span>
+    </div>
+    <div class="conf-card">
+      <div class="conf-info">
+        <div class="conf-tag">May 17–19 · Dallas</div>
+        <h3 class="conf-title">Brothers Spring Retreat<br>2026</h3>
+        <p class="conf-tagline">
+          Three days, twelve halaqat, and a long-overdue qiyam. Schedule unlocks
+          on May 1 — for now, sign up for sessions you don't want to miss.
+        </p>
+        <div class="conf-meta">
+          <div class="conf-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Friday — Sunday</span>
+          </div>
+          <div class="conf-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Hyatt Regency, Plano</span>
+          </div>
+          <div class="conf-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+            <span>184 invited</span>
+          </div>
+        </div>
+        <a class="conf-cta" href="#">
+          Open conference
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+      <div class="conf-stats">
+        <div class="stat">
+          <div class="stat-label">Days</div>
+          <div class="stat-value">19<span class="unit">until</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Sessions</div>
+          <div class="stat-value">23<span class="unit">scheduled</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Your sign-ups</div>
+          <div class="stat-value">0<span class="unit">/ 12 max</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- System sample -->
+  <section class="system-sample">
+    <div class="system-grid">
+      <div>
+        <div class="system-label">Type — Bricolage Grotesque + Geist + Amiri</div>
+        <div class="type-stack">
+          <div style="font-family:var(--serif);font-variation-settings:'opsz' 96,'wdth' 75,'wght' 500;font-size:48px;line-height:1;color:var(--c-ink);letter-spacing:-0.025em;">Display 48px</div>
+          <div style="font-family:var(--serif);font-variation-settings:'wdth' 90,'wght' 500;font-size:24px;line-height:1.1;color:var(--c-ink);letter-spacing:-0.015em;">Title 24px</div>
+          <div style="font-family:var(--sans);font-size:15px;line-height:1.5;color:var(--c-ink-soft);">Body 15px — Geist Sans handles paragraph copy.</div>
+          <div style="font-family:var(--arabic);font-size:22px;color:var(--c-gold);">السلام عليكم ورحمة الله</div>
+          <div style="font-family:var(--sans);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--c-ink-faint);">Eyebrow 11px / 0.18em</div>
+        </div>
+      </div>
+      <div>
+        <div class="system-label">Palette — Maghrib</div>
+        <div class="swatches">
+          <div class="swatch" style="background:#061A2A;">#061A2A</div>
+          <div class="swatch" style="background:#0A2E32;">#0A2E32</div>
+          <div class="swatch" style="background:#0F3D2E;">#0F3D2E</div>
+          <div class="swatch" style="background:#E5B454;color:#1A0F00;">#E5B454</div>
+          <div class="swatch" style="background:#4F7EE0;">#4F7EE0</div>
+        </div>
+        <p style="margin-top:24px;font-size:12px;line-height:1.6;color:var(--c-ink-soft);">
+          Vertical sunset gradient (navy → twilight → forest) is the signature.
+          Gold appears as accent only. Brand cobalt lifts to a higher value
+          for legibility on the gradient context.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

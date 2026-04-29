@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YM App — Mihrab direction</title>
+
+<!-- Fonts: Cinzel (lapidary Roman caps) + Big Shoulders Display Italic (statistical) + Geist (body) + Amiri (Arabic) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Big+Shoulders+Display:ital,wght@0,400..900;1,400..900&family=Geist:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    /* Mihrab palette — royal cobalt + gold + cream, classical Islamic graphic design */
+    --c-cobalt:    #173A7A;       /* deep royal cobalt — the throughline */
+    --c-cobalt-2:  #1F4A92;       /* lift for contrast */
+    --c-cobalt-3:  #0E2655;       /* deepen for shadow */
+    --c-night:     #0A1B3D;       /* near-black cobalt */
+
+    --c-gold:      #DBA84E;       /* warm gold (gilt) */
+    --c-gold-2:    #E9C57A;       /* lifted gold for highlights */
+    --c-gold-deep: #8E6320;       /* dark gold rule */
+
+    --c-cream:     #F5EFE0;       /* warm cream, never pure white */
+    --c-cream-soft: rgba(245, 239, 224, 0.72);
+    --c-cream-faint: rgba(245, 239, 224, 0.45);
+
+    --c-edge:      rgba(219, 168, 78, 0.22);  /* faint gold edge */
+    --c-edge-hi:   rgba(219, 168, 78, 0.55);
+
+    --display: 'Cinzel', 'Trajan Pro', 'Optima', serif;
+    --display-num: 'Big Shoulders Display', 'Bebas Neue', sans-serif;
+    --sans:    'Geist', ui-sans-serif, system-ui, sans-serif;
+    --arabic:  'Amiri', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--sans);
+    color: var(--c-cream);
+    background: var(--c-cobalt);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* ============================================================
+     Pattern as a SYSTEM — full-page Islamic geometric tessellation,
+     subtle enough to not overwhelm, present enough to be the look.
+  ============================================================ */
+  .pattern-bg {
+    position: fixed; inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><g fill='none' stroke='%23DBA84E' stroke-width='0.6' opacity='0.18'><path d='M40 0 L48 16 L64 16 L56 32 L72 40 L56 48 L64 64 L48 64 L40 80 L32 64 L16 64 L24 48 L8 40 L24 32 L16 16 L32 16 Z'/><circle cx='40' cy='40' r='12'/><path d='M0 40 L16 32 M0 40 L16 48 M80 40 L64 32 M80 40 L64 48 M40 0 L32 16 M40 0 L48 16 M40 80 L32 64 M40 80 L48 64'/></g></svg>");
+    background-size: 80px 80px;
+  }
+
+  /* Vertical gradient overlay so the pattern fades top→deeper bottom */
+  .pattern-bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg,
+        rgba(23, 58, 122, 0.4) 0%,
+        rgba(14, 38, 85, 0.7) 60%,
+        rgba(10, 27, 61, 0.92) 100%),
+      radial-gradient(ellipse 1100px 700px at 50% 0%, rgba(31, 74, 146, 0.5), transparent 65%);
+  }
+
+  /* Massive M letterform watermark — classical motif from Brothers Coordinators IG */
+  .watermark {
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    bottom: -8vh;
+    transform: translateX(-50%);
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 90vh;
+    color: rgba(219, 168, 78, 0.05);
+    line-height: 0.78;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* Mosque silhouette anchor at the page foot — pulled from Ramadan IG */
+  .skyline {
+    position: fixed;
+    z-index: 1;
+    bottom: 0; left: 0; right: 0;
+    height: 280px;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 280' preserveAspectRatio='xMidYMax slice'><g fill='%2310275A' opacity='0.9'><rect x='0' y='240' width='1200' height='40'/><path d='M120 240 V160 a30 30 0 0 1 60 0 V240 z M150 100 a40 40 0 0 1 40 40 H110 a40 40 0 0 1 40 -40 z M155 60 v40 h-10 v-40 z'/><path d='M260 240 V180 h60 v60 z'/><path d='M380 240 V120 a60 60 0 0 1 120 0 V240 z M440 60 a30 60 0 0 1 30 60 H410 a30 60 0 0 1 30 -60 z'/><path d='M540 240 V190 h40 v50 z M620 240 V200 h30 v40 z'/><path d='M720 240 V140 a45 45 0 0 1 90 0 V240 z M765 80 a25 25 0 0 1 25 25 H740 a25 25 0 0 1 25 -25 z M768 50 v30 h-6 v-30 z'/><path d='M870 240 V190 h35 v50 z'/><path d='M960 240 V150 a40 40 0 0 1 80 0 V240 z M1000 100 a25 35 0 0 1 25 35 H975 a25 35 0 0 1 25 -35 z'/><path d='M1090 240 V200 h40 v40 z'/></g></svg>");
+    background-size: 1400px 280px;
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    opacity: 0.7;
+  }
+
+  .shell { position: relative; z-index: 2; }
+
+  /* ============================================================
+     Top bar — symmetric, ceremonial header
+  ============================================================ */
+  .crest-bar {
+    padding: 32px 48px 24px;
+    text-align: center;
+    border-bottom: 1px solid var(--c-edge);
+    position: relative;
+  }
+  .crest-bar::before, .crest-bar::after {
+    content: '';
+    position: absolute; bottom: -1px;
+    width: 64px; height: 2px;
+    background: var(--c-gold);
+  }
+  .crest-bar::before { left: 50%; transform: translateX(-50%); width: 8px; height: 8px; transform: translate(-50%, 50%) rotate(45deg); }
+  .crest-bar::after { display: none; }
+
+  .crest {
+    display: inline-flex; align-items: center; gap: 16px;
+    flex-direction: column;
+  }
+  .crest-mark {
+    width: 48px; height: 48px;
+    border-radius: 999px;
+    border: 1.5px solid var(--c-gold);
+    display: grid; place-items: center;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--c-gold);
+    letter-spacing: 0.08em;
+  }
+  .crest-name {
+    font-family: var(--display);
+    font-size: 14px;
+    letter-spacing: 0.36em;
+    text-transform: uppercase;
+    color: var(--c-cream);
+  }
+  .crest-name small {
+    display: block;
+    font-family: var(--sans);
+    font-size: 9px;
+    letter-spacing: 0.42em;
+    color: var(--c-gold);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .nav-row {
+    display: flex; gap: 48px; justify-content: center;
+    padding: 18px 24px;
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--c-edge);
+  }
+  .nav-row a {
+    color: var(--c-cream-soft);
+    text-decoration: none;
+    transition: color .25s;
+    position: relative;
+    padding-bottom: 2px;
+  }
+  .nav-row a.is-active { color: var(--c-gold); }
+  .nav-row a.is-active::after {
+    content: '';
+    position: absolute;
+    left: 50%; bottom: -19px;
+    transform: translateX(-50%) rotate(45deg);
+    width: 6px; height: 6px;
+    background: var(--c-gold);
+  }
+  .nav-row a:hover { color: var(--c-cream); }
+
+  /* ============================================================
+     Hero — ceremonial, centered, classical proportions
+  ============================================================ */
+  .hero {
+    text-align: center;
+    padding: 96px 32px 80px;
+    max-width: 920px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Decorative gold flourish bracketing the headline */
+  .flourish {
+    display: flex; justify-content: center; align-items: center;
+    gap: 24px;
+    color: var(--c-gold);
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    animation: fade-in 0.8s 0.05s both;
+  }
+  .flourish::before, .flourish::after {
+    content: '';
+    width: 80px; height: 1px;
+    background: linear-gradient(to right, transparent, var(--c-gold));
+  }
+  .flourish::after { background: linear-gradient(to left, transparent, var(--c-gold)); }
+
+  .greeting-arabic {
+    font-family: var(--arabic);
+    font-weight: 400;
+    font-size: clamp(28px, 4vw, 44px);
+    color: var(--c-gold-2);
+    line-height: 1.2;
+    margin-bottom: 24px;
+    animation: fade-up 0.8s 0.15s both;
+  }
+
+  .greeting {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: clamp(48px, 6.4vw, 96px);
+    line-height: 1.0;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    animation: fade-up 0.8s 0.25s both;
+  }
+  .greeting .name {
+    color: var(--c-gold);
+    font-weight: 600;
+    display: block;
+    margin-top: 0.2em;
+  }
+
+  .hero-deck {
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--c-cream-soft);
+    max-width: 56ch;
+    margin: 0 auto 48px;
+    animation: fade-up 0.8s 0.35s both;
+  }
+
+  /* Chapter rule — large gold rule under the hero */
+  .chapter-rule {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px;
+    margin: 0 auto;
+    max-width: 200px;
+    color: var(--c-gold);
+    animation: fade-in 0.8s 0.5s both;
+  }
+  .chapter-rule::before, .chapter-rule::after {
+    content: ''; height: 1px; flex: 1; background: var(--c-gold);
+  }
+  .chapter-rule .diamond {
+    width: 8px; height: 8px;
+    background: var(--c-gold);
+    transform: rotate(45deg);
+  }
+
+  /* ============================================================
+     Adhan strip — centered prayer times, classical proportions
+  ============================================================ */
+  .adhan-strip {
+    max-width: 1080px;
+    margin: 64px auto 0;
+    padding: 0 32px;
+  }
+  .adhan-frame {
+    border: 1px solid var(--c-edge-hi);
+    background: rgba(14, 38, 85, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .adhan-head {
+    text-align: center;
+    padding: 16px;
+    border-bottom: 1px solid var(--c-edge);
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+  }
+  .adhan-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .adhan-cell {
+    padding: 28px 16px;
+    text-align: center;
+    border-right: 1px solid var(--c-edge);
+    position: relative;
+  }
+  .adhan-cell:last-child { border-right: 0; }
+  .adhan-cell.is-next { background: rgba(219, 168, 78, 0.06); }
+  .adhan-cell.is-next::before {
+    content: '';
+    position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+    width: 8px; height: 8px; background: var(--c-gold);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .adhan-cell-name {
+    font-family: var(--display);
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--c-cream-faint);
+    margin-bottom: 8px;
+  }
+  .adhan-cell.is-next .adhan-cell-name {
+    color: var(--c-gold);
+  }
+  .adhan-cell-time {
+    font-family: var(--display-num);
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 1;
+    color: var(--c-cream);
+    font-feature-settings: 'tnum';
+    letter-spacing: 0.01em;
+  }
+  .adhan-cell.is-next .adhan-cell-time { color: var(--c-gold); }
+
+  /* ============================================================
+     Quick actions — three "mihrab" arches
+  ============================================================ */
+  .quick {
+    max-width: 1240px;
+    margin: 96px auto 0;
+    padding: 0 48px;
+  }
+  .section-cap {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .section-cap h2 {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 36px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .section-cap small {
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+  }
+
+  .arches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .arch {
+    position: relative;
+    background: linear-gradient(180deg, rgba(31, 74, 146, 0.3), rgba(14, 38, 85, 0.5));
+    border: 1px solid var(--c-edge-hi);
+    padding: 56px 32px 36px;
+    text-align: center;
+    /* Rounded top to feel like a mihrab arch */
+    border-top-left-radius: 100px 60px;
+    border-top-right-radius: 100px 60px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .35s cubic-bezier(0.16, 1, 0.3, 1), border-color .25s, background .25s;
+  }
+  .arch:hover {
+    transform: translateY(-4px);
+    border-color: var(--c-gold);
+    background: linear-gradient(180deg, rgba(31, 74, 146, 0.5), rgba(14, 38, 85, 0.7));
+  }
+  .arch::before {
+    content: '';
+    position: absolute; inset: 8px;
+    border: 1px solid var(--c-edge);
+    border-top-left-radius: 96px 56px;
+    border-top-right-radius: 96px 56px;
+    pointer-events: none;
+  }
+
+  .arch-icon {
+    width: 48px; height: 48px;
+    border-radius: 999px;
+    border: 1px solid var(--c-gold);
+    display: grid; place-items: center;
+    margin: 0 auto 24px;
+    color: var(--c-gold);
+    background: rgba(219, 168, 78, 0.08);
+  }
+  .arch-icon svg { width: 22px; height: 22px; stroke-width: 1.5; }
+
+  .arch-title {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .arch-desc {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--c-cream-soft);
+    max-width: 28ch;
+    margin: 0 auto 24px;
+  }
+  .arch-cta {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+    border-bottom: 1px solid var(--c-gold);
+    padding-bottom: 4px;
+    display: inline-block;
+  }
+
+  /* ============================================================
+     Conference — formal "decree" style block
+  ============================================================ */
+  .decree {
+    max-width: 1080px;
+    margin: 96px auto 120px;
+    padding: 0 48px;
+  }
+  .decree-frame {
+    position: relative;
+    border: 1px solid var(--c-gold);
+    padding: 64px;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(14, 38, 85, 0.35), rgba(10, 27, 61, 0.6));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  /* Inner gold rule frame, classical manuscript treatment */
+  .decree-frame::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid var(--c-edge);
+    pointer-events: none;
+  }
+  /* Corner ornaments */
+  .corner {
+    position: absolute;
+    width: 24px; height: 24px;
+    border: 1px solid var(--c-gold);
+  }
+  .corner-tl { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+  .corner-tr { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
+  .corner-bl { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
+  .corner-br { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+  .decree-tag {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+    margin-bottom: 28px;
+  }
+  .decree-title {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: clamp(36px, 4.6vw, 64px);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.05;
+    margin-bottom: 16px;
+  }
+  .decree-title em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--c-gold);
+  }
+  .decree-deck {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--c-cream-soft);
+    max-width: 50ch;
+    margin: 0 auto 40px;
+  }
+  .decree-stats {
+    display: flex; justify-content: center; gap: 64px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+  .decree-stat-num {
+    font-family: var(--display-num);
+    font-weight: 700;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--c-gold);
+    font-feature-settings: 'tnum';
+    font-style: italic;
+  }
+  .decree-stat-lbl {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--c-cream-faint);
+    margin-top: 6px;
+  }
+
+  .decree-cta {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 16px 40px;
+    background: var(--c-gold);
+    color: var(--c-night);
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background .25s, box-shadow .25s;
+    box-shadow: 0 8px 32px rgba(219, 168, 78, 0.25);
+  }
+  .decree-cta:hover {
+    background: var(--c-gold-2);
+    box-shadow: 0 12px 40px rgba(219, 168, 78, 0.4);
+  }
+
+  /* ============================================================
+     System sample
+  ============================================================ */
+  .system-sample {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 64px 48px 360px;  /* extra bottom padding for skyline */
+    position: relative;
+  }
+  .system-sample::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 200px; height: 1px;
+    background: var(--c-gold);
+  }
+  .system-sample::after {
+    content: '◆';
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    color: var(--c-gold);
+    background: var(--c-cobalt-3);
+    padding: 0 16px;
+    font-size: 12px;
+  }
+  .system-grid {
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: 64px; align-items: start;
+    margin-top: 48px;
+  }
+  .system-label {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+    margin-bottom: 20px;
+  }
+  .type-stack > div { margin-bottom: 18px; }
+  .swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .swatch {
+    aspect-ratio: 1;
+    border: 1px solid var(--c-edge);
+    display: grid; place-items: end start;
+    padding: 8px;
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    font-family: var(--sans);
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @media (max-width: 920px) {
+    .crest-bar, .nav-row, .hero, .adhan-strip, .quick, .decree, .system-sample {
+      padding-left: 24px; padding-right: 24px;
+    }
+    .nav-row { gap: 24px; flex-wrap: wrap; }
+    .arches, .system-grid { grid-template-columns: 1fr !important; gap: 24px; }
+    .adhan-grid { grid-template-columns: repeat(5, 1fr); }
+    .adhan-cell { padding: 16px 8px; }
+    .adhan-cell-time { font-size: 22px; }
+    .adhan-cell-name { font-size: 9px; letter-spacing: 0.16em; }
+    .decree-frame { padding: 32px 20px; }
+    .decree-stats { gap: 32px; }
+    .decree-stat-num { font-size: 36px; }
+    .skyline { height: 160px; opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+
+<div class="pattern-bg"></div>
+<div class="watermark" aria-hidden="true">M</div>
+<div class="skyline" aria-hidden="true"></div>
+
+<div class="shell">
+
+  <!-- Crest header -->
+  <header class="crest-bar">
+    <div class="crest">
+      <div class="crest-mark">YM</div>
+      <div class="crest-name">
+        Young Muslims
+        <small>Established 1995</small>
+      </div>
+    </div>
+  </header>
+
+  <!-- Nav -->
+  <nav class="nav-row">
+    <a href="#" class="is-active">Home</a>
+    <a href="#">People</a>
+    <a href="#">Conferences</a>
+    <a href="#">Finance</a>
+    <a href="#">Docs</a>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="flourish">9 Shawwal 1447 · Wednesday</div>
+
+    <div class="greeting-arabic">السلام عليكم ورحمة الله وبركاته</div>
+
+    <h1 class="greeting">
+      Welcome,
+      <span class="name">Omar</span>
+    </h1>
+
+    <p class="hero-deck">
+      You're an Ameer in <strong style="color:var(--c-cream);">Heart of Texas</strong>,
+      and three brothers in your sub-region just joined this week.
+      Maghrib is in <strong style="color:var(--c-gold);">1 hour, 24 minutes</strong>.
+    </p>
+
+    <div class="chapter-rule">
+      <span class="diamond"></span>
+    </div>
+  </section>
+
+  <!-- Adhan strip -->
+  <section class="adhan-strip">
+    <div class="adhan-frame">
+      <div class="adhan-head">Salat times · Houston · Today</div>
+      <div class="adhan-grid">
+        <div class="adhan-cell">
+          <div class="adhan-cell-name">Fajr</div>
+          <div class="adhan-cell-time">5:42</div>
+        </div>
+        <div class="adhan-cell">
+          <div class="adhan-cell-name">Dhuhr</div>
+          <div class="adhan-cell-time">12:38</div>
+        </div>
+        <div class="adhan-cell">
+          <div class="adhan-cell-name">Asr</div>
+          <div class="adhan-cell-time">3:51</div>
+        </div>
+        <div class="adhan-cell is-next">
+          <div class="adhan-cell-name">Maghrib</div>
+          <div class="adhan-cell-time">6:24</div>
+        </div>
+        <div class="adhan-cell">
+          <div class="adhan-cell-name">Isha</div>
+          <div class="adhan-cell-time">7:48</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick actions: three arches -->
+  <section class="quick">
+    <div class="section-cap">
+      <h2>Quick Access</h2>
+      <small>· Three Pillars ·</small>
+    </div>
+
+    <div class="arches">
+      <a class="arch" href="#">
+        <div class="arch-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="arch-title">People</div>
+        <p class="arch-desc">Browse 487 brothers across 12 NeighborNets.</p>
+        <span class="arch-cta">Open Roster →</span>
+      </a>
+
+      <a class="arch" href="#">
+        <div class="arch-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="arch-title">Finance</div>
+        <p class="arch-desc">Submit a reimbursement or check pending requests.</p>
+        <span class="arch-cta">Open Forms →</span>
+      </a>
+
+      <a class="arch" href="#">
+        <div class="arch-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="arch-title">Docs</div>
+        <p class="arch-desc">Halaqa curricula, SOPs, and event playbooks.</p>
+        <span class="arch-cta">Open Library →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Decree: conference -->
+  <section class="decree">
+    <div class="section-cap">
+      <h2>Up Next</h2>
+      <small>· Conference ·</small>
+    </div>
+
+    <div class="decree-frame">
+      <span class="corner corner-tl"></span>
+      <span class="corner corner-tr"></span>
+      <span class="corner corner-bl"></span>
+      <span class="corner corner-br"></span>
+
+      <div class="decree-tag">May 17 — May 19 · Plano, Texas</div>
+
+      <h3 class="decree-title">
+        Brothers <em>Spring</em><br>
+        Retreat 2026
+      </h3>
+
+      <p class="decree-deck">
+        Three days, twelve halaqat, and a long-overdue qiyam.
+        The schedule unlocks May 1 — until then, brothers are invited
+        to mark sessions they don't want to miss.
+      </p>
+
+      <div class="decree-stats">
+        <div>
+          <div class="decree-stat-num">19</div>
+          <div class="decree-stat-lbl">Days Until</div>
+        </div>
+        <div>
+          <div class="decree-stat-num">23</div>
+          <div class="decree-stat-lbl">Sessions</div>
+        </div>
+        <div>
+          <div class="decree-stat-num">184</div>
+          <div class="decree-stat-lbl">Brothers Invited</div>
+        </div>
+      </div>
+
+      <a class="decree-cta" href="#">
+        Open Conference
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- System sample -->
+  <section class="system-sample">
+    <div class="system-grid">
+      <div>
+        <div class="system-label">Type — Cinzel + Big Shoulders + Geist + Amiri</div>
+        <div class="type-stack">
+          <div style="font-family:var(--display);font-weight:500;font-size:48px;letter-spacing:0.04em;text-transform:uppercase;line-height:1;">Display 48</div>
+          <div style="font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:0.16em;text-transform:uppercase;color:var(--c-gold);">Title 22 / Gold</div>
+          <div style="font-family:var(--display-num);font-style:italic;font-weight:700;font-size:48px;color:var(--c-gold);line-height:1;">019 · 023 · 184</div>
+          <div style="font-family:var(--sans);font-size:15px;line-height:1.6;color:var(--c-cream-soft);">Body 15px — Geist for paragraphs and UI labels.</div>
+          <div style="font-family:var(--arabic);font-size:28px;color:var(--c-gold-2);">السلام عليكم ورحمة الله</div>
+          <div style="font-family:var(--sans);font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:var(--c-gold);">Eyebrow 10px · 0.32em</div>
+        </div>
+      </div>
+      <div>
+        <div class="system-label">Palette — Mihrab</div>
+        <div class="swatches">
+          <div class="swatch" style="background:#0A1B3D;color:#F5EFE0;">#0A1B3D</div>
+          <div class="swatch" style="background:#173A7A;color:#F5EFE0;">#173A7A</div>
+          <div class="swatch" style="background:#1F4A92;color:#F5EFE0;">#1F4A92</div>
+          <div class="swatch" style="background:#DBA84E;color:#0A1B3D;">#DBA84E</div>
+          <div class="swatch" style="background:#F5EFE0;color:#0A1B3D;">#F5EFE0</div>
+        </div>
+        <p style="margin-top:24px;font-family:var(--sans);font-size:12px;line-height:1.6;color:var(--c-cream-soft);">
+          Royal cobalt + gold + cream. Pattern is system-wide, faded with a vertical
+          gradient so it never overwhelms. Mosque silhouette anchors the bottom of
+          long pages. Statistical numerals use Big Shoulders italic for the
+          sports-team energy from your Brothers Coordinators IG.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

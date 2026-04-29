@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YM App — Brand directions, three prototypes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --c-bg: #FAFAF7;
+    --c-paper: #FFFFFF;
+    --c-ink: #0F0F0E;
+    --c-ink-soft: #4A4A47;
+    --c-ink-faint: #8B8B86;
+    --c-rule: #E0E0DA;
+    --sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    --mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--sans);
+    color: var(--c-ink);
+    background: var(--c-bg);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  .container { max-width: 1280px; margin: 0 auto; padding: 64px 40px 96px; }
+
+  header { margin-bottom: 64px; padding-bottom: 32px; border-bottom: 1px solid var(--c-rule); }
+  .super {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--c-ink-faint);
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    margin-bottom: 24px;
+    text-wrap: balance;
+  }
+  .lede {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--c-ink-soft);
+    max-width: 70ch;
+  }
+  .lede em {
+    color: var(--c-ink);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .meta-row {
+    margin-top: 32px;
+    display: flex; gap: 32px; flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--c-ink-soft);
+  }
+  .meta-row dt { color: var(--c-ink-faint); margin-right: 6px; display: inline; }
+  .meta-row dd { display: inline; margin-right: 24px; }
+
+  .section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 64px 0 24px;
+  }
+  .section-head h2 {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--c-ink-faint);
+  }
+  .section-head .count {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--c-ink-faint);
+  }
+
+  /* Direction cards */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .card {
+    position: relative;
+    background: var(--c-paper);
+    border: 1px solid var(--c-rule);
+    border-radius: 8px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: transform .35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .35s, border-color .25s;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 48px -16px rgba(0,0,0,0.18);
+    border-color: var(--c-ink);
+  }
+  .card-preview {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    position: relative;
+    border-bottom: 1px solid var(--c-rule);
+  }
+  .card-preview iframe {
+    width: 1200px; height: 900px;
+    transform: scale(0.33);
+    transform-origin: 0 0;
+    border: 0;
+    pointer-events: none;
+  }
+  .card-body { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+  .card-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--c-ink-faint);
+    margin-bottom: 8px;
+  }
+  .card-name {
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    margin-bottom: 4px;
+  }
+  .card-name .ar {
+    font-family: 'Amiri', serif;
+    font-size: 0.7em;
+    color: var(--c-ink-faint);
+    margin-left: 8px;
+  }
+  .card-tag {
+    font-size: 12px;
+    color: var(--c-ink-faint);
+    margin-bottom: 16px;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+  .card-desc {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--c-ink-soft);
+    margin-bottom: 24px;
+    flex: 1;
+  }
+
+  .card-attrs {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 12px;
+    font-size: 12px;
+    margin-bottom: 24px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--c-rule);
+  }
+  .card-attrs dt {
+    font-family: var(--mono);
+    color: var(--c-ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 10px;
+    align-self: center;
+  }
+  .card-attrs dd { color: var(--c-ink); }
+
+  .card-swatches { display: flex; gap: 4px; margin-bottom: 20px; }
+  .swatch {
+    width: 24px; height: 24px;
+    border: 1px solid var(--c-rule);
+    border-radius: 4px;
+  }
+
+  .card-cta {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c-ink);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .card-cta::after {
+    content: '→';
+    transition: transform .2s;
+  }
+  .card:hover .card-cta::after { transform: translateX(4px); }
+
+  /* DNA section */
+  .dna {
+    margin-top: 96px;
+    padding-top: 48px;
+    border-top: 1px solid var(--c-rule);
+  }
+  .dna-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .dna-block h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--c-ink-faint);
+    margin-bottom: 12px;
+    font-family: var(--mono);
+    font-weight: 500;
+  }
+  .dna-block p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--c-ink-soft);
+  }
+  .dna-block strong { color: var(--c-ink); font-weight: 500; }
+
+  footer {
+    margin-top: 96px;
+    padding-top: 32px;
+    border-top: 1px solid var(--c-rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--c-ink-faint);
+    letter-spacing: 0.05em;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  }
+
+  @media (max-width: 920px) {
+    .container { padding: 40px 20px 64px; }
+    .grid, .dna-grid { grid-template-columns: 1fr; gap: 16px; }
+    .card-preview iframe { transform: scale(0.4); }
+    .meta-row { gap: 16px; }
+    .meta-row dd { margin-right: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="super">YM Brand Directions · 2026-04-27</div>
+    <h1>Three brand prototypes,<br>each pulling from a different facet of your IG.</h1>
+    <p class="lede">
+      The current app is "stock shadcn with no creative direction" (45/100 in the Feb visual audit).
+      These three prototypes take the home page and commit hard to one aesthetic each — so you can
+      <em>feel</em> the difference before deciding what becomes the brand kit. None of them are the
+      final answer; the goal is to surface what resonates so we know what to build toward.
+    </p>
+    <dl class="meta-row">
+      <dt>Surface</dt><dd>Home page</dd>
+      <dt>Source</dt><dd>YM IG (6 images)</dd>
+      <dt>Methodology</dt><dd>Refactoring UI principles · frontend-design skill</dd>
+      <dt>Audience</dt><dd>Internal YM youth org</dd>
+    </dl>
+  </header>
+
+  <div class="section-head">
+    <h2>Directions</h2>
+    <span class="count">01 / 02 / 03</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- 01 Maghrib -->
+    <a class="card" href="01-maghrib.html">
+      <div class="card-preview"><iframe src="01-maghrib.html" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+      <div class="card-body">
+        <div class="card-num">01 · Modern Atmospheric</div>
+        <div class="card-name">Maghrib <span class="ar">المغرب</span></div>
+        <div class="card-tag">"Sunset" — Spotify post + Giving Tuesday</div>
+        <p class="card-desc">
+          Deep navy → forest green sunset gradient as the signature treatment. Bricolage Grotesque
+          display, Geist body, warm gold accents. Glass-morphism cards on a layered atmosphere.
+          Modern, sleek, app-native. Best for: a product that wants to feel like Spotify-meets-mosque.
+        </p>
+        <div class="card-swatches">
+          <div class="swatch" style="background:#061A2A;"></div>
+          <div class="swatch" style="background:#0A2E32;"></div>
+          <div class="swatch" style="background:#0F3D2E;"></div>
+          <div class="swatch" style="background:#E5B454;"></div>
+          <div class="swatch" style="background:#4F7EE0;"></div>
+        </div>
+        <dl class="card-attrs">
+          <dt>Display</dt><dd>Bricolage Grotesque</dd>
+          <dt>Body</dt><dd>Geist Sans</dd>
+          <dt>Mood</dt><dd>Sleek, modern, atmospheric</dd>
+        </dl>
+        <span class="card-cta">View prototype</span>
+      </div>
+    </a>
+
+    <!-- 02 Diwan -->
+    <a class="card" href="02-diwan.html">
+      <div class="card-preview"><iframe src="02-diwan.html" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+      <div class="card-body">
+        <div class="card-num">02 · Editorial Serif</div>
+        <div class="card-name">Diwan <span class="ar">ديوان</span></div>
+        <div class="card-tag">"Gathering" — Testimonial + Eid Mubarak</div>
+        <p class="card-desc">
+          Cream paper background with subtle grain. Fraunces serif display in caps, italic for warmth.
+          Asymmetric editorial layout with thin rules and ruled-line TOCs. Geometric pattern in
+          corners only. Best for: a product that wants to feel like a thoughtful magazine — slow,
+          considered, ceremonial without being formal.
+        </p>
+        <div class="card-swatches">
+          <div class="swatch" style="background:#F6EEDE;"></div>
+          <div class="swatch" style="background:#EFE2C9;"></div>
+          <div class="swatch" style="background:#1B3A8B;"></div>
+          <div class="swatch" style="background:#B0863C;"></div>
+          <div class="swatch" style="background:#1A1410;"></div>
+        </div>
+        <dl class="card-attrs">
+          <dt>Display</dt><dd>Fraunces (variable, SOFT axis)</dd>
+          <dt>Body</dt><dd>Geist Sans</dd>
+          <dt>Mood</dt><dd>Editorial, refined, magazine-quality</dd>
+        </dl>
+        <span class="card-cta">View prototype</span>
+      </div>
+    </a>
+
+    <!-- 03 Mihrab -->
+    <a class="card" href="03-mihrab.html">
+      <div class="card-preview"><iframe src="03-mihrab.html" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+      <div class="card-body">
+        <div class="card-num">03 · Classical Islamic</div>
+        <div class="card-name">Mihrab <span class="ar">محراب</span></div>
+        <div class="card-tag">"Prayer niche" — Ramadan + Eid + Brothers</div>
+        <p class="card-desc">
+          Solid royal cobalt with full Islamic geometric tessellation as the system. Cinzel lapidary
+          display, Big Shoulders italic for stats (the sports-team energy from your Brothers
+          Coordinators graphic), gold + cream throughout. Mosque silhouette anchor. Mihrab-arched
+          quick-action cards. Best for: leaning fully into religious-cultural identity.
+        </p>
+        <div class="card-swatches">
+          <div class="swatch" style="background:#0A1B3D;"></div>
+          <div class="swatch" style="background:#173A7A;"></div>
+          <div class="swatch" style="background:#1F4A92;"></div>
+          <div class="swatch" style="background:#DBA84E;"></div>
+          <div class="swatch" style="background:#F5EFE0;"></div>
+        </div>
+        <dl class="card-attrs">
+          <dt>Display</dt><dd>Cinzel · Big Shoulders Italic</dd>
+          <dt>Body</dt><dd>Geist Sans</dd>
+          <dt>Mood</dt><dd>Lush, ceremonial, classical</dd>
+        </dl>
+        <span class="card-cta">View prototype</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- DNA explainer -->
+  <section class="dna">
+    <div class="section-head">
+      <h2>What I pulled from your IG</h2>
+      <span class="count">three threads</span>
+    </div>
+
+    <div class="dna-grid">
+      <div class="dna-block">
+        <h3>Color DNA</h3>
+        <p>
+          <strong>Three palettes recur</strong>: deep navy → forest green diagonal gradients
+          (Spotify, Giving Tuesday, Eid); warm peach/cream gradients (testimonial story);
+          solid royal cobalt + gold + Islamic pattern (Ramadan, Eid). Cobalt blue is the
+          through-line — already your app's brand color and on 4 of 6 images.
+        </p>
+      </div>
+      <div class="dna-block">
+        <h3>Type DNA</h3>
+        <p>
+          Two consistent moves: <strong>tall editorial serif in big caps</strong> for ceremonial
+          moments ("YOUNG MUSLIMS", "EID MUBARAK") + <strong>Arabic calligraphy in gold</strong>
+          for religious salutations. Body is always clean sans. The 2025 Coordinators graphic
+          is the outlier — bold italic geometric sans, sports-team energy.
+        </p>
+      </div>
+      <div class="dna-block">
+        <h3>Decorative DNA</h3>
+        <p>
+          Islamic geometric patterns appear as <strong>corner frames</strong> (testimonial, Eid)
+          and <strong>full backdrops</strong> (Ramadan), not edge-to-edge wallpaper. Mosque
+          silhouettes are silhouettes-not-illustration. The YM logo M doubles as oversized
+          watermark on stat-driven posts.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>YM App / docs/prototypes/2026-04-27-brand-directions</span>
+    <span>Open each in full screen to evaluate · Compare side-by-side in browser tabs</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

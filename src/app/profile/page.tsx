@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { User, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProfileModeProvider } from '@/contexts/ProfileModeContext'
+import { toUserMessage } from '@/lib/errors/userMessage'
 import { useProfileForm, type ProfileFormState } from './hooks/useProfileForm'
 import { useProfileData } from './hooks/useProfileData'
 import { PersonalInfoSection } from './components/PersonalInfoSection'
@@ -37,7 +39,6 @@ export default function ProfilePage() {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
-  const [saveAndLeaveError, setSaveAndLeaveError] = useState<string | null>(null)
 
   // Fetch profile data from Supabase
   const { profileData, isLoading, error } = useProfileData()
@@ -66,7 +67,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     const result = await saveForm()
     if (!result.success) {
-      throw new Error(result.error ?? 'Failed to save profile')
+      throw new Error(result.error ?? 'save_profile_failed')
     }
   }
 
@@ -84,7 +85,6 @@ export default function ProfilePage() {
   const handleNavigationAttempt = (href: string) => {
     if (hasChanges) {
       setPendingNavigation(href)
-      setSaveAndLeaveError(null) // Clear any previous errors
       setShowUnsavedModal(true)
     } else {
       window.location.href = href
@@ -92,7 +92,6 @@ export default function ProfilePage() {
   }
 
   const handleSaveAndLeave = async () => {
-    setSaveAndLeaveError(null) // Clear error before attempting save
     const result = await saveForm()
     if (result.success) {
       setShowUnsavedModal(false)
@@ -100,15 +99,14 @@ export default function ProfilePage() {
         window.location.href = pendingNavigation
       }
     } else {
-      // Show error to user instead of silently failing
-      setSaveAndLeaveError(result.error || 'Failed to save profile. Please try again.')
+      console.error('Save profile failed:', result.error)
+      toast.error(toUserMessage(result.error, { action: 'save your profile' }))
     }
   }
 
   const handleDiscardAndLeave = () => {
     resetForm()
     setShowUnsavedModal(false)
-    setSaveAndLeaveError(null)
     if (pendingNavigation) {
       window.location.href = pendingNavigation
     }
@@ -117,7 +115,6 @@ export default function ProfilePage() {
   const handleStay = () => {
     setShowUnsavedModal(false)
     setPendingNavigation(null)
-    setSaveAndLeaveError(null)
   }
 
   return (
@@ -269,7 +266,6 @@ export default function ProfilePage() {
         onDiscardAndLeave={handleDiscardAndLeave}
         onStay={handleStay}
         changeCount={changeCount}
-        error={saveAndLeaveError}
       />
       </div>
     </ProfileModeProvider>

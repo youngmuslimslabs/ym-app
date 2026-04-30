@@ -8,6 +8,7 @@ import type {
   EducationEntry,
 } from '@/contexts/OnboardingContext'
 import { saveProfile } from '../services/profileService'
+import { toUserMessage } from '@/lib/errors/userMessage'
 
 export interface ProfileFormState extends OnboardingData {
   // Google auth email (read-only)
@@ -212,7 +213,7 @@ export function useProfileForm(initialData: ProfileFormState): UseProfileFormRet
       setOriginalData(formData)
       return { success: true }
     } else {
-      setSaveError(result.error ?? 'Failed to save profile')
+      setSaveError(toUserMessage(result.error, { action: 'save your profile' }))
       return { success: false, error: result.error }
     }
   }, [formData])

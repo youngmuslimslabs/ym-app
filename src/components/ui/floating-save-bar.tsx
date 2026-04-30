@@ -16,7 +16,7 @@ interface FloatingSaveBarProps {
   saveLabel?: string
   /** Custom success message (default: "Changes saved!") */
   successMessage?: string
-  /** Custom error message (default: "Failed to save") */
+  /** Custom error message (default: "Couldn't save") */
   errorMessage?: string
   /** Duration to show success/error message in ms (default: 2000) */
   successDuration?: number
@@ -49,7 +49,7 @@ export function FloatingSaveBar({
   onSave,
   saveLabel = 'Save',
   successMessage = 'Changes saved!',
-  errorMessage = 'Failed to save',
+  errorMessage = "Couldn't save",
   successDuration = 2000,
   className,
 }: FloatingSaveBarProps) {
@@ -65,7 +65,7 @@ export function FloatingSaveBar({
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), successDuration)
     } catch (error) {
-      console.error('Failed to save:', error)
+      console.error('FloatingSaveBar onSave threw:', error)
       setShowError(true)
       setTimeout(() => setShowError(false), successDuration)
     } finally {

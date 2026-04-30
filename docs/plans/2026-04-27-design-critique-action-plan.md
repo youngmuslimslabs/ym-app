@@ -71,10 +71,10 @@ Severity weighs **frequency × impact × persistence**.
 
 **Definition of done.**
 
-- [ ] No user-facing string contains the word "Failed" (admin/internal logs are fine).
-- [ ] `error.tsx`, `ErrorBoundary.tsx`, `global-error.tsx` use updated copy.
-- [ ] All `toast.error(...)` callers either route through `toUserMessage` or supply pre-translated copy.
-- [ ] `FloatingSaveBar` default `errorMessage` updated.
+- [x] No user-facing string contains the word "Failed" (admin/internal logs are fine).
+- [x] `error.tsx`, `ErrorBoundary.tsx`, `global-error.tsx` use updated copy.
+- [x] All `toast.error(...)` callers either route through `toUserMessage` or supply pre-translated copy.
+- [x] `FloatingSaveBar` default `errorMessage` updated.
 
 ---
 
@@ -155,8 +155,8 @@ Severity weighs **frequency × impact × persistence**.
 
 **Definition of done.**
 
-- [ ] `error.tsx` and `ErrorBoundary.tsx` are <30 lines each.
-- [ ] Both delegate UI to `ErrorFallbackCard`.
+- [x] Both delegate UI to `ErrorFallbackCard`.
+- [~] `error.tsx` and `ErrorBoundary.tsx` are <30 lines each. — `error.tsx` is 17 lines; `ErrorBoundary.tsx` is ~50 because of unavoidable React class-component boilerplate (constructor, `getDerivedStateFromError`, `componentDidCatch`, `handleReset`, `render`). The intent of P2-3 (single point of UI divergence) is met; the line target was a sketch.
 
 ---
 

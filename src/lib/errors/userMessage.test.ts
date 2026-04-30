@@ -2,24 +2,37 @@ import { describe, it, expect } from 'vitest'
 import { toUserMessage } from './userMessage'
 
 describe('toUserMessage', () => {
-  describe('non-classifiable inputs return the fallback', () => {
-    it('null', () => {
+  describe('non-classifiable inputs fall back', () => {
+    it('null with no action', () => {
       expect(toUserMessage(null)).toMatch(/went sideways/i)
     })
-    it('undefined', () => {
+    it('undefined with no action', () => {
       expect(toUserMessage(undefined)).toMatch(/went sideways/i)
     })
-    it('empty string', () => {
+    it('empty string with no action', () => {
       expect(toUserMessage('')).toMatch(/went sideways/i)
     })
-    it('number', () => {
+    it('number with no action', () => {
       expect(toUserMessage(42)).toMatch(/went sideways/i)
     })
-    it('plain Error with no signal', () => {
+    it('plain Error with no signal, no action', () => {
       expect(toUserMessage(new Error('something weird'))).toMatch(/went sideways/i)
     })
-    it('empty object', () => {
+    it('empty object with no action', () => {
       expect(toUserMessage({})).toMatch(/went sideways/i)
+    })
+    it('action context shifts fallback away from "your work is saved"', () => {
+      // For non-data flows like sign-in, "your work is saved" is nonsensical.
+      // The action-aware fallback names the action and points to recovery.
+      const msg = toUserMessage(null, { action: 'sign in' })
+      expect(msg).toMatch(/couldn't sign in/i)
+      expect(msg).not.toMatch(/work is saved/i)
+    })
+    it('action context applies to plain Error fallthrough too', () => {
+      const msg = toUserMessage(new Error('something weird'), {
+        action: 'load conferences',
+      })
+      expect(msg).toMatch(/couldn't load conferences/i)
     })
   })
 

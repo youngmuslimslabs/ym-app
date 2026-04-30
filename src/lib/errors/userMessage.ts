@@ -24,8 +24,10 @@ const CONSTRAINT_PATTERNS =
 const NOT_FOUND_PATTERNS = /(not\s+found|no\s+rows|missing\s+row)/i
 const SERVER_PATTERNS = /(internal\s+server|service\s+unavailable|bad\s+gateway)/i
 
-const FALLBACK =
+const FALLBACK_GENERIC =
   'Something went sideways. Your work is saved — try again or reload.'
+const fallbackForAction = (action: string) =>
+  `Couldn't ${action}. Try again, or reload if it persists.`
 
 function asErrorLike(err: unknown): ErrorLike | null {
   if (err === null || err === undefined) return null
@@ -98,7 +100,7 @@ function isServerError(e: ErrorLike): boolean {
  */
 export function toUserMessage(err: unknown, ctx?: UserMessageContext): string {
   const e = asErrorLike(err)
-  if (!e) return FALLBACK
+  if (!e) return ctx?.action ? fallbackForAction(ctx.action) : FALLBACK_GENERIC
 
   if (isSessionExpired(e)) {
     return 'Your session expired. Sign in again to keep going.'
@@ -128,5 +130,5 @@ export function toUserMessage(err: unknown, ctx?: UserMessageContext): string {
       : "Something's off on our end. Try again in a moment."
   }
 
-  return FALLBACK
+  return ctx?.action ? fallbackForAction(ctx.action) : FALLBACK_GENERIC
 }

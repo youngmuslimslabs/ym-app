@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { User, ArrowLeft, Loader2 } from 'lucide-react'
+import { User, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProfileModeProvider } from '@/contexts/ProfileModeContext'
 import { toUserMessage } from '@/lib/errors/userMessage'
@@ -14,6 +14,7 @@ import { YMProjectsSection } from './components/YMProjectsSection'
 import { EducationSection } from './components/EducationSection'
 import { SkillsChipSelector } from './components/SkillsChipSelector'
 import { SaveButton } from './components/SaveButton'
+import { ProfilePageSkeleton } from './components/ProfilePageSkeleton'
 import {
   UnsavedChangesModal,
   useUnsavedChangesWarning,
@@ -117,6 +118,10 @@ export default function ProfilePage() {
     setPendingNavigation(null)
   }
 
+  if (isLoading) {
+    return <ProfilePageSkeleton />
+  }
+
   return (
     <ProfileModeProvider isEditable={true}>
       <div className="flex min-h-screen flex-col bg-background">
@@ -159,16 +164,8 @@ export default function ProfilePage() {
       {/* Main Content */}
       <main className="flex-1 px-6 py-8 pb-24">
         <div className="mx-auto max-w-2xl space-y-12">
-          {/* Loading State */}
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="mt-4 text-sm text-muted-foreground">Loading your profile...</p>
-            </div>
-          )}
-
           {/* Error State */}
-          {error && !isLoading && (
+          {error && (
             <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
               <p className="text-sm text-destructive">{error}</p>
               <Button
@@ -183,7 +180,7 @@ export default function ProfilePage() {
           )}
 
           {/* Profile Sections - only show when loaded */}
-          {!isLoading && !error && isInitialized && (
+          {!error && isInitialized && (
             <>
               <div
                 className="animate-in fade-in slide-in-from-bottom-4 duration-200"

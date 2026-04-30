@@ -17,7 +17,7 @@ import { useOnboardingReference } from "@/contexts/OnboardingReferenceContext"
 import {
   OnboardingLayout,
   OnboardingContent,
-  OnboardingLoadingState,
+  OnboardingStepSkeleton,
   OnboardingErrorState,
 } from "./components"
 
@@ -65,7 +65,7 @@ export default function Step2() {
 
   // Show loading state while fetching location data
   if (isLoadingData) {
-    return <OnboardingLoadingState message="Loading locations..." />
+    return <OnboardingStepSkeleton />
   }
 
   // Show error state if data failed to load

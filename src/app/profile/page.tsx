@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { toast } from 'sonner'
 import { User, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -140,11 +141,14 @@ export default function ProfilePage() {
 
           <div className="flex items-center gap-3">
             {profileData?.avatarUrl ? (
-              <img
+              <Image
                 src={profileData.avatarUrl}
                 alt={`${profileData.firstName ?? ''} ${profileData.lastName ?? ''}`}
+                width={40}
+                height={40}
                 className="h-10 w-10 rounded-full object-cover"
                 referrerPolicy="no-referrer"
+                unoptimized
               />
             ) : (
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">

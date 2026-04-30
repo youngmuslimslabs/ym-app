@@ -2,6 +2,7 @@
 
 import type { KeyboardEvent } from 'react'
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
   useReactTable,
@@ -66,11 +67,14 @@ export function PeopleTable({ people }: PeopleTableProps) {
           return (
             <div className="flex items-center gap-3">
               {person.avatarUrl ? (
-                <img
+                <Image
                   src={person.avatarUrl}
                   alt=""
+                  width={32}
+                  height={32}
                   className="h-8 w-8 rounded-full object-cover"
                   referrerPolicy="no-referrer"
+                  unoptimized
                 />
               ) : (
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary/70">

@@ -25,7 +25,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { PersonListItem } from '../types'
-import { ROLE_CATEGORY_STYLES } from '../constants'
+import { ROLE_CATEGORY_ICONS } from '../constants'
 
 interface PeopleTableProps {
   people: PersonListItem[]
@@ -101,15 +101,19 @@ export function PeopleTable({ people }: PeopleTableProps) {
         header: 'Roles',
         cell: ({ row }) => (
           <div className="flex flex-wrap gap-1 max-w-[280px]">
-            {row.original.roles.map((role) => (
-              <Badge
-                key={role.id}
-                variant="outline"
-                className={`text-[11px] font-medium px-2 py-0.5 ${ROLE_CATEGORY_STYLES[role.category] ?? 'bg-secondary'}`}
-              >
-                {role.name}
-              </Badge>
-            ))}
+            {row.original.roles.map((role) => {
+              const Icon = ROLE_CATEGORY_ICONS[role.category]
+              return (
+                <Badge
+                  key={role.id}
+                  variant="outline"
+                  className="gap-1 px-2 py-0.5 text-[11px] font-medium"
+                >
+                  {Icon && <Icon className="h-3 w-3 opacity-70" aria-hidden="true" />}
+                  {role.name}
+                </Badge>
+              )
+            })}
           </div>
         ),
         enableSorting: false,

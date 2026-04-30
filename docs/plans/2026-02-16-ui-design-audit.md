@@ -24,15 +24,11 @@
 - Fix: Add a system preference detector or theme toggle
 - WCAG: 1.4.11 (Non-text Contrast)
 
-**[A11Y] `src/app/people/constants.ts:7-15` — Color-only role categorization with hardcoded colors**
-```ts
-ns: 'bg-amber-100 text-amber-800 border-amber-200',
-council: 'bg-purple-100 text-purple-800 border-purple-200',
-```
-- Uses arbitrary Tailwind colors (violates design system rule)
-- Colors are the only visual distinction between role categories — no icons or prefixes
-- No dark mode variants — will clash once dark mode works
-- Fix: Use design tokens with icon prefixes per category
+**[A11Y] `src/app/people/constants.ts:7-15` — Color-only role categorization with hardcoded colors** ✅ FIXED
+- ~~Uses arbitrary Tailwind colors (violates design system rule)~~
+- ~~Colors are the only visual distinction between role categories — no icons or prefixes~~
+- ~~No dark mode variants — will clash once dark mode works~~
+- **FIXED** — `ROLE_CATEGORY_STYLES` replaced with `ROLE_CATEGORY_ICONS`. All 7 categories now share a single neutral `Badge variant="outline"` chrome and are differentiated by per-category Lucide icons (`Landmark`, `Users`, `Map`, `MapPin`, `Network`, `Briefcase`, `Cloud`). Color is no longer a category signal.
 - WCAG: 1.4.1
 
 ### Serious (2 issues)
@@ -159,11 +155,11 @@ council: 'bg-purple-100 text-purple-800 border-purple-200',
 - Generate colorful gradient backgrounds from user initials (hash the name to pick from a palette)
 - This alone would make the People directory feel more alive
 
-#### 8. Fix ROLE_CATEGORY_STYLES
+#### 8. Fix ROLE_CATEGORY_STYLES ✅ IMPLEMENTED
 
-- Replace arbitrary Tailwind colors with design-token-based styles
-- Add icon prefixes per category so color isn't the only differentiator
-- Create dark mode variants
+- ~~Replace arbitrary Tailwind colors with design-token-based styles~~ Done (no per-category color at all — single neutral chrome)
+- ~~Add icon prefixes per category so color isn't the only differentiator~~ Done (`ROLE_CATEGORY_ICONS` map)
+- ~~Create dark mode variants~~ Not needed — neutral outline badge inherits from `--foreground` / `--border` tokens which already have dark values
 
 ### POLISH — Details that matter
 

@@ -181,9 +181,9 @@ Severity weighs **frequency × impact × persistence**.
 
 **Definition of done.**
 
-- [ ] Filters survive a hard refresh.
-- [ ] Browser back from a profile restores prior filter state.
-- [ ] Sharing a filtered URL with a teammate reproduces the same filtered list.
+- [x] Filters survive a hard refresh.
+- [x] Browser back from a profile restores prior filter state.
+- [x] Sharing a filtered URL with a teammate reproduces the same filtered list.
 
 ---
 
@@ -209,8 +209,10 @@ Severity weighs **frequency × impact × persistence**.
 
 **Definition of done.**
 
-- [ ] No more direct `<Dialog>` wrappers in feature components for confirm-style flows; all go through `ConfirmDialog` or `TypeToConfirmDialog`.
-- [ ] Enter-to-confirm works on the swap and remove-RSVP dialogs.
+- [~] No more direct `<Dialog>` wrappers in feature components for confirm-style flows; all go through `ConfirmDialog` or `TypeToConfirmDialog`.
+- [~] Enter-to-confirm works on the swap and remove-RSVP dialogs.
+
+**Deferred 2026-04-30** — All three referenced files (`ScheduleContent.tsx`, `SessionSheet.tsx`, `TypeToConfirmDialog.tsx`) live on `feature/conferences` and aren't present on `feature/design`. The right place for this work is `feature/conferences` (or a branch cut after both merge to `main`), not here. P3-1 (Enter-to-confirm) is folded in by design and is deferred along with P2-5.
 
 ---
 
@@ -240,8 +242,8 @@ Preserve `referrerPolicy="no-referrer"` for Google avatars. Either configure the
 
 **Definition of done.**
 
-- [ ] All avatars use `next/image` with explicit width/height.
-- [ ] Google avatar URLs render correctly without referrer leakage.
+- [x] All avatars use `next/image` with explicit width/height.
+- [x] Google avatar URLs render correctly without referrer leakage. — `unoptimized` set on each so the Google host doesn't need to be added to `next.config.images.remotePatterns`.
 
 ---
 

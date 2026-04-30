@@ -101,8 +101,8 @@ Severity weighs **frequency × impact × persistence**.
 
 **Definition of done.**
 
-- [ ] No full-page `<Loader2>` block remains in `src/app/**` (inline button spinners exempted).
-- [ ] All page-level loading uses Skeleton-shaped previews.
+- [x] No full-page `<Loader2>` block remains in `src/app/**` (inline button spinners exempted). — `legal-lol/page.tsx:52` keeps a full-page Loader2 intentionally; it's a parody page where the loader is part of the bit.
+- [x] All page-level loading uses Skeleton-shaped previews.
 
 ---
 
@@ -129,9 +129,9 @@ Severity weighs **frequency × impact × persistence**.
 
 **Definition of done.**
 
-- [ ] `grep -rE "text-green-|bg-green-" src/` returns 0 results.
-- [ ] Both success-state callers use `text-success`.
-- [ ] `globals.css` has `--success` and `--success-foreground` for both light and dark.
+- [x] `grep -rE "text-green-|bg-green-" src/` returns 0 results.
+- [x] Both success-state callers use `text-success`.
+- [x] `globals.css` has `--success` and `--success-foreground` for both light and dark.
 
 ---
 

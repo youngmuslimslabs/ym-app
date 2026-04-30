@@ -16,9 +16,11 @@ interface ErrorLike {
 const NETWORK_PATTERNS =
   /(network|fetch|offline|connection|timeout|enotfound|econnrefused|aborted)/i
 const PERMISSION_PATTERNS =
-  /(permission|denied|forbidden|unauthori[sz]ed|not\s+authori[sz]ed|\brls\b)/i
+  /(permission|denied|forbidden|unauthori[sz]ed|not\s+authori[sz]ed|row[-\s]level\s+security)/i
 const UNIQUE_PATTERNS =
   /(duplicate|unique|already\s+(?:exists|in\s+use|registered|taken))/i
+const CONSTRAINT_PATTERNS =
+  /(violates\s+(?:foreign\s+key|check)\s+constraint|invalid\s+input\s+value)/i
 const NOT_FOUND_PATTERNS = /(not\s+found|no\s+rows|missing\s+row)/i
 const SERVER_PATTERNS = /(internal\s+server|service\s+unavailable|bad\s+gateway)/i
 
@@ -65,6 +67,15 @@ function isConflict(e: ErrorLike): boolean {
   return UNIQUE_PATTERNS.test(e.message ?? '')
 }
 
+function isConstraintViolation(e: ErrorLike): boolean {
+  if (codeMatches(e, '23503') || codeMatches(e, '23514')) return true
+  return CONSTRAINT_PATTERNS.test(e.message ?? '')
+}
+
+function isSessionExpired(e: ErrorLike): boolean {
+  return e.code === 'PGRST301'
+}
+
 function isNotFound(e: ErrorLike): boolean {
   if (getStatus(e) === 404) return true
   if (e.code === 'PGRST116') return true
@@ -89,6 +100,9 @@ export function toUserMessage(err: unknown, ctx?: UserMessageContext): string {
   const e = asErrorLike(err)
   if (!e) return FALLBACK
 
+  if (isSessionExpired(e)) {
+    return 'Your session expired. Sign in again to keep going.'
+  }
   if (isNetworkFailure(e)) {
     return "Couldn't reach our servers — your changes are still here. Try again?"
   }
@@ -97,6 +111,11 @@ export function toUserMessage(err: unknown, ctx?: UserMessageContext): string {
   }
   if (isConflict(e)) {
     return ctx?.conflictMessage ?? "That's already in use. Try a different value."
+  }
+  if (isConstraintViolation(e)) {
+    return ctx?.action
+      ? `Couldn't ${ctx.action} — some of the input doesn't fit. Double-check and try again.`
+      : "Some of the input doesn't fit. Double-check and try again."
   }
   if (isNotFound(e)) {
     return ctx?.action

@@ -61,10 +61,68 @@ describe('toUserMessage', () => {
         toUserMessage({ code: '42501', message: 'new row violates rls policy' }),
       ).toMatch(/don't have access/i)
     })
+    it('classifies "row-level security" message without code', () => {
+      // Real Supabase RLS rejection often arrives as a string-only message —
+      // the regex must catch it independently of code 42501.
+      expect(
+        toUserMessage(
+          'new row violates row-level security policy for table profiles',
+        ),
+      ).toMatch(/don't have access/i)
+    })
     it('classifies "permission denied" message', () => {
       expect(toUserMessage('permission denied for table users')).toMatch(
         /don't have access/i,
       )
+    })
+  })
+
+  describe('session expired (PGRST301)', () => {
+    it('classifies PGRST301 as session expired', () => {
+      expect(
+        toUserMessage({ code: 'PGRST301', message: 'JWT expired' }),
+      ).toMatch(/session expired/i)
+    })
+    it('takes precedence over permission classification', () => {
+      // PGRST301 messages can mention "unauthorized" too — session-expired
+      // copy is more actionable than "you don't have access".
+      const msg = toUserMessage({
+        code: 'PGRST301',
+        message: 'JWT expired: unauthorized',
+      })
+      expect(msg).toMatch(/session expired/i)
+      expect(msg).not.toMatch(/don't have access/i)
+    })
+  })
+
+  describe('constraint violation (FK / check)', () => {
+    it('classifies Postgres code 23503 (FK)', () => {
+      expect(
+        toUserMessage({
+          code: '23503',
+          message: 'violates foreign key constraint',
+        }),
+      ).toMatch(/some of the input doesn't fit/i)
+    })
+    it('classifies Postgres code 23514 (check)', () => {
+      expect(
+        toUserMessage({
+          code: '23514',
+          message: 'violates check constraint',
+        }),
+      ).toMatch(/some of the input doesn't fit/i)
+    })
+    it('classifies "invalid input value" message', () => {
+      expect(
+        toUserMessage('invalid input value for enum role_type: "ghost"'),
+      ).toMatch(/some of the input doesn't fit/i)
+    })
+    it('uses action context when provided', () => {
+      const msg = toUserMessage(
+        { code: '23514' },
+        { action: 'save your conference' },
+      )
+      expect(msg).toContain('save your conference')
     })
   })
 

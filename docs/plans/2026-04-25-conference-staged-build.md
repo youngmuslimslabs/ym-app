@@ -332,7 +332,7 @@ git commit -m "feat(conferences): schema, RLS, functions, smoke test"
 
 Optional small items that don't justify their own stage. Pick up between stages or in a dedicated polish session.
 
-- **Mobile drag-to-dismiss visual feedback.** Bottom sheets currently close on >60px swipe but don't render a drag preview during the gesture. Add a `translateY` transform on `touchmove` so the sheet visibly follows the finger, then snaps back if the swipe is below threshold. Makes mobile feel native.
+- **Mobile drag-to-dismiss visual feedback.** Bottom sheets currently close on >60px swipe but don't render a drag preview during the gesture. Add a `translateY` transform on `touchmove` so the sheet visibly follows the finger, then snaps back if the swipe is below threshold. Makes mobile feel native. Affected sheets: `SessionSheet.tsx` (attendee), `RosterSheet.tsx` (admin Stage 5), `SessionCommentsSheet.tsx` (admin Stage 6) — all three copy the same `dragStartY` ref pattern, so a single shared hook (`useBottomSheetDragToDismiss`) would fix all three at once.
 
 ---
 

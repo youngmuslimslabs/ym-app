@@ -1,0 +1,125 @@
+import { describe, it, expect } from 'vitest'
+import { toUserMessage } from './userMessage'
+
+describe('toUserMessage', () => {
+  describe('non-classifiable inputs return the fallback', () => {
+    it('null', () => {
+      expect(toUserMessage(null)).toMatch(/went sideways/i)
+    })
+    it('undefined', () => {
+      expect(toUserMessage(undefined)).toMatch(/went sideways/i)
+    })
+    it('empty string', () => {
+      expect(toUserMessage('')).toMatch(/went sideways/i)
+    })
+    it('number', () => {
+      expect(toUserMessage(42)).toMatch(/went sideways/i)
+    })
+    it('plain Error with no signal', () => {
+      expect(toUserMessage(new Error('something weird'))).toMatch(/went sideways/i)
+    })
+    it('empty object', () => {
+      expect(toUserMessage({})).toMatch(/went sideways/i)
+    })
+  })
+
+  describe('network failures', () => {
+    it('classifies TypeError "Failed to fetch"', () => {
+      expect(toUserMessage(new TypeError('Failed to fetch'))).toMatch(
+        /couldn't reach our servers/i,
+      )
+    })
+    it('classifies AbortError', () => {
+      const err = Object.assign(new Error('aborted'), { name: 'AbortError' })
+      expect(toUserMessage(err)).toMatch(/couldn't reach our servers/i)
+    })
+    it('classifies "network error" string', () => {
+      expect(toUserMessage('A network error occurred')).toMatch(
+        /couldn't reach our servers/i,
+      )
+    })
+    it('classifies ENOTFOUND', () => {
+      expect(toUserMessage(new Error('getaddrinfo ENOTFOUND supabase.co'))).toMatch(
+        /couldn't reach our servers/i,
+      )
+    })
+  })
+
+  describe('permission failures', () => {
+    it('classifies status 403', () => {
+      expect(toUserMessage({ status: 403, message: 'Forbidden' })).toMatch(
+        /don't have access/i,
+      )
+    })
+    it('classifies status 401', () => {
+      expect(toUserMessage({ status: 401, message: 'Unauthorized' })).toMatch(
+        /don't have access/i,
+      )
+    })
+    it('classifies Postgres code 42501', () => {
+      expect(
+        toUserMessage({ code: '42501', message: 'new row violates rls policy' }),
+      ).toMatch(/don't have access/i)
+    })
+    it('classifies "permission denied" message', () => {
+      expect(toUserMessage('permission denied for table users')).toMatch(
+        /don't have access/i,
+      )
+    })
+  })
+
+  describe('conflict / unique violation', () => {
+    it('classifies Postgres code 23505', () => {
+      expect(toUserMessage({ code: '23505', message: 'duplicate key' })).toMatch(
+        /already in use/i,
+      )
+    })
+    it('classifies status 409', () => {
+      expect(toUserMessage({ status: 409, message: 'Conflict' })).toMatch(
+        /already in use/i,
+      )
+    })
+    it('respects conflictMessage override', () => {
+      const msg = toUserMessage(
+        { code: '23505' },
+        {
+          conflictMessage:
+            'Someone already used this email — try signing in instead.',
+        },
+      )
+      expect(msg).toBe('Someone already used this email — try signing in instead.')
+    })
+  })
+
+  describe('not found', () => {
+    it('classifies status 404', () => {
+      expect(toUserMessage({ status: 404, message: 'Not Found' })).toMatch(
+        /couldn't find/i,
+      )
+    })
+    it('classifies PGRST116 (Supabase no-rows)', () => {
+      expect(
+        toUserMessage({ code: 'PGRST116', message: 'No rows returned' }),
+      ).toMatch(/couldn't find/i)
+    })
+    it('uses action context when provided', () => {
+      const msg = toUserMessage({ status: 404 }, { action: 'load profile' })
+      expect(msg).toContain('load profile')
+    })
+  })
+
+  describe('server errors', () => {
+    it('classifies status 500', () => {
+      expect(
+        toUserMessage({ status: 500, message: 'Internal Server Error' }),
+      ).toMatch(/off on our end/i)
+    })
+    it('classifies status 503', () => {
+      expect(toUserMessage({ status: 503 })).toMatch(/off on our end/i)
+    })
+    it('uses action context when provided', () => {
+      const msg = toUserMessage({ status: 503 }, { action: 'save profile' })
+      expect(msg).toContain('save profile')
+    })
+  })
+})

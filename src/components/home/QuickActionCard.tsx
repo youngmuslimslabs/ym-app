@@ -25,12 +25,14 @@ export function QuickActionCard({
   className,
 }: QuickActionCardProps) {
   return (
-    <Link href={href} className="block group">
+    <Link
+      href={href}
+      className="block group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
       <Card
         className={cn(
           'transition-all duration-200',
           'hover:-translate-y-1 hover:shadow-lg',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           className
         )}
       >

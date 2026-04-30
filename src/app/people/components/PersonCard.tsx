@@ -1,8 +1,8 @@
 'use client'
 
-import type { KeyboardEvent } from 'react'
 import Image from 'next/image'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tag } from 'lucide-react'
@@ -14,22 +14,8 @@ interface PersonCardProps {
 }
 
 export function PersonCard({ person }: PersonCardProps) {
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-
-  const handleClick = () => {
-    // Preserve current filters by passing them as back URL
-    const currentUrl = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
-    router.push(`/people/${person.id}?back=${encodeURIComponent(currentUrl)}`)
-  }
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      handleClick()
-    }
-  }
 
   // Get location display (prefer subregion, fallback to region)
   const location = person.subregion?.name ?? person.region?.name ?? 'No location'
@@ -37,20 +23,8 @@ export function PersonCard({ person }: PersonCardProps) {
   // Get initials for avatar fallback
   const initials = `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`
 
-  return (
-    <Card
-      onClick={person.isClaimed ? handleClick : undefined}
-      onKeyDown={person.isClaimed ? handleKeyDown : undefined}
-      tabIndex={person.isClaimed ? 0 : -1}
-      role={person.isClaimed ? 'link' : undefined}
-      aria-label={person.isClaimed ? `View profile of ${person.firstName} ${person.lastName}` : undefined}
-      className={`group relative h-full overflow-hidden transition-all duration-200 ${
-        person.isClaimed
-          ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] hover:border-primary/20 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
-          : 'opacity-60'
-      }`}
-    >
-      {/* Subtle gradient overlay on hover — only for claimed users */}
+  const inner = (
+    <>
       {person.isClaimed && (
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
       )}
@@ -79,7 +53,9 @@ export function PersonCard({ person }: PersonCardProps) {
 
           {/* Name and Location */}
           <div className="min-w-0 flex-1">
-            <h3 className={`font-semibold text-foreground truncate ${person.isClaimed ? 'group-hover:text-primary transition-colors' : ''}`}>
+            <h3
+              className={`font-semibold text-foreground truncate ${person.isClaimed ? 'group-hover:text-primary transition-colors' : ''}`}
+            >
               {person.firstName} {person.lastName}
             </h3>
             <p className="text-sm text-muted-foreground truncate">
@@ -120,6 +96,30 @@ export function PersonCard({ person }: PersonCardProps) {
           </p>
         )}
       </div>
-    </Card>
+    </>
+  )
+
+  if (!person.isClaimed) {
+    return (
+      <Card className="group relative h-full overflow-hidden transition-all duration-200 opacity-60">
+        {inner}
+      </Card>
+    )
+  }
+
+  const currentUrl =
+    pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
+  const href = `/people/${person.id}?back=${encodeURIComponent(currentUrl)}`
+
+  return (
+    <Link
+      href={href}
+      className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      aria-label={`View profile of ${person.firstName} ${person.lastName}`}
+    >
+      <Card className="group relative h-full overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-lg hover:scale-[1.02] hover:border-primary/20 active:scale-[0.99]">
+        {inner}
+      </Card>
+    </Link>
   )
 }

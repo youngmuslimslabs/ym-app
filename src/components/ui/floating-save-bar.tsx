@@ -95,8 +95,8 @@ export function FloatingSaveBar({
       <div className="flex items-center gap-2 sm:gap-3 bg-background/95 backdrop-blur-sm border shadow-lg rounded-full px-3 sm:px-4 py-2">
         {showSuccess ? (
           <>
-            <Check className="h-4 w-4 text-green-600 shrink-0" />
-            <span className="text-sm font-medium text-green-600 whitespace-nowrap">
+            <Check className="h-4 w-4 text-success shrink-0" />
+            <span className="text-sm font-medium text-success whitespace-nowrap">
               {successMessage}
             </span>
           </>

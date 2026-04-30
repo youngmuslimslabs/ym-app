@@ -106,7 +106,7 @@ describe('OnboardingLayout', () => {
       </OnboardingLayout>,
     )
 
-    expect(screen.getByText(/Step 3 didn.t save/i)).toBeInTheDocument()
+    expect(screen.getByText(/We saved your work in this browser/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /retry save/i }))
 

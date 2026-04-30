@@ -69,7 +69,7 @@ export function OnboardingLayout({
       {pendingSaveError && (
         <div className="mt-3 flex w-full max-w-md mx-auto items-center gap-2 rounded-md bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          <span className="flex-1">Step {pendingSaveError.step} didn&apos;t save. Your data is safe locally.</span>
+          <span className="flex-1">We saved your work in this browser — tap retry to send it.</span>
           <button
             type="button"
             aria-label="Retry save"

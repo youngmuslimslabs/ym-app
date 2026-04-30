@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { fetchCurrentUserProfile } from '@/lib/supabase/queries/profile'
+import { toUserMessage } from '@/lib/errors/userMessage'
 import type { ProfileFormState } from './useProfileForm'
 
 interface UseProfileDataReturn {
@@ -26,7 +27,8 @@ export function useProfileData(): UseProfileDataReturn {
     const { data, error: fetchError } = await fetchCurrentUserProfile()
 
     if (fetchError) {
-      setError(fetchError)
+      console.error('Profile load error:', fetchError)
+      setError(toUserMessage(fetchError, { action: 'load your profile' }))
       setProfileData(null)
     } else {
       setProfileData(data)

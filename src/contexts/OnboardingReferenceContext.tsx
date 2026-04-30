@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { fetchSubregions, fetchAllNeighborNets, type Subregion, type NeighborNet } from '@/lib/supabase/queries/location'
 import { fetchRoleTypes, type RoleType } from '@/lib/supabase/queries/roles'
 import { fetchCompletedUsers, type UserOption } from '@/lib/supabase/queries/users'
+import { toUserMessage } from '@/lib/errors/userMessage'
 
 interface OnboardingReferenceData {
   subregions: Subregion[]
@@ -37,18 +38,11 @@ export function OnboardingReferenceProvider({ children }: { children: ReactNode 
       ])
 
       // Check for critical errors (subregions and roleTypes are required)
-      if (subregionsResult.error) {
-        setError(subregionsResult.error)
-        setIsLoading(false)
-        return
-      }
-      if (neighborNetsResult.error) {
-        setError(neighborNetsResult.error)
-        setIsLoading(false)
-        return
-      }
-      if (roleTypesResult.error) {
-        setError(roleTypesResult.error)
+      const firstError =
+        subregionsResult.error ?? neighborNetsResult.error ?? roleTypesResult.error
+      if (firstError) {
+        console.error('Onboarding reference load error:', firstError)
+        setError(toUserMessage(firstError, { action: 'load setup data' }))
         setIsLoading(false)
         return
       }

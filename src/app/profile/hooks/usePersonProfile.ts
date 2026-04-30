@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { fetchUserProfileById } from '@/lib/supabase/queries/profile'
+import { toUserMessage } from '@/lib/errors/userMessage'
 import type { ProfileFormState } from './useProfileForm'
 
 interface UsePersonProfileReturn {
@@ -22,7 +23,7 @@ export function usePersonProfile(userId: string): UsePersonProfileReturn {
 
   const fetchProfile = useCallback(async () => {
     if (!userId) {
-      setError('No user ID provided')
+      setError("We couldn't find that profile.")
       setIsLoading(false)
       return
     }
@@ -33,7 +34,8 @@ export function usePersonProfile(userId: string): UsePersonProfileReturn {
     const { data, error: fetchError } = await fetchUserProfileById(userId)
 
     if (fetchError) {
-      setError(fetchError)
+      console.error('Person profile load error:', fetchError)
+      setError(toUserMessage(fetchError, { action: 'load this profile' }))
       setPersonData(null)
     } else {
       setPersonData(data)

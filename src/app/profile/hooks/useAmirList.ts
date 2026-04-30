@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { toUserMessage } from '@/lib/errors/userMessage'
 
 export interface AmirOption {
   id: string
@@ -37,7 +38,7 @@ export function useAmirList(): UseAmirListReturn {
         .order('first_name', { ascending: true })
 
       if (usersError) {
-        throw new Error(`Failed to fetch users: ${usersError.message}`)
+        throw usersError
       }
 
       const amirOptions: AmirOption[] = (users ?? []).map((user) => ({
@@ -48,9 +49,8 @@ export function useAmirList(): UseAmirListReturn {
 
       setAmirs(amirOptions)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch amir list'
-      setError(message)
       console.error('Amir list fetch error:', err)
+      setError(toUserMessage(err, { action: 'load the directory' }))
     } finally {
       setIsLoading(false)
     }

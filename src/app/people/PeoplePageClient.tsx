@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
@@ -20,9 +21,41 @@ interface PeoplePageClientProps {
   filterCategories: FilterCategory[]
 }
 
+function readViewFromParams(params: URLSearchParams): ViewMode {
+  return params.get('view') === 'table' ? 'table' : 'cards'
+}
+
 export function PeoplePageClient({ initialPeople, filterCategories }: PeoplePageClientProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const isMobile = useIsMobile()
-  const [viewMode, setViewMode] = useState<ViewMode>('cards')
+  const [viewMode, setViewMode] = useState<ViewMode>(() =>
+    readViewFromParams(new URLSearchParams(searchParams.toString())),
+  )
+
+  // viewMode → URL (immediate; toggle is a single discrete action)
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (viewMode === 'cards') {
+      params.delete('view')
+    } else {
+      params.set('view', viewMode)
+    }
+    const queryString = params.toString()
+    const next = queryString ? `${pathname}?${queryString}` : pathname
+    const current =
+      pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
+    if (next !== current) {
+      router.replace(next, { scroll: false })
+    }
+  }, [viewMode, pathname, router, searchParams])
+
+  // URL → viewMode (browser back/forward, paste-in URL)
+  useEffect(() => {
+    const urlView = readViewFromParams(new URLSearchParams(searchParams.toString()))
+    setViewMode((current) => (current === urlView ? current : urlView))
+  }, [searchParams])
 
   const {
     filters,

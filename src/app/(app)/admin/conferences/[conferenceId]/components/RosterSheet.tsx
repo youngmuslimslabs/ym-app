@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState, type TouchEvent, useRef } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, Clock, Search, Users, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useBottomSheetDragToDismiss } from '@/hooks/use-bottom-sheet-drag'
 import { createClient } from '@/lib/supabase/client'
 import {
   Sheet,
@@ -42,17 +43,9 @@ export function RosterSheet({ session, timezone, onClose }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
 
-  // Drag-to-dismiss for the bottom-sheet variant; mirrors SessionSheet.tsx.
-  const dragStartY = useRef<number | null>(null)
-  function handleDragStart(e: TouchEvent<HTMLDivElement>) {
-    dragStartY.current = e.touches[0]?.clientY ?? null
-  }
-  function handleDragEnd(e: TouchEvent<HTMLDivElement>) {
-    if (dragStartY.current === null) return
-    const deltaY = (e.changedTouches[0]?.clientY ?? 0) - dragStartY.current
-    dragStartY.current = null
-    if (deltaY > 60) onClose()
-  }
+  const { sheetRef, dragHandleProps } = useBottomSheetDragToDismiss({
+    onDismiss: onClose,
+  })
 
   // Reset state when the targeted session changes — otherwise opening a second
   // session would briefly show the previous roster.
@@ -107,6 +100,7 @@ export function RosterSheet({ session, timezone, onClose }: Props) {
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
+        ref={isMobile ? sheetRef : undefined}
         side={side}
         className={cn(
           'flex flex-col p-0 gap-0',
@@ -118,8 +112,7 @@ export function RosterSheet({ session, timezone, onClose }: Props) {
         {isMobile && (
           <div
             className="flex justify-center pt-2 pb-1 shrink-0 touch-none"
-            onTouchStart={handleDragStart}
-            onTouchEnd={handleDragEnd}
+            {...dragHandleProps}
             aria-hidden="true"
           >
             <div className="h-1 w-10 rounded-full bg-border" />

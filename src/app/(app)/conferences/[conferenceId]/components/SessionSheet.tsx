@@ -1,9 +1,10 @@
 'use client'
 
-import { type TouchEvent, useRef, useState } from 'react'
+import { useState } from 'react'
 import { CheckCircle2, CircleSlash, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useBottomSheetDragToDismiss } from '@/hooks/use-bottom-sheet-drag'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
   Dialog,
@@ -57,19 +58,9 @@ export function SessionSheet({
 }: Props) {
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
   const isMobile = useIsMobile()
-  // Drag-to-dismiss: track touchstart Y on the bottom-sheet drag handle. If
-  // the user swipes down more than 60px, treat it as a dismiss gesture.
-  const dragStartY = useRef<number | null>(null)
-
-  function handleDragStart(e: TouchEvent<HTMLDivElement>) {
-    dragStartY.current = e.touches[0]?.clientY ?? null
-  }
-  function handleDragEnd(e: TouchEvent<HTMLDivElement>) {
-    if (dragStartY.current === null) return
-    const deltaY = (e.changedTouches[0]?.clientY ?? 0) - dragStartY.current
-    dragStartY.current = null
-    if (deltaY > 60) onClose()
-  }
+  const { sheetRef, dragHandleProps } = useBottomSheetDragToDismiss({
+    onDismiss: onClose,
+  })
 
   if (!session) {
     return (
@@ -110,6 +101,7 @@ export function SessionSheet({
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
+        ref={isMobile ? sheetRef : undefined}
         side={side}
         className={cn(
           'flex flex-col p-0',
@@ -121,8 +113,7 @@ export function SessionSheet({
         {isMobile && (
           <div
             className="flex justify-center pt-2 pb-1 shrink-0 touch-none"
-            onTouchStart={handleDragStart}
-            onTouchEnd={handleDragEnd}
+            {...dragHandleProps}
             aria-hidden="true"
           >
             <div className="h-1 w-10 rounded-full bg-border" />

@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState, type TouchEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { MessageSquare, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useBottomSheetDragToDismiss } from '@/hooks/use-bottom-sheet-drag'
 import { createClient } from '@/lib/supabase/client'
 import {
   Sheet,
@@ -37,16 +38,9 @@ export function SessionCommentsSheet({ session, timezone, onClose }: Props) {
   const [comments, setComments] = useState<CommentRow[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const dragStartY = useRef<number | null>(null)
-  function handleDragStart(e: TouchEvent<HTMLDivElement>) {
-    dragStartY.current = e.touches[0]?.clientY ?? null
-  }
-  function handleDragEnd(e: TouchEvent<HTMLDivElement>) {
-    if (dragStartY.current === null) return
-    const deltaY = (e.changedTouches[0]?.clientY ?? 0) - dragStartY.current
-    dragStartY.current = null
-    if (deltaY > 60) onClose()
-  }
+  const { sheetRef, dragHandleProps } = useBottomSheetDragToDismiss({
+    onDismiss: onClose,
+  })
 
   useEffect(() => {
     if (!session) return
@@ -77,6 +71,7 @@ export function SessionCommentsSheet({ session, timezone, onClose }: Props) {
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
+        ref={isMobile ? sheetRef : undefined}
         side={side}
         className={cn(
           'flex flex-col p-0 gap-0',
@@ -88,8 +83,7 @@ export function SessionCommentsSheet({ session, timezone, onClose }: Props) {
         {isMobile && (
           <div
             className="flex justify-center pt-2 pb-1 shrink-0 touch-none"
-            onTouchStart={handleDragStart}
-            onTouchEnd={handleDragEnd}
+            {...dragHandleProps}
             aria-hidden="true"
           >
             <div className="h-1 w-10 rounded-full bg-border" />

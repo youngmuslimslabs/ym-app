@@ -8,12 +8,11 @@ import {
 import type { UpcomingAttendance } from '@/lib/supabase/queries'
 
 const mockFetchUpcomingAttendance = vi.fn<
-  (authId: string) => Promise<UpcomingAttendance | null>
+  () => Promise<UpcomingAttendance | null>
 >()
 
 vi.mock('@/lib/supabase/queries', () => ({
-  fetchUpcomingAttendance: (authId: string) =>
-    mockFetchUpcomingAttendance(authId),
+  fetchUpcomingAttendance: () => mockFetchUpcomingAttendance(),
 }))
 
 async function renderAsync(node: Promise<React.ReactNode>) {
@@ -52,9 +51,7 @@ describe('ConferenceAttendanceSection', () => {
 
   it('returns null when there is no upcoming attendance', async () => {
     mockFetchUpcomingAttendance.mockResolvedValue(null)
-    const { container } = await renderAsync(
-      ConferenceAttendanceSection({ userId: 'auth-1' }),
-    )
+    const { container } = await renderAsync(ConferenceAttendanceSection())
     expect(container).toBeEmptyDOMElement()
   })
 
@@ -66,7 +63,7 @@ describe('ConferenceAttendanceSection', () => {
       endDate: '2026-05-02',
       isLive: false,
     })
-    await renderAsync(ConferenceAttendanceSection({ userId: 'auth-1' }))
+    await renderAsync(ConferenceAttendanceSection())
 
     expect(screen.getByText('Attending')).toBeInTheDocument()
     expect(
@@ -86,12 +83,11 @@ describe('ConferenceAttendanceSection', () => {
       endDate: '2026-05-02',
       isLive: true,
     })
-    const { container, unmount } = await renderAsync(
-      ConferenceAttendanceSection({ userId: 'auth-1' }),
-    )
-    const liveDot = container.querySelector('span[aria-hidden="true"]')
-    expect(liveDot).toHaveClass('animate-status-pulse')
-    unmount()
+    const live = await renderAsync(ConferenceAttendanceSection())
+    expect(
+      live.getByTestId('conference-status-dot'),
+    ).toHaveClass('animate-status-pulse')
+    live.unmount()
 
     mockFetchUpcomingAttendance.mockResolvedValueOnce({
       conferenceId: 'soon-1',
@@ -100,18 +96,9 @@ describe('ConferenceAttendanceSection', () => {
       endDate: '2026-05-16',
       isLive: false,
     })
-    const upcoming = await renderAsync(
-      ConferenceAttendanceSection({ userId: 'auth-1' }),
-    )
-    const upcomingDot = upcoming.container.querySelector(
-      'span[aria-hidden="true"]',
-    )
-    expect(upcomingDot).not.toHaveClass('animate-status-pulse')
-  })
-
-  it('passes the auth user id through to the query', async () => {
-    mockFetchUpcomingAttendance.mockResolvedValue(null)
-    await renderAsync(ConferenceAttendanceSection({ userId: 'auth-xyz' }))
-    expect(mockFetchUpcomingAttendance).toHaveBeenCalledWith('auth-xyz')
+    const upcoming = await renderAsync(ConferenceAttendanceSection())
+    expect(
+      upcoming.getByTestId('conference-status-dot'),
+    ).not.toHaveClass('animate-status-pulse')
   })
 })

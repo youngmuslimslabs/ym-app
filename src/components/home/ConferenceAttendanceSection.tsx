@@ -2,10 +2,7 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 
 import { fetchUpcomingAttendance } from '@/lib/supabase/queries'
-
-interface ConferenceAttendanceSectionProps {
-  userId: string
-}
+import { cn } from '@/lib/utils'
 
 const MONTH_DAY = new Intl.DateTimeFormat('en-US', {
   month: 'long',
@@ -39,10 +36,8 @@ export function formatConferenceDateRange(
  * (`animate-status-pulse`) only while the conference is live (today
  * inside the inclusive date range).
  */
-export async function ConferenceAttendanceSection({
-  userId,
-}: ConferenceAttendanceSectionProps) {
-  const attendance = await fetchUpcomingAttendance(userId)
+export async function ConferenceAttendanceSection() {
+  const attendance = await fetchUpcomingAttendance()
   if (!attendance) return null
 
   const dateRange = formatConferenceDateRange(
@@ -55,9 +50,11 @@ export async function ConferenceAttendanceSection({
       <div className="mb-3.5 inline-flex items-center gap-2 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-primary">
         <span
           aria-hidden="true"
-          className={`inline-block size-[7px] shrink-0 rounded-full bg-success${
-            attendance.isLive ? ' animate-status-pulse' : ''
-          }`}
+          data-testid="conference-status-dot"
+          className={cn(
+            'inline-block size-[7px] shrink-0 rounded-full bg-success',
+            attendance.isLive && 'animate-status-pulse',
+          )}
         />
         Attending
       </div>

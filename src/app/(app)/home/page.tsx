@@ -38,7 +38,7 @@ export default async function HomePage() {
       <div className="mx-auto flex max-w-[600px] flex-col">
         <Greeting fullName={displayName} />
 
-        <ConferenceAttendanceSection userId={user.id} />
+        <ConferenceAttendanceSection />
 
         <hr className="mt-12 mb-14 border-t border-border" />
 

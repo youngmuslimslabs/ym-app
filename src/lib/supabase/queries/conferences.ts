@@ -9,26 +9,44 @@ export interface UpcomingAttendance {
 }
 
 /**
- * Fetch the user's most-imminent published conference within the next
- * 30 days, or null if there isn't one.
+ * Fetch the current user's most-imminent published conference within
+ * the next 30 days, or null if there isn't one.
  *
- * RLS on `conferences` already restricts visibility to users who are
- * attendees, so a plain `select` returns only conferences the caller
- * is invited to. The `authId` argument isn't sent to Postgres — the
- * supabase server client picks the user's session up from cookies and
- * RLS keys off `auth.uid()`. We accept it on the signature to mirror
- * `fetchUserContext(user.id)` so callers don't have to remember which
- * queries do or don't take an id.
+ * Why this is two queries instead of relying on RLS: the SELECT policy
+ * on `conferences` (00013_conferences_feature.sql) is `EXISTS(attendee
+ * row) OR is_event_admin(...)`. An event admin would otherwise see
+ * every published conference here and the home page would render an
+ * "Attending" card for a conference they aren't actually on. Explicit
+ * filter on `conference_attendees.user_id` is the *intent* boundary;
+ * RLS underneath is the security boundary.
  *
  * The 30-day horizon is a product call: a conference 3 months out
- * isn't actionable from the home page yet, so it doesn't earn the
- * slot above the fold.
+ * isn't actionable from the home slot yet, so it doesn't earn it.
  */
-export async function fetchUpcomingAttendance(
-  authId: string
-): Promise<UpcomingAttendance | null> {
-  void authId
+export async function fetchUpcomingAttendance(): Promise<UpcomingAttendance | null> {
   const supabase = await createClient()
+
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser()
+  if (!authUser) return null
+
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_id', authUser.id)
+    .maybeSingle()
+  if (!userRow) return null
+
+  const { data: attendeeRows, error: attendeeErr } = await supabase
+    .from('conference_attendees')
+    .select('conference_id')
+    .eq('user_id', userRow.id)
+  if (attendeeErr) {
+    console.error('fetchUpcomingAttendance: attendee lookup failed', attendeeErr)
+    return null
+  }
+  if (!attendeeRows?.length) return null
 
   const today = new Date()
   const todayIso = today.toISOString().slice(0, 10)
@@ -39,6 +57,10 @@ export async function fetchUpcomingAttendance(
   const { data, error } = await supabase
     .from('conferences')
     .select('id, name, start_date, end_date')
+    .in(
+      'id',
+      attendeeRows.map((r) => r.conference_id),
+    )
     .eq('status', 'published')
     .gte('end_date', todayIso)
     .lte('start_date', horizonIso)

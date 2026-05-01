@@ -6,6 +6,16 @@
 // and adding a dep just for two functions is overkill. The trick uses the
 // difference between an instant displayed in the target tz vs displayed in
 // UTC to derive the offset for that exact wall-clock moment (handles DST).
+//
+// KNOWN LIMITATION: the offset is sampled at the *input UTC instant*, not at
+// the target wall-clock instant. On DST spring-forward day, wall clocks in
+// the post-transition / pre-transition-UTC window get the wrong offset and
+// the result is off by one hour. Concrete: composeTzIso('2026-03-08','03:30',
+// 'America/New_York') returns '08:30Z' (EST offset) when 03:30 EDT is '07:30Z'.
+// Affected window: ~02:00–07:00 wall clock on the second Sunday of March,
+// US tz only. Fix sketch: iterate — compute O at W, then recompute O at W-O
+// and use that — or adopt date-fns-tz. See datetime.test.ts for a pinned
+// `it.skip` that lights up once this is fixed.
 export function composeTzIso(
   date: string, // "YYYY-MM-DD"
   time: string, // "HH:mm"
@@ -67,6 +77,8 @@ export function decomposeTzIso(
 
 // Range of YYYY-MM-DD strings between start and end inclusive. Used by the
 // SessionEditor's day picker to limit choices to the conference's days.
+// Returns `[]` if `endDate < startDate` (inverted range — caller's bug, not
+// ours, but we don't throw because the picker just renders nothing).
 export function dateRangeInclusive(startDate: string, endDate: string): string[] {
   const start = new Date(`${startDate}T00:00:00Z`)
   const end = new Date(`${endDate}T00:00:00Z`)

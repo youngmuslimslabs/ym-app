@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      conference_attendees: {
+        Row: {
+          conference_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          conference_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          conference_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conference_attendees_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conference_attendees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conferences: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          location: string | null
+          name: string
+          published_at: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["conference_status"]
+          tagline: string | null
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          location?: string | null
+          name: string
+          published_at?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["conference_status"]
+          tagline?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          location?: string | null
+          name?: string
+          published_at?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["conference_status"]
+          tagline?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           code: string
@@ -267,6 +348,179 @@ export type Database = {
         }
         Relationships: []
       }
+      session_check_ins: {
+        Row: {
+          checked_in_at: string
+          id: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          checked_in_at?: string
+          id?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          checked_in_at?: string
+          id?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_check_ins_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_check_ins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          session_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_signups: {
+        Row: {
+          created_at: string
+          id: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_signups_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_signups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          capacity: number | null
+          check_in_code: string | null
+          conference_id: string
+          created_at: string
+          description: string | null
+          end_at: string
+          id: string
+          is_break: boolean
+          room: string | null
+          speaker: string | null
+          start_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          check_in_code?: string | null
+          conference_id: string
+          created_at?: string
+          description?: string | null
+          end_at: string
+          id?: string
+          is_break?: boolean
+          room?: string | null
+          speaker?: string | null
+          start_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number | null
+          check_in_code?: string | null
+          conference_id?: string
+          created_at?: string
+          description?: string | null
+          end_at?: string
+          id?: string
+          is_break?: boolean
+          room?: string | null
+          speaker?: string | null
+          start_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subregions: {
         Row: {
           code: string
@@ -474,10 +728,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_signup: { Args: { p_session_id: string }; Returns: Json }
+      check_in_to_session: {
+        Args: { p_session_id: string; p_code: string }
+        Returns: Json
+      }
       get_current_user_id: { Args: never; Returns: string }
       is_authenticated: { Args: never; Returns: boolean }
+      is_event_admin: { Args: { p_user_id: string }; Returns: boolean }
+      publish_conference: { Args: { p_id: string }; Returns: Json }
+      remove_attendee: {
+        Args: { p_conference_id: string; p_user_id: string }
+        Returns: Json
+      }
+      signup_for_session: { Args: { p_session_id: string }; Returns: Json }
     }
     Enums: {
+      conference_status: "draft" | "published"
       membership_status: "active" | "alumni" | "inactive"
       role_category:
         | "ns"
@@ -487,6 +754,7 @@ export type Database = {
         | "neighbor_net"
         | "cabinet"
         | "cloud"
+        | "system"
       scope_type:
         | "national"
         | "region"
@@ -621,6 +889,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      conference_status: ["draft", "published"],
       membership_status: ["active", "alumni", "inactive"],
       role_category: [
         "ns",
@@ -630,6 +899,7 @@ export const Constants = {
         "neighbor_net",
         "cabinet",
         "cloud",
+        "system",
       ],
       scope_type: [
         "national",

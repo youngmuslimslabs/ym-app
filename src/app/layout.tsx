@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper";
 import { ServiceWorkerRegistration } from "@/components/providers/ServiceWorkerRegistration";
 import { IOSInstallPrompt } from "@/components/pwa/IOSInstallPrompt";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -58,6 +59,7 @@ export default function RootLayout({
           <ServiceWorkerRegistration />
           <IOSInstallPrompt />
           {children}
+          <Toaster />
         </AuthProviderWrapper>
       </body>
     </html>

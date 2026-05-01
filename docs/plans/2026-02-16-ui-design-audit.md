@@ -123,11 +123,11 @@
 - QuickActionCards need more visual weight — larger icons, category-specific tints
 - Add a "recent activity" or "upcoming" section so the page has content, not just navigation
 
-#### 3. Surface depth — differentiate layers
+#### 3. Surface depth — differentiate layers (partial ✅)
 
-- Make `--card` slightly different from `--background` (e.g., `0.99 0 0` vs `1 0 0`, or a very slight warm tint)
-- Add subtle shadows to cards by default (not just on hover)
-- Consider a faint sidebar/page-level background distinction
+- ~~Make `--card` slightly different from `--background` (e.g., `0.99 0 0` vs `1 0 0`, or a very slight warm tint)~~ Done — `--card` light mode now `0.99 0 0` (1% darker, neutral). Dark mode already differentiated.
+- Add subtle shadows to cards by default (not just on hover) — _deferred, separate decision_
+- Consider a faint sidebar/page-level background distinction — _deferred, separate decision_
 
 #### 4. Add a secondary accent color
 

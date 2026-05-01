@@ -1,28 +1,18 @@
 import { redirect } from 'next/navigation'
 import { Users, DollarSign, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { fetchUserContext } from '@/lib/supabase/queries'
-import { PersonalContextCard, QuickActionCard } from '@/components/home'
+import { fetchUserContext, fetchHomeStats } from '@/lib/supabase/queries'
+import {
+  Greeting,
+  QuickActionList,
+  StatsStrip,
+  ConferenceAttendanceSection,
+} from '@/components/home'
 
 const QUICK_ACTIONS = [
-  {
-    href: '/people',
-    icon: Users,
-    title: 'People',
-    description: 'Browse YM members',
-  },
-  {
-    href: '/finance',
-    icon: DollarSign,
-    title: 'Finance',
-    description: 'Reimbursements',
-  },
-  {
-    href: '/docs',
-    icon: FileText,
-    title: 'Docs',
-    description: 'Halaqa & SOPs',
-  },
+  { href: '/people', icon: Users, title: 'People', description: 'Browse YM members' },
+  { href: '/finance', icon: DollarSign, title: 'Finance', description: 'Reimbursements' },
+  { href: '/docs', icon: FileText, title: 'Docs', description: 'Halaqa & SOPs' },
 ]
 
 export default async function HomePage() {
@@ -33,45 +23,69 @@ export default async function HomePage() {
     redirect('/login')
   }
 
-  // Fetch real user context
-  const userContext = await fetchUserContext(session.user.id)
+  const [userContext, stats] = await Promise.all([
+    fetchUserContext(session.user.id),
+    fetchHomeStats(),
+  ])
 
-  // Fallback values if user context not found
   const displayName = userContext?.name || session.user.email?.split('@')[0] || 'Member'
-  const displayRoles = userContext?.roles.length ? userContext.roles : []
+  const displayRoles = userContext?.roles ?? []
   const displayNN = userContext?.neighborNetName || 'No NeighborNet'
   const displaySR = userContext?.subregionName || ''
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] md:min-h-screen px-4 py-12">
-      <div className="w-full max-w-2xl space-y-8">
-        {/* Personal Context Card */}
-        <div
-          className="animate-in fade-in slide-in-from-bottom-4 duration-200"
-          style={{ animationDelay: '0ms' }}
-        >
-          <PersonalContextCard
-            name={displayName}
-            roles={displayRoles}
-            neighborNetName={displayNN}
-            subregionName={displaySR}
-          />
-        </div>
 
-        {/* Quick Action Cards */}
-        <div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-200"
-          style={{ animationDelay: '150ms' }}
-        >
-          {QUICK_ACTIONS.map((action) => (
-            <QuickActionCard
-              key={action.href}
-              href={action.href}
-              icon={action.icon}
-              title={action.title}
-              description={action.description}
-            />
-          ))}
-        </div>
+  return (
+    <div className="px-6 py-12 sm:px-10 sm:py-16">
+      <div className="mx-auto flex max-w-[600px] flex-col">
+        <Greeting fullName={displayName} />
+
+        <ConferenceAttendanceSection userId={session.user.id} />
+
+        <hr className="mt-12 mb-14 border-t border-border" />
+
+        <section className="space-y-1">
+          <div className="mb-5 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            Who you are
+          </div>
+          <p className="text-[1.0625rem] font-medium leading-[1.4]">
+            {displayRoles.length > 0 ? displayRoles.join(' · ') : 'No roles yet'}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {displayNN}{displaySR && ` · ${displaySR}`}
+          </p>
+        </section>
+
+        <section className="mt-14">
+          <div className="mb-5 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            Quick actions
+          </div>
+          <QuickActionList actions={QUICK_ACTIONS} />
+        </section>
+
+        <section className="mt-14">
+          <div className="mb-5 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            At a glance
+          </div>
+          <StatsStrip
+            stats={[
+              {
+                label: 'Active members',
+                value: stats.activeMembers,
+                meta: 'this month',
+                metaAccent: stats.newThisWeek > 0 ? `+${stats.newThisWeek}` : undefined,
+              },
+              {
+                label: 'NeighborNets',
+                value: stats.neighborNets,
+                meta: stats.neighborNets === 1 ? 'across the network' : undefined,
+              },
+              {
+                label: 'New this week',
+                value: stats.newThisWeek,
+                meta: stats.newThisWeek > 0 ? 'welcome them' : '—',
+              },
+            ]}
+          />
+        </section>
       </div>
     </div>
   )

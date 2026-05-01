@@ -7,6 +7,7 @@ import { YMLoginForm } from '@/components/auth/YMLoginForm'
 import { PageLoader } from '@/components/ui/page-loader'
 import { supabase } from '@/lib/supabase'
 import { checkOnboardingComplete } from '@/lib/supabase/onboarding'
+import { toUserMessage } from '@/lib/errors/userMessage'
 
 export default function LoginPage() {
   const { user, loading } = useAuth()
@@ -45,8 +46,9 @@ export default function LoginPage() {
     router.push(isComplete ? '/home' : '/onboarding?step=1')
   }
 
-  const handleGoogleError = (errorMessage: string) => {
-    setError(errorMessage)
+  const handleGoogleError = (rawMessage: string) => {
+    console.error('Login error:', rawMessage)
+    setError(toUserMessage(rawMessage, { action: 'sign in with Google' }))
   }
 
   if (loading && showLoader) {

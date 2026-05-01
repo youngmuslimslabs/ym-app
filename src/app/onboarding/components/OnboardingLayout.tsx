@@ -5,6 +5,7 @@ import { Loader2, AlertCircle, RotateCw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useOnboarding } from "@/contexts/OnboardingContext"
 import { calculateProgress } from "../constants"
 
@@ -68,7 +69,7 @@ export function OnboardingLayout({
       {pendingSaveError && (
         <div className="mt-3 flex w-full max-w-md mx-auto items-center gap-2 rounded-md bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          <span className="flex-1">Step {pendingSaveError.step} didn&apos;t save. Your data is safe locally.</span>
+          <span className="flex-1">We saved your work in this browser — tap retry to send it.</span>
           <button
             type="button"
             aria-label="Retry save"
@@ -159,22 +160,41 @@ export function OnboardingContent({
   )
 }
 
-interface OnboardingLoadingStateProps {
-  /** Loading message */
-  message?: string
-}
-
 /**
- * Loading state for onboarding steps that fetch data.
+ * Skeleton preview for onboarding steps that fetch data. Mirrors the
+ * OnboardingLayout shell — progress bar, centered heading, four form
+ * fields, two nav buttons — so the layout doesn't shift when content
+ * lands.
  */
-export function OnboardingLoadingState({ message = "Loading..." }: OnboardingLoadingStateProps) {
+export function OnboardingStepSkeleton() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <p className="mt-4 text-sm text-muted-foreground">{message}</p>
+    <div className="flex min-h-screen flex-col bg-background p-6">
+      <Skeleton className="h-2 w-full rounded-full" />
+
+      <div className="flex flex-1 flex-col items-center justify-center gap-12">
+        <div className="space-y-3 text-center">
+          <Skeleton className="mx-auto h-12 w-72 sm:h-14 sm:w-96" />
+          <Skeleton className="mx-auto h-4 w-64" />
+        </div>
+
+        <div className="flex w-full max-w-md flex-col gap-5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex w-full items-center justify-center gap-4 pb-4">
+        <Skeleton className="h-10 w-40 rounded-md" />
+        <Skeleton className="h-10 w-40 rounded-md" />
+      </div>
     </div>
   )
 }
+
 
 interface OnboardingErrorStateProps {
   /** Error message */

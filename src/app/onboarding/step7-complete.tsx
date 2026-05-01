@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { CheckCircle } from "lucide-react"
 
 import { useOnboarding } from "@/contexts/OnboardingContext"
+import { toUserMessage } from "@/lib/errors/userMessage"
 import {
   OnboardingLayout,
   OnboardingContent,
@@ -21,7 +22,8 @@ export default function Step7() {
     // Retry any failed background saves before completing
     const flushResult = await flushPendingSaves()
     if (!flushResult.success) {
-      setError(flushResult.error || "A previous step failed to save. Please try again.")
+      console.error('Onboarding flush failed:', flushResult.error)
+      setError(toUserMessage(flushResult.error, { action: 'save a previous step' }))
       return
     }
 
@@ -29,7 +31,8 @@ export default function Step7() {
     const result = await completeOnboarding()
 
     if (!result.success) {
-      setError(result.error || "Failed to complete onboarding. Please try again.")
+      console.error('Onboarding complete failed:', result.error)
+      setError(toUserMessage(result.error, { action: 'finish setting up' }))
       return
     }
 

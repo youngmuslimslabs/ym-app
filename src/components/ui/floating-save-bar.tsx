@@ -16,7 +16,7 @@ interface FloatingSaveBarProps {
   saveLabel?: string
   /** Custom success message (default: "Changes saved!") */
   successMessage?: string
-  /** Custom error message (default: "Failed to save") */
+  /** Custom error message (default: "Couldn't save") */
   errorMessage?: string
   /** Duration to show success/error message in ms (default: 2000) */
   successDuration?: number
@@ -49,7 +49,7 @@ export function FloatingSaveBar({
   onSave,
   saveLabel = 'Save',
   successMessage = 'Changes saved!',
-  errorMessage = 'Failed to save',
+  errorMessage = "Couldn't save",
   successDuration = 2000,
   className,
 }: FloatingSaveBarProps) {
@@ -65,7 +65,7 @@ export function FloatingSaveBar({
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), successDuration)
     } catch (error) {
-      console.error('Failed to save:', error)
+      console.error('FloatingSaveBar onSave threw:', error)
       setShowError(true)
       setTimeout(() => setShowError(false), successDuration)
     } finally {
@@ -95,8 +95,8 @@ export function FloatingSaveBar({
       <div className="flex items-center gap-2 sm:gap-3 bg-background/95 backdrop-blur-sm border shadow-lg rounded-full px-3 sm:px-4 py-2">
         {showSuccess ? (
           <>
-            <Check className="h-4 w-4 text-green-600 shrink-0" />
-            <span className="text-sm font-medium text-green-600 whitespace-nowrap">
+            <Check className="h-4 w-4 text-success shrink-0" />
+            <span className="text-sm font-medium text-success whitespace-nowrap">
               {successMessage}
             </span>
           </>

@@ -53,10 +53,10 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             </div>
 
             <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
-              Something went wrong
+              Hit a snag rendering this page.
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              We encountered an unexpected error. Please try again or contact support if the problem persists.
+              Your work is saved. Try again, or head home if it persists.
             </p>
 
             <div className="mt-6 flex justify-center gap-3">

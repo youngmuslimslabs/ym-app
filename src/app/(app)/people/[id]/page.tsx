@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -53,11 +54,14 @@ export default function PersonProfilePage() {
 
             <div className="flex items-center gap-3">
               {personData.avatarUrl ? (
-                <img
+                <Image
                   src={personData.avatarUrl}
                   alt={`${personData.firstName ?? ''} ${personData.lastName ?? ''}`}
+                  width={40}
+                  height={40}
                   className="h-10 w-10 rounded-full object-cover ring-2 ring-background shadow-sm"
                   referrerPolicy="no-referrer"
+                  unoptimized
                 />
               ) : (
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-background shadow-sm">

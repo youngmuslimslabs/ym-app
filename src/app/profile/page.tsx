@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, ArrowLeft, Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import { toast } from 'sonner'
+import { User, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProfileModeProvider } from '@/contexts/ProfileModeContext'
+import { toUserMessage } from '@/lib/errors/userMessage'
 import { useProfileForm, type ProfileFormState } from './hooks/useProfileForm'
 import { useProfileData } from './hooks/useProfileData'
 import { PersonalInfoSection } from './components/PersonalInfoSection'
@@ -12,6 +15,7 @@ import { YMProjectsSection } from './components/YMProjectsSection'
 import { EducationSection } from './components/EducationSection'
 import { SkillsChipSelector } from './components/SkillsChipSelector'
 import { SaveButton } from './components/SaveButton'
+import { ProfilePageSkeleton } from './components/ProfilePageSkeleton'
 import {
   UnsavedChangesModal,
   useUnsavedChangesWarning,
@@ -37,7 +41,6 @@ export default function ProfilePage() {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
-  const [saveAndLeaveError, setSaveAndLeaveError] = useState<string | null>(null)
 
   // Fetch profile data from Supabase
   const { profileData, isLoading, error } = useProfileData()
@@ -66,7 +69,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     const result = await saveForm()
     if (!result.success) {
-      throw new Error(result.error ?? 'Failed to save profile')
+      throw new Error(result.error ?? 'save_profile_failed')
     }
   }
 
@@ -84,7 +87,6 @@ export default function ProfilePage() {
   const handleNavigationAttempt = (href: string) => {
     if (hasChanges) {
       setPendingNavigation(href)
-      setSaveAndLeaveError(null) // Clear any previous errors
       setShowUnsavedModal(true)
     } else {
       window.location.href = href
@@ -92,7 +94,6 @@ export default function ProfilePage() {
   }
 
   const handleSaveAndLeave = async () => {
-    setSaveAndLeaveError(null) // Clear error before attempting save
     const result = await saveForm()
     if (result.success) {
       setShowUnsavedModal(false)
@@ -100,15 +101,14 @@ export default function ProfilePage() {
         window.location.href = pendingNavigation
       }
     } else {
-      // Show error to user instead of silently failing
-      setSaveAndLeaveError(result.error || 'Failed to save profile. Please try again.')
+      console.error('Save profile failed:', result.error)
+      toast.error(toUserMessage(result.error, { action: 'save your profile' }))
     }
   }
 
   const handleDiscardAndLeave = () => {
     resetForm()
     setShowUnsavedModal(false)
-    setSaveAndLeaveError(null)
     if (pendingNavigation) {
       window.location.href = pendingNavigation
     }
@@ -117,7 +117,10 @@ export default function ProfilePage() {
   const handleStay = () => {
     setShowUnsavedModal(false)
     setPendingNavigation(null)
-    setSaveAndLeaveError(null)
+  }
+
+  if (isLoading) {
+    return <ProfilePageSkeleton />
   }
 
   return (
@@ -138,11 +141,14 @@ export default function ProfilePage() {
 
           <div className="flex items-center gap-3">
             {profileData?.avatarUrl ? (
-              <img
+              <Image
                 src={profileData.avatarUrl}
                 alt={`${profileData.firstName ?? ''} ${profileData.lastName ?? ''}`}
+                width={40}
+                height={40}
                 className="h-10 w-10 rounded-full object-cover"
                 referrerPolicy="no-referrer"
+                unoptimized
               />
             ) : (
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -162,16 +168,8 @@ export default function ProfilePage() {
       {/* Main Content */}
       <main className="flex-1 px-6 py-8 pb-24">
         <div className="mx-auto max-w-2xl space-y-12">
-          {/* Loading State */}
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="mt-4 text-sm text-muted-foreground">Loading your profile...</p>
-            </div>
-          )}
-
           {/* Error State */}
-          {error && !isLoading && (
+          {error && (
             <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
               <p className="text-sm text-destructive">{error}</p>
               <Button
@@ -186,7 +184,7 @@ export default function ProfilePage() {
           )}
 
           {/* Profile Sections - only show when loaded */}
-          {!isLoading && !error && isInitialized && (
+          {!error && isInitialized && (
             <>
               <div
                 className="animate-in fade-in slide-in-from-bottom-4 duration-200"
@@ -269,7 +267,6 @@ export default function ProfilePage() {
         onDiscardAndLeave={handleDiscardAndLeave}
         onStay={handleStay}
         changeCount={changeCount}
-        error={saveAndLeaveError}
       />
       </div>
     </ProfileModeProvider>

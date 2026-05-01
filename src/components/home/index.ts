@@ -1,3 +1,6 @@
-export { PersonalContextCard } from './PersonalContextCard'
-export { QuickActionCard } from './QuickActionCard'
 export { HomePageSkeleton } from './HomePageSkeleton'
+export { Greeting } from './Greeting'
+export { StatsStrip } from './StatsStrip'
+export { QuickActionList } from './QuickActionList'
+export { QuickActionRow } from './QuickActionRow'
+export { ConferenceAttendanceSection } from './ConferenceAttendanceSection'

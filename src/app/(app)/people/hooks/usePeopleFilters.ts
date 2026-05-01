@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Fuse, { type IFuseOptions } from 'fuse.js'
 import type { PersonListItem, PeopleFilters } from '../types'
 
@@ -33,6 +34,57 @@ function getInitialFilters(): PeopleFilters {
   }
 }
 
+const MULTI_FILTER_KEYS = [
+  'regions',
+  'subregions',
+  'neighborNets',
+  'roles',
+  'projectTypes',
+  'projectRoles',
+  'skills',
+] as const
+
+function readFiltersFromParams(params: URLSearchParams): PeopleFilters {
+  const filters = getInitialFilters()
+  const search = params.get('search')
+  if (search) filters.search = search
+  for (const key of MULTI_FILTER_KEYS) {
+    const values = params.getAll(key)
+    if (values.length > 0) filters[key] = values
+  }
+  return filters
+}
+
+/**
+ * Serialize filters into URLSearchParams while preserving any unrelated
+ * params already present (e.g., 'view'). Empty values are omitted so the
+ * URL stays clean.
+ */
+function writeFiltersToParams(
+  filters: PeopleFilters,
+  current: URLSearchParams,
+): URLSearchParams {
+  const next = new URLSearchParams()
+
+  // Preserve unrelated params (e.g., view, back)
+  for (const [key, value] of current.entries()) {
+    if (key === 'search') continue
+    if ((MULTI_FILTER_KEYS as readonly string[]).includes(key)) continue
+    next.append(key, value)
+  }
+
+  if (filters.search) next.set('search', filters.search)
+  for (const key of MULTI_FILTER_KEYS) {
+    for (const value of filters[key]) {
+      next.append(key, value)
+    }
+  }
+
+  return next
+}
+
+const URL_DEBOUNCE_MS = 300
+
 const PAGE_SIZE = 20
 
 interface UsePeopleFiltersReturn {
@@ -51,7 +103,45 @@ interface UsePeopleFiltersReturn {
 }
 
 export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersReturn {
-  const [filters, setFilters] = useState<PeopleFilters>(getInitialFilters())
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const [filters, setFilters] = useState<PeopleFilters>(() =>
+    readFiltersFromParams(new URLSearchParams(searchParams.toString())),
+  )
+
+  // Skip writing on first render so initial mount doesn't churn the URL
+  // when the URL already matches the derived state.
+  const isFirstRender = useRef(true)
+
+  // filters → URL (debounced for typing comfort)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    const handle = setTimeout(() => {
+      const params = writeFiltersToParams(
+        filters,
+        new URLSearchParams(searchParams.toString()),
+      )
+      const queryString = params.toString()
+      const url = queryString ? `${pathname}?${queryString}` : pathname
+      router.replace(url, { scroll: false })
+    }, URL_DEBOUNCE_MS)
+    return () => clearTimeout(handle)
+  }, [filters, pathname, router, searchParams])
+
+  // URL → filters (external navigation: browser back/forward, paste-in URL)
+  useEffect(() => {
+    const urlFilters = readFiltersFromParams(
+      new URLSearchParams(searchParams.toString()),
+    )
+    setFilters((current) =>
+      JSON.stringify(urlFilters) === JSON.stringify(current) ? current : urlFilters,
+    )
+  }, [searchParams])
 
   const setSearch = useCallback((search: string) => {
     setFilters((prev) => ({ ...prev, search }))

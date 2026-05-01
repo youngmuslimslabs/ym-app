@@ -50,6 +50,10 @@ const config = {
           DEFAULT: 'oklch(var(--destructive) / <alpha-value>)',
           foreground: 'oklch(var(--destructive-foreground) / <alpha-value>)',
         },
+        success: {
+          DEFAULT: 'oklch(var(--success) / <alpha-value>)',
+          foreground: 'oklch(var(--success-foreground) / <alpha-value>)',
+        },
         border: 'oklch(var(--border) / <alpha-value>)',
         input: 'oklch(var(--input) / <alpha-value>)',
         ring: 'oklch(var(--ring) / <alpha-value>)',

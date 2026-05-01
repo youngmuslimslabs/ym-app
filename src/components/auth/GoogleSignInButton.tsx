@@ -87,8 +87,9 @@ export default function GoogleSignInButton({
       if (process.env.NODE_ENV === 'development') {
         console.error('Google sign in error:', error)
       }
-      const errorMessage = error instanceof Error ? error.message : 'Failed to sign in with Google'
-      onError?.(errorMessage)
+      // Pass the raw message up; the consumer translates with action context.
+      const rawMessage = error instanceof Error ? error.message : String(error)
+      onError?.(rawMessage)
     } finally {
       setIsLoading(false)
     }

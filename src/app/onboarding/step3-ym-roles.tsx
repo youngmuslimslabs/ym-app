@@ -19,7 +19,7 @@ import { useOnboardingReference } from "@/contexts/OnboardingReferenceContext"
 import {
   OnboardingLayout,
   OnboardingContent,
-  OnboardingLoadingState,
+  OnboardingStepSkeleton,
   OnboardingErrorState,
 } from "./components"
 
@@ -141,7 +141,7 @@ export default function Step3() {
 
   // Show loading state while fetching data
   if (isLoadingData) {
-    return <OnboardingLoadingState message="Loading roles..." />
+    return <OnboardingStepSkeleton />
   }
 
   // Show error state if data failed to load

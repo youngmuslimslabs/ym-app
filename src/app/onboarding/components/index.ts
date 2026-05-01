@@ -1,6 +1,6 @@
 export {
   OnboardingLayout,
   OnboardingContent,
-  OnboardingLoadingState,
+  OnboardingStepSkeleton,
   OnboardingErrorState,
 } from "./OnboardingLayout"

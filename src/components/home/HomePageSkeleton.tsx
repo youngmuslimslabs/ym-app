@@ -1,59 +1,56 @@
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
 /**
- * Skeleton for PersonalContextCard
- */
-function PersonalContextCardSkeleton() {
-  return (
-    <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-      <CardContent className="pt-6 flex flex-col items-center">
-        {/* Name */}
-        <Skeleton className="h-7 w-40 mb-2" />
-        {/* Roles */}
-        <Skeleton className="h-4 w-48 mb-3" />
-        {/* Location */}
-        <Skeleton className="h-4 w-36" />
-      </CardContent>
-    </Card>
-  )
-}
-
-/**
- * Skeleton for QuickActionCard
- */
-function QuickActionCardSkeleton() {
-  return (
-    <Card>
-      <CardContent className="pt-6 flex flex-col items-center">
-        {/* Icon circle */}
-        <Skeleton className="h-12 w-12 rounded-full mb-3" />
-        {/* Title */}
-        <Skeleton className="h-5 w-16 mb-1" />
-        {/* Description */}
-        <Skeleton className="h-4 w-24" />
-      </CardContent>
-    </Card>
-  )
-}
-
-/**
  * Full page skeleton for the home page.
- * Matches the layout of the actual home page content.
+ * Mirrors the editorial Variant D layout: greeting hero, hairline rule,
+ * three labeled sections (identity, quick actions, stats strip).
+ * No card chrome — same restraint as the live page.
  */
 export function HomePageSkeleton() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] md:min-h-screen px-4 py-12">
-      <div className="w-full max-w-2xl space-y-8">
-        {/* Personal Context Card Skeleton */}
-        <PersonalContextCardSkeleton />
+    <div className="px-6 py-12 sm:px-10 sm:py-16">
+      <div className="mx-auto flex max-w-[600px] flex-col">
+        {/* Greeting (two lines, ~clamp 40-56px each, leading-[1.05]) */}
+        <Skeleton className="h-14 w-2/3" />
+        <Skeleton className="mt-1 h-14 w-1/2" />
 
-        {/* Quick Action Cards Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <QuickActionCardSkeleton />
-          <QuickActionCardSkeleton />
-          <QuickActionCardSkeleton />
-        </div>
+        <hr className="mt-12 mb-14 border-t border-border" />
+
+        {/* "Who you are" */}
+        <section className="space-y-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </section>
+
+        {/* "Quick actions" */}
+        <section className="mt-14 space-y-3">
+          <Skeleton className="h-3 w-24" />
+          <div className="space-y-2 pt-2">
+            <Skeleton className="h-[58px] w-full" />
+            <Skeleton className="h-[58px] w-full" />
+            <Skeleton className="h-[58px] w-full" />
+          </div>
+        </section>
+
+        {/* "At a glance" */}
+        <section className="mt-14 space-y-3">
+          <Skeleton className="h-3 w-24" />
+          <div className="grid grid-cols-3 gap-8 pt-2">
+            <div className="space-y-3">
+              <Skeleton className="h-9 w-12" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-9 w-12" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-9 w-12" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   )

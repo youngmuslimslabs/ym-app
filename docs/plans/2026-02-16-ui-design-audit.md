@@ -116,12 +116,12 @@
 - ~~Staggered entry animations~~ Done
 - ~~Logo glow ring~~ Done
 
-#### 2. Home page — make it a real dashboard
+#### 2. Home page — make it a real dashboard (partial ✅)
 
-- PersonalContextCard should be larger and more prominent
-- Add time-of-day greeting ("Assalamu alaykum, Omar")
-- QuickActionCards need more visual weight — larger icons, category-specific tints
-- Add a "recent activity" or "upcoming" section so the page has content, not just navigation
+- ~~PersonalContextCard should be larger and more prominent~~ Replaced — identity now renders as plain editorial typography under a "Who you are" eyebrow; the gradient card wrapper is gone. The home page no longer has any card chrome at all (D direction).
+- ~~Add time-of-day greeting ("Assalamu alaykum, Omar")~~ Done — `Greeting` component renders "Assalamu alaykum, {firstName}." with the name in cobalt. No time/date subtitle (intentionally simpler than the audit's literal suggestion).
+- ~~QuickActionCards need more visual weight — larger icons, category-specific tints~~ Replaced — `QuickActionList` is a typographic list, not separate cards. "Category-specific tints" remains deferred to the brand-direction conversation (would need secondary accent decision).
+- "Add a 'recent activity' or 'upcoming' section" — _partially addressed via `StatsStrip` (Active members / NeighborNets / New this week)._ A full activity feed remains unresolved; the conditional `ConferenceAttendanceSection` (lands once `feature/conferences` reaches `main`) covers the most important "upcoming" case for attendees.
 
 #### 3. Surface depth — differentiate layers (partial ✅)
 

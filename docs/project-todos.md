@@ -244,6 +244,7 @@
 - [x] Update baseline-browser-mapping package — updated via `bun update`
 - [x] Extract common onboarding step layout to shared component — `OnboardingLayout`, `OnboardingContent`, `OnboardingLoadingState`, `OnboardingErrorState` in `src/app/onboarding/components/`
 - [x] Add loading skeletons for Supabase data fetching — Added `loading.tsx` files for `/home`, `/people`, `/people/[id]`, `/profile` pages with appropriate skeletons
+- [ ] **Fix local jsdom CJS load error** — `bunx vitest run` (default jsdom env) crashes locally with `TypeError: LRUCache is not a constructor` at `node_modules/jsdom/lib/jsdom/living/css/helpers/css-values.js:42`. Transitive-dep mismatch between jsdom and `lru-cache`. CI is unaffected (clean install). Workaround already in place: pure-logic tests (e.g. `src/app/(app)/admin/conferences/lib/*.test.ts`) declare `// @vitest-environment node` to skip jsdom; that's a legitimate optimization but it's currently masking the bug for component tests. Fix via `package.json` `overrides`/`resolutions` pinning a compatible `lru-cache`, or wait for jsdom to release a fixed version.
 
 ---
 

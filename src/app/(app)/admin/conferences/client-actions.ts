@@ -1,0 +1,181 @@
+'use client'
+
+import { createClient } from '@/lib/supabase/client'
+import type { SimpleResult } from './types'
+
+// Client-side mutations called from admin UI components. These are NOT
+// Next.js Server Actions despite the directory layout — the file uses
+// 'use client' and the browser Supabase client. Authorization lives
+// entirely in the database (RLS policies + SECURITY DEFINER RPCs that
+// check is_event_admin). If you add a mutation here that touches a table
+// or column without admin RLS coverage, it will silently allow any
+// authenticated user to call it. Either add RLS, or convert this whole
+// file (and the rest of the conferences mutations) to real Server Actions.
+
+export interface CreateConferenceInput {
+  name: string
+  tagline: string | null
+  start_date: string // YYYY-MM-DD
+  end_date: string
+  timezone: string
+  location: string | null
+  description: string | null
+}
+
+export async function createConference(
+  input: CreateConferenceInput
+): Promise<{ success: true; id: string } | { success: false; error: string }> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('conferences')
+    .insert({
+      name: input.name,
+      tagline: input.tagline,
+      start_date: input.start_date,
+      end_date: input.end_date,
+      timezone: input.timezone,
+      location: input.location,
+      description: input.description,
+    })
+    .select('id')
+    .maybeSingle()
+  if (error) return { success: false, error: error.message }
+  if (!data) return { success: false, error: 'Insert returned no row' }
+  return { success: true, id: data.id as string }
+}
+
+export interface UpdateConferenceInput {
+  name?: string
+  tagline?: string | null
+  start_date?: string
+  end_date?: string
+  timezone?: string
+  location?: string | null
+  description?: string | null
+}
+
+export async function updateConference(
+  id: string,
+  patch: UpdateConferenceInput
+): Promise<SimpleResult> {
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('conferences')
+    .update(patch)
+    .eq('id', id)
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
+export async function deleteConference(id: string): Promise<SimpleResult> {
+  const supabase = createClient()
+  const { error } = await supabase.from('conferences').delete().eq('id', id)
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
+export async function publishConference(id: string): Promise<SimpleResult> {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('publish_conference', {
+    p_id: id,
+  })
+  if (error) return { success: false, error: error.message }
+  return data as unknown as SimpleResult
+}
+
+// Attendees -----------------------------------------------------------------
+
+// Bulk-invite. Rows that already exist are silently ignored thanks to the
+// (conference_id, user_id) UNIQUE constraint + ignoreDuplicates upsert.
+// Returns the count of rows actually inserted so the UI can toast accurately.
+export async function inviteAttendees(
+  conferenceId: string,
+  userIds: string[]
+): Promise<{ success: true; invited: number } | { success: false; error: string }> {
+  if (userIds.length === 0) return { success: true, invited: 0 }
+  const supabase = createClient()
+  const rows = userIds.map((user_id) => ({ conference_id: conferenceId, user_id }))
+  const { data, error } = await supabase
+    .from('conference_attendees')
+    .upsert(rows, {
+      onConflict: 'conference_id,user_id',
+      ignoreDuplicates: true,
+    })
+    .select('user_id')
+  if (error) return { success: false, error: error.message }
+  return { success: true, invited: (data ?? []).length }
+}
+
+// Wraps the remove_attendee RPC, which cascades signups, check-ins, and
+// feedback for the user's sessions in this conference before deleting the
+// junction row. All in one transaction at the DB layer.
+export async function removeAttendee(
+  conferenceId: string,
+  userId: string
+): Promise<SimpleResult> {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('remove_attendee', {
+    p_conference_id: conferenceId,
+    p_user_id: userId,
+  })
+  if (error) return { success: false, error: error.message }
+  return data as unknown as SimpleResult
+}
+
+// Sessions ------------------------------------------------------------------
+
+export interface SessionInput {
+  conference_id: string
+  start_at: string // ISO timestamptz
+  end_at: string
+  title: string
+  description: string | null
+  speaker: string | null
+  room: string | null
+  is_break: boolean
+  capacity: number | null
+  check_in_code: string | null
+}
+
+export async function createSession(
+  input: SessionInput
+): Promise<{ success: true; id: string } | { success: false; error: string }> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('sessions')
+    .insert(input)
+    .select('id')
+    .maybeSingle()
+  if (error) return { success: false, error: friendlySessionError(error.message) }
+  if (!data) return { success: false, error: 'Insert returned no row' }
+  return { success: true, id: data.id as string }
+}
+
+export async function updateSession(
+  id: string,
+  patch: Partial<SessionInput>
+): Promise<SimpleResult> {
+  const supabase = createClient()
+  const { error } = await supabase.from('sessions').update(patch).eq('id', id)
+  if (error) return { success: false, error: friendlySessionError(error.message) }
+  return { success: true }
+}
+
+export async function deleteSession(id: string): Promise<SimpleResult> {
+  const supabase = createClient()
+  const { error } = await supabase.from('sessions').delete().eq('id', id)
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
+// Translates the most common DB-level errors into actionable messages. The
+// trigger error wording comes from enforce_capacity_floor() in migration 00013.
+function friendlySessionError(raw: string): string {
+  if (/Cannot reduce capacity below current signup count/i.test(raw)) {
+    return raw.replace(/^.*?Cannot/, 'Cannot')
+  }
+  if (/end_at > start_at/i.test(raw)) {
+    return 'End time must be after start time.'
+  }
+  return raw
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -15,6 +15,9 @@ import {
   ChevronUp,
   PanelLeftClose,
   PanelLeft,
+  Calendar,
+  CalendarDays,
+  Shield,
   X,
 } from 'lucide-react'
 import {
@@ -23,12 +26,14 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { createClient } from '@/lib/supabase/client'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,12 +50,74 @@ const NAV_ITEMS = [
   { href: '/docs', label: 'Docs', icon: FileText },
 ]
 
+interface InvitedConference {
+  id: string
+  name: string
+}
+
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut } = useAuth()
   // Using shadcn's useSidebar hook for state and toggle
   const { isMobile, setOpenMobile, state, toggleSidebar } = useSidebar()
+  const [conferences, setConferences] = useState<InvitedConference[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // Load conferences the user is invited to + admin status. RLS already
+  // filters attendee rows to their own. The admin check uses the same
+  // is_event_admin() function the DB policies use, so the sidebar visibility
+  // matches what they're actually allowed to do.
+  //
+  // Re-fetched on every pathname change (so a newly granted admin sees the
+  // Admin group as soon as they navigate anywhere) and on window focus
+  // (catches the long-idle-tab case). Real-time push for instant deltas
+  // would need a Supabase realtime subscription on conference_attendees +
+  // role_assignments; we'll add that in the realtime stage.
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    // Coalesce focus-triggered refetches: tab-thrash should not fire
+    // back-to-back queries. Pathname-change refetches always go through
+    // because the effect itself re-runs and resets this closure.
+    let lastFetchStartedAt = 0
+    const supabase = createClient()
+
+    async function fetchSidebarData() {
+      if (Date.now() - lastFetchStartedAt < 2000) return
+      lastFetchStartedAt = Date.now()
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', user!.id)
+        .maybeSingle()
+      if (!userRow || cancelled) return
+      const [confRes, adminRes] = await Promise.all([
+        supabase
+          .from('conference_attendees')
+          .select('conferences(id, name)')
+          .eq('user_id', userRow.id),
+        supabase.rpc('is_event_admin', { p_user_id: userRow.id }),
+      ])
+      if (cancelled) return
+      const list = ((confRes.data ?? []) as { conferences: InvitedConference | null }[])
+        .map((r) => r.conferences)
+        .filter((c): c is InvitedConference => c !== null)
+        .sort((a, b) => a.name.localeCompare(b.name))
+      setConferences(list)
+      setIsAdmin(Boolean(adminRes.data))
+    }
+
+    void fetchSidebarData()
+    const onFocus = () => {
+      void fetchSidebarData()
+    }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      cancelled = true
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [user, pathname])
 
   // Custom state for hover effect on entire collapsed sidebar
   const [isHoveringCollapsed, setIsHoveringCollapsed] = useState(false)
@@ -200,6 +267,60 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {conferences.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <CalendarDays className="mr-1.5 size-3" />
+              Conferences
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {conferences.map((c) => (
+                  <SidebarMenuItem key={c.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === `/conferences/${c.id}`}
+                      tooltip={c.name}
+                      onClick={handleNavClick}
+                    >
+                      <Link href={`/conferences/${c.id}`}>
+                        <Calendar />
+                        <span className="truncate">{c.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <Shield className="mr-1.5 size-3" />
+              Admin
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith('/admin/conferences')}
+                    tooltip="Conferences"
+                    onClick={handleNavClick}
+                  >
+                    <Link href="/admin/conferences">
+                      <Calendar />
+                      <span>Conferences</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {/* Footer - User Profile + Feedback */}

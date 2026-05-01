@@ -20,10 +20,10 @@ export function StatsStrip({ stats }: StatsStripProps) {
           <div className="mt-3.5 text-[0.6875rem] font-medium uppercase tracking-[0.10em] text-muted-foreground">
             {stat.label}
           </div>
-          {stat.meta && (
+          {(stat.meta || stat.metaAccent) && (
             <div className="mt-1.5 text-xs text-muted-foreground">
               {stat.metaAccent && (
-                <span className="font-medium text-success">{stat.metaAccent} </span>
+                <span className="font-medium text-success">{stat.metaAccent}{stat.meta ? ' ' : ''}</span>
               )}
               {stat.meta}
             </div>

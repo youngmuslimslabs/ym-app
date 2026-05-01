@@ -50,6 +50,20 @@ describe('StatsStrip', () => {
     expect(screen.queryByText('this month')).not.toBeInTheDocument()
   })
 
+  it('renders the metaAccent line even when meta is not provided', () => {
+    render(
+      <StatsStrip
+        stats={[
+          { label: 'Active members', value: 142, metaAccent: '+8' },
+          { label: 'NeighborNets', value: 1 },
+          { label: 'New this week', value: 8 },
+        ]}
+      />,
+    )
+    expect(screen.getByText('+8')).toBeInTheDocument()
+    expect(screen.getByText('+8')).toHaveClass('text-success')
+  })
+
   it('renders metaAccent in success color before the meta text', () => {
     render(
       <StatsStrip

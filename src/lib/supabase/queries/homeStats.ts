@@ -24,11 +24,7 @@ export async function fetchHomeStats(): Promise<HomeStats> {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
   const sevenDaysAgoIso = sevenDaysAgo.toISOString()
 
-  const [
-    { count: activeMembers },
-    { count: newThisWeek },
-    { count: neighborNets },
-  ] = await Promise.all([
+  const [activeRes, newRes, nnRes] = await Promise.all([
     supabase
       .from('users')
       .select('*', { count: 'exact', head: true })
@@ -42,9 +38,13 @@ export async function fetchHomeStats(): Promise<HomeStats> {
       .select('*', { count: 'exact', head: true }),
   ])
 
+  if (activeRes.error) console.error('fetchHomeStats: active members count failed', activeRes.error)
+  if (newRes.error) console.error('fetchHomeStats: new-this-week count failed', newRes.error)
+  if (nnRes.error) console.error('fetchHomeStats: neighbor_nets count failed', nnRes.error)
+
   return {
-    activeMembers: activeMembers ?? 0,
-    newThisWeek: newThisWeek ?? 0,
-    neighborNets: neighborNets ?? 0,
+    activeMembers: activeRes.count ?? 0,
+    newThisWeek: newRes.count ?? 0,
+    neighborNets: nnRes.count ?? 0,
   }
 }

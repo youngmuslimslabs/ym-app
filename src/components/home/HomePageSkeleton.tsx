@@ -10,9 +10,9 @@ export function HomePageSkeleton() {
   return (
     <div className="px-6 py-12 sm:px-10 sm:py-16">
       <div className="mx-auto flex max-w-[600px] flex-col">
-        {/* Greeting (two lines) */}
-        <Skeleton className="h-12 w-2/3" />
-        <Skeleton className="mt-2 h-12 w-1/2" />
+        {/* Greeting (two lines, ~clamp 40-56px each, leading-[1.05]) */}
+        <Skeleton className="h-14 w-2/3" />
+        <Skeleton className="mt-1 h-14 w-1/2" />
 
         <hr className="mt-12 mb-14 border-t border-border" />
 
@@ -27,9 +27,9 @@ export function HomePageSkeleton() {
         <section className="mt-14 space-y-3">
           <Skeleton className="h-3 w-24" />
           <div className="space-y-2 pt-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-[58px] w-full" />
+            <Skeleton className="h-[58px] w-full" />
+            <Skeleton className="h-[58px] w-full" />
           </div>
         </section>
 

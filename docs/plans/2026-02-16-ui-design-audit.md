@@ -143,12 +143,12 @@
 - Even a weight variant of Geist (Black/Ultra) would help
 - Consider a serif or decorative font for the "Young Muslims" brand name in sidebar
 
-#### 6. Animations & transitions
+#### 6. Animations & transitions (partial ✅)
 
-- Page transitions between onboarding steps (slide left/right)
-- Staggered card reveals on People page as they load
-- Button press feedback (subtle scale on active)
-- Skeleton loading states should shimmer, not be static gray
+- Page transitions between onboarding steps (slide left/right) — _deferred, separate decision_
+- ~~Staggered card reveals on People page as they load~~ Done — `PersonCardGrid` wraps each card in `animate-in fade-in slide-in-from-bottom-2 duration-200` with `animationDelay: ${Math.min(index * 50, 300)}ms`.
+- ~~Button press feedback (subtle scale on active)~~ Done — picked color-darken (`active:bg-*/80`) over scale for restraint; aligns with the existing `hover:bg-*/90` pattern. All `Button` CVA variants except `link` got an `active:` darken state.
+- Skeleton loading states should shimmer, not be static gray — _deferred (cheesiness risk in a calm/utilitarian brand; existing `animate-pulse` stays)_
 
 #### 7. PersonCard avatars
 

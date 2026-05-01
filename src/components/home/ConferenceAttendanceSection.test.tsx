@@ -74,7 +74,7 @@ describe('ConferenceAttendanceSection', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('April 30 – May 2')).toBeInTheDocument()
 
-    const link = screen.getByRole('link', { name: /view your schedule/i })
+    const link = screen.getByRole('link', { name: /view schedule/i })
     expect(link).toHaveAttribute('href', '/conferences/conf-123')
   })
 

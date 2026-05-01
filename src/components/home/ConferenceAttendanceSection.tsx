@@ -69,7 +69,7 @@ export async function ConferenceAttendanceSection({
         href={`/conferences/${attendance.conferenceId}`}
         className="mt-4 inline-flex items-center gap-1 rounded-sm text-sm font-medium text-primary transition-[gap] duration-200 hover:gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       >
-        View your schedule
+        View schedule
         <ChevronRight className="size-3.5" />
       </Link>
     </section>

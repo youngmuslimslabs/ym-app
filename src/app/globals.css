@@ -88,6 +88,18 @@
   }
 }
 
+@keyframes ym-status-pulse {
+  0%   { box-shadow: 0 0 0 0 oklch(var(--success) / 0.45); }
+  70%  { box-shadow: 0 0 0 8px oklch(var(--success) / 0); }
+  100% { box-shadow: 0 0 0 0 oklch(var(--success) / 0); }
+}
+
+@layer utilities {
+  .animate-status-pulse {
+    animation: ym-status-pulse 2.4s ease-out infinite;
+  }
+}
+
 /* PWA Safe Area Insets for iOS notch/Dynamic Island */
 @supports (padding-top: env(safe-area-inset-top)) {
   .pt-safe {

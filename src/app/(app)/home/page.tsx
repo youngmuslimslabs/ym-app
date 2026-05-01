@@ -17,18 +17,18 @@ const QUICK_ACTIONS = [
 
 export default async function HomePage() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session?.user) {
+  if (!user) {
     redirect('/login')
   }
 
   const [userContext, stats] = await Promise.all([
-    fetchUserContext(session.user.id),
+    fetchUserContext(user.id),
     fetchHomeStats(),
   ])
 
-  const displayName = userContext?.name || session.user.email?.split('@')[0] || 'Member'
+  const displayName = userContext?.name || user.email?.split('@')[0] || 'Member'
   const displayRoles = userContext?.roles ?? []
   const displayNN = userContext?.neighborNetName || 'No NeighborNet'
   const displaySR = userContext?.subregionName || ''
@@ -38,7 +38,7 @@ export default async function HomePage() {
       <div className="mx-auto flex max-w-[600px] flex-col">
         <Greeting fullName={displayName} />
 
-        <ConferenceAttendanceSection userId={session.user.id} />
+        <ConferenceAttendanceSection userId={user.id} />
 
         <hr className="mt-12 mb-14 border-t border-border" />
 
@@ -70,7 +70,6 @@ export default async function HomePage() {
               {
                 label: 'Active members',
                 value: stats.activeMembers,
-                meta: 'this month',
                 metaAccent: stats.newThisWeek > 0 ? `+${stats.newThisWeek}` : undefined,
               },
               {

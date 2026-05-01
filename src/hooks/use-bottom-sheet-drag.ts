@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, type TouchEvent } from 'react'
+import { useCallback, useEffect, useRef, type TouchEvent } from 'react'
 
 interface Options {
   onDismiss: () => void
@@ -26,6 +26,11 @@ interface Result {
 // Radix's slide-out keyframe picks up smoothly from the finger's last position
 // instead of jumping back to 0 (its `from` falls back to the element's
 // underlying computed transform).
+//
+// We intentionally don't preventDefault on touchmove — React 17+ attaches
+// touch listeners as passive, so it'd no-op anyway. The drag handle uses
+// `touch-none` (Tailwind) which sets `touch-action: none`, blocking iOS
+// pull-to-refresh and scroll while the gesture is in flight.
 export function useBottomSheetDragToDismiss({
   onDismiss,
   threshold = 60,
@@ -36,6 +41,25 @@ export function useBottomSheetDragToDismiss({
 
   const sheetRef = useCallback((node: HTMLDivElement | null) => {
     elementRef.current = node
+    if (node) {
+      // On mount, clear any inline transform/transition that might have
+      // leaked from a previous gesture if Radix reuses the same DOM node
+      // across opens. No-op on a clean first mount; defensive otherwise.
+      node.style.transform = ''
+      node.style.transition = ''
+    }
+  }, [])
+
+  // Cancel any pending snap-back animation if the component unmounts mid-flight
+  // (e.g. user swipes below threshold then closes via Esc / backdrop within the
+  // 200ms window). The timeout's body is already guarded against a null ref, so
+  // this is hygiene rather than a correctness fix.
+  useEffect(() => {
+    return () => {
+      if (snapBackTimeoutRef.current !== null) {
+        window.clearTimeout(snapBackTimeoutRef.current)
+      }
+    }
   }, [])
 
   const onTouchStart = useCallback((e: TouchEvent<HTMLDivElement>) => {

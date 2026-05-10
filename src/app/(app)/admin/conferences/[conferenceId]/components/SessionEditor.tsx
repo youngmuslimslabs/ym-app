@@ -110,10 +110,14 @@ export function SessionEditor({
   const descRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    const el = descRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
+    // rAF defers past Radix's mount animation so scrollHeight is accurate on open
+    const raf = requestAnimationFrame(() => {
+      const el = descRef.current
+      if (!el) return
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight}px`
+    })
+    return () => cancelAnimationFrame(raf)
   }, [form.description, open])
 
   // Reset whenever the dialog opens with a different target. Prevents a stale

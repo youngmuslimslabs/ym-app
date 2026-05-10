@@ -6,10 +6,7 @@ import { useState } from 'react'
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
-  Info,
   MapPin,
-  Star,
-  Users,
 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
@@ -20,6 +17,12 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { ConferenceStatusBadge } from '../components/ConferenceStatusBadge'
 import { TypeToConfirmDialog } from '../components/TypeToConfirmDialog'
 import { deleteConference, publishConference } from '../client-actions'
@@ -49,10 +52,10 @@ export function ConferenceEditor({ initialView }: Props) {
     try {
       const result = await publishConference(conference.id)
       if (!result.success) {
-        toast.error(result.error ?? 'Could not publish')
+        toast.error(result.error ?? 'Could not go live')
         return
       }
-      toast.success('Conference published')
+      toast.success('Conference is now live')
       setPublishOpen(false)
       router.refresh()
     } finally {
@@ -120,71 +123,46 @@ export function ConferenceEditor({ initialView }: Props) {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {isDraft && (
-              <Button
-                onClick={() => setPublishOpen(true)}
-                disabled={publishPending}
-              >
-                {publishPending ? 'Publishing…' : 'Publish'}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => setPublishOpen(true)}
+                      disabled={publishPending}
+                    >
+                      {publishPending ? 'Going live…' : 'Go Live'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[220px] text-center">
+                    Opens this conference to all invited attendees. This cannot be undone.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         </div>
       </header>
 
       <Tabs defaultValue="schedule" className="px-6 md:px-8 pt-6">
-        {/* Once published, the conference goes live and Schedule becomes the
-            dominant surface (admins are running the event, not editing it).
-            Tabs collapse to icon-only buttons to stay out of the way; admins
-            still navigate the same four sections. */}
         <TabsList>
-          <TabsTrigger
-            value="info"
-            aria-label="Info"
-            className={isDraft ? '' : 'px-2.5'}
-          >
-            {isDraft ? 'Info' : <Info className="w-4 h-4" />}
+          <TabsTrigger value="info">
+            Info
           </TabsTrigger>
-          <TabsTrigger
-            value="schedule"
-            aria-label="Schedule"
-            className={isDraft ? '' : 'px-2.5'}
-          >
-            {isDraft ? 'Schedule' : <CalendarIcon className="w-4 h-4" />}
+          <TabsTrigger value="schedule">
+            Schedule
           </TabsTrigger>
-          <TabsTrigger
-            value="attendees"
-            aria-label="Attendees"
-            className={isDraft ? '' : 'px-2.5'}
-          >
-            {isDraft ? (
-              <>
-                Attendees
-                <span className="ml-1.5 text-muted-foreground tabular-nums">
-                  {invitedCount}
-                </span>
-              </>
-            ) : (
-              <Users className="w-4 h-4" />
-            )}
+          <TabsTrigger value="attendees">
+            Attendees
+            <span className="ml-1.5 text-muted-foreground tabular-nums">
+              {invitedCount}
+            </span>
           </TabsTrigger>
-          {/* Feedback tab is intentionally available even when empty so admins
-              can find it; it shows an empty state until the first response. */}
-          <TabsTrigger
-            value="feedback"
-            aria-label="Feedback"
-            className={isDraft ? '' : 'px-2.5'}
-          >
-            {isDraft ? (
-              <>
-                Feedback
-                {feedbackCount > 0 && (
-                  <span className="ml-1.5 text-muted-foreground tabular-nums">
-                    {feedbackCount}
-                  </span>
-                )}
-              </>
-            ) : (
-              <Star className="w-4 h-4" />
+          <TabsTrigger value="feedback">
+            Feedback
+            {feedbackCount > 0 && (
+              <span className="ml-1.5 text-muted-foreground tabular-nums">
+                {feedbackCount}
+              </span>
             )}
           </TabsTrigger>
         </TabsList>
@@ -244,21 +222,21 @@ export function ConferenceEditor({ initialView }: Props) {
       <TypeToConfirmDialog
         open={publishOpen}
         onOpenChange={setPublishOpen}
-        title="Publish this conference?"
+        title="Go live with this conference?"
         description={
           <>
-            Once published,{' '}
+            Once live,{' '}
             <span className="text-foreground font-medium">
               {conference.name}
             </span>{' '}
             becomes visible to all {invitedCount} invited attendee
-            {invitedCount === 1 ? '' : 's'}. Publishing is one-way — you
+            {invitedCount === 1 ? '' : 's'}. Going live is one-way — you
             cannot revert to draft.
           </>
         }
         confirmText={conference.name}
-        confirmLabel="Publish conference"
-        pendingLabel="Publishing…"
+        confirmLabel="Go live"
+        pendingLabel="Going live…"
         tone="primary"
         pending={publishPending}
         onConfirm={handlePublish}

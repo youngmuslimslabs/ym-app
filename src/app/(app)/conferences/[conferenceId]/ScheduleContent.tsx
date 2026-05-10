@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { ConferenceOnboardingBanner } from './components/ConferenceOnboardingBanner'
 import { DaySchedule } from './components/DaySchedule'
 import { SessionSheet } from './components/SessionSheet'
 import {
@@ -204,6 +205,8 @@ export function ScheduleContent({ initialView }: Props) {
           )}
         </div>
       </header>
+
+      <ConferenceOnboardingBanner conferenceId={conference.id} />
 
       <DaySchedule
         sessions={view.sessions}

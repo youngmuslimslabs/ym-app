@@ -93,6 +93,7 @@ export function ScheduleEditor({ view }: Props) {
           conference={conference}
           session={editingSession}
           defaultDate={editorDefaultDate}
+          sessions={sessions}
         />
       </div>
     )
@@ -153,6 +154,7 @@ export function ScheduleEditor({ view }: Props) {
         conference={conference}
         session={editingSession}
         defaultDate={editorDefaultDate}
+        sessions={sessions}
       />
 
       <RosterSheet

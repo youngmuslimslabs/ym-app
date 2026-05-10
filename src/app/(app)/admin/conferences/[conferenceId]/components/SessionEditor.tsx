@@ -114,7 +114,7 @@ export function SessionEditor({
     if (!el) return
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight}px`
-  }, [form.description])
+  }, [form.description, open])
 
   // Reset whenever the dialog opens with a different target. Prevents a stale
   // form from previous open carrying into the next add/edit click.

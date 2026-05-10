@@ -139,9 +139,7 @@ export function SessionSheet({
             {session.room && <span className="text-muted-foreground/40">·</span>}
             <span className={cn(
               'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
-              inProgress ? 'bg-primary/10 text-primary' :
-              ended ? 'bg-muted text-muted-foreground' :
-              'bg-muted text-muted-foreground'
+              inProgress ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
             )}>
               {inProgress && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
               {ended ? 'Ended' : inProgress ? 'In progress' : 'Upcoming'}

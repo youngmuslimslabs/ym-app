@@ -110,7 +110,7 @@ export function ConferenceCreateDialog() {
             after.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
           <div>
             <Label htmlFor="conf-name">Name</Label>
             <Input

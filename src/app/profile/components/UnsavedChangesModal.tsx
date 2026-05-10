@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -42,7 +43,7 @@ export function UnsavedChangesModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex gap-3 mt-2">
+        <DialogFooter className="flex-row gap-3">
           <Button
             variant="outline"
             onClick={onDiscardAndLeave}
@@ -56,7 +57,7 @@ export function UnsavedChangesModal({
           >
             Save
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

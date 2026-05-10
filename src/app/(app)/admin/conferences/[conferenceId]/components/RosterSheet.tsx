@@ -120,20 +120,9 @@ export function RosterSheet({ session, timezone, onClose, onEdit }: Props) {
           </div>
         )}
 
-        <SheetHeader className="p-6 pr-14 border-b text-left space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="text-xs uppercase tracking-widest text-primary font-medium">
-              Roster
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onEdit}
-              aria-label="Edit session"
-              className="h-8 w-8 text-muted-foreground shrink-0"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+        <SheetHeader className="p-6 pr-10 border-b text-left space-y-2">
+          <div className="text-xs uppercase tracking-widest text-primary font-medium">
+            Roster
           </div>
           <SheetTitle className="text-xl font-semibold tracking-tight">
             {session.title}
@@ -245,6 +234,18 @@ export function RosterSheet({ session, timezone, onClose, onEdit }: Props) {
               ))}
             </ul>
           )}
+        </div>
+
+        <div className="border-t px-6 py-3 shrink-0 bg-muted/30">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onEdit}
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <Edit className="w-4 h-4" />
+            {session.is_break ? 'Edit break' : 'Edit session'}
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

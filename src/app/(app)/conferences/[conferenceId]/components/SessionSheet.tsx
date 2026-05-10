@@ -129,31 +129,34 @@ export function SessionSheet({
           {session.speaker && (
             <p className="text-sm text-muted-foreground">{session.speaker}</p>
           )}
-          {showFeedback && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-primary" />
-              You checked in
-            </p>
-          )}
-        </SheetHeader>
-
-        <div className={cn('grid border-b text-xs', session.room ? 'grid-cols-2' : 'grid-cols-1')}>
-          {session.room && (
-            <div className="p-4 border-r">
-              <div className="text-muted-foreground uppercase tracking-wider mb-1">Room</div>
-              <div className="text-sm font-medium flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+          <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
+            {session.room && (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5" />
                 {session.room}
-              </div>
-            </div>
-          )}
-          <div className="p-4">
-            <div className="text-muted-foreground uppercase tracking-wider mb-1">Status</div>
-            <div className="text-sm font-medium">
+              </span>
+            )}
+            {session.room && <span className="text-muted-foreground/40">·</span>}
+            <span className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
+              inProgress ? 'bg-primary/10 text-primary' :
+              ended ? 'bg-muted text-muted-foreground' :
+              'bg-muted text-muted-foreground'
+            )}>
+              {inProgress && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
               {ended ? 'Ended' : inProgress ? 'In progress' : 'Upcoming'}
-            </div>
+            </span>
+            {showFeedback && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span className="inline-flex items-center gap-1 text-primary">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Checked in
+                </span>
+              </>
+            )}
           </div>
-        </div>
+        </SheetHeader>
 
         <div className="p-6 flex-1 overflow-y-auto space-y-6">
           {session.description ? (

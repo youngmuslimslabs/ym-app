@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Coffee, Users } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
@@ -107,6 +107,14 @@ export function SessionEditor({
 
   const [form, setForm] = useState<FormState>(initialForm)
   const [pending, setPending] = useState(false)
+  const descRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const el = descRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [form.description])
 
   // Reset whenever the dialog opens with a different target. Prevents a stale
   // form from previous open carrying into the next add/edit click.
@@ -327,11 +335,12 @@ export function SessionEditor({
               </span>
             </Label>
             <Textarea
+              ref={descRef}
               id="se-description"
-              rows={2}
               value={form.description}
               onChange={(e) => field('description', e.target.value)}
-              className="mt-1 resize-none"
+              className="mt-1 resize-none overflow-hidden"
+              style={{ minHeight: '4rem' }}
             />
           </div>
 

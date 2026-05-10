@@ -80,7 +80,7 @@ export function SessionCard({
           <p className="text-sm text-muted-foreground mb-2">{session.speaker}</p>
         )}
         {session.description && upcoming && (
-          <p className="text-sm text-foreground/80 leading-relaxed max-w-prose mb-3">
+          <p className="text-sm text-foreground/80 leading-relaxed mb-3">
             {session.description}
           </p>
         )}

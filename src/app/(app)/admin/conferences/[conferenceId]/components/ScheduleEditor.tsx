@@ -159,6 +159,12 @@ export function ScheduleEditor({ view }: Props) {
         session={rosterSession}
         timezone={conference.timezone}
         onClose={() => setRosterSession(null)}
+        onEdit={() => {
+          if (rosterSession) {
+            setRosterSession(null)
+            openEdit(rosterSession)
+          }
+        }}
       />
 
       <TypeToConfirmDialog

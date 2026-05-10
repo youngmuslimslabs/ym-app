@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { Check, CheckCircle2, Coffee, MapPin, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Session } from '../types'
@@ -74,50 +75,77 @@ export function SessionCard({
         </span>
       )}
 
+      {/* Title + speaker: pr-24 clears the absolute badge in the top-right */}
       <div className="pr-24">
         <h3 className="font-semibold text-base tracking-tight mb-1">{session.title}</h3>
         {session.speaker && (
-          <p className="text-sm text-muted-foreground mb-2">{session.speaker}</p>
+          <p className="text-sm text-muted-foreground">{session.speaker}</p>
         )}
-        {session.description && upcoming && (
-          <p className="text-sm text-foreground/80 leading-relaxed mb-3">
-            {session.description}
-          </p>
+      </div>
+
+      {/* Description: full card width, clamped to 3 lines with gradient fade */}
+      {session.description && upcoming && (
+        <ClampedDescription description={session.description} />
+      )}
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-muted-foreground">
+        {session.room && (
+          <span className="inline-flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5" />
+            {session.room}
+          </span>
         )}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-muted-foreground">
-          {session.room && (
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5" />
-              {session.room}
+        {checkedIn && (
+          <span className="inline-flex items-center gap-1.5 text-primary font-medium">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Checked in
+          </span>
+        )}
+        {ended && signedUp && !checkedIn && (
+          <span className="text-muted-foreground">You didn&apos;t check in</span>
+        )}
+        {ended && checkedIn && !feedback && (
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2 py-0.5 font-medium text-foreground">
+            <Star className="w-3 h-3" />
+            Leave feedback
+          </span>
+        )}
+        {feedback && (
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
+            You rated
+            <span className="text-primary font-medium tabular-nums">
+              {feedback.rating}/5
             </span>
-          )}
-          {checkedIn && (
-            <span className="inline-flex items-center gap-1.5 text-primary font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Checked in
-            </span>
-          )}
-          {ended && signedUp && !checkedIn && (
-            <span className="text-muted-foreground">You didn&apos;t check in</span>
-          )}
-          {ended && checkedIn && !feedback && (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2 py-0.5 font-medium text-foreground">
-              <Star className="w-3 h-3" />
-              Leave feedback
-            </span>
-          )}
-          {feedback && (
-            <span className="inline-flex items-center gap-1 text-muted-foreground">
-              You rated
-              <span className="text-primary font-medium tabular-nums">
-                {feedback.rating}/5
-              </span>
-              <Star className="w-3 h-3 text-primary" fill="currentColor" />
-            </span>
-          )}
-        </div>
+            <Star className="w-3 h-3 text-primary" fill="currentColor" />
+          </span>
+        )}
       </div>
     </button>
+  )
+}
+
+// Extracted so the ref/state don't bloat SessionCard's render path for
+// sessions without descriptions (breaks, ended sessions).
+function ClampedDescription({ description }: { description: string }) {
+  const ref = useRef<HTMLParagraphElement>(null)
+  const [clamped, setClamped] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    setClamped(el.scrollHeight > el.clientHeight)
+  }, [description])
+
+  return (
+    <div className="relative mt-2 mb-1">
+      <p ref={ref} className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
+        {description}
+      </p>
+      {/* from-card matches bg-card; the bg-primary/5 tint on signed-up cards is imperceptible at 5% opacity */}
+      {clamped && (
+        <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+      )}
+    </div>
   )
 }
 

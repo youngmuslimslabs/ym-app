@@ -198,7 +198,7 @@ export function SessionEditor({
         onOpenChange(next)
       }}
     >
-      <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="sm:max-w-[520px] p-0">
         <DialogHeader className="p-6 pb-4 border-b text-left">
           <DialogTitle>{dialogTitle}</DialogTitle>
           {dateOk && (

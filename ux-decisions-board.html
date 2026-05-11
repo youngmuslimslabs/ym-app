@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conferences UX — Decision Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c10;--surface:#131318;--surface2:#1c1c26;
+  --border:#26263a;--border2:#38385a;
+  --text:#e2e2ee;--muted:#80809a;--faint:#383855;
+  --accent:#5b7cf7;--accent-glow:rgba(91,124,247,.12);
+  --green:#22d3a0;--red:#f07070;--amber:#f9c74f;--purple:#a78bfa;
+  --fn-d:'Playfair Display',Georgia,serif;
+  --fn-m:'IBM Plex Mono',monospace;
+  --fn-b:'DM Sans',system-ui,sans-serif;
+  /* app light-mode sim */
+  --ap:#fff;--ap-border:#e4e4e8;--ap-border2:#c4c4cc;
+  --ap-muted:#f4f4f8;--ap-muted-fg:#71718a;--ap-fg:#0f0f14;
+  --ap-primary:#254FA0;--ap-primary-fg:#fff;
+  --ap-primary-m:rgba(37,79,160,.1);--ap-primary-b:rgba(37,79,160,.3);
+  --ap-dest:#dc2626;--ap-dest-m:rgba(220,38,38,.1);
+  --ap-success:#16a34a;--ap-r:8px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--fn-b);font-size:14px;line-height:1.65}
+.page{max-width:1160px;margin:0 auto;padding:0 24px 100px}
+
+/* hero */
+.hero{padding:60px 0 44px;border-bottom:1px solid var(--border);margin-bottom:44px}
+.hero-tag{font-family:var(--fn-m);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.hero h1{font-family:var(--fn-d);font-size:clamp(34px,5vw,52px);font-weight:700;line-height:1.15;margin-bottom:14px}
+.hero-desc{font-size:14px;color:var(--muted);max-width:520px;line-height:1.75}
+.hero-meta{display:flex;gap:24px;margin-top:22px;flex-wrap:wrap}
+.stat{font-family:var(--fn-m);font-size:12px;color:var(--muted);display:flex;align-items:baseline;gap:6px}
+.stat-n{font-size:22px;font-weight:600;color:var(--text)}
+
+/* progress */
+.prog-wrap{margin-bottom:40px}
+.prog-top{display:flex;justify-content:space-between;margin-bottom:7px}
+.prog-label{font-family:var(--fn-m);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.prog-count{font-family:var(--fn-m);font-size:11px;color:var(--accent)}
+.prog-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .35s ease;width:0%}
+
+/* cards */
+.decisions{display:flex;flex-direction:column;gap:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color .2s}
+.card.resolved{border-color:var(--accent)}
+.card-head{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:14px}
+.card-num{font-family:var(--fn-m);font-size:11px;color:var(--faint);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;flex-shrink:0;margin-top:2px}
+.card-meta{flex:1;min-width:0}
+.card-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:6px}
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-family:var(--fn-m);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;font-weight:500}
+.th{background:rgba(167,139,250,.14);color:var(--purple)}
+.ts-hi{background:rgba(240,112,112,.14);color:var(--red)}
+.ts-me{background:rgba(249,199,79,.14);color:var(--amber)}
+.ts-lo{background:rgba(128,128,154,.14);color:var(--muted)}
+.resolved-check{font-family:var(--fn-m);font-size:11px;color:var(--green);flex-shrink:0;display:none;align-items:center;gap:4px}
+.card.resolved .resolved-check{display:flex}
+.card-body{padding:18px 22px}
+.problem{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px;padding-left:12px;border-left:2px solid var(--border2)}
+
+/* options */
+.opts{display:grid;gap:10px}
+.o2{grid-template-columns:1fr 1fr}
+.o3{grid-template-columns:1fr 1fr 1fr}
+.o4{grid-template-columns:1fr 1fr 1fr 1fr}
+@media(max-width:880px){.o3,.o4{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.o2,.o3,.o4{grid-template-columns:1fr}}
+
+.opt{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .18s,background .18s;position:relative}
+.opt:hover{border-color:var(--border2)}
+.opt.sel{border-color:var(--accent);background:var(--accent-glow)}
+.radio{position:absolute;top:9px;right:9px;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--border2);background:var(--surface);display:flex;align-items:center;justify-content:center;transition:all .18s;z-index:2}
+.opt.sel .radio{background:var(--accent);border-color:var(--accent)}
+.radio-dot{width:6px;height:6px;border-radius:50%;background:#fff;opacity:0;transition:opacity .18s}
+.opt.sel .radio-dot{opacity:1}
+.mock{background:#f7f7fb;padding:14px;border-bottom:1px solid var(--border);min-height:110px;display:flex;align-items:center;justify-content:center}
+.lbl{padding:11px 13px}
+.lbl-t{font-size:12px;font-weight:500;color:var(--text);margin-bottom:3px}
+.lbl-d{font-size:11px;color:var(--muted);line-height:1.55}
+
+/* ── app component primitives ── */
+.am{font-family:var(--fn-b);font-size:13px;color:var(--ap-fg);width:100%}
+.ai{width:100%;border:1px solid var(--ap-border2);border-radius:6px;padding:6px 9px;font-size:12px;font-family:var(--fn-b);color:var(--ap-fg);background:var(--ap);outline:none}
+.ai.err{border-color:var(--ap-dest)}
+.albl{font-size:10px;font-weight:500;color:var(--ap-muted-fg);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+.aerr{font-size:11px;color:var(--ap-dest);margin-top:3px}
+.afield{margin-bottom:9px}
+.abtn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:6px;font-size:12px;font-weight:500;font-family:var(--fn-b);border:none;white-space:nowrap;cursor:default}
+.abtn-p{background:var(--ap-primary);color:var(--ap-primary-fg)}
+.abtn-p.dis{opacity:.38}
+.abtn-o{background:transparent;color:var(--ap-fg);border:1px solid var(--ap-border2)}
+.abtn-g{background:transparent;color:var(--ap-muted-fg)}
+.abtn-d{background:var(--ap-dest);color:#fff}
+.dlg{background:#fff;border-radius:11px;border:1px solid var(--ap-border);box-shadow:0 6px 24px rgba(0,0,0,.1);overflow:hidden;width:100%}
+.dlg-h{padding:14px 18px;border-bottom:1px solid var(--ap-border)}
+.dlg-ht{font-size:13px;font-weight:600;color:var(--ap-fg)}
+.dlg-b{padding:14px 18px}
+.dlg-f{padding:10px 18px;border-top:1px solid var(--ap-border);background:var(--ap-muted);display:flex;justify-content:flex-end;gap:6px}
+.tabs{display:inline-flex;background:var(--ap-muted);border-radius:7px;padding:3px;gap:2px}
+.tab{padding:5px 11px;border-radius:5px;font-size:11px;font-weight:500;color:var(--ap-muted-fg);display:flex;align-items:center;gap:5px}
+.tab.act{background:#fff;color:var(--ap-fg);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:500}
+.badge-p{background:var(--ap-primary-m);color:var(--ap-primary)}
+.badge-mu{background:var(--ap-muted);color:var(--ap-muted-fg)}
+.badge-g{background:rgba(22,163,74,.1);color:var(--ap-success)}
+.badge-live{background:rgba(22,163,74,.1);color:var(--ap-success);font-family:var(--fn-m);font-size:9px;letter-spacing:.08em;border:1px solid rgba(22,163,74,.3)}
+.hdg{padding:14px 18px;border-bottom:1px solid var(--ap-border);background:#fff}
+.hdg-eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--ap-muted-fg);margin-bottom:3px}
+.hdg-name{font-size:16px;font-weight:600;color:var(--ap-fg);margin-bottom:2px}
+.hdg-sub{font-size:11px;color:var(--ap-muted-fg)}
+.hdg-actions{display:flex;align-items:center;gap:7px;margin-top:8px}
+.banner{background:var(--ap-primary-m);border:1px solid var(--ap-primary-b);border-radius:7px;padding:10px 12px;display:flex;align-items:flex-start;gap:9px}
+.banner-icon{width:17px;height:17px;background:var(--ap-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:9px;font-weight:700;margin-top:1px}
+.banner-txt{font-size:11px;color:var(--ap-primary);flex:1}
+.banner-x{font-size:10px;color:var(--ap-muted-fg);flex-shrink:0}
+.steps{display:flex;align-items:center;gap:3px;margin-top:6px;flex-wrap:wrap}
+.step{font-size:10px;font-weight:500;color:var(--ap-primary);display:flex;align-items:center;gap:3px}
+.step-n{width:15px;height:15px;background:var(--ap-primary);border-radius:50%;color:#fff;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.step-arr{color:var(--ap-muted-fg);font-size:9px;margin:0 2px}
+.pin-grid{display:flex;gap:7px}
+.pin{width:38px;height:42px;border:1.5px solid var(--ap-border2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;font-family:var(--fn-m);color:var(--ap-fg);background:#fff}
+.pin.f{border-color:var(--ap-primary);color:var(--ap-primary)}
+.pin.act{border-color:var(--ap-primary);box-shadow:0 0 0 2px var(--ap-primary-m)}
+.pin.err{border-color:var(--ap-dest);color:var(--ap-dest)}
+.warn{background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);border-radius:6px;padding:7px 9px;font-size:11px;color:#7c5a00;display:flex;align-items:flex-start;gap:5px}
+.scard{border:1px solid var(--ap-border);border-radius:10px;padding:12px 14px;background:#fff;position:relative}
+.scard.su{border:2px solid var(--ap-primary);background:var(--ap-primary-m)}
+.toast-e{background:#fff;border:1px solid var(--ap-border);border-left:3px solid var(--ap-dest);border-radius:7px;padding:9px 12px;font-size:11px;display:flex;align-items:center;gap:7px;color:var(--ap-fg)}
+.ttip-wrap{position:relative;display:inline-flex}
+.ttip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0f0f14;color:#fff;font-size:10px;padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none}
+.ttip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:3px solid transparent;border-top-color:#0f0f14}
+.skip-mock{text-align:center;color:var(--ap-muted-fg);font-size:12px;padding:16px}
+
+/* notes */
+.notes-wrap{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.notes-label{font-family:var(--fn-m);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.notes-label::before{content:'✎';font-style:normal;color:var(--border2)}
+.notes-ta{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--fn-b);font-size:13px;line-height:1.6;padding:10px 12px;resize:none;outline:none;min-height:52px;transition:border-color .18s}
+.notes-ta::placeholder{color:var(--faint)}
+.notes-ta:focus{border-color:var(--border2)}
+.card.resolved .notes-ta:focus{border-color:var(--accent)}
+
+/* copy footer */
+.copy-footer{position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 78%,transparent);padding:20px 0 14px;margin-top:36px}
+.copy-btn{display:flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:13px 22px;font-size:14px;font-weight:500;font-family:var(--fn-b);cursor:pointer;transition:all .2s;width:100%;max-width:300px;margin:0 auto;justify-content:center}
+.copy-btn:hover{background:#4468e8}
+.copy-btn.copied{background:var(--green)}
+.copy-status{text-align:center;font-family:var(--fn-m);font-size:11px;color:var(--muted);margin-top:7px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">YM App · Conferences · Nielsen Heuristic Evaluation</div>
+  <h1>UX Decision Board</h1>
+  <p class="hero-desc">10 issues across admin and attendee surfaces. Each card shows the problem and your options as real UI previews. Select one per card, then copy your choices to action.</p>
+  <div class="hero-meta">
+    <div class="stat"><span class="stat-n" id="sel-count">0</span> of 10 selected</div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="prog-wrap">
+  <div class="prog-top">
+    <span class="prog-label">Progress</span>
+    <span class="prog-count" id="prog-text">0 / 10</span>
+  </div>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+</div>
+
+<!-- DECISIONS -->
+<div class="decisions">
+
+<!-- D1 -->
+<div class="card" id="card-1">
+  <div class="card-head">
+    <span class="card-num">D1</span>
+    <div class="card-meta">
+      <div class="card-title">Session form: why is the submit button disabled?</div>
+      <div class="tags">
+        <span class="tag th">H5 Error Prevention</span>
+        <span class="tag th">H9 Recovery</span>
+        <span class="tag ts-hi">High · Admin</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">When a required field is empty in SessionEditor, "Add session" silently grays out. There's no indication of which field is the problem — a first-time admin is left guessing.</p>
+    <div class="opts o3" data-d="1">
+
+      <div class="opt" data-v="A: Inline field-level errors — red border + message beneath each invalid field on blur. Submit stays enabled so users can attempt submit and see all errors at once.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div class="dlg">
+              <div class="dlg-h"><div class="dlg-ht">New session</div></div>
+              <div class="dlg-b" style="padding:10px 14px">
+                <div class="afield">
+                  <label class="albl">Title</label>
+                  <input class="ai err" value="" placeholder="Session title" readonly>
+                  <div class="aerr">⚠ Title is required</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                  <div><label class="albl">Start</label><input class="ai" value="09:00" readonly style="font-family:monospace"></div>
+                  <div>
+                    <label class="albl">End</label>
+                    <input class="ai err" value="09:00" readonly style="font-family:monospace">
+                    <div class="aerr">⚠ End must be after start</div>
+                  </div>
+                </div>
+              </div>
+              <div class="dlg-f"><div class="abtn abtn-g">Cancel</div><div class="abtn abtn-p">Add session</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · Inline field errors</div>
+          <div class="lbl-d">Red border + message beneath each invalid field. Submit stays enabled so all errors surface at once on first attempt.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: Toast on submit attempt — button stays enabled, clicking it while invalid shows a Sonner toast listing which fields need attention.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am" style="display:flex;flex-direction:column;gap:8px">
+            <div class="dlg">
+              <div class="dlg-h"><div class="dlg-ht">New session</div></div>
+              <div class="dlg-b" style="padding:10px 14px">
+                <div class="afield" style="margin:0"><label class="albl">Title</label><input class="ai" value="" placeholder="Session title" readonly></div>
+              </div>
+              <div class="dlg-f"><div class="abtn abtn-g">Cancel</div><div class="abtn abtn-p">Add session</div></div>
+            </div>
+            <div class="toast-e">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Fill in Title before saving
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">B · Toast on submit</div>
+          <div class="lbl-d">Button enabled always. Clicking with invalid data shows a Sonner error toast naming the missing field.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="C: Keep as-is — disabled button, no explanation (current behavior).">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div class="dlg">
+              <div class="dlg-h"><div class="dlg-ht">New session</div></div>
+              <div class="dlg-b" style="padding:10px 14px"><div class="afield" style="margin:0"><label class="albl">Title</label><input class="ai" value="" placeholder="Session title" readonly></div></div>
+              <div class="dlg-f"><div class="abtn abtn-g">Cancel</div><div class="abtn abtn-p dis">Add session</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">C · Keep as-is</div>
+          <div class="lbl-d">Disabled button, no message. Simple but leaves admins guessing which field is blocking.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D2 -->
+<div class="card" id="card-2">
+  <div class="card-head">
+    <span class="card-num">D2</span>
+    <div class="card-meta">
+      <div class="card-title">Check-in code: admin field vs attendee prompt mismatch</div>
+      <div class="tags">
+        <span class="tag th">H2 Real World</span>
+        <span class="tag th">H5 Error Prevention</span>
+        <span class="tag ts-hi">High · Admin + Attendee</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">Admin SessionEditor accepts any free-form string. The attendee CheckInDialog says "Enter your 4-digit code" and shows a 4-box PIN grid. If an admin sets the code to "GATE" or "FAJR1", the attendee UI is factually wrong.</p>
+    <div class="opts o3" data-d="2">
+
+      <div class="opt" data-v="A: Enforce 4-digit numeric on the admin input — add maxLength=4 and numeric validation. Attendee '4-digit code' language stays correct.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am" style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div style="font-size:9px;color:var(--ap-muted-fg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Admin sets</div>
+              <label class="albl">Check-in code</label>
+              <input class="ai" value="4719" readonly style="font-family:monospace;letter-spacing:.22em;font-size:14px;font-weight:600">
+              <div style="font-size:10px;color:var(--ap-muted-fg);margin-top:3px">4 digits · numeric only</div>
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--ap-muted-fg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Attendee sees</div>
+              <div style="font-size:11px;font-weight:500;color:var(--ap-fg);margin-bottom:5px">Enter your 4-digit check-in code</div>
+              <div class="pin-grid"><div class="pin f">4</div><div class="pin f">7</div><div class="pin act"></div><div class="pin"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · Enforce 4-digit on admin</div>
+          <div class="lbl-d">Constrain admin input to exactly 4 digits. Keeps the attendee PIN grid and "4-digit" language accurate.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: Keep free-form admin input, update attendee prompt to 'Enter your check-in code' (drop '4-digit'), replace PIN grid with a text input.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am" style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div style="font-size:9px;color:var(--ap-muted-fg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Admin sets</div>
+              <label class="albl">Check-in code <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+              <input class="ai" value="MASJID" readonly style="font-family:monospace;letter-spacing:.1em">
+              <div style="font-size:10px;color:var(--ap-muted-fg);margin-top:3px">Any format — letters or digits</div>
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--ap-muted-fg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Attendee sees</div>
+              <div style="font-size:11px;font-weight:500;color:var(--ap-fg);margin-bottom:5px">Enter the check-in code from the venue</div>
+              <input class="ai" value="" placeholder="Code" readonly style="font-family:monospace;max-width:160px">
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">B · Free-form admin, update attendee wording</div>
+          <div class="lbl-d">Admin stays flexible. Attendee gets a plain text input and no "4-digit" assumption.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="C: Keep as-is — free-form admin, '4-digit code' attendee prompt (current inconsistency, acceptable only if admins always use numeric codes).">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am" style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div style="font-size:9px;color:var(--ap-muted-fg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Admin (free-form)</div>
+              <input class="ai" value="GATE" readonly style="font-family:monospace;letter-spacing:.12em">
+            </div>
+            <div>
+              <div style="font-size:9px;color:#dc2626;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Attendee (⚠ mismatch)</div>
+              <div style="font-size:11px;font-weight:500;color:var(--ap-fg);margin-bottom:5px">Enter your 4-digit code</div>
+              <div class="pin-grid"><div class="pin"></div><div class="pin"></div><div class="pin"></div><div class="pin"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">C · Keep as-is</div>
+          <div class="lbl-d">Leaves the inconsistency. Only safe if admins are always instructed to use 4-digit numeric codes.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D3 -->
+<div class="card" id="card-3">
+  <div class="card-head">
+    <span class="card-num">D3</span>
+    <div class="card-meta">
+      <div class="card-title">Icon-only tabs on published conferences</div>
+      <div class="tags">
+        <span class="tag th">H1 Visibility</span>
+        <span class="tag th">H6 Recognition</span>
+        <span class="tag th">H4 Consistency</span>
+        <span class="tag ts-hi">High · Admin</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">After publishing, tabs collapse from "Info / Schedule / Attendees / Feedback" to icon-only with no hover tooltips. Returning admins must recall which icon maps to which tab. Non-standard behavior that changes after a one-way action.</p>
+    <div class="opts o3" data-d="3">
+
+      <div class="opt" data-v="A: Add hover tooltips to the icon-only tabs — keep compact layout but reveal the label name on hover using a Radix Tooltip.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="padding:10px;background:var(--ap-muted);border-radius:8px">
+              <div class="tabs">
+                <div class="tab">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <div class="tab act" style="position:relative">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <div class="ttip">Schedule</div>
+                </div>
+                <div class="tab">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                </div>
+                <div class="tab">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+              </div>
+              <div style="font-size:10px;color:var(--ap-muted-fg);margin-top:7px">Hover → label appears</div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · Hover tooltips</div>
+          <div class="lbl-d">Keeps the compact icon layout. Radix Tooltip reveals the label name on hover — discoverable without always cluttering the bar.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: Always show text labels on tabs regardless of draft/published state — remove the icon-collapse behavior entirely.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="padding:10px;background:var(--ap-muted);border-radius:8px">
+              <div class="tabs">
+                <div class="tab" style="font-size:11px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Info
+                </div>
+                <div class="tab act" style="font-size:11px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule
+                </div>
+                <div class="tab" style="font-size:11px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Attendees
+                </div>
+                <div class="tab" style="font-size:11px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Feedback
+                </div>
+              </div>
+              <div style="font-size:10px;color:var(--ap-muted-fg);margin-top:7px">Always-visible labels, all states</div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">B · Always-visible labels</div>
+          <div class="lbl-d">Remove the collapse. More horizontal space but completely consistent — same tab bar in draft and live.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="C: Keep icon-only tabs on published conferences with no tooltips (current behavior).">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="padding:10px;background:var(--ap-muted);border-radius:8px">
+              <div class="tabs">
+                <div class="tab"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+                <div class="tab act"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                <div class="tab"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                <div class="tab"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+              </div>
+              <div style="font-size:10px;color:var(--ap-muted-fg);margin-top:7px">Icon-only, no hover label (current)</div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">C · Keep as-is</div>
+          <div class="lbl-d">Compact. Requires admins to memorize the icon-to-tab mapping after first encounter.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D4 -->
+<div class="card" id="card-4">
+  <div class="card-head">
+    <span class="card-num">D4</span>
+    <div class="card-meta">
+      <div class="card-title">Add to Calendar for attendees</div>
+      <div class="tags">
+        <span class="tag th">H7 Flexibility</span>
+        <span class="tag ts-me">Medium · Attendee</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">No way for attendees to export conference dates or their signed-up sessions to a device calendar. Table-stakes feature for any event product — attendees can't set reminders without it.</p>
+    <div class="opts o4" data-d="4">
+
+      <div class="opt" data-v="A: 'Add to Calendar' button in the attendee schedule header — exports full conference date range as a single .ics block.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div class="hdg">
+              <div class="hdg-eyebrow">Young Muslims Conf</div>
+              <div class="hdg-name">The Future of Community</div>
+              <div class="hdg-sub">June 14–15 · Birmingham</div>
+              <div class="hdg-actions">
+                <div class="abtn abtn-o" style="font-size:11px;padding:5px 9px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Add to Calendar
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · Conference header</div>
+          <div class="lbl-d">One button, exports the full conference block as .ics. Simple and prominent.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: Calendar icon button in SessionSheet footer — exports that individual session as a .ics event. Only appears for sessions the attendee is signed up for.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="background:#fff;border:1px solid var(--ap-border);border-radius:9px;overflow:hidden">
+              <div style="padding:12px 14px;border-bottom:1px solid var(--ap-border)">
+                <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--ap-primary);margin-bottom:3px">Sat · 9:00 – 10:00 AM</div>
+                <div style="font-size:13px;font-weight:600">The Ethics of AI in Islam</div>
+              </div>
+              <div style="padding:9px 14px;background:var(--ap-muted);display:flex;gap:7px;align-items:center">
+                <div class="abtn abtn-p" style="flex:1;justify-content:center;font-size:11px;padding:6px">Sign up</div>
+                <div class="abtn abtn-o" style="font-size:11px;padding:6px 8px">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">B · Per-session in sheet</div>
+          <div class="lbl-d">Calendar icon in SessionSheet footer. Exports individual sessions. More granular but requires opening each session.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="C: Both — conference header button exports full conference, SessionSheet has calendar icon for individual sessions.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am" style="display:flex;flex-direction:column;gap:7px">
+            <div class="abtn abtn-o" style="width:100%;justify-content:center;font-size:11px;padding:6px 10px">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Export full conference
+            </div>
+            <div style="font-size:10px;color:var(--ap-muted-fg);text-align:center">+ calendar icon per session in sheet</div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">C · Both locations</div>
+          <div class="lbl-d">Full conference in header, individual sessions in sheet. Covers all use cases.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="D: Skip — deprioritise Add to Calendar for now.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock"><div class="skip-mock"><div style="font-size:22px;margin-bottom:4px">—</div>Not this sprint</div></div>
+        <div class="lbl">
+          <div class="lbl-t">D · Skip</div>
+          <div class="lbl-d">Defer until higher-priority items are done.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D5 -->
+<div class="card" id="card-5">
+  <div class="card-head">
+    <span class="card-num">D5</span>
+    <div class="card-meta">
+      <div class="card-title">Attendee schedule onboarding hint</div>
+      <div class="tags">
+        <span class="tag th">H10 Documentation</span>
+        <span class="tag th">H6 Recognition</span>
+        <span class="tag ts-hi">High · Attendee</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">First-time attendees have no indication to sign up for sessions pre-event, find a check-in code at the venue, or that feedback only unlocks after check-in. The full flow requires verbal briefing — nothing in the UI teaches it.</p>
+    <div class="opts o3" data-d="5">
+
+      <div class="opt" data-v="A: Dismissible 3-step banner — shown once above the schedule, explains Sign Up → Check In → Feedback. Dismissed state stored in localStorage per conference.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div class="banner">
+              <div class="banner-icon">i</div>
+              <div class="banner-txt">
+                <div style="font-weight:600;margin-bottom:5px">How it works</div>
+                <div class="steps">
+                  <div class="step"><div class="step-n">1</div>Sign up for sessions</div>
+                  <span class="step-arr">→</span>
+                  <div class="step"><div class="step-n">2</div>Check in at the venue</div>
+                  <span class="step-arr">→</span>
+                  <div class="step"><div class="step-n">3</div>Leave feedback</div>
+                </div>
+              </div>
+              <div class="banner-x">✕</div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · Dismissible banner</div>
+          <div class="lbl-d">One-time banner above the schedule with the 3-step flow. Dismissed per conference and stored in localStorage.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: Zero-state callout only — a dashed hint card shown above the sessions only when the attendee has zero signups. Auto-hides once they sign up for their first session.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="background:#fff;border:1.5px dashed var(--ap-border2);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:11px;color:var(--ap-muted-fg);margin-bottom:6px">Tap a session to sign up</div>
+              <div class="steps" style="justify-content:center">
+                <div class="step"><div class="step-n">1</div>Sign up</div>
+                <span class="step-arr">→</span>
+                <div class="step"><div class="step-n">2</div>Check in</div>
+                <span class="step-arr">→</span>
+                <div class="step"><div class="step-n">3</div>Rate</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">B · Zero-state callout only</div>
+          <div class="lbl-d">Hint shown only while user has no signups. Auto-disappears once they've signed up for their first session.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="C: Skip — rely on verbal briefing at the event registration desk, no in-app onboarding.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock"><div class="skip-mock"><div style="font-size:22px;margin-bottom:4px">—</div>Skip — verbal briefing only</div></div>
+        <div class="lbl">
+          <div class="lbl-t">C · Skip</div>
+          <div class="lbl-d">Acceptable if admins always brief attendees in person at the registration desk.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D6 -->
+<div class="card" id="card-6">
+  <div class="card-head">
+    <span class="card-num">D6</span>
+    <div class="card-meta">
+      <div class="card-title">Persistent "live" signal in the admin editor</div>
+      <div class="tags">
+        <span class="tag th">H1 Visibility</span>
+        <span class="tag ts-me">Medium · Admin</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">After publishing, the success toast disappears. An admin returning to the editor later only sees the small status badge and icon-only tabs — easy to confuse with still being in draft. There's no persistent "you're managing a live event" environment signal.</p>
+    <div class="opts o3" data-d="6">
+
+      <div class="opt" data-v="A: Persistent pulsing '● LIVE' badge in the editor header alongside the conference name — always visible on any published conference.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div class="hdg">
+              <div style="font-size:10px;color:var(--ap-muted-fg);margin-bottom:4px">← All conferences</div>
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                <div style="font-size:16px;font-weight:600;color:var(--ap-fg)">YM Summer Conf</div>
+                <div class="badge badge-mu">Live</div>
+                <div class="badge badge-live">
+                  <span style="width:6px;height:6px;border-radius:50%;background:var(--ap-success);display:inline-block;animation:pulse 1.5s infinite"></span>
+                  LIVE
+                </div>
+              </div>
+              <div class="hdg-sub" style="margin-top:3px">June 14–15 · Birmingham</div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · Persistent LIVE badge</div>
+          <div class="lbl-d">Pulsing green "● LIVE" badge in the header. Immediately orients returning admins — they know they're in live-event mode.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: 3px green top-border on the editor header area when the conference is published — a subtle ambient signal without adding chrome.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div class="hdg" style="border-top:3px solid var(--ap-success)">
+              <div style="font-size:10px;color:var(--ap-muted-fg);margin-bottom:4px">← All conferences</div>
+              <div style="display:flex;align-items:center;gap:7px">
+                <div style="font-size:16px;font-weight:600;color:var(--ap-fg)">YM Summer Conf</div>
+                <div class="badge badge-mu">Live</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">B · Green header border</div>
+          <div class="lbl-d">3px green top-border on the header. Subtle environmental signal — no extra badge, just a color cue on the chrome.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="C: Keep as-is — the ConferenceStatusBadge ('Live') in the header is sufficient.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div class="hdg">
+              <div style="font-size:10px;color:var(--ap-muted-fg);margin-bottom:4px">← All conferences</div>
+              <div style="display:flex;align-items:center;gap:7px">
+                <div style="font-size:16px;font-weight:600;color:var(--ap-fg)">YM Summer Conf</div>
+                <div class="badge badge-mu">Live</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">C · Keep as-is</div>
+          <div class="lbl-d">Status badge in the header is the only live indicator. Consistent with the existing design language.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D7 -->
+<div class="card" id="card-7">
+  <div class="card-head">
+    <span class="card-num">D7</span>
+    <div class="card-meta">
+      <div class="card-title">"Publish" button label</div>
+      <div class="tags">
+        <span class="tag th">H2 Real World</span>
+        <span class="tag ts-lo">Low · Admin</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">"Publish" is developer vocabulary (CMS/blog context). Event organizers think in terms of making things live or opening registration — the label doesn't hint at the consequence (attendees can now see and access the schedule).</p>
+    <div class="opts o3" data-d="7">
+
+      <div class="opt" data-v="A: Rename to 'Go Live' — action-oriented, implies real-world consequence, familiar from streaming and event contexts.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am" style="display:flex;justify-content:center;align-items:center;min-height:80px">
+            <div class="abtn abtn-p" style="font-size:13px;padding:9px 18px">
+              <span style="width:7px;height:7px;border-radius:50%;background:#fff;display:inline-block"></span>
+              Go Live
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · "Go Live"</div>
+          <div class="lbl-d">Action-oriented. Conveys real-world stakes. Common in streaming, broadcasting, and event tools.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: Rename to 'Open to Attendees' — explicit about what the action does, self-explanatory for non-technical admins.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am" style="display:flex;justify-content:center;align-items:center;min-height:80px">
+            <div class="abtn abtn-p" style="font-size:12px;padding:9px 14px">Open to Attendees</div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">B · "Open to Attendees"</div>
+          <div class="lbl-d">Long but explicit — names exactly who gains access. No ambiguity for non-technical event organizers.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="C: Keep 'Publish' — standard product vocabulary, familiar from CMS and content tools.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am" style="display:flex;justify-content:center;align-items:center;min-height:80px">
+            <div class="abtn abtn-p" style="font-size:13px;padding:9px 18px">Publish</div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">C · Keep "Publish"</div>
+          <div class="lbl-d">Standard vocabulary. Works if your admins have experience with CMS or content tools.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D8 -->
+<div class="card" id="card-8">
+  <div class="card-head">
+    <span class="card-num">D8</span>
+    <div class="card-meta">
+      <div class="card-title">Room conflict detection in SessionEditor</div>
+      <div class="tags">
+        <span class="tag th">H5 Error Prevention</span>
+        <span class="tag ts-me">Medium · Admin</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">Two sessions can be scheduled in the same room at overlapping times with no warning. An admin building a multi-track schedule can accidentally double-book "Ballroom A" at 10am with zero feedback from the UI.</p>
+    <div class="opts o2" data-d="8">
+
+      <div class="opt" data-v="A: Non-blocking inline warning in SessionEditor — when room + overlapping time matches an existing session, show a yellow advisory. Admin can still save (warning, not a blocker).">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="padding:10px;display:flex;flex-direction:column;gap:7px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                <div><label class="albl">Room</label><input class="ai" value="Ballroom A" readonly></div>
+                <div><label class="albl">Start</label><input class="ai" value="10:00 AM" readonly style="font-family:monospace"></div>
+              </div>
+              <div class="warn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span><strong>Ballroom A</strong> is used by "Fiqh of Finance" at 10:00–11:30 AM. You can still save.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · Inline conflict warning</div>
+          <div class="lbl-d">Yellow advisory inside the form. Non-blocking — admin can proceed anyway, but the conflict is visible before saving.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: Skip room conflict detection — too complex for the current scope, low frequency for small conferences.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock"><div class="skip-mock"><div style="font-size:22px;margin-bottom:4px">—</div>Skip — low frequency issue</div></div>
+        <div class="lbl">
+          <div class="lbl-t">B · Skip</div>
+          <div class="lbl-d">Acceptable for small conferences where admins can manually track room usage. Lower priority than D1–D5.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D9 -->
+<div class="card" id="card-9">
+  <div class="card-head">
+    <span class="card-num">D9</span>
+    <div class="card-meta">
+      <div class="card-title">Feedback edit window visibility</div>
+      <div class="tags">
+        <span class="tag th">H10 Documentation</span>
+        <span class="tag th">H1 Visibility</span>
+        <span class="tag ts-lo">Low · Attendee</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">The 24-hour feedback edit window is enforced silently in UI code but never surfaced to attendees. Users who submit feedback don't know they can revise it, or when that opportunity closes.</p>
+    <div class="opts o2" data-d="9">
+
+      <div class="opt" data-v="A: Show 'Editable until [time]' notice in FeedbackForm after first submission — disappears silently once the 24h window closes and the form becomes read-only.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="padding:10px;display:flex;flex-direction:column;gap:8px;align-items:center">
+              <div style="display:flex;gap:3px">
+                <span style="font-size:19px;color:var(--ap-primary)">★</span>
+                <span style="font-size:19px;color:var(--ap-primary)">★</span>
+                <span style="font-size:19px;color:var(--ap-primary)">★</span>
+                <span style="font-size:19px;color:var(--ap-primary)">★</span>
+                <span style="font-size:19px;color:var(--ap-border2)">★</span>
+              </div>
+              <div style="font-size:10px;color:var(--ap-muted-fg);background:var(--ap-muted);border-radius:5px;padding:4px 9px;width:100%;text-align:center">
+                ✎ Editable until Sunday 11:59 PM
+              </div>
+              <div class="abtn abtn-o" style="width:100%;justify-content:center;font-size:11px">Update feedback</div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · Show edit window notice</div>
+          <div class="lbl-d">After submitting, show when the revision window closes. Form silently becomes read-only after 24h.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: Skip — don't surface the edit window, keep the current silent 24h behavior.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock"><div class="skip-mock"><div style="font-size:22px;margin-bottom:4px">—</div>Skip — most users submit once</div></div>
+        <div class="lbl">
+          <div class="lbl-t">B · Skip</div>
+          <div class="lbl-d">Most attendees submit once and don't expect to edit. Low user-facing impact, defer for now.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- D10 -->
+<div class="card" id="card-10">
+  <div class="card-head">
+    <span class="card-num">D10</span>
+    <div class="card-meta">
+      <div class="card-title">Break types and prayer time nuance</div>
+      <div class="tags">
+        <span class="tag th">H2 Real World</span>
+        <span class="tag ts-lo">Low · Admin + Attendee</span>
+      </div>
+    </div>
+    <div class="resolved-check">✓ resolved</div>
+  </div>
+  <div class="card-body">
+    <p class="problem">The single "Break" type collapses prayer times, Jumu'ah, lunch, coffee, and networking into one bucket. In a Muslim conference context these have very different social meanings — prayer times especially should stand out visually on the schedule.</p>
+    <div class="opts o3" data-d="10">
+
+      <div class="opt" data-v="A: Add break sub-types — a dropdown in SessionEditor with options: General, Prayer Time, Jumu'ah / Salah, Lunch, Coffee, Networking. Each gets a distinct icon on the attendee schedule card.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="padding:10px;display:flex;flex-direction:column;gap:8px">
+              <div><label class="albl">Break type</label>
+                <select class="ai" style="font-size:11px" disabled>
+                  <option>🕌 Prayer Time</option>
+                  <option>🍽 Lunch</option>
+                  <option>☕ Coffee</option>
+                  <option>Jumu'ah / Salah</option>
+                  <option>Networking</option>
+                  <option>General</option>
+                </select>
+              </div>
+              <div style="border:1px dashed var(--ap-border2);border-radius:9px;padding:8px 10px;display:flex;align-items:center;gap:8px;background:var(--ap-muted)">
+                <span style="font-size:16px">🕌</span>
+                <div><div style="font-size:11px;font-weight:600">Prayer Time</div><div style="font-size:10px;color:var(--ap-muted-fg)">1:00 – 1:30 PM</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">A · Break sub-types with icons</div>
+          <div class="lbl-d">Type dropdown in admin; each sub-type renders with a distinct icon on the attendee schedule. Prayer times and Jumu'ah visually stand out.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="B: Add an optional 'Notes' field to the break form — free-text that appears on the attendee schedule card below the title. Simpler than sub-types.">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="padding:10px;display:flex;flex-direction:column;gap:8px">
+              <div><label class="albl">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <input class="ai" value="Brothers → Ballroom A for Jumu'ah" readonly style="font-size:11px">
+              </div>
+              <div style="border:1px dashed var(--ap-border2);border-radius:9px;padding:8px 10px;background:var(--ap-muted)">
+                <div style="font-size:11px;font-weight:600;margin-bottom:2px">Prayer Time</div>
+                <div style="font-size:10px;color:var(--ap-muted-fg)">Brothers → Ballroom A for Jumu'ah</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">B · Add Notes field to break</div>
+          <div class="lbl-d">Free-text notes on the break form. Simpler schema change. Any contextual nuance can be communicated through the text.</div>
+        </div>
+      </div>
+
+      <div class="opt" data-v="C: Keep as-is — single 'Break' type, admins use the title to convey context (e.g. 'Jumu'ah Prayer', 'Lunch Break').">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="mock">
+          <div class="am">
+            <div style="padding:10px">
+              <div style="border:1px dashed var(--ap-border2);border-radius:9px;padding:8px 10px;display:flex;align-items:center;gap:8px;background:var(--ap-muted)">
+                <div style="background:var(--ap-border);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px">☕</div>
+                <div><div style="font-size:11px;font-weight:600">Jumu'ah Prayer</div><div style="font-size:10px;color:var(--ap-muted-fg)">1:00 – 1:30 PM</div></div>
+              </div>
+              <div style="font-size:10px;color:var(--ap-muted-fg);margin-top:6px">Context in title — same ☕ icon for all breaks</div>
+            </div>
+          </div>
+        </div>
+        <div class="lbl">
+          <div class="lbl-t">C · Keep as-is</div>
+          <div class="lbl-d">Admins use the title to convey break type. No schema change. Works but prayer times don't visually differentiate from coffee breaks.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- /decisions -->
+
+<!-- COPY FOOTER -->
+<div class="copy-footer">
+  <button class="copy-btn" id="copy-btn" onclick="copyDecisions()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    <span id="btn-txt">Copy my decisions</span>
+  </button>
+  <div class="copy-status" id="copy-status">Select all 10 decisions to generate your action prompt</div>
+</div>
+
+</div><!-- /page -->
+
+<script>
+const picks = {};
+const notes = {};
+const TOTAL = 10;
+const titles = {
+  1:'Session form validation messages',
+  2:'Check-in code consistency',
+  3:'Icon-only tabs on published conferences',
+  4:'Add to Calendar',
+  5:'Attendee onboarding hint',
+  6:'Persistent LIVE indicator',
+  7:'Publish button label',
+  8:'Room conflict detection',
+  9:'Feedback edit window visibility',
+  10:'Break types'
+};
+
+// Inject a notes field beneath every decision's options group
+document.querySelectorAll('.opts').forEach(g => {
+  const d = g.dataset.d;
+  const wrap = document.createElement('div');
+  wrap.className = 'notes-wrap';
+  wrap.innerHTML =
+    '<div class="notes-label">Notes for D' + d + '</div>' +
+    '<textarea class="notes-ta" data-d="' + d + '" placeholder="Any context, constraints, or specifics you want me to know before implementing this decision…" rows="2"></textarea>';
+  g.parentNode.insertBefore(wrap, g.nextSibling);
+  wrap.querySelector('textarea').addEventListener('input', function() {
+    notes[d] = this.value.trim();
+  });
+});
+
+document.querySelectorAll('.opts').forEach(g => {
+  const d = g.dataset.d;
+  g.querySelectorAll('.opt').forEach(o => {
+    o.addEventListener('click', () => {
+      g.querySelectorAll('.opt').forEach(x => x.classList.remove('sel'));
+      o.classList.add('sel');
+      picks[d] = o.dataset.v;
+      document.getElementById('card-' + d).classList.add('resolved');
+      sync();
+    });
+  });
+});
+
+function sync() {
+  const n = Object.keys(picks).length;
+  document.getElementById('sel-count').textContent = n;
+  document.getElementById('prog-text').textContent = n + ' / ' + TOTAL;
+  document.getElementById('prog-fill').style.width = (n / TOTAL * 100) + '%';
+  document.getElementById('copy-status').textContent =
+    n === TOTAL ? '✓ All done — ready to copy' : (TOTAL - n) + ' decision' + (TOTAL - n === 1 ? '' : 's') + ' remaining';
+}
+
+function copyDecisions() {
+  const n = Object.keys(picks).length;
+  if (n === 0) { document.getElementById('copy-status').textContent = 'Make at least one selection first'; return; }
+  let out = 'Here are my UX decisions for the conferences feature. Please implement these changes:\n\n';
+  for (let i = 1; i <= TOTAL; i++) {
+    out += 'D' + i + '. ' + titles[i] + ':\n' + (picks[i] || '[no selection]');
+    if (notes[i]) out += '\nNotes: ' + notes[i];
+    out += '\n\n';
+  }
+  out += '---\nWork through D1 first, confirm the approach, then proceed. Implement each in sequence.';
+  navigator.clipboard.writeText(out).then(() => {
+    const btn = document.getElementById('copy-btn');
+    document.getElementById('btn-txt').textContent = 'Copied!';
+    btn.classList.add('copied');
+    document.getElementById('copy-status').textContent = '✓ Paste into Claude Code chat';
+    setTimeout(() => { btn.classList.remove('copied'); document.getElementById('btn-txt').textContent = 'Copy my decisions'; }, 3000);
+  });
+}
+
+sync();
+</script>
+</body>
+</html>

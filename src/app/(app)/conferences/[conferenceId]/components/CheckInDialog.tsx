@@ -1,27 +1,19 @@
 'use client'
 
-import {
-  type ChangeEvent,
-  type ClipboardEvent,
-  type KeyboardEvent,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { useState } from 'react'
 import { AlertTriangle, CheckCircle2, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface Props {
   alreadyCheckedIn: boolean
   pending: boolean
   // Parent-supplied error from the last RPC attempt. When non-null, the form
-  // renders destructive chrome and the digits remain so the user can edit.
+  // renders destructive chrome and the input remains so the user can edit.
   error: string | null
   onSubmit: (code: string) => Promise<void>
 }
-
-const CODE_LENGTH = 4
 
 export function CheckInDialog({
   alreadyCheckedIn,
@@ -29,14 +21,7 @@ export function CheckInDialog({
   error,
   onSubmit,
 }: Props) {
-  const [digits, setDigits] = useState<string[]>(() =>
-    Array(CODE_LENGTH).fill('')
-  )
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-
-  useEffect(() => {
-    if (alreadyCheckedIn) setDigits(Array(CODE_LENGTH).fill(''))
-  }, [alreadyCheckedIn])
+  const [code, setCode] = useState('')
 
   if (alreadyCheckedIn) {
     return (
@@ -52,78 +37,6 @@ export function CheckInDialog({
         </p>
       </div>
     )
-  }
-
-  const code = digits.join('')
-  const complete = code.length === CODE_LENGTH
-
-  function focusIndex(i: number) {
-    inputRefs.current[i]?.focus()
-    inputRefs.current[i]?.select()
-  }
-
-  function handleChange(i: number, e: ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
-    // SMS / paste autofill writes the entire code into one input — splay it out.
-    if (raw.length > 1) {
-      setDigits((prev) => {
-        const next = [...prev]
-        for (let j = 0; j < CODE_LENGTH; j++) {
-          // Take from the autofill string starting at the current input index.
-          next[j] = j < i ? prev[j] : raw[j - i] ?? ''
-        }
-        return next
-      })
-      const lastFilled = Math.min(i + raw.length, CODE_LENGTH) - 1
-      focusIndex(Math.min(lastFilled + 1, CODE_LENGTH - 1))
-      return
-    }
-    const cleaned = raw.slice(-1)
-    setDigits((prev) => {
-      const next = [...prev]
-      next[i] = cleaned
-      return next
-    })
-    if (cleaned && i < CODE_LENGTH - 1) focusIndex(i + 1)
-  }
-
-  function handleKeyDown(i: number, e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Backspace' && !digits[i] && i > 0) {
-      e.preventDefault()
-      setDigits((prev) => {
-        const next = [...prev]
-        next[i - 1] = ''
-        return next
-      })
-      focusIndex(i - 1)
-      return
-    }
-    if (e.key === 'ArrowLeft' && i > 0) {
-      e.preventDefault()
-      focusIndex(i - 1)
-    } else if (e.key === 'ArrowRight' && i < CODE_LENGTH - 1) {
-      e.preventDefault()
-      focusIndex(i + 1)
-    } else if (e.key === 'Enter' && complete && !pending) {
-      e.preventDefault()
-      void onSubmit(code)
-    }
-  }
-
-  function handlePaste(e: ClipboardEvent<HTMLInputElement>) {
-    const pasted = e.clipboardData
-      .getData('text')
-      .replace(/[^a-zA-Z0-9]/g, '')
-      .toUpperCase()
-      .slice(0, CODE_LENGTH)
-    if (!pasted) return
-    e.preventDefault()
-    setDigits((prev) => {
-      const next = [...prev]
-      for (let i = 0; i < CODE_LENGTH; i++) next[i] = pasted[i] ?? ''
-      return next
-    })
-    focusIndex(Math.min(pasted.length, CODE_LENGTH - 1))
   }
 
   return (
@@ -155,39 +68,30 @@ export function CheckInDialog({
           <p className="text-xs text-muted-foreground mt-0.5">
             {error
               ? 'Double-check the code with the speaker.'
-              : 'Enter the 4-character code from the speaker.'}
+              : 'Enter the check-in code from the speaker.'}
           </p>
         </div>
       </div>
-      <div className="flex gap-2 justify-center mb-3">
-        {digits.map((d, i) => (
-          <input
-            key={i}
-            ref={(el) => {
-              inputRefs.current[i] = el
-            }}
-            type="text"
-            inputMode="text"
-            autoComplete="one-time-code"
-            maxLength={1}
-            value={d}
-            disabled={pending}
-            onChange={(e) => handleChange(i, e)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
-            onPaste={handlePaste}
-            onFocus={(e) => e.currentTarget.select()}
-            aria-label={`Code character ${i + 1} of ${CODE_LENGTH}`}
-            className={cn(
-              'h-12 w-11 rounded-md bg-background text-center font-mono text-lg shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50',
-              error ? 'ring-2 ring-destructive border border-destructive' : 'border border-input'
-            )}
-          />
-        ))}
-      </div>
+      <Input
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && code.trim() && !pending) {
+            void onSubmit(code.trim())
+          }
+        }}
+        disabled={pending}
+        autoComplete="one-time-code"
+        placeholder="Enter code"
+        className={cn(
+          'mb-3 font-mono tracking-widest text-center',
+          error && 'border-destructive focus-visible:ring-destructive'
+        )}
+      />
       <Button
         className="w-full"
-        disabled={!complete || pending}
-        onClick={() => onSubmit(code)}
+        disabled={!code.trim() || pending}
+        onClick={() => { void onSubmit(code.trim()) }}
       >
         {pending ? 'Checking in…' : error ? 'Try again' : 'Check in'}
       </Button>

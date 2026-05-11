@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, Clock, Search, Users, X } from 'lucide-react'
+import { CheckCircle2, Clock, Edit, KeyRound, MapPin, Search, Users, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useBottomSheetDragToDismiss } from '@/hooks/use-bottom-sheet-drag'
@@ -22,6 +22,7 @@ interface Props {
   session: AdminSession | null
   timezone: string
   onClose: () => void
+  onEdit: () => void
 }
 
 interface RosterEntry {
@@ -36,7 +37,7 @@ type Filter = 'all' | 'in' | 'out'
 // ScheduleEditor. Snapshot fetched once on open: no realtime, no polling. To
 // see fresh data, the admin closes and reopens the sheet (or reloads). See the
 // staged-build plan's Stage 5 override note.
-export function RosterSheet({ session, timezone, onClose }: Props) {
+export function RosterSheet({ session, timezone, onClose, onEdit }: Props) {
   const isMobile = useIsMobile()
   const [entries, setEntries] = useState<RosterEntry[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -119,18 +120,55 @@ export function RosterSheet({ session, timezone, onClose }: Props) {
           </div>
         )}
 
-        <SheetHeader className="p-6 border-b text-left space-y-2">
+        <SheetHeader className="p-6 pr-10 border-b text-left space-y-2">
           <div className="text-xs uppercase tracking-widest text-primary font-medium">
             Roster
           </div>
-          <SheetTitle className="text-xl font-semibold tracking-tight pr-8">
+          <SheetTitle className="text-xl font-semibold tracking-tight">
             {session.title}
           </SheetTitle>
-          <p className="text-sm text-muted-foreground">
-            {formatTime(startWall.time)} – {formatTime(endWall.time)}
-            {session.room ? ` · ${session.room}` : ''}
-          </p>
+          {session.speaker && (
+            <p className="text-sm text-muted-foreground">{session.speaker}</p>
+          )}
+          <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
+            <span>{formatTime(startWall.time)} – {formatTime(endWall.time)}</span>
+            {session.room && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5" />
+                  {session.room}
+                </span>
+              </>
+            )}
+          </div>
         </SheetHeader>
+
+        {session.description && (
+          <div className="px-6 py-4 border-b text-sm text-foreground/75 leading-relaxed shrink-0">
+            {session.description}
+          </div>
+        )}
+
+        {(session.capacity != null || session.check_in_code) && (
+          <div className="px-6 py-3 border-b flex gap-4 text-xs text-muted-foreground items-center shrink-0">
+            {session.capacity != null && (
+              <span className="inline-flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                {session.capacity} seats
+              </span>
+            )}
+            {session.check_in_code && (
+              <span className="inline-flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5" />
+                Code{' '}
+                <span className="font-mono tracking-wider bg-muted px-1.5 py-0.5 rounded text-foreground">
+                  {session.check_in_code}
+                </span>
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="px-6 pt-4 pb-3 border-b space-y-3 shrink-0">
           <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
@@ -196,6 +234,18 @@ export function RosterSheet({ session, timezone, onClose }: Props) {
               ))}
             </ul>
           )}
+        </div>
+
+        <div className="border-t px-6 py-3 shrink-0 bg-muted/30">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onEdit}
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <Edit className="w-4 h-4" />
+            {session.is_break ? 'Edit break' : 'Edit session'}
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

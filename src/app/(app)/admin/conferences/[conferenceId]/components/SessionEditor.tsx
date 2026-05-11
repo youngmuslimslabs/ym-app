@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Coffee, Users } from 'lucide-react'
+import { AlertTriangle, Coffee, Users } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
 import {
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import { createSession, updateSession } from '../../client-actions'
 import {
   composeTzIso,
@@ -39,6 +40,8 @@ interface Props {
   session: AdminSession | null
   // Pre-select day for new sessions (defaults to first conf day).
   defaultDate?: string
+  // All existing sessions — used for room conflict detection.
+  sessions: AdminSession[]
 }
 
 interface FormState {
@@ -92,6 +95,7 @@ export function SessionEditor({
   conference,
   session,
   defaultDate,
+  sessions,
 }: Props) {
   const router = useRouter()
   const isEdit = session !== null
@@ -107,32 +111,87 @@ export function SessionEditor({
 
   const [form, setForm] = useState<FormState>(initialForm)
   const [pending, setPending] = useState(false)
+  const [touched, setTouched] = useState<Set<string>>(() => new Set())
+  const [attempted, setAttempted] = useState(false)
+  const descRef = useRef<HTMLTextAreaElement>(null)
 
-  // Reset whenever the dialog opens with a different target. Prevents a stale
-  // form from previous open carrying into the next add/edit click.
   useEffect(() => {
-    if (open) setForm(initialForm)
-  }, [open, initialForm])
+    // rAF defers past Radix's mount animation so scrollHeight is accurate on open
+    const raf = requestAnimationFrame(() => {
+      const el = descRef.current
+      if (!el) return
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight}px`
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [form.description, open])
+
+  const sessionId = session?.id ?? null
+
+  // Reset whenever the dialog opens or the target session changes.
+  useEffect(() => {
+    if (!open) return
+    setForm(initialForm)
+    setTouched(new Set())
+    setAttempted(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, sessionId, conference.timezone, defaultDate])
 
   function field<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  // Field validation. Times must be HH:mm and end > start by clock; the DB
-  // CHECK constraint backstops if we miss something here.
+  function touch(key: string) {
+    setTouched((prev) => {
+      if (prev.has(key)) return prev
+      const next = new Set(prev)
+      next.add(key)
+      return next
+    })
+  }
+
+  // Validation — split into granular booleans so showErr can reference each independently.
   const titleOk = form.title.trim().length > 0
   const dateOk = conferenceDays.includes(form.date)
-  const timesOk =
-    /^\d{2}:\d{2}$/.test(form.startTime) &&
-    /^\d{2}:\d{2}$/.test(form.endTime) &&
-    form.endTime > form.startTime
+  const startFmtOk = /^\d{2}:\d{2}$/.test(form.startTime)
+  const endFmtOk = /^\d{2}:\d{2}$/.test(form.endTime)
+  const endTimeOk = endFmtOk && startFmtOk && form.endTime > form.startTime
   const capacityOk =
     form.capacity === '' ||
     (/^\d+$/.test(form.capacity.trim()) && Number(form.capacity) > 0)
-  const canSubmit = titleOk && dateOk && timesOk && capacityOk
+  const canSubmit = titleOk && dateOk && startFmtOk && endTimeOk && capacityOk
+
+  // Show an error for a field only after it's been blurred or a submit was attempted.
+  function showErr(key: string, ok: boolean): boolean {
+    return !ok && (attempted || touched.has(key))
+  }
+
+  // Non-blocking room conflict warning (D8). Case-insensitive exact match.
+  const roomConflict: AdminSession | null = useMemo(() => {
+    if (!form.room.trim()) return null
+    if (!startFmtOk || !endFmtOk || form.endTime <= form.startTime) return null
+    const startIso = composeTzIso(form.date, form.startTime, conference.timezone)
+    const endIso = composeTzIso(form.date, form.endTime, conference.timezone)
+    const roomLower = form.room.trim().toLowerCase()
+    return (
+      sessions.find(
+        (s) =>
+          s.id !== (sessionId ?? '') &&
+          !s.is_break &&
+          s.room != null &&
+          s.room.trim().toLowerCase() === roomLower &&
+          s.start_at < endIso &&
+          s.end_at > startIso
+      ) ?? null
+    )
+  }, [form.room, form.date, form.startTime, form.endTime, conference.timezone, sessionId, sessions, startFmtOk, endFmtOk])
 
   async function handleSubmit() {
-    if (!canSubmit || pending) return
+    if (!canSubmit) {
+      setAttempted(true)
+      return
+    }
+    if (pending) return
     setPending(true)
     try {
       const startIso = composeTzIso(form.date, form.startTime, conference.timezone)
@@ -198,7 +257,7 @@ export function SessionEditor({
         onOpenChange(next)
       }}
     >
-      <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="sm:max-w-[520px] p-0">
         <DialogHeader className="p-6 pb-4 border-b text-left">
           <DialogTitle>{dialogTitle}</DialogTitle>
           {dateOk && (
@@ -208,7 +267,7 @@ export function SessionEditor({
           )}
         </DialogHeader>
 
-        <div className="p-6 space-y-4 overflow-y-auto flex-1">
+        <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
           <ModeToggle
             isBreak={form.isBreak}
             onToggle={() => field('isBreak', !form.isBreak)}
@@ -240,8 +299,15 @@ export function SessionEditor({
                 type="time"
                 value={form.startTime}
                 onChange={(e) => field('startTime', e.target.value)}
-                className="mt-1 font-mono"
+                onBlur={() => touch('startTime')}
+                className={cn(
+                  'mt-1 font-mono',
+                  showErr('startTime', startFmtOk) && 'border-destructive focus-visible:ring-destructive'
+                )}
               />
+              {showErr('startTime', startFmtOk) && (
+                <p className="text-xs text-destructive mt-1">Enter a valid start time.</p>
+              )}
             </div>
             <div>
               <Label htmlFor="se-end" className="text-xs">
@@ -252,8 +318,15 @@ export function SessionEditor({
                 type="time"
                 value={form.endTime}
                 onChange={(e) => field('endTime', e.target.value)}
-                className="mt-1 font-mono"
+                onBlur={() => touch('endTime')}
+                className={cn(
+                  'mt-1 font-mono',
+                  showErr('endTime', endTimeOk) && 'border-destructive focus-visible:ring-destructive'
+                )}
               />
+              {showErr('endTime', endTimeOk) && (
+                <p className="text-xs text-destructive mt-1">End must be after start.</p>
+              )}
             </div>
           </div>
 
@@ -265,11 +338,18 @@ export function SessionEditor({
               id="se-title"
               value={form.title}
               onChange={(e) => field('title', e.target.value)}
+              onBlur={() => touch('title')}
               placeholder={
                 form.isBreak ? 'Coffee & Conversation' : 'The Ethics of Community Building'
               }
-              className="mt-1"
+              className={cn(
+                'mt-1',
+                showErr('title', titleOk) && 'border-destructive focus-visible:ring-destructive'
+              )}
             />
+            {showErr('title', titleOk) && (
+              <p className="text-xs text-destructive mt-1">Title is required.</p>
+            )}
           </div>
 
           {!form.isBreak && (
@@ -297,6 +377,12 @@ export function SessionEditor({
                   placeholder="Ballroom A"
                   className="mt-1"
                 />
+                {roomConflict && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 shrink-0" />
+                    Overlaps with &ldquo;{roomConflict.title}&rdquo; in this room.
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -327,11 +413,12 @@ export function SessionEditor({
               </span>
             </Label>
             <Textarea
+              ref={descRef}
               id="se-description"
-              rows={2}
               value={form.description}
               onChange={(e) => field('description', e.target.value)}
-              className="mt-1 resize-none"
+              className="mt-1 resize-none overflow-hidden"
+              style={{ minHeight: '4rem' }}
             />
           </div>
 
@@ -350,9 +437,16 @@ export function SessionEditor({
                   min={1}
                   value={form.capacity}
                   onChange={(e) => field('capacity', e.target.value)}
+                  onBlur={() => touch('capacity')}
                   placeholder="80"
-                  className="mt-1 tabular-nums"
+                  className={cn(
+                    'mt-1 tabular-nums',
+                    showErr('capacity', capacityOk) && 'border-destructive focus-visible:ring-destructive'
+                  )}
                 />
+                {showErr('capacity', capacityOk) && (
+                  <p className="text-xs text-destructive mt-1">Must be a whole number greater than 0.</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="se-code" className="text-xs">
@@ -364,10 +458,17 @@ export function SessionEditor({
                 <Input
                   id="se-code"
                   value={form.checkInCode}
-                  onChange={(e) => field('checkInCode', e.target.value)}
-                  placeholder="4-digit code"
+                  onChange={(e) =>
+                    field('checkInCode', e.target.value.slice(0, 15))
+                  }
+                  placeholder="e.g. GATE, 7291"
                   className="mt-1 font-mono tracking-widest"
                 />
+                {form.checkInCode.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1 text-right tabular-nums">
+                    {form.checkInCode.length}/15
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -381,7 +482,7 @@ export function SessionEditor({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit || pending}>
+          <Button onClick={handleSubmit} disabled={pending}>
             {pending ? 'Saving…' : submitLabel}
           </Button>
         </DialogFooter>

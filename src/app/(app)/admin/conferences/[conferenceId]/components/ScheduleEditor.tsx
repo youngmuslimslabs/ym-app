@@ -93,6 +93,7 @@ export function ScheduleEditor({ view }: Props) {
           conference={conference}
           session={editingSession}
           defaultDate={editorDefaultDate}
+          sessions={sessions}
         />
       </div>
     )
@@ -153,12 +154,19 @@ export function ScheduleEditor({ view }: Props) {
         conference={conference}
         session={editingSession}
         defaultDate={editorDefaultDate}
+        sessions={sessions}
       />
 
       <RosterSheet
         session={rosterSession}
         timezone={conference.timezone}
         onClose={() => setRosterSession(null)}
+        onEdit={() => {
+          if (rosterSession) {
+            setRosterSession(null)
+            openEdit(rosterSession)
+          }
+        }}
       />
 
       <TypeToConfirmDialog

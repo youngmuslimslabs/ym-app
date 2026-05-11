@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Button Placement — Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand: #254FA0;
+  --brand-light: rgba(37,79,160,.08);
+  --surface: #fff;
+  --border: #e8eaed;
+  --border-subtle: #f2f3f5;
+  --text: #0d1117;
+  --text-2: #525866;
+  --text-3: #8b93a0;
+  --radius: 14px;
+  --mono: 'Geist Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Geist', -apple-system, sans-serif;
+  background: #f0f2f5;
+  color: var(--text);
+  min-height: 100vh;
+  padding: 40px 32px 80px;
+}
+
+/* ── Page header ── */
+.page-header {
+  margin-bottom: 36px;
+}
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.page-header p {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  max-width: 520px;
+}
+
+/* ── Grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  max-width: 1160px;
+}
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+/* ── Option card ── */
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.option-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.option-num {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.option-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.option-desc {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.55;
+  padding-left: 2px;
+}
+
+/* ── Panel shell ── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.04),
+    0 4px 16px rgba(0,0,0,.06),
+    0 12px 40px rgba(0,0,0,.04);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Radix X — exact replica of the real SheetClose button */
+.radix-x {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 20;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-3);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  transition: all .15s;
+}
+.radix-x:hover { background: #f5f5f6; color: var(--text); }
+.radix-x svg { width: 13px; height: 13px; }
+
+/* ── Shared header anatomy ── */
+.panel-header {
+  padding: 20px 20px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.roster-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: 8px;
+}
+
+.session-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 3px;
+  padding-right: 44px; /* always clear the X */
+}
+
+.session-speaker {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+
+.session-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-3);
+  flex-wrap: wrap;
+}
+.session-meta svg { flex-shrink: 0; }
+.meta-sep { color: var(--border); }
+
+/* ── Description section ── */
+.panel-desc {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.65;
+}
+
+/* ── Ops strip ── */
+.ops-strip {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.ops-strip svg { width: 13px; height: 13px; flex-shrink: 0; }
+.code-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: #f4f5f7;
+  padding: 2px 6px;
+  border-radius: 5px;
+  color: var(--text);
+  letter-spacing: .07em;
+  border: 1px solid var(--border);
+}
+
+/* ── Roster section ── */
+.roster-section {
+  padding: 14px 20px;
+}
+
+.tab-bar {
+  display: flex;
+  background: #f4f5f7;
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+.tab {
+  flex: 1;
+  padding: 6px 4px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-3);
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.tab.active {
+  background: white;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,.09);
+}
+.tab-count { color: var(--text-3); margin-left: 3px; font-size: 11px; }
+
+.search-row { position: relative; }
+.search-row svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--text-3); pointer-events: none; }
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 30px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  background: white;
+  outline: none;
+  font-family: inherit;
+  transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--brand); }
+
+/* ═══════════════════════════════
+   OPTION 1 — Hover reveal on header
+   The edit affordance lives on the
+   session info block itself, revealed
+   on hover. Zero noise at rest.
+═══════════════════════════════ */
+.header-hover-zone {
+  position: relative;
+  cursor: default;
+}
+.header-hover-zone .hover-edit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity .15s, transform .15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand);
+  background: var(--brand-light);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.header-hover-zone:hover .hover-edit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.header-hover-zone .hover-edit svg { width: 12px; height: 12px; }
+
+/* hint text when not hovered */
+.hover-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 8px;
+  font-style: italic;
+  transition: opacity .15s;
+}
+.header-hover-zone:hover .hover-hint { opacity: 0; }
+
+/* ═══════════════════════════════
+   OPTION 2 — Footer action strip
+   Edit lives at the bottom of the
+   panel as a persistent action,
+   clearly separated from the info.
+═══════════════════════════════ */
+.panel-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-subtle);
+  background: #fafbfc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: white;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+}
+.footer-edit-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-light);
+}
+.footer-edit-btn svg { width: 13px; height: 13px; }
+.footer-hint {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* ═══════════════════════════════
+   OPTION 3 — Ops strip integration
+   Edit icon lives at the right end
+   of the admin-only ops strip.
+   Admin data → admin action, same row.
+═══════════════════════════════ */
+.ops-edit-btn {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  transition: all .12s;
+  flex-shrink: 0;
+}
+.ops-edit-btn:hover {
+  background: var(--brand-light);
+  color: var(--brand);
+}
+.ops-edit-btn svg { width: 13px; height: 13px; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Edit button — placement options</h1>
+  <p>All three options correctly clear the ✕ button. Hover Option 1's header to see the reveal interaction.</p>
+</div>
+
+<div class="grid">
+
+  <!-- ════════════════════════════
+       OPTION 1 · Hover reveal
+  ════════════════════════════ -->
+  <div class="option">
+    <div class="option-meta">
+      <span class="option-num">01</span>
+      <span class="option-name">Hover reveal on session info</span>
+    </div>
+    <div class="panel">
+      <div class="radix-x" title="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </div>
+
+      <div class="panel-header">
+        <div class="roster-eyebrow">Roster</div>
+        <!-- Hover zone wraps title + speaker + meta -->
+        <div class="header-hover-zone">
+          <div class="session-title">intro</div>
+          <div class="session-speaker">munbo1</div>
+          <div class="session-meta">
+            9:00 AM – 10:00 AM
+            <span class="meta-sep">·</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            munbo basement
+          </div>
+          <div class="hover-hint">← hover to edit</div>
+          <button class="hover-edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit session
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-desc">
+        I am looking deeper into the resolved issues and its accuracy. So far the main high priority tasks the team is working on that I have been facilitating is current data plan issue in project cockpit…
+      </div>
+
+      <div class="ops-strip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        30 seats
+        <span class="meta-sep">·</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Code <span class="code-chip">IFN-4</span>
+      </div>
+
+      <div class="roster-section">
+        <div class="tab-bar">
+          <button class="tab active">All <span class="tab-count">1</span></button>
+          <button class="tab">Checked in <span class="tab-count">0</span></button>
+          <button class="tab">Not in <span class="tab-count">1</span></button>
+        </div>
+        <div class="search-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" placeholder="Search attendees…">
+        </div>
+      </div>
+    </div>
+    <p class="option-desc">Edit reveals on hover of the session info block — zero noise at rest. Treats the session header as an editable region, like Notion or Linear. Works best for keyboard/mouse; always-visible fallback needed on touch.</p>
+  </div>
+
+  <!-- ════════════════════════════
+       OPTION 2 · Footer strip
+  ════════════════════════════ -->
+  <div class="option">
+    <div class="option-meta">
+      <span class="option-num">02</span>
+      <span class="option-name">Footer action strip</span>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column;">
+      <div class="radix-x" title="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </div>
+
+      <div class="panel-header">
+        <div class="roster-eyebrow">Roster</div>
+        <div class="session-title">intro</div>
+        <div class="session-speaker">munbo1</div>
+        <div class="session-meta" style="margin-top:6px;">
+          9:00 AM – 10:00 AM
+          <span class="meta-sep">·</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          munbo basement
+        </div>
+      </div>
+
+      <div class="panel-desc">
+        I am looking deeper into the resolved issues and its accuracy. So far the main high priority tasks the team is working on that I have been facilitating is current data plan issue in project cockpit…
+      </div>
+
+      <div class="ops-strip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        30 seats
+        <span class="meta-sep">·</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Code <span class="code-chip">IFN-4</span>
+      </div>
+
+      <div class="roster-section">
+        <div class="tab-bar">
+          <button class="tab active">All <span class="tab-count">1</span></button>
+          <button class="tab">Checked in <span class="tab-count">0</span></button>
+          <button class="tab">Not in <span class="tab-count">1</span></button>
+        </div>
+        <div class="search-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" placeholder="Search attendees…">
+        </div>
+      </div>
+
+      <!-- Footer — persistent action -->
+      <div class="panel-footer">
+        <button class="footer-edit-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit session
+        </button>
+        <span class="footer-hint">Admin only</span>
+      </div>
+    </div>
+    <p class="option-desc">Edit lives at the bottom as a persistent panel-level action — always visible, never collides with anything. Clear mental model: top half = read, bottom = act. Familiar from drawers and detail panels across design systems.</p>
+  </div>
+
+  <!-- ════════════════════════════
+       OPTION 3 · Ops strip inline
+  ════════════════════════════ -->
+  <div class="option">
+    <div class="option-meta">
+      <span class="option-num">03</span>
+      <span class="option-name">Edit icon in the ops strip</span>
+    </div>
+    <div class="panel">
+      <div class="radix-x" title="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </div>
+
+      <div class="panel-header">
+        <div class="roster-eyebrow">Roster</div>
+        <div class="session-title">intro</div>
+        <div class="session-speaker">munbo1</div>
+        <div class="session-meta" style="margin-top:6px;">
+          9:00 AM – 10:00 AM
+          <span class="meta-sep">·</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          munbo basement
+        </div>
+      </div>
+
+      <div class="panel-desc">
+        I am looking deeper into the resolved issues and its accuracy. So far the main high priority tasks the team is working on that I have been facilitating is current data plan issue in project cockpit…
+      </div>
+
+      <!-- Ops strip with edit icon right-aligned -->
+      <div class="ops-strip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        30 seats
+        <span class="meta-sep">·</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Code <span class="code-chip">IFN-4</span>
+        <!-- Edit sits at the far right of the admin row -->
+        <button class="ops-edit-btn" title="Edit session">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+
+      <div class="roster-section">
+        <div class="tab-bar">
+          <button class="tab active">All <span class="tab-count">1</span></button>
+          <button class="tab">Checked in <span class="tab-count">0</span></button>
+          <button class="tab">Not in <span class="tab-count">1</span></button>
+        </div>
+        <div class="search-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" placeholder="Search attendees…">
+        </div>
+      </div>
+    </div>
+    <p class="option-desc">Edit icon anchors to the right end of the admin-only ops row — admin data and admin action live in the same zone. Compact, no vertical overhead. Icon-only so a tooltip is important on desktop.</p>
+  </div>
+
+</div>
+
+</body>
+</html>

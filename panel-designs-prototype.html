@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Panel Design Options</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 28px 24px 80px;
+}
+
+h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.sub { font-size: 13px; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+
+/* ── Top nav ── */
+.top-nav {
+  display: flex; gap: 4px;
+  background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 4px; width: fit-content; margin-bottom: 28px;
+}
+.top-nav button {
+  padding: 8px 20px; border-radius: 7px; border: none;
+  background: transparent; font-size: 13px; font-weight: 500;
+  cursor: pointer; color: #64748b; font-family: inherit;
+  transition: all .15s;
+}
+.top-nav button.active { background: #254FA0; color: white; }
+.top-nav button:not(.active):hover { background: #f1f5f9; color: #0f172a; }
+
+/* ── Option sections ── */
+.option-section { display: none; }
+.option-section.visible { display: block; }
+
+.option-desc {
+  background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 14px 18px; margin-bottom: 20px; font-size: 13px;
+  color: #475569; line-height: 1.6;
+}
+.option-desc strong { color: #0f172a; }
+
+/* ── Panel pair layout ── */
+.pair { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+
+.panel-col { flex: 1; min-width: 320px; max-width: 400px; }
+.panel-col-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: #94a3b8; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.badge-admin {
+  background: #fef3c7; color: #92400e;
+  padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700;
+}
+.badge-attendee {
+  background: #dbeafe; color: #1e40af;
+  padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700;
+}
+
+/* ── Panel shell ── */
+.panel {
+  border: 1px solid #e2e8f0; border-radius: 12px;
+  background: white; box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+
+/* ── Common shared elements ── */
+.brand-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #254FA0;
+}
+.panel-title { font-weight: 600; letter-spacing: -.01em; }
+.panel-speaker { font-size: 13px; color: #71717a; }
+.panel-desc { font-size: 13px; color: rgba(15,23,42,.72); line-height: 1.6; }
+
+.edit-icon-btn {
+  width: 32px; height: 32px; border-radius: 6px; border: none;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #94a3b8; transition: all .15s;
+}
+.edit-icon-btn:hover { background: #f1f5f9; color: #374151; }
+
+/* meta bar */
+.meta-bar {
+  display: grid; font-size: 12px;
+  border: 1px solid #f0f0f1; border-radius: 8px; overflow: hidden;
+}
+.meta-bar.two-col { grid-template-columns: 1fr 1fr; }
+.meta-cell {
+  padding: 9px 12px;
+}
+.meta-cell + .meta-cell { border-left: 1px solid #f0f0f1; }
+.meta-key {
+  font-size: 10px; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: #9ca3af; margin-bottom: 3px;
+}
+.meta-val { font-size: 13px; font-weight: 500; }
+
+/* admin ops strip */
+.ops-strip {
+  display: flex; gap: 16px; font-size: 12px; color: #64748b;
+  align-items: center;
+}
+.ops-strip svg { width: 13px; height: 13px; flex-shrink: 0; }
+.mono-chip {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 11px; background: #f4f4f5; padding: 1px 6px;
+  border-radius: 4px; color: #374151; letter-spacing: .07em;
+}
+
+/* roster */
+.roster-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid #f8f8f9;
+  font-size: 13px;
+}
+.roster-row:last-child { border-bottom: none; }
+.roster-name { flex: 1; font-weight: 500; }
+.badge-in {
+  background: rgba(37,79,160,.1); color: #254FA0;
+  border-radius: 99px; padding: 2px 8px; font-size: 11px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.badge-out {
+  background: #f4f4f5; color: #6b7280;
+  border-radius: 99px; padding: 2px 8px; font-size: 11px; font-weight: 500;
+}
+
+/* tabs */
+.tab-bar {
+  display: flex; background: #f4f4f5; border-radius: 8px;
+  padding: 3px; gap: 2px;
+}
+.tab-btn {
+  flex: 1; padding: 6px 4px; border-radius: 6px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  color: #6b7280; border: none; background: transparent;
+  transition: all .15s; font-family: inherit;
+}
+.tab-btn.active {
+  background: white; color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+}
+.tab-count { color: #9ca3af; margin-left: 3px; }
+
+/* search */
+.search-box {
+  position: relative;
+}
+.search-box svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 13px; height: 13px; color: #9ca3af; pointer-events: none;
+}
+.search-input {
+  width: 100%; padding: 7px 12px 7px 30px;
+  border: 1px solid #e4e4e7; border-radius: 7px;
+  font-size: 13px; color: #0f172a; background: white;
+  outline: none; font-family: inherit;
+}
+.search-input:focus { border-color: #254FA0; }
+
+/* footer action */
+.action-footer {
+  padding: 14px 20px; border-top: 1px solid #f0f0f1;
+  background: #fafafa; flex-shrink: 0;
+}
+.btn-primary {
+  width: 100%; padding: 10px; border-radius: 7px;
+  background: #254FA0; color: white; font-size: 14px;
+  font-weight: 500; border: none; cursor: pointer;
+  font-family: inherit; transition: background .15s;
+}
+.btn-primary:hover { background: #1e3f80; }
+.btn-ghost {
+  background: transparent; border: 1px solid #e4e4e7;
+  border-radius: 7px; padding: 8px 14px; font-size: 13px;
+  font-weight: 500; cursor: pointer; color: #374151;
+  font-family: inherit; transition: background .15s;
+}
+.btn-ghost:hover { background: #f3f4f6; }
+
+/* section card */
+.section-card {
+  background: #f8fafc; border: 1px solid #f1f5f9;
+  border-radius: 8px; padding: 14px;
+}
+.section-card-title {
+  font-size: 10px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: #94a3b8; margin-bottom: 10px;
+}
+
+/* ── Tab panel switcher (used in option 3 admin) ── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Status pill ── */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; padding: 3px 9px;
+  border-radius: 99px;
+}
+.status-upcoming { background: #f1f5f9; color: #475569; }
+.status-live { background: rgba(37,79,160,.1); color: #254FA0; }
+.status-ended { background: #f4f4f5; color: #9ca3af; }
+
+hr.divider { border: none; border-top: 1px solid #f0f0f1; }
+
+/* ── Placeholder text ── */
+.placeholder-text { font-size: 12px; color: #9ca3af; font-style: italic; text-align: center; padding: 16px; }
+</style>
+</head>
+<body>
+
+<h1>Session Panel — Design Options</h1>
+<p class="sub">Three different directions for the unified session side panel.<br>Each option shows the admin view (with roster + edit) and the attendee view side by side.</p>
+
+<div class="top-nav">
+  <button class="active" onclick="showOption(1)">Option 1 · Lean</button>
+  <button onclick="showOption(2)">Option 2 · Sectioned</button>
+  <button onclick="showOption(3)">Option 3 · Tabbed</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     OPTION 1 · LEAN
+     Text-forward, no visual containers.
+     Fast to read, feels like a document.
+════════════════════════════════════════════════ -->
+<div id="opt1" class="option-section visible">
+  <div class="option-desc">
+    <strong>Lean —</strong> Pure typography hierarchy, no card containers. The header reads like a well-structured document. Admin gets a thin metadata strip before the roster; attendee gets a clean scroll with the action pinned to the footer. Works best if users already know the panel layout.
+  </div>
+  <div class="pair">
+
+    <!-- ADMIN -->
+    <div class="panel-col">
+      <div class="panel-col-label"><span class="badge-admin">ADMIN</span></div>
+      <div class="panel" style="height:600px;">
+
+        <!-- Header -->
+        <div style="padding:20px 20px 16px;border-bottom:1px solid #f0f0f1;flex-shrink:0;position:relative;">
+          <button class="edit-icon-btn" onclick="openEditModal()"
+            style="position:absolute;top:16px;right:14px;" title="Edit session">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <div class="brand-label" style="margin-bottom:5px;">Thu · 9:00 – 10:00 AM</div>
+          <div class="panel-title" style="font-size:19px;margin-bottom:3px;padding-right:36px;">Intro to Islamic Finance</div>
+          <div class="panel-speaker" style="margin-bottom:10px;">Br. Tariq Hussain</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:4px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Room A
+            </span>
+            <span style="color:#d1d5db;">·</span>
+            <span class="status-pill status-upcoming">Upcoming</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div style="padding:14px 20px;border-bottom:1px solid #f0f0f1;flex-shrink:0;">
+          <p class="panel-desc">An introduction to the principles of halal investing and riba-free banking, with practical examples for attendees looking to align their finances with their faith.</p>
+        </div>
+
+        <!-- Admin metadata strip -->
+        <div style="padding:10px 20px;border-bottom:1px solid #f0f0f1;flex-shrink:0;" class="ops-strip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          30 seats
+          <span style="color:#d1d5db;margin:0 2px;">·</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          Code <span class="mono-chip">IFN-4</span>
+        </div>
+
+        <!-- Roster -->
+        <div style="padding:12px 20px 8px;flex-shrink:0;">
+          <div class="tab-bar" style="margin-bottom:8px;">
+            <button class="tab-btn active">All <span class="tab-count">12</span></button>
+            <button class="tab-btn">Checked in <span class="tab-count">7</span></button>
+            <button class="tab-btn">Not checked in <span class="tab-count">5</span></button>
+          </div>
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-input" placeholder="Search attendees…">
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:0 20px;">
+          <div class="roster-row"><span class="roster-name">Abdullah Khan</span><span class="badge-in">✓ Checked in</span></div>
+          <div class="roster-row"><span class="roster-name">Aisha Rahman</span><span class="badge-in">✓ Checked in</span></div>
+          <div class="roster-row"><span class="roster-name">Omar Farooq</span><span class="badge-out">Not checked in</span></div>
+          <div class="roster-row"><span class="roster-name">Fatima Malik</span><span class="badge-in">✓ Checked in</span></div>
+          <div class="roster-row"><span class="roster-name">Yusuf Ali</span><span class="badge-out">Not checked in</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATTENDEE -->
+    <div class="panel-col">
+      <div class="panel-col-label"><span class="badge-attendee">ATTENDEE</span></div>
+      <div class="panel" style="height:600px;">
+        <div style="padding:20px 20px 16px;border-bottom:1px solid #f0f0f1;flex-shrink:0;">
+          <div class="brand-label" style="margin-bottom:5px;">Thu · 9:00 – 10:00 AM</div>
+          <div class="panel-title" style="font-size:19px;margin-bottom:3px;">Intro to Islamic Finance</div>
+          <div class="panel-speaker" style="margin-bottom:10px;">Br. Tariq Hussain</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:4px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Room A
+            </span>
+            <span style="color:#d1d5db;">·</span>
+            <span class="status-pill status-upcoming">Upcoming</span>
+          </div>
+        </div>
+        <div style="padding:14px 20px;border-bottom:1px solid #f0f0f1;flex-shrink:0;">
+          <p class="panel-desc">An introduction to the principles of halal investing and riba-free banking, with practical examples for attendees looking to align their finances with their faith.</p>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:20px;">
+          <p class="placeholder-text">Check-in / feedback appears here when session is active or ended</p>
+        </div>
+        <div class="action-footer">
+          <button class="btn-primary">Sign up</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     OPTION 2 · SECTIONED
+     Content grouped into visual blocks.
+     Easier to scan; helps first-time users.
+════════════════════════════════════════════════ -->
+<div id="opt2" class="option-section">
+  <div class="option-desc">
+    <strong>Sectioned —</strong> Content is chunked into labelled blocks with light-grey backgrounds. Admins immediately see "About", "Admin details", and "Roster" as distinct zones. Attendees see "About" then the action. More visual weight but very easy to scan at a glance — good for users who jump between many sessions.
+  </div>
+  <div class="pair">
+
+    <!-- ADMIN -->
+    <div class="panel-col">
+      <div class="panel-col-label"><span class="badge-admin">ADMIN</span></div>
+      <div class="panel" style="height:640px;">
+
+        <!-- Compact header -->
+        <div style="padding:18px 20px 14px;border-bottom:1px solid #f0f0f1;flex-shrink:0;position:relative;display:flex;align-items:flex-start;gap:10px;">
+          <div style="flex:1;">
+            <div class="brand-label" style="margin-bottom:4px;">Thu · 9:00 – 10:00 AM</div>
+            <div class="panel-title" style="font-size:18px;">Intro to Islamic Finance</div>
+          </div>
+          <button class="edit-icon-btn" onclick="openEditModal()" title="Edit session" style="flex-shrink:0;margin-top:2px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+
+          <!-- About block -->
+          <div class="section-card">
+            <div class="section-card-title">About</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:13px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:#94a3b8;margin-top:1px;flex-shrink:0;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Br. Tariq Hussain</span>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;font-size:13px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:#94a3b8;margin-top:1px;flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>Room A</span>
+              </div>
+              <p class="panel-desc" style="padding-top:2px;">An introduction to the principles of halal investing and riba-free banking, with practical examples for attendees.</p>
+            </div>
+          </div>
+
+          <!-- Admin details block -->
+          <div class="section-card">
+            <div class="section-card-title">Admin details</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div style="font-size:11px;color:#9ca3af;margin-bottom:3px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;">Capacity</div>
+                <div style="font-size:13px;font-weight:500;">30 seats</div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#9ca3af;margin-bottom:3px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;">Check-in code</div>
+                <div style="font-size:13px;font-weight:500;"><span class="mono-chip" style="font-size:12px;">IFN-4</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Roster block -->
+          <div class="section-card">
+            <div class="section-card-title">Roster · 12 signed up</div>
+            <div class="tab-bar" style="margin-bottom:8px;">
+              <button class="tab-btn active">All <span class="tab-count">12</span></button>
+              <button class="tab-btn">Checked in <span class="tab-count">7</span></button>
+              <button class="tab-btn">Not in <span class="tab-count">5</span></button>
+            </div>
+            <div class="search-box" style="margin-bottom:8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input class="search-input" placeholder="Search attendees…">
+            </div>
+            <div>
+              <div class="roster-row"><span class="roster-name">Abdullah Khan</span><span class="badge-in">✓ Checked in</span></div>
+              <div class="roster-row"><span class="roster-name">Aisha Rahman</span><span class="badge-in">✓ Checked in</span></div>
+              <div class="roster-row"><span class="roster-name">Omar Farooq</span><span class="badge-out">Not checked in</span></div>
+              <div class="roster-row"><span class="roster-name">Fatima Malik</span><span class="badge-in">✓ Checked in</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ATTENDEE -->
+    <div class="panel-col">
+      <div class="panel-col-label"><span class="badge-attendee">ATTENDEE</span></div>
+      <div class="panel" style="height:640px;">
+
+        <!-- Compact header -->
+        <div style="padding:18px 20px 14px;border-bottom:1px solid #f0f0f1;flex-shrink:0;">
+          <div class="brand-label" style="margin-bottom:4px;">Thu · 9:00 – 10:00 AM</div>
+          <div class="panel-title" style="font-size:18px;">Intro to Islamic Finance</div>
+        </div>
+
+        <div style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+
+          <!-- About block -->
+          <div class="section-card">
+            <div class="section-card-title">About</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:#94a3b8;flex-shrink:0;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Br. Tariq Hussain</span>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:#94a3b8;flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>Room A</span>
+              </div>
+              <p class="panel-desc" style="padding-top:2px;">An introduction to the principles of halal investing and riba-free banking, with practical examples for attendees.</p>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="section-card" style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:13px;color:#64748b;">Session status</span>
+            <span class="status-pill status-upcoming">Upcoming</span>
+          </div>
+
+          <p class="placeholder-text">Check-in / feedback block appears here when session is live or ended</p>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn-primary">Sign up</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     OPTION 3 · TABBED
+     Admin: Info / Roster tabs. Attendee: no tabs.
+     Cleanest header, content behind a click.
+════════════════════════════════════════════════ -->
+<div id="opt3" class="option-section">
+  <div class="option-desc">
+    <strong>Tabbed —</strong> Admin gets an "Info" and "Roster" tab — the header stays constant, content switches. This keeps the panel feeling compact and focused. Attendee doesn't need tabs (simpler flow), so they see a straightforward scroll with the action footer. Best if admins primarily use the panel for roster management and only occasionally need session details.
+  </div>
+  <div class="pair">
+
+    <!-- ADMIN -->
+    <div class="panel-col">
+      <div class="panel-col-label"><span class="badge-admin">ADMIN</span></div>
+      <div class="panel" style="height:600px;">
+
+        <!-- Always-visible header -->
+        <div style="padding:18px 20px 14px;flex-shrink:0;position:relative;">
+          <button class="edit-icon-btn" onclick="openEditModal()" title="Edit session" style="position:absolute;top:14px;right:14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <div class="brand-label" style="margin-bottom:4px;">Thu · 9:00 – 10:00 AM</div>
+          <div class="panel-title" style="font-size:18px;padding-right:36px;">Intro to Islamic Finance</div>
+        </div>
+
+        <!-- Tab switcher -->
+        <div style="padding:0 20px 12px;flex-shrink:0;border-bottom:1px solid #f0f0f1;">
+          <div style="display:flex;gap:0;border-bottom:2px solid #f1f5f9;">
+            <button id="tab-info-btn"
+              style="padding:8px 16px;border:none;background:transparent;font-size:13px;font-weight:600;cursor:pointer;color:#254FA0;border-bottom:2px solid #254FA0;margin-bottom:-2px;font-family:inherit;"
+              onclick="switchTab('info')">
+              Info
+            </button>
+            <button id="tab-roster-btn"
+              style="padding:8px 16px;border:none;background:transparent;font-size:13px;font-weight:500;cursor:pointer;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit;"
+              onclick="switchTab('roster')">
+              Roster <span style="font-size:12px;color:#9ca3af;">12</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Info tab -->
+        <div id="tab-info" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:#94a3b8;flex-shrink:0;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Br. Tariq Hussain</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:#94a3b8;flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>Room A</span>
+            </div>
+          </div>
+          <hr class="divider">
+          <p class="panel-desc">An introduction to the principles of halal investing and riba-free banking, with practical examples for attendees.</p>
+          <hr class="divider">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <div style="font-size:11px;color:#9ca3af;margin-bottom:4px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;">Capacity</div>
+              <div style="font-size:13px;font-weight:500;">30 seats</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9ca3af;margin-bottom:4px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;">Check-in code</div>
+              <div style="font-size:13px;font-weight:500;"><span class="mono-chip">IFN-4</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Roster tab (hidden by default) -->
+        <div id="tab-roster" style="flex:1;overflow-y:auto;display:none;flex-direction:column;">
+          <div style="padding:12px 20px 8px;flex-shrink:0;">
+            <div class="tab-bar" style="margin-bottom:8px;">
+              <button class="tab-btn active">All <span class="tab-count">12</span></button>
+              <button class="tab-btn">Checked in <span class="tab-count">7</span></button>
+              <button class="tab-btn">Not in <span class="tab-count">5</span></button>
+            </div>
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input class="search-input" placeholder="Search attendees…">
+            </div>
+          </div>
+          <div style="padding:0 20px;flex:1;overflow-y:auto;">
+            <div class="roster-row"><span class="roster-name">Abdullah Khan</span><span class="badge-in">✓ Checked in</span></div>
+            <div class="roster-row"><span class="roster-name">Aisha Rahman</span><span class="badge-in">✓ Checked in</span></div>
+            <div class="roster-row"><span class="roster-name">Omar Farooq</span><span class="badge-out">Not checked in</span></div>
+            <div class="roster-row"><span class="roster-name">Fatima Malik</span><span class="badge-in">✓ Checked in</span></div>
+            <div class="roster-row"><span class="roster-name">Yusuf Ali</span><span class="badge-out">Not checked in</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ATTENDEE -->
+    <div class="panel-col">
+      <div class="panel-col-label"><span class="badge-attendee">ATTENDEE</span></div>
+      <div class="panel" style="height:600px;">
+        <!-- No tabs for attendee — simpler flow -->
+        <div style="padding:18px 20px 14px;border-bottom:1px solid #f0f0f1;flex-shrink:0;">
+          <div class="brand-label" style="margin-bottom:4px;">Thu · 9:00 – 10:00 AM</div>
+          <div class="panel-title" style="font-size:18px;margin-bottom:3px;">Intro to Islamic Finance</div>
+          <div class="panel-speaker">Br. Tariq Hussain</div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:#94a3b8;flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Room A · <span class="status-pill status-upcoming" style="font-size:11px;padding:2px 7px;">Upcoming</span></span>
+          </div>
+          <p class="panel-desc">An introduction to the principles of halal investing and riba-free banking, with practical examples for attendees.</p>
+          <hr class="divider">
+          <p class="placeholder-text" style="padding:8px 0;">Check-in / feedback appears here when session is live or ended</p>
+        </div>
+        <div class="action-footer">
+          <button class="btn-primary">Sign up</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Edit modal (shared) -->
+<div id="edit-modal" onclick="if(event.target===this)this.style.display='none'"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:12px;width:460px;max-width:90vw;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+    <div style="font-size:17px;font-weight:600;margin-bottom:4px;">Edit session</div>
+    <div style="font-size:13px;color:#71717a;margin-bottom:20px;">Thu, Jul 1 2027</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Start</label><input type="time" value="09:00" style="width:100%;padding:7px 10px;border:1px solid #d4d4d8;border-radius:6px;font-size:13px;font-family:inherit;outline:none;"></div>
+      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">End</label><input type="time" value="10:00" style="width:100%;padding:7px 10px;border:1px solid #d4d4d8;border-radius:6px;font-size:13px;font-family:inherit;outline:none;"></div>
+    </div>
+    <div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Title</label><input type="text" value="Intro to Islamic Finance" style="width:100%;padding:7px 10px;border:1px solid #d4d4d8;border-radius:6px;font-size:13px;font-family:inherit;outline:none;"></div>
+    <div style="margin-bottom:16px;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Description <span style="font-weight:400;color:#9ca3af;">(optional)</span></label>
+      <textarea oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="width:100%;padding:7px 10px;border:1px solid #d4d4d8;border-radius:6px;font-size:13px;font-family:inherit;resize:none;min-height:60px;outline:none;">An introduction to the principles of halal investing and riba-free banking, with practical examples for attendees looking to align their finances with their faith.</textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn-ghost" onclick="document.getElementById('edit-modal').style.display='none'">Cancel</button>
+      <button class="btn-primary" style="width:auto;padding:8px 20px;">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showOption(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('opt'+i).classList.toggle('visible', i===n);
+  });
+  document.querySelectorAll('.top-nav button').forEach((b,i) => {
+    b.classList.toggle('active', i===n-1);
+  });
+}
+
+function openEditModal() {
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function switchTab(tab) {
+  const info = document.getElementById('tab-info');
+  const roster = document.getElementById('tab-roster');
+  const infoBtn = document.getElementById('tab-info-btn');
+  const rosterBtn = document.getElementById('tab-roster-btn');
+
+  if (tab === 'info') {
+    info.style.display = 'flex';
+    roster.style.display = 'none';
+    infoBtn.style.color = '#254FA0';
+    infoBtn.style.borderBottomColor = '#254FA0';
+    infoBtn.style.fontWeight = '600';
+    rosterBtn.style.color = '#94a3b8';
+    rosterBtn.style.borderBottomColor = 'transparent';
+    rosterBtn.style.fontWeight = '500';
+  } else {
+    info.style.display = 'none';
+    roster.style.display = 'flex';
+    rosterBtn.style.color = '#254FA0';
+    rosterBtn.style.borderBottomColor = '#254FA0';
+    rosterBtn.style.fontWeight = '600';
+    infoBtn.style.color = '#94a3b8';
+    infoBtn.style.borderBottomColor = 'transparent';
+    infoBtn.style.fontWeight = '500';
+  }
+}
+</script>
+</body>
+</html>

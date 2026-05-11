@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scrollable Modal Prototype</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    background: #f4f4f5;
+    color: #0f172a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px;
+    gap: 16px;
+  }
+
+  h1 { font-size: 20px; font-weight: 700; color: #111827; }
+  p.sub { font-size: 13px; color: #6b7280; }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+  }
+
+  .pill-btn {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1px solid #d4d4d8;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+    color: #374151;
+    font-family: inherit;
+  }
+  .pill-btn:hover { background: #f3f4f6; }
+
+  .panels {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .panel-label {
+    text-align: center;
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 8px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  /* Simulated viewport frame */
+  .viewport-sim {
+    position: relative;
+    width: 620px;
+    height: 480px;
+    border: 2px dashed #d4d4d8;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e5e7eb;
+    transition: height 0.35s cubic-bezier(.4,0,.2,1);
+  }
+  .viewport-sim.tall { height: 780px; }
+
+  .vp-label {
+    position: absolute;
+    top: 8px; left: 12px;
+    font-size: 10px;
+    color: #9ca3af;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+
+  /* Overlay */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── BEFORE ── */
+  .modal-before {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e4e4e7;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    width: 520px;
+    padding: 24px;
+    display: grid;
+    gap: 16px;
+    position: relative;
+  }
+
+  /* ── AFTER ── */
+  .modal-after {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e4e4e7;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    width: 520px;
+    padding: 24px;
+    position: relative;
+
+    /* The fix */
+    display: flex;
+    flex-direction: column;
+    max-height: 90%;
+    overflow: hidden;
+  }
+
+  .modal-header { flex-shrink: 0; }
+  .modal-title { font-size: 18px; font-weight: 600; }
+  .modal-desc { font-size: 13px; color: #71717a; margin-top: 4px; }
+
+  .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .modal-body::-webkit-scrollbar { width: 4px; }
+  .modal-body::-webkit-scrollbar-track { background: transparent; }
+  .modal-body::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 2px; }
+
+  .modal-footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* For before-modal, no flex so gap is from grid */
+  .before-body { display: contents; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  label { font-size: 13px; font-weight: 500; color: #374151; }
+  label .opt { font-weight: 400; color: #9ca3af; }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #0f172a;
+    background: white;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #254FA0;
+    box-shadow: 0 0 0 3px rgba(37,79,160,0.12);
+  }
+  textarea { resize: none; }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-ghost { background: transparent; border-color: #d4d4d8; color: #374151; }
+  .btn-ghost:hover { background: #f3f4f6; }
+  .btn-primary { background: #254FA0; color: white; }
+  .btn-primary:hover { background: #1e3f80; }
+
+  .close-btn {
+    position: absolute;
+    top: 14px; right: 14px;
+    background: none; border: none;
+    cursor: pointer; color: #9ca3af;
+    font-size: 16px; line-height: 1;
+  }
+  .close-btn:hover { color: #374151; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    align-self: center;
+  }
+  .badge-bad  { background: #fee2e2; color: #dc2626; }
+  .badge-good { background: #dcfce7; color: #16a34a; }
+  .badge-wrap { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+
+<h1>Scrollable Modal — Before &amp; After</h1>
+<p class="sub">Scroll inside the "After" modal to see the header and footer stay pinned.</p>
+
+<div class="controls">
+  <button class="pill-btn" id="toggleHeight">▲▼ Toggle viewport height</button>
+</div>
+
+<div class="panels">
+
+  <!-- BEFORE -->
+  <div>
+    <div class="panel-label">Before</div>
+    <div class="viewport-sim" id="vpBefore">
+      <span class="vp-label">Simulated viewport</span>
+      <div class="overlay">
+        <div class="modal-before">
+          <button class="close-btn">✕</button>
+          <div>
+            <div class="modal-title">New conference</div>
+            <div class="modal-desc">Just the essentials to get started. You can edit everything else after.</div>
+          </div>
+          <div class="field">
+            <label>Name</label>
+            <input type="text" value="National Convention 2027">
+          </div>
+          <div class="field">
+            <label>Tagline <span class="opt">(optional)</span></label>
+            <input type="text" value="Building together, believing together">
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Start date</label><input type="date" value="2027-07-01"></div>
+            <div class="field"><label>End date</label><input type="date" value="2027-07-03"></div>
+          </div>
+          <div class="field">
+            <label>Timezone</label>
+            <select><option>Eastern (New York)</option><option>Central (Chicago)</option></select>
+          </div>
+          <div class="field">
+            <label>Location <span class="opt">(optional)</span></label>
+            <input type="text" value="Chicago Hilton">
+          </div>
+          <div class="field">
+            <label>Description <span class="opt">(optional)</span></label>
+            <textarea rows="2" placeholder="Short blurb attendees see at the top of the schedule…"></textarea>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-ghost">Cancel</button>
+            <button class="btn btn-primary">Create conference</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="badge-wrap"><span class="badge badge-bad">✕ Footer clipped off screen</span></div>
+  </div>
+
+  <!-- AFTER -->
+  <div>
+    <div class="panel-label">After</div>
+    <div class="viewport-sim" id="vpAfter">
+      <span class="vp-label">Simulated viewport</span>
+      <div class="overlay">
+        <div class="modal-after">
+          <button class="close-btn">✕</button>
+
+          <div class="modal-header">
+            <div class="modal-title">New conference</div>
+            <div class="modal-desc">Just the essentials to get started. You can edit everything else after.</div>
+          </div>
+
+          <div class="modal-body">
+            <div class="field">
+              <label>Name</label>
+              <input type="text" value="National Convention 2027">
+            </div>
+            <div class="field">
+              <label>Tagline <span class="opt">(optional)</span></label>
+              <input type="text" value="Building together, believing together">
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Start date</label><input type="date" value="2027-07-01"></div>
+              <div class="field"><label>End date</label><input type="date" value="2027-07-03"></div>
+            </div>
+            <div class="field">
+              <label>Timezone</label>
+              <select><option>Eastern (New York)</option><option>Central (Chicago)</option></select>
+            </div>
+            <div class="field">
+              <label>Location <span class="opt">(optional)</span></label>
+              <input type="text" value="Chicago Hilton">
+            </div>
+            <div class="field">
+              <label>Description <span class="opt">(optional)</span></label>
+              <textarea rows="2" placeholder="Short blurb attendees see at the top of the schedule…"></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-ghost">Cancel</button>
+            <button class="btn btn-primary">Create conference</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="badge-wrap"><span class="badge badge-good">✓ Header + footer always visible</span></div>
+  </div>
+
+</div>
+
+<script>
+  const vpBefore = document.getElementById('vpBefore');
+  const vpAfter  = document.getElementById('vpAfter');
+  const btn = document.getElementById('toggleHeight');
+  let tall = false;
+  btn.addEventListener('click', () => {
+    tall = !tall;
+    vpBefore.classList.toggle('tall', tall);
+    vpAfter.classList.toggle('tall', tall);
+    btn.textContent = tall ? '▲▼ Use short viewport' : '▲▼ Toggle viewport height';
+  });
+</script>
+</body>
+</html>

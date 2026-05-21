@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Schedule UX — 3 Prototypes</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#254FA0;--brand-dim:rgba(37,79,160,.08);--brand-20:rgba(37,79,160,.2);
+  --bg:#f0f2f5;--surface:#fff;--border:#e5e7eb;--border-subtle:#f3f4f6;
+  --text:#111827;--text-2:#6b7280;--text-3:#9ca3af;--muted:#f9fafb;
+  --dest:#dc2626;--dest-dim:rgba(220,38,38,.08);
+  --green:#16a34a;--green-dim:rgba(22,163,74,.08);
+  --amber:#d97706;--amber-dim:rgba(217,119,6,.08);
+  --font:'Geist',-apple-system,sans-serif;--mono:'Geist Mono',monospace;
+  --r:8px;--rl:12px;--rxl:16px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;padding:24px 20px 80px}
+
+/* ─── page top nav ─── */
+.pnav{max-width:1280px;margin:0 auto 16px;display:flex;flex-direction:column;gap:10px}
+.pnav-top{display:flex;align-items:baseline;gap:12px}
+.pnav-title{font-size:15px;font-weight:600}
+.pnav-sub{font-size:12px;color:var(--text-2)}
+.ptabs{display:flex;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:4px;width:fit-content}
+.ptab{padding:7px 20px;border-radius:10px;border:none;background:transparent;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;color:var(--text-2);transition:all .15s;white-space:nowrap}
+.ptab.active{background:var(--brand);color:#fff}
+.ptab:not(.active):hover{background:var(--muted);color:var(--text)}
+.desc-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:12px 18px;display:none;gap:10px;align-items:flex-start}
+.desc-bar.show{display:flex}
+.desc-badge{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.badge-rec{background:var(--brand-dim);color:var(--brand)}
+.badge-alt{background:var(--muted);color:var(--text-3)}
+.desc-text{font-size:13px;color:var(--text-2);line-height:1.6;flex:1}
+.desc-text strong{color:var(--text)}
+.desc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.chip{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--text-2)}
+.chip-pro{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.chip-con{border-color:var(--border);color:var(--text-3)}
+
+/* ─── admin shell ─── */
+.shell{max-width:1280px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,.06)}
+.shell-header{padding:28px 32px 20px;border-bottom:1px solid var(--border)}
+.breadcrumb{font-size:11px;color:var(--text-3);margin-bottom:10px;display:flex;align-items:center;gap:4px}
+.breadcrumb a{color:var(--text-3);text-decoration:none}
+.breadcrumb a:hover{color:var(--text-2)}
+.hdr-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.conf-name{font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+.conf-meta{font-size:13px;color:var(--text-2);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:20px}
+.badge-draft{background:var(--amber-dim);color:var(--amber)}
+.badge-live{background:var(--green-dim);color:var(--green)}
+.sdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* ─── buttons ─── */
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:var(--r);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-sm{padding:6px 14px}
+.btn-md{padding:8px 18px}
+.btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{opacity:.88}
+.btn-outline{background:transparent;color:var(--text-2);border:1px solid var(--border)}.btn-outline:hover{background:var(--muted);color:var(--text)}
+.btn-ghost{background:transparent;color:var(--text-2);border:none}.btn-ghost:hover{background:var(--muted);color:var(--text)}
+.btn-dest{background:var(--dest);color:#fff}.btn-dest:hover{opacity:.88}
+.btn-icon{width:30px;height:30px;border:none;background:transparent;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-3);transition:all .15s}
+.btn-icon:hover{background:var(--muted);color:var(--text-2)}
+.btn-icon.dest-hover:hover{background:var(--dest-dim);color:var(--dest)}
+.hdr-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+
+/* ─── admin tabs ─── */
+.admin-tabs{padding:0 32px;display:flex;border-bottom:1px solid var(--border)}
+.atab{padding:12px 16px;font-size:13px;font-weight:500;color:var(--text-2);cursor:default;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.atab.active{color:var(--text);border-bottom-color:var(--brand)}
+.atab-count{font-size:12px;color:var(--text-3)}
+
+/* ─── option visibility ─── */
+.opt-content{display:none}
+.opt-content.show{display:block}
+
+/* ─── toolbar ─── */
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:20px 32px 0}
+.toolbar-meta{font-size:13px;color:var(--text-2)}
+
+/* ─── day group ─── */
+.day-group{padding:20px 0 0}
+.day-hdr{padding:0 32px 10px;display:flex;align-items:baseline;gap:10px}
+.day-name{font-size:14px;font-weight:600}
+.day-meta{font-size:11px;color:var(--text-3)}
+.day-sessions{padding:0 32px;display:flex;flex-direction:column;gap:6px}
+.add-day-btn{margin:6px 0 0;padding:8px 16px;border-radius:var(--r);border:1px dashed var(--border);background:transparent;font-family:var(--font);font-size:12px;color:var(--text-3);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s}
+.add-day-btn:hover{border-color:var(--text-3);color:var(--text-2);background:var(--muted)}
+
+/* ══════════════════════════════════════════
+   OPTION A — MASTER-DETAIL SPLIT PANEL
+══════════════════════════════════════════ */
+#opt-a .schedule-body{display:grid;grid-template-columns:1fr 380px;min-height:520px;border-top:1px solid var(--border)}
+.a-list{overflow-y:auto;padding-bottom:32px;border-right:1px solid var(--border)}
+.a-list .toolbar{padding:20px 24px 0}
+.a-list .day-hdr{padding:0 24px 10px}
+.a-list .day-sessions{padding:0 24px;gap:3px}
+.a-row{border-radius:var(--r);border:1px solid transparent;background:transparent;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:0;overflow:hidden}
+.a-row:hover{background:var(--muted);border-color:var(--border)}
+.a-row.active{background:var(--brand-dim);border-color:var(--brand-20)}
+.a-row.break-row{border:1px dashed var(--border);background:var(--muted);cursor:default;opacity:.75}
+.a-row.break-row:hover{background:var(--muted);border-color:var(--border)}
+.a-time{font-size:11px;font-family:var(--mono);color:var(--text-3);width:58px;flex-shrink:0;padding:10px 8px 10px 12px;text-align:right;line-height:1.3}
+.a-row.active .a-time{color:var(--brand)}
+.a-divider{width:1px;background:var(--border-subtle);align-self:stretch;flex-shrink:0;margin:6px 0}
+.a-main{flex:1;min-width:0;padding:10px 10px 10px 12px}
+.a-title{font-size:13px;font-weight:500;truncate:true;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+.a-row.active .a-title{color:var(--brand)}
+.a-sub{font-size:11px;color:var(--text-3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.a-counts{display:flex;align-items:center;gap:12px;flex-shrink:0;padding:0 12px}
+.a-count{text-align:right}
+.a-count-num{font-size:12px;font-weight:600;font-family:var(--mono);line-height:1}
+.a-count-num.full{color:var(--dest)}
+.a-count-label{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-top:1px}
+
+/* right panel */
+.a-panel{display:flex;flex-direction:column;background:var(--surface)}
+.a-panel-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--text-3);padding:40px}
+.a-panel-empty p{font-size:13px;text-align:center;max-width:200px;line-height:1.5}
+.a-panel-body{display:flex;flex-direction:column;flex:1;overflow-y:auto}
+
+/* panel view mode */
+.panel-view{padding:20px 24px}
+.panel-type{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.panel-session-title{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.2;margin-bottom:14px}
+.panel-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.pmg-cell{padding:9px 12px;background:var(--muted)}
+.pmg-key{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px}
+.pmg-val{font-size:13px;font-weight:500;color:var(--text)}
+.pmg-val.mono{font-family:var(--mono);letter-spacing:.08em}
+.cap-bar-wrap{margin-bottom:16px}
+.cap-bar-label{font-size:12px;color:var(--text-2);margin-bottom:6px;display:flex;justify-content:space-between}
+.cap-bar-label span{font-weight:600;color:var(--text)}
+.cap-bar-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.cap-bar-fill{height:100%;border-radius:3px;background:var(--brand);transition:width .3s}
+.cap-bar-fill.full{background:var(--dest)}
+.panel-desc{font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:16px;padding:12px;background:var(--muted);border-radius:var(--r);border:1px solid var(--border-subtle)}
+.panel-divider{height:1px;background:var(--border);margin:4px -24px 16px}
+.panel-section-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px}
+.roster-list{display:flex;flex-direction:column;gap:4px}
+.roster-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px}
+.roster-item:hover{background:var(--muted)}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--brand-dim);color:var(--brand);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:.02em}
+.roster-name{font-size:13px;color:var(--text)}
+.roster-more{font-size:12px;color:var(--text-3);padding:6px 8px}
+
+/* panel edit mode */
+.panel-edit{padding:20px 24px;display:flex;flex-direction:column;gap:0;flex:1}
+.pedit-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.pedit-title{font-size:13px;font-weight:600;color:var(--text)}
+.pedit-form{display:flex;flex-direction:column;gap:12px;flex:1}
+.form-row{display:flex;flex-direction:column;gap:4px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-label{font-size:11px;font-weight:600;color:var(--text-2);letter-spacing:.01em}
+.form-input{padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface);transition:border-color .15s;outline:none;width:100%}
+.form-input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-dim)}
+.form-input.mono{font-family:var(--mono);letter-spacing:.08em}
+textarea.form-input{resize:none;line-height:1.5}
+.pedit-footer{padding:16px 0 0;border-top:1px solid var(--border);margin-top:16px;display:flex;gap:8px;justify-content:flex-end}
+
+/* ══════════════════════════════════════════
+   OPTION B — RICH CARDS + SHEET
+══════════════════════════════════════════ */
+#opt-b .schedule-body{padding-bottom:32px;position:relative}
+#opt-b .toolbar{padding:20px 32px 0}
+#opt-b .day-hdr{padding:0 32px 10px}
+#opt-b .day-sessions{padding:0 32px;gap:8px}
+.b-card{border:1px solid var(--border);border-radius:var(--rl);background:var(--surface);overflow:hidden;transition:box-shadow .15s,border-color .15s;cursor:default}
+.b-card:hover{border-color:rgba(0,0,0,.15);box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.b-card.break-card{border-style:dashed;background:var(--muted);opacity:.8}
+.b-card-inner{padding:14px 18px}
+.b-card-time{font-size:11px;font-family:var(--mono);color:var(--text-3);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.b-card-time .room-tag{background:var(--muted);border:1px solid var(--border-subtle);padding:1px 7px;border-radius:4px;font-size:10px;font-weight:500;color:var(--text-2);font-family:var(--font)}
+.b-card-title{font-size:16px;font-weight:600;letter-spacing:-.01em;line-height:1.2;margin-bottom:3px}
+.b-card-speaker{font-size:13px;color:var(--text-2);margin-bottom:10px}
+.b-card-desc{font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.b-card-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.b-cap-wrap{flex:1}
+.b-cap-label{font-size:11px;color:var(--text-3);margin-bottom:4px;display:flex;justify-content:space-between}
+.b-cap-label strong{color:var(--text-2);font-weight:600}
+.b-cap-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.b-cap-fill{height:100%;border-radius:2px;background:var(--brand);transition:width .3s}
+.b-cap-fill.full{background:var(--dest)}
+.b-cap-fill.warn{background:var(--amber)}
+.b-actions{display:flex;gap:4px;flex-shrink:0}
+.b-card-break-inner{display:flex;align-items:center;gap:14px;padding:12px 18px}
+.break-icon-wrap{width:34px;height:34px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.b-break-info{flex:1}
+.b-break-title{font-size:13px;font-weight:500}
+.b-break-sub{font-size:11px;color:var(--text-3);margin-top:1px}
+.full-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--dest-dim);color:var(--dest)}
+
+/* ══════════════════════════════════════════
+   OPTION C — LEAN ROWS + SIDE SHEET
+══════════════════════════════════════════ */
+#opt-c .schedule-body{padding-bottom:32px}
+#opt-c .toolbar{padding:20px 32px 0}
+#opt-c .day-hdr{padding:0 32px 10px}
+#opt-c .day-sessions{padding:0 32px;gap:4px}
+.c-row{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);display:flex;align-items:center;gap:0;cursor:pointer;transition:all .12s;overflow:hidden}
+.c-row:hover{border-color:rgba(0,0,0,.15);box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.c-row.break-row{border-style:dashed;background:var(--muted);cursor:default;opacity:.7}
+.c-row-body{flex:1;min-width:0;display:flex;align-items:center;gap:0;padding:10px 14px}
+.c-icon{width:32px;height:32px;border-radius:50%;background:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px}
+.c-info{flex:1;min-width:0}
+.c-title{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-sub{font-size:11px;color:var(--text-3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-stats{display:flex;align-items:center;gap:14px;flex-shrink:0;padding:0 14px}
+.c-stat{text-align:right;min-width:36px}
+.c-stat-num{font-size:12px;font-weight:600;font-family:var(--mono)}
+.c-stat-num.full{color:var(--dest)}
+.c-stat-label{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-top:1px}
+.c-row-hint{font-size:11px;color:var(--text-3);padding:0 10px;display:flex;align-items:center;gap:4px;flex-shrink:0;border-left:1px solid var(--border-subtle)}
+.c-hint-text{padding:10px 8px;font-size:11px;color:var(--text-3);white-space:nowrap}
+
+/* ══════════════════════════════════════════
+   SHARED RIGHT SHEET (B & C)
+══════════════════════════════════════════ */
+.sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:40;display:none;backdrop-filter:blur(2px)}
+.sheet-backdrop.show{display:block}
+.sheet{position:fixed;top:0;right:0;bottom:0;width:460px;background:var(--surface);border-left:1px solid var(--border);z-index:41;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .2s cubic-bezier(.4,0,.2,1);box-shadow:-8px 0 32px rgba(0,0,0,.08)}
+.sheet.open{transform:translateX(0)}
+.sheet-hdr{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px;flex-shrink:0}
+.sheet-hdr-info{flex:1;min-width:0}
+.sheet-type-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
+.sheet-title{font-size:18px;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.sheet-speaker{font-size:13px;color:var(--text-2);margin-top:3px}
+.sheet-tabs-bar{display:flex;padding:0 24px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sheet-tab{padding:10px 14px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.sheet-tab.active{color:var(--text);border-bottom-color:var(--brand)}
+.sheet-tab:hover:not(.active){color:var(--text)}
+.sheet-body{flex:1;overflow-y:auto}
+.sheet-section{padding:20px 24px}
+.sheet-section+.sheet-section{border-top:1px solid var(--border-subtle)}
+.sheet-tab-content{display:none}
+.sheet-tab-content.show{display:block}
+.sheet-form{display:flex;flex-direction:column;gap:14px;padding:20px 24px}
+.sheet-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;background:var(--muted)}
+
+/* ─── SVG icons ─── */
+svg.icon{display:block;flex-shrink:0}
+
+/* ─── utility ─── */
+.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.flex{display:flex}.items-center{align-items:center}.gap-6{gap:6px}.gap-8{gap:8px}.ml-auto{margin-left:auto}
+.text-muted{color:var(--text-2)}.text-dim{color:var(--text-3)}.text-xs{font-size:12px}.text-sm{font-size:13px}
+.font-medium{font-weight:500}.font-semibold{font-weight:600}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.panel-section-divider{height:1px;background:var(--border);margin:16px 0}
+</style>
+</head>
+<body>
+
+<!-- ─── Option switcher nav ─── -->
+<div class="pnav">
+  <div class="pnav-top">
+    <span class="pnav-title">Admin Schedule UX — 3 Approaches</span>
+    <span class="pnav-sub">Click each option to explore the interaction pattern</span>
+  </div>
+  <div class="ptabs">
+    <button class="ptab active" data-opt="a">A · Master-Detail Split</button>
+    <button class="ptab" data-opt="b">B · Rich Cards + Sheet</button>
+    <button class="ptab" data-opt="c">C · Lean Rows + Sheet</button>
+  </div>
+  <div class="desc-bar show" id="desc-a">
+    <span class="desc-badge badge-rec">Recommended</span>
+    <div class="desc-text">
+      <strong>Persistent split panel</strong> — list on the left, detail+edit panel always open on the right. Clicking a session loads it in the panel instantly — no open/close ceremony, no lost scroll position. Edit happens inline in the panel: view fields become inputs. Roster visible below the edit form in the same panel.
+      <div class="desc-chips">
+        <span class="chip chip-pro">No modals</span>
+        <span class="chip chip-pro">Fastest session-hopping</span>
+        <span class="chip chip-pro">Roster + edit in one place</span>
+        <span class="chip chip-con">List area is narrower</span>
+      </div>
+    </div>
+  </div>
+  <div class="desc-bar" id="desc-b">
+    <span class="desc-badge badge-alt">Option B</span>
+    <div class="desc-text">
+      <strong>Rich cards + slide-in sheet</strong> — full-width cards that show all session info (speaker, room, capacity bar, description excerpt) without clicking. Editing opens a sheet from the right edge. Sheet holds the edit form and roster as separate sections.
+      <div class="desc-chips">
+        <span class="chip chip-pro">Maximum info at a glance</span>
+        <span class="chip chip-pro">Sheet > modal (less disruptive)</span>
+        <span class="chip chip-con">Cards are tall (fewer visible)</span>
+        <span class="chip chip-con">Sheet open/close still has friction</span>
+      </div>
+    </div>
+  </div>
+  <div class="desc-bar" id="desc-c">
+    <span class="desc-badge badge-alt">Option C</span>
+    <div class="desc-text">
+      <strong>Lean rows + sheet (smallest change from current)</strong> — keeps the compact list but replaces the modal with a sheet, and merges roster + editing into that sheet. One interaction instead of two competing ones (currently: click body → roster, click edit icon → modal).
+      <div class="desc-chips">
+        <span class="chip chip-pro">Familiar list density</span>
+        <span class="chip chip-pro">Unifies roster + edit</span>
+        <span class="chip chip-con">Sheet still disrupts context</span>
+        <span class="chip chip-con">No improvement in scanning</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Admin shell ─── -->
+<div class="shell">
+
+  <!-- Header -->
+  <div class="shell-header">
+    <div class="breadcrumb">
+      <a href="#">All conferences</a>
+      <svg class="icon" width="10" height="10" viewBox="0 0 16 16"><path d="M5 3l6 5-6 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Young Muslims Leadership Summit 2026
+    </div>
+    <div class="hdr-row">
+      <div>
+        <div class="flex items-center gap-8">
+          <h1 class="conf-name">YM Leadership Summit 2026</h1>
+          <span class="status-badge badge-draft"><span class="sdot"></span>Draft</span>
+        </div>
+        <div class="conf-meta">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/></svg>
+          Chicago Marriott Downtown
+          <span>·</span>
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/></svg>
+          June 6–8, 2026
+        </div>
+      </div>
+      <div class="hdr-actions">
+        <button class="btn btn-md btn-primary">Go Live</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="admin-tabs">
+    <div class="atab">Info</div>
+    <div class="atab active">Schedule</div>
+    <div class="atab">Attendees <span class="atab-count">142</span></div>
+    <div class="atab">Feedback <span class="atab-count">0</span></div>
+  </div>
+
+  <!-- ══════════════ OPTION A ══════════════ -->
+  <div class="opt-content show" id="opt-a">
+    <div class="schedule-body">
+
+      <!-- Left list -->
+      <div class="a-list">
+        <div class="toolbar">
+          <span class="toolbar-meta">8 items · 3 days</span>
+          <button class="btn btn-sm btn-primary" onclick="void 0">
+            <svg class="icon" width="12" height="12" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            Add session
+          </button>
+        </div>
+
+        <!-- Day 1 -->
+        <div class="day-group">
+          <div class="day-hdr" style="padding-top:20px">
+            <span class="day-name">Friday, June 6</span>
+            <span class="day-meta">2 sessions · 1 break</span>
+          </div>
+          <div class="day-sessions">
+            <div class="a-row" data-sid="1" onclick="selectA(1)">
+              <div class="a-time">9:00<br>10:30</div>
+              <div class="a-divider"></div>
+              <div class="a-main">
+                <div class="a-title">Opening Keynote</div>
+                <div class="a-sub">Dr. Sarah Ahmed · Main Hall</div>
+              </div>
+              <div class="a-counts">
+                <div class="a-count">
+                  <div class="a-count-num">45<span style="color:var(--text-3);font-weight:400">/80</span></div>
+                  <div class="a-count-label">Signed up</div>
+                </div>
+                <div class="a-count">
+                  <div class="a-count-num" style="color:var(--text-3)">—</div>
+                  <div class="a-count-label">Checked in</div>
+                </div>
+              </div>
+            </div>
+            <div class="a-row" data-sid="2" onclick="selectA(2)">
+              <div class="a-time">11:00<br>12:00</div>
+              <div class="a-divider"></div>
+              <div class="a-main">
+                <div class="a-title">Ethics of Knowledge Sharing</div>
+                <div class="a-sub">Imam Bilal Hassan · Ballroom A</div>
+              </div>
+              <div class="a-counts">
+                <div class="a-count">
+                  <div class="a-count-num full">60<span style="color:var(--dest);font-weight:400;opacity:.6">/60</span></div>
+                  <div class="a-count-label">Full</div>
+                </div>
+                <div class="a-count">
+                  <div class="a-count-num">18</div>
+                  <div class="a-count-label">Checked in</div>
+                </div>
+              </div>
+            </div>
+            <div class="a-row break-row" data-sid="3">
+              <div class="a-time">12:00<br>1:30</div>
+              <div class="a-divider"></div>
+              <div class="a-main">
+                <div class="a-title" style="color:var(--text-2)">Lunch Break</div>
+                <div class="a-sub">Mezzanine Foyer · break</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Day 2 -->
+        <div class="day-group">
+          <div class="day-hdr" style="padding-top:20px">
+            <span class="day-name">Saturday, June 7</span>
+            <span class="day-meta">2 sessions · 1 break</span>
+          </div>
+          <div class="day-sessions">
+            <div class="a-row" data-sid="4" onclick="selectA(4)">
+              <div class="a-time">9:00<br>10:15</div>
+              <div class="a-divider"></div>
+              <div class="a-main">
+                <div class="a-title">Youth Leadership Workshop</div>
+                <div class="a-sub">Yusuf Al-Rashid · Ballroom B</div>
+              </div>
+              <div class="a-counts">
+                <div class="a-count">
+                  <div class="a-count-num">31<span style="color:var(--text-3);font-weight:400">/40</span></div>
+                  <div class="a-count-label">Signed up</div>
+                </div>
+                <div class="a-count">
+                  <div class="a-count-num" style="color:var(--text-3)">—</div>
+                  <div class="a-count-label">Checked in</div>
+                </div>
+              </div>
+            </div>
+            <div class="a-row" data-sid="5" onclick="selectA(5)">
+              <div class="a-time">10:30<br>11:30</div>
+              <div class="a-divider"></div>
+              <div class="a-main">
+                <div class="a-title">Women in Philanthropy Panel</div>
+                <div class="a-sub">Multiple speakers · Ballroom A</div>
+              </div>
+              <div class="a-counts">
+                <div class="a-count">
+                  <div class="a-count-num">72<span style="color:var(--text-3);font-weight:400">/80</span></div>
+                  <div class="a-count-label">Signed up</div>
+                </div>
+                <div class="a-count">
+                  <div class="a-count-num">31</div>
+                  <div class="a-count-label">Checked in</div>
+                </div>
+              </div>
+            </div>
+            <div class="a-row break-row" data-sid="6">
+              <div class="a-time">11:30<br>12:30</div>
+              <div class="a-divider"></div>
+              <div class="a-main">
+                <div class="a-title" style="color:var(--text-2)">Coffee &amp; Conversation</div>
+                <div class="a-sub">break</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Day 3 -->
+        <div class="day-group">
+          <div class="day-hdr" style="padding-top:20px">
+            <span class="day-name">Sunday, June 8</span>
+            <span class="day-meta">2 sessions</span>
+          </div>
+          <div class="day-sessions">
+            <div class="a-row" data-sid="7" onclick="selectA(7)">
+              <div class="a-time">10:00<br>11:15</div>
+              <div class="a-divider"></div>
+              <div class="a-main">
+                <div class="a-title">Closing: Building Lasting Change</div>
+                <div class="a-sub">Sheikh Omar Abdullah · Main Hall</div>
+              </div>
+              <div class="a-counts">
+                <div class="a-count">
+                  <div class="a-count-num">89<span style="color:var(--text-3);font-weight:400">/120</span></div>
+                  <div class="a-count-label">Signed up</div>
+                </div>
+                <div class="a-count">
+                  <div class="a-count-num" style="color:var(--text-3)">—</div>
+                  <div class="a-count-label">Checked in</div>
+                </div>
+              </div>
+            </div>
+            <div class="a-row" data-sid="8" onclick="selectA(8)">
+              <div class="a-time">11:30<br>12:30</div>
+              <div class="a-divider"></div>
+              <div class="a-main">
+                <div class="a-title">Zakat &amp; Community Finance</div>
+                <div class="a-sub">Dr. Aisha Rahman · Ballroom B</div>
+              </div>
+              <div class="a-counts">
+                <div class="a-count">
+                  <div class="a-count-num">23<span style="color:var(--text-3);font-weight:400">/50</span></div>
+                  <div class="a-count-label">Signed up</div>
+                </div>
+                <div class="a-count">
+                  <div class="a-count-num" style="color:var(--text-3)">—</div>
+                  <div class="a-count-label">Checked in</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:20px 24px 0">
+          <button class="add-day-btn">
+            <svg class="icon" width="11" height="11" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            Add session
+          </button>
+        </div>
+      </div><!-- /a-list -->
+
+      <!-- Right panel -->
+      <div class="a-panel">
+        <!-- Empty state -->
+        <div class="a-panel-empty" id="a-empty">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#d1d5db" stroke-width="1.5"/><line x1="8" y1="8" x2="16" y2="8" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="12" x2="14" y2="12" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <p>Select a session to view details and edit</p>
+        </div>
+        <!-- Panel body (view) -->
+        <div class="a-panel-body" id="a-panel-view" style="display:none">
+          <!-- injected by JS -->
+        </div>
+        <!-- Panel body (edit) -->
+        <div class="a-panel-body" id="a-panel-edit" style="display:none">
+          <!-- injected by JS -->
+        </div>
+      </div>
+
+    </div><!-- /schedule-body -->
+  </div><!-- /opt-a -->
+
+  <!-- ══════════════ OPTION B ══════════════ -->
+  <div class="opt-content" id="opt-b">
+    <div class="schedule-body">
+      <div class="toolbar">
+        <span class="toolbar-meta">8 items · 3 days</span>
+        <button class="btn btn-sm btn-primary">
+          <svg class="icon" width="12" height="12" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          Add session
+        </button>
+      </div>
+
+      <!-- Day 1 -->
+      <div class="day-group">
+        <div class="day-hdr" style="padding-top:20px">
+          <span class="day-name">Friday, June 6</span>
+          <span class="day-meta">2 sessions · 1 break</span>
+        </div>
+        <div class="day-sessions">
+          <div class="b-card" onclick="openSheetB(1)">
+            <div class="b-card-inner">
+              <div class="b-card-time">9:00–10:30 AM <span class="room-tag">Main Hall</span></div>
+              <div class="b-card-title">Opening Keynote</div>
+              <div class="b-card-speaker">Dr. Sarah Ahmed</div>
+              <div class="b-card-desc">An exploration of community building in a fragmented world — what draws us together and how to sustain it across generations.</div>
+              <div class="b-card-footer">
+                <div class="b-cap-wrap">
+                  <div class="b-cap-label">45 signed up <strong>/ 80</strong> &nbsp;·&nbsp; 0 checked in</div>
+                  <div class="b-cap-track"><div class="b-cap-fill" style="width:56.25%"></div></div>
+                </div>
+                <div class="b-actions" onclick="event.stopPropagation()">
+                  <button class="btn btn-sm btn-outline" onclick="openSheetB(1)">Edit</button>
+                  <button class="btn-icon dest-hover" title="Delete">
+                    <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="b-card" onclick="openSheetB(2)">
+            <div class="b-card-inner">
+              <div class="b-card-time">11:00 AM–12:00 PM <span class="room-tag">Ballroom A</span> <span class="full-badge">Full</span></div>
+              <div class="b-card-title">Ethics of Knowledge Sharing</div>
+              <div class="b-card-speaker">Imam Bilal Hassan</div>
+              <div class="b-card-desc">How scholars navigated information asymmetry across generations — and what this means for us today.</div>
+              <div class="b-card-footer">
+                <div class="b-cap-wrap">
+                  <div class="b-cap-label"><span style="color:var(--dest);font-weight:600">60 signed up / 60 — Full</span> &nbsp;·&nbsp; 18 checked in</div>
+                  <div class="b-cap-track"><div class="b-cap-fill full" style="width:100%"></div></div>
+                </div>
+                <div class="b-actions" onclick="event.stopPropagation()">
+                  <button class="btn btn-sm btn-outline" onclick="openSheetB(2)">Edit</button>
+                  <button class="btn-icon dest-hover" title="Delete">
+                    <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="b-card break-card">
+            <div class="b-card-break-inner">
+              <div class="break-icon-wrap">
+                <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 8h1a4 4 0 0 1 0 8h-1" stroke="currentColor" stroke-width="1.8"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" stroke="currentColor" stroke-width="1.8"/><line x1="6" y1="1" x2="6" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="10" y1="1" x2="10" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="1" x2="14" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </div>
+              <div class="b-break-info">
+                <div class="b-break-title">Lunch Break</div>
+                <div class="b-break-sub">12:00–1:30 PM · Mezzanine Foyer</div>
+              </div>
+              <div class="b-actions">
+                <button class="btn btn-sm btn-outline" onclick="openSheetB(3)">Edit</button>
+                <button class="btn-icon dest-hover"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day 2 -->
+      <div class="day-group">
+        <div class="day-hdr" style="padding-top:20px">
+          <span class="day-name">Saturday, June 7</span>
+          <span class="day-meta">2 sessions · 1 break</span>
+        </div>
+        <div class="day-sessions">
+          <div class="b-card" onclick="openSheetB(4)">
+            <div class="b-card-inner">
+              <div class="b-card-time">9:00–10:15 AM <span class="room-tag">Ballroom B</span></div>
+              <div class="b-card-title">Youth Leadership Workshop</div>
+              <div class="b-card-speaker">Yusuf Al-Rashid</div>
+              <div class="b-card-desc">Practical frameworks for developing leadership in the next generation of community organizers.</div>
+              <div class="b-card-footer">
+                <div class="b-cap-wrap">
+                  <div class="b-cap-label">31 signed up <strong>/ 40</strong> &nbsp;·&nbsp; 0 checked in</div>
+                  <div class="b-cap-track"><div class="b-cap-fill warn" style="width:77.5%"></div></div>
+                </div>
+                <div class="b-actions" onclick="event.stopPropagation()">
+                  <button class="btn btn-sm btn-outline" onclick="openSheetB(4)">Edit</button>
+                  <button class="btn-icon dest-hover"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="b-card" onclick="openSheetB(5)">
+            <div class="b-card-inner">
+              <div class="b-card-time">10:30–11:30 AM <span class="room-tag">Ballroom A</span></div>
+              <div class="b-card-title">Women in Philanthropy Panel</div>
+              <div class="b-card-speaker">Multiple speakers</div>
+              <div class="b-card-footer" style="margin-top:8px">
+                <div class="b-cap-wrap">
+                  <div class="b-cap-label">72 signed up <strong>/ 80</strong> &nbsp;·&nbsp; 31 checked in</div>
+                  <div class="b-cap-track"><div class="b-cap-fill warn" style="width:90%"></div></div>
+                </div>
+                <div class="b-actions" onclick="event.stopPropagation()">
+                  <button class="btn btn-sm btn-outline" onclick="openSheetB(5)">Edit</button>
+                  <button class="btn-icon dest-hover"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="b-card break-card">
+            <div class="b-card-break-inner">
+              <div class="break-icon-wrap"><svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 8h1a4 4 0 0 1 0 8h-1" stroke="currentColor" stroke-width="1.8"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" stroke="currentColor" stroke-width="1.8"/><line x1="6" y1="1" x2="6" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="10" y1="1" x2="10" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="1" x2="14" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+              <div class="b-break-info"><div class="b-break-title">Coffee &amp; Conversation</div><div class="b-break-sub">11:30 AM–12:30 PM · break</div></div>
+              <div class="b-actions"><button class="btn btn-sm btn-outline" onclick="openSheetB(6)">Edit</button><button class="btn-icon dest-hover"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day 3 -->
+      <div class="day-group">
+        <div class="day-hdr" style="padding-top:20px">
+          <span class="day-name">Sunday, June 8</span>
+          <span class="day-meta">2 sessions</span>
+        </div>
+        <div class="day-sessions">
+          <div class="b-card" onclick="openSheetB(7)">
+            <div class="b-card-inner">
+              <div class="b-card-time">10:00–11:15 AM <span class="room-tag">Main Hall</span></div>
+              <div class="b-card-title">Closing Session: Building Lasting Change</div>
+              <div class="b-card-speaker">Sheikh Omar Abdullah</div>
+              <div class="b-card-desc">Reflections on the weekend and the road ahead for Young Muslims globally.</div>
+              <div class="b-card-footer">
+                <div class="b-cap-wrap">
+                  <div class="b-cap-label">89 signed up <strong>/ 120</strong> &nbsp;·&nbsp; 0 checked in</div>
+                  <div class="b-cap-track"><div class="b-cap-fill" style="width:74.2%"></div></div>
+                </div>
+                <div class="b-actions" onclick="event.stopPropagation()">
+                  <button class="btn btn-sm btn-outline" onclick="openSheetB(7)">Edit</button>
+                  <button class="btn-icon dest-hover"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="b-card" onclick="openSheetB(8)">
+            <div class="b-card-inner">
+              <div class="b-card-time">11:30 AM–12:30 PM <span class="room-tag">Ballroom B</span></div>
+              <div class="b-card-title">Zakat &amp; Community Finance</div>
+              <div class="b-card-speaker">Dr. Aisha Rahman</div>
+              <div class="b-card-desc">A practical guide to implementing Zakat programs at the local mosque level.</div>
+              <div class="b-card-footer">
+                <div class="b-cap-wrap">
+                  <div class="b-cap-label">23 signed up <strong>/ 50</strong> &nbsp;·&nbsp; 0 checked in</div>
+                  <div class="b-cap-track"><div class="b-cap-fill" style="width:46%"></div></div>
+                </div>
+                <div class="b-actions" onclick="event.stopPropagation()">
+                  <button class="btn btn-sm btn-outline" onclick="openSheetB(8)">Edit</button>
+                  <button class="btn-icon dest-hover"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:12px 32px 0"><button class="add-day-btn"><svg class="icon" width="11" height="11" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Add session</button></div>
+    </div>
+  </div><!-- /opt-b -->
+
+  <!-- ══════════════ OPTION C ══════════════ -->
+  <div class="opt-content" id="opt-c">
+    <div class="schedule-body">
+      <div class="toolbar">
+        <span class="toolbar-meta">8 items · 3 days</span>
+        <button class="btn btn-sm btn-primary">
+          <svg class="icon" width="12" height="12" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          Add session
+        </button>
+      </div>
+
+      <!-- Day 1 -->
+      <div class="day-group">
+        <div class="day-hdr" style="padding-top:20px">
+          <span class="day-name">Friday, June 6</span>
+          <span class="day-meta">2 sessions · 1 break</span>
+        </div>
+        <div class="day-sessions">
+          <div class="c-row" onclick="openSheetC(1)">
+            <div class="c-row-body">
+              <div class="c-icon"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></div>
+              <div class="c-info">
+                <div class="c-title">Opening Keynote</div>
+                <div class="c-sub">9:00–10:30 AM · Dr. Sarah Ahmed · Main Hall</div>
+              </div>
+            </div>
+            <div class="c-stats">
+              <div class="c-stat">
+                <div class="c-stat-num">45<span style="color:var(--text-3);font-weight:400">/80</span></div>
+                <div class="c-stat-label">Signed up</div>
+              </div>
+              <div class="c-stat">
+                <div class="c-stat-num" style="color:var(--text-3)">—</div>
+                <div class="c-stat-label">Checked in</div>
+              </div>
+            </div>
+            <div class="c-hint-text">Click to view &amp; edit →</div>
+          </div>
+          <div class="c-row" onclick="openSheetC(2)">
+            <div class="c-row-body">
+              <div class="c-icon"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></div>
+              <div class="c-info">
+                <div class="c-title">Ethics of Knowledge Sharing</div>
+                <div class="c-sub">11:00 AM–12:00 PM · Imam Bilal Hassan · Ballroom A</div>
+              </div>
+            </div>
+            <div class="c-stats">
+              <div class="c-stat">
+                <div class="c-stat-num full">60<span style="color:var(--dest);font-weight:400;opacity:.6">/60</span></div>
+                <div class="c-stat-label">Full</div>
+              </div>
+              <div class="c-stat">
+                <div class="c-stat-num">18</div>
+                <div class="c-stat-label">Checked in</div>
+              </div>
+            </div>
+            <div class="c-hint-text">Click to view &amp; edit →</div>
+          </div>
+          <div class="c-row break-row">
+            <div class="c-row-body">
+              <div class="c-icon" style="background:transparent"><svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 8h1a4 4 0 0 1 0 8h-1" stroke="#9ca3af" stroke-width="1.8"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" stroke="#9ca3af" stroke-width="1.8"/></svg></div>
+              <div class="c-info">
+                <div class="c-title" style="color:var(--text-2)">Lunch Break</div>
+                <div class="c-sub">12:00–1:30 PM · Mezzanine Foyer · break</div>
+              </div>
+            </div>
+            <div class="b-actions" style="padding:0 12px"><button class="btn btn-sm btn-outline" style="font-size:12px" onclick="openSheetC(3)">Edit</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day 2 -->
+      <div class="day-group">
+        <div class="day-hdr" style="padding-top:20px">
+          <span class="day-name">Saturday, June 7</span>
+          <span class="day-meta">2 sessions · 1 break</span>
+        </div>
+        <div class="day-sessions">
+          <div class="c-row" onclick="openSheetC(4)">
+            <div class="c-row-body">
+              <div class="c-icon"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></div>
+              <div class="c-info">
+                <div class="c-title">Youth Leadership Workshop</div>
+                <div class="c-sub">9:00–10:15 AM · Yusuf Al-Rashid · Ballroom B</div>
+              </div>
+            </div>
+            <div class="c-stats">
+              <div class="c-stat"><div class="c-stat-num">31<span style="color:var(--text-3);font-weight:400">/40</span></div><div class="c-stat-label">Signed up</div></div>
+              <div class="c-stat"><div class="c-stat-num" style="color:var(--text-3)">—</div><div class="c-stat-label">Checked in</div></div>
+            </div>
+            <div class="c-hint-text">Click to view &amp; edit →</div>
+          </div>
+          <div class="c-row" onclick="openSheetC(5)">
+            <div class="c-row-body">
+              <div class="c-icon"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></div>
+              <div class="c-info">
+                <div class="c-title">Women in Philanthropy Panel</div>
+                <div class="c-sub">10:30–11:30 AM · Multiple speakers · Ballroom A</div>
+              </div>
+            </div>
+            <div class="c-stats">
+              <div class="c-stat"><div class="c-stat-num">72<span style="color:var(--text-3);font-weight:400">/80</span></div><div class="c-stat-label">Signed up</div></div>
+              <div class="c-stat"><div class="c-stat-num">31</div><div class="c-stat-label">Checked in</div></div>
+            </div>
+            <div class="c-hint-text">Click to view &amp; edit →</div>
+          </div>
+          <div class="c-row break-row">
+            <div class="c-row-body">
+              <div class="c-icon" style="background:transparent"><svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 8h1a4 4 0 0 1 0 8h-1" stroke="#9ca3af" stroke-width="1.8"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" stroke="#9ca3af" stroke-width="1.8"/></svg></div>
+              <div class="c-info"><div class="c-title" style="color:var(--text-2)">Coffee &amp; Conversation</div><div class="c-sub">11:30 AM–12:30 PM · break</div></div>
+            </div>
+            <div class="b-actions" style="padding:0 12px"><button class="btn btn-sm btn-outline" style="font-size:12px" onclick="openSheetC(6)">Edit</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day 3 -->
+      <div class="day-group">
+        <div class="day-hdr" style="padding-top:20px">
+          <span class="day-name">Sunday, June 8</span>
+          <span class="day-meta">2 sessions</span>
+        </div>
+        <div class="day-sessions">
+          <div class="c-row" onclick="openSheetC(7)">
+            <div class="c-row-body">
+              <div class="c-icon"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></div>
+              <div class="c-info">
+                <div class="c-title">Closing: Building Lasting Change</div>
+                <div class="c-sub">10:00–11:15 AM · Sheikh Omar Abdullah · Main Hall</div>
+              </div>
+            </div>
+            <div class="c-stats">
+              <div class="c-stat"><div class="c-stat-num">89<span style="color:var(--text-3);font-weight:400">/120</span></div><div class="c-stat-label">Signed up</div></div>
+              <div class="c-stat"><div class="c-stat-num" style="color:var(--text-3)">—</div><div class="c-stat-label">Checked in</div></div>
+            </div>
+            <div class="c-hint-text">Click to view &amp; edit →</div>
+          </div>
+          <div class="c-row" onclick="openSheetC(8)">
+            <div class="c-row-body">
+              <div class="c-icon"><svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="none"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></div>
+              <div class="c-info">
+                <div class="c-title">Zakat &amp; Community Finance</div>
+                <div class="c-sub">11:30 AM–12:30 PM · Dr. Aisha Rahman · Ballroom B</div>
+              </div>
+            </div>
+            <div class="c-stats">
+              <div class="c-stat"><div class="c-stat-num">23<span style="color:var(--text-3);font-weight:400">/50</span></div><div class="c-stat-label">Signed up</div></div>
+              <div class="c-stat"><div class="c-stat-num" style="color:var(--text-3)">—</div><div class="c-stat-label">Checked in</div></div>
+            </div>
+            <div class="c-hint-text">Click to view &amp; edit →</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:12px 32px 0"><button class="add-day-btn"><svg class="icon" width="11" height="11" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Add session</button></div>
+    </div>
+  </div><!-- /opt-c -->
+
+</div><!-- /shell -->
+
+<!-- ─── Shared sheet (B & C) ─── -->
+<div class="sheet-backdrop" id="sheet-backdrop" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-hdr">
+    <div class="sheet-hdr-info">
+      <div class="sheet-type-label" id="sheet-type-label">Session</div>
+      <div class="sheet-title" id="sheet-title">Opening Keynote</div>
+      <div class="sheet-speaker" id="sheet-speaker">Dr. Sarah Ahmed</div>
+    </div>
+    <button class="btn-icon" onclick="closeSheet()" style="flex-shrink:0;width:32px;height:32px;margin-top:2px">
+      <svg class="icon" width="16" height="16" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <!-- Tabs (only shown for Option C) -->
+  <div class="sheet-tabs-bar" id="sheet-tabs-bar">
+    <div class="sheet-tab active" data-stab="edit" onclick="switchSheetTab('edit')">Edit</div>
+    <div class="sheet-tab" data-stab="roster" onclick="switchSheetTab('roster')">Roster</div>
+  </div>
+  <!-- Edit tab -->
+  <div class="sheet-tab-content show" id="stab-edit">
+    <div class="sheet-form" id="sheet-form-inner">
+      <!-- injected by JS -->
+    </div>
+  </div>
+  <!-- Roster tab -->
+  <div class="sheet-tab-content" id="stab-roster">
+    <div class="sheet-section" id="sheet-roster-inner">
+      <!-- injected by JS -->
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-sm btn-outline" onclick="closeSheet()">Cancel</button>
+    <button class="btn btn-sm btn-primary" onclick="fakeSave()">Save changes</button>
+  </div>
+</div>
+
+<script>
+// ── Data ──
+const SESSIONS = {
+  1: { title:'Opening Keynote', speaker:'Dr. Sarah Ahmed', room:'Main Hall', time:'9:00 AM – 10:30 AM', day:'Friday, June 6', startT:'09:00', endT:'10:30', cap:80, signups:45, checkins:0, code:'OPEN', desc:'An exploration of community building in a fragmented world — what draws us together and how to sustain it across generations.', isBreak:false },
+  2: { title:'Ethics of Knowledge Sharing', speaker:'Imam Bilal Hassan', room:'Ballroom A', time:'11:00 AM – 12:00 PM', day:'Friday, June 6', startT:'11:00', endT:'12:00', cap:60, signups:60, checkins:18, code:'ETH1', desc:'How scholars navigated information asymmetry across generations — and what this means for us today.', isBreak:false },
+  3: { title:'Lunch Break', speaker:null, room:'Mezzanine Foyer', time:'12:00 – 1:30 PM', day:'Friday, June 6', startT:'12:00', endT:'13:30', cap:null, signups:0, checkins:0, code:null, desc:null, isBreak:true },
+  4: { title:'Youth Leadership Workshop', speaker:'Yusuf Al-Rashid', room:'Ballroom B', time:'9:00 – 10:15 AM', day:'Saturday, June 7', startT:'09:00', endT:'10:15', cap:40, signups:31, checkins:0, code:'YTH1', desc:'Practical frameworks for developing leadership in the next generation of community organizers.', isBreak:false },
+  5: { title:'Women in Philanthropy Panel', speaker:'Multiple speakers', room:'Ballroom A', time:'10:30 – 11:30 AM', day:'Saturday, June 7', startT:'10:30', endT:'11:30', cap:80, signups:72, checkins:31, code:'WPH1', desc:null, isBreak:false },
+  6: { title:'Coffee & Conversation', speaker:null, room:null, time:'11:30 AM – 12:30 PM', day:'Saturday, June 7', startT:'11:30', endT:'12:30', cap:null, signups:0, checkins:0, code:null, desc:null, isBreak:true },
+  7: { title:'Closing: Building Lasting Change', speaker:'Sheikh Omar Abdullah', room:'Main Hall', time:'10:00 – 11:15 AM', day:'Sunday, June 8', startT:'10:00', endT:'11:15', cap:120, signups:89, checkins:0, code:'CLO1', desc:'Reflections on the weekend and the road ahead for Young Muslims globally.', isBreak:false },
+  8: { title:'Zakat & Community Finance', speaker:'Dr. Aisha Rahman', room:'Ballroom B', time:'11:30 AM – 12:30 PM', day:'Sunday, June 8', startT:'11:30', endT:'12:30', cap:50, signups:23, checkins:0, code:'ZKT1', desc:'A practical guide to implementing Zakat programs at the local mosque level.', isBreak:false },
+}
+
+const ROSTER = [
+  {n:'Ahmad Karimi',i:'AK'},{n:'Fatima Mansour',i:'FM'},{n:'Omar Al-Rashid',i:'OR'},
+  {n:'Yusuf Bilal',i:'YB'},{n:'Zainab Hassan',i:'ZH'},{n:'Khadijah Taha',i:'KT'},
+  {n:'Ibrahim Saleh',i:'IS'},{n:'Leila Rahman',i:'LR'},{n:'Hassan Jabir',i:'HJ'},
+  {n:'Sarah Noor',i:'SN'},
+]
+
+// ── Option switching ──
+document.querySelectorAll('.ptab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const opt = btn.dataset.opt
+    document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    document.querySelectorAll('.desc-bar').forEach(d => d.classList.remove('show'))
+    document.getElementById('desc-' + opt).classList.add('show')
+    document.querySelectorAll('.opt-content').forEach(c => c.classList.remove('show'))
+    document.getElementById('opt-' + opt).classList.add('show')
+    // reset panel A state
+    if (opt === 'a') { clearPanelA() }
+  })
+})
+
+// ══════════════════════════════════════════
+// OPTION A — MASTER-DETAIL
+// ══════════════════════════════════════════
+let selectedSid = null
+let aEditMode = false
+
+function selectA(sid) {
+  selectedSid = sid
+  aEditMode = false
+  // update row highlights
+  document.querySelectorAll('#opt-a .a-row').forEach(r => {
+    r.classList.toggle('active', +r.dataset.sid === sid)
+  })
+  renderPanelAView(sid)
+}
+
+function clearPanelA() {
+  selectedSid = null
+  aEditMode = false
+  document.getElementById('a-empty').style.display = 'flex'
+  document.getElementById('a-panel-view').style.display = 'none'
+  document.getElementById('a-panel-edit').style.display = 'none'
+  document.querySelectorAll('#opt-a .a-row').forEach(r => r.classList.remove('active'))
+}
+
+function renderPanelAView(sid) {
+  const s = SESSIONS[sid]
+  const isFull = s.cap && s.signups >= s.cap
+  const pct = s.cap ? Math.round(s.signups / s.cap * 100) : 0
+  const rosterHtml = s.isBreak ? `<p style="font-size:13px;color:var(--text-3)">No roster — breaks have no signups.</p>` :
+    ROSTER.slice(0, 6).map(r => `
+      <div class="roster-item">
+        <div class="avatar">${r.i}</div>
+        <span class="roster-name">${r.n}</span>
+      </div>`).join('') + (s.signups > 6 ? `<p class="roster-more">+ ${s.signups - 6} more attendees</p>` : '')
+
+  document.getElementById('a-panel-view').innerHTML = `
+    <div class="panel-view">
+      <div class="panel-type">
+        <span>${s.isBreak ? 'Break' : 'Session'}</span>
+        ${!s.isBreak ? `<button class="btn btn-sm btn-outline" onclick="enterEditA(${sid})">
+          <svg class="icon" width="12" height="12" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" fill="none"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+          Edit
+        </button>` : ''}
+      </div>
+      <div class="panel-session-title">${s.title}</div>
+      <div class="panel-meta-grid">
+        <div class="pmg-cell"><div class="pmg-key">Day</div><div class="pmg-val">${s.day}</div></div>
+        <div class="pmg-cell"><div class="pmg-key">Time</div><div class="pmg-val">${s.startT} – ${s.endT}</div></div>
+        ${!s.isBreak ? `<div class="pmg-cell"><div class="pmg-key">Speaker</div><div class="pmg-val">${s.speaker||'—'}</div></div>` : ''}
+        <div class="pmg-cell"><div class="pmg-key">Room</div><div class="pmg-val">${s.room||'—'}</div></div>
+        ${!s.isBreak && s.code ? `<div class="pmg-cell" style="grid-column:span 1"><div class="pmg-key">Check-in code</div><div class="pmg-val mono">${s.code}</div></div>` : ''}
+      </div>
+      ${!s.isBreak && s.cap ? `<div class="cap-bar-wrap">
+        <div class="cap-bar-label"><span>${s.signups} signed up</span> <span>/ ${s.cap} capacity ${isFull ? '· <span style="color:var(--dest);font-weight:600">Full</span>' : ''}</span></div>
+        <div class="cap-bar-track"><div class="cap-bar-fill ${isFull?'full':''}" style="width:${pct}%"></div></div>
+      </div>` : ''}
+      ${s.desc ? `<div class="panel-desc">${s.desc}</div>` : ''}
+      <div class="panel-divider"></div>
+      <div class="panel-section-title">${s.isBreak ? 'No roster' : `Roster · ${s.signups} signed up`}</div>
+      <div class="roster-list">${rosterHtml}</div>
+    </div>
+  `
+
+  document.getElementById('a-empty').style.display = 'none'
+  document.getElementById('a-panel-view').style.display = 'block'
+  document.getElementById('a-panel-edit').style.display = 'none'
+}
+
+function enterEditA(sid) {
+  const s = SESSIONS[sid]
+  document.getElementById('a-panel-edit').innerHTML = `
+    <div class="panel-edit">
+      <div class="pedit-hdr">
+        <span class="pedit-title">Edit session</span>
+        <button class="btn btn-sm btn-ghost" onclick="exitEditA(${sid})">Cancel</button>
+      </div>
+      <div class="pedit-form">
+        <div class="form-row">
+          <label class="form-label">Title</label>
+          <input class="form-input" value="${s.title}">
+        </div>
+        <div class="form-row-2">
+          <div class="form-row">
+            <label class="form-label">Start</label>
+            <input class="form-input mono" type="time" value="${s.startT}">
+          </div>
+          <div class="form-row">
+            <label class="form-label">End</label>
+            <input class="form-input mono" type="time" value="${s.endT}">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-row">
+            <label class="form-label">Speaker</label>
+            <input class="form-input" value="${s.speaker||''}">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Room</label>
+            <input class="form-input" value="${s.room||''}">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-row">
+            <label class="form-label">Capacity</label>
+            <input class="form-input mono" type="number" value="${s.cap||''}">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Check-in code</label>
+            <input class="form-input mono" value="${s.code||''}">
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Description <span style="font-weight:400;color:var(--text-3)">(optional)</span></label>
+          <textarea class="form-input" rows="3">${s.desc||''}</textarea>
+        </div>
+      </div>
+      <div class="pedit-footer">
+        <button class="btn btn-sm btn-outline" onclick="exitEditA(${sid})">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="fakeSaveA(${sid})">Save changes</button>
+      </div>
+    </div>
+  `
+  document.getElementById('a-panel-view').style.display = 'none'
+  document.getElementById('a-panel-edit').style.display = 'block'
+}
+
+function exitEditA(sid) {
+  renderPanelAView(sid)
+}
+
+function fakeSaveA(sid) {
+  renderPanelAView(sid)
+  // brief flash on the row
+  const row = document.querySelector(`#opt-a .a-row[data-sid="${sid}"]`)
+  if(row) { row.style.background='rgba(22,163,74,.08)'; setTimeout(()=>{ row.style.background=''; selectA(sid) }, 800) }
+}
+
+// ══════════════════════════════════════════
+// SHEET (shared B & C)
+// ══════════════════════════════════════════
+let sheetMode = 'b' // 'b' or 'c'
+
+function buildSheetForm(s) {
+  return `
+    <div class="form-row">
+      <label class="form-label">Title</label>
+      <input class="form-input" value="${s.title}">
+    </div>
+    ${!s.isBreak ? `<div class="form-row-2">
+      <div class="form-row"><label class="form-label">Speaker</label><input class="form-input" value="${s.speaker||''}"></div>
+      <div class="form-row"><label class="form-label">Room</label><input class="form-input" value="${s.room||''}"></div>
+    </div>` : `<div class="form-row"><label class="form-label">Location <span style="font-weight:400;color:var(--text-3)">(optional)</span></label><input class="form-input" value="${s.room||''}"></div>`}
+    <div class="form-row-2">
+      <div class="form-row"><label class="form-label">Start</label><input class="form-input mono" type="time" value="${s.startT}"></div>
+      <div class="form-row"><label class="form-label">End</label><input class="form-input mono" type="time" value="${s.endT}"></div>
+    </div>
+    ${!s.isBreak ? `<div class="form-row-2">
+      <div class="form-row"><label class="form-label">Capacity</label><input class="form-input mono" type="number" value="${s.cap||''}"></div>
+      <div class="form-row"><label class="form-label">Check-in code</label><input class="form-input mono" value="${s.code||''}"></div>
+    </div>` : ''}
+    <div class="form-row">
+      <label class="form-label">Description <span style="font-weight:400;color:var(--text-3)">(optional)</span></label>
+      <textarea class="form-input" rows="3">${s.desc||''}</textarea>
+    </div>
+  `
+}
+
+function buildRosterHtml(s) {
+  if(s.isBreak) return `<p style="font-size:13px;color:var(--text-3)">No roster — breaks have no signups.</p>`
+  return `
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:12px">${s.signups} signed up · ${s.checkins} checked in</div>
+    <div class="roster-list">
+      ${ROSTER.slice(0,8).map(r=>`<div class="roster-item"><div class="avatar">${r.i}</div><span class="roster-name">${r.n}</span></div>`).join('')}
+      ${s.signups>8 ? `<p class="roster-more">+ ${s.signups-8} more</p>` : ''}
+    </div>
+  `
+}
+
+function openSheetB(sid) {
+  sheetMode = 'b'
+  const s = SESSIONS[sid]
+  document.getElementById('sheet-type-label').textContent = s.isBreak ? 'Break' : 'Session'
+  document.getElementById('sheet-title').textContent = s.title
+  document.getElementById('sheet-speaker').textContent = s.isBreak ? `${s.time} · ${s.room||''}` : `${s.speaker} · ${s.time}`
+  document.getElementById('sheet-tabs-bar').style.display = 'none'
+
+  // show just edit form + roster together (no tabs)
+  document.getElementById('stab-edit').classList.add('show')
+  document.getElementById('stab-roster').classList.remove('show')
+
+  document.getElementById('sheet-form-inner').innerHTML = buildSheetForm(s) +
+    `<div style="margin-top:4px;border-top:1px solid var(--border-subtle);padding-top:14px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px">Roster · ${s.signups} signed up</div>
+      ${buildRosterHtml(s)}
+    </div>`
+
+  document.getElementById('sheet-backdrop').classList.add('show')
+  document.getElementById('sheet').classList.add('open')
+}
+
+function openSheetC(sid) {
+  sheetMode = 'c'
+  const s = SESSIONS[sid]
+  document.getElementById('sheet-type-label').textContent = s.isBreak ? 'Break' : 'Session'
+  document.getElementById('sheet-title').textContent = s.title
+  document.getElementById('sheet-speaker').textContent = s.isBreak ? `${s.time}` : `${s.speaker} · ${s.time}`
+  document.getElementById('sheet-tabs-bar').style.display = 'flex'
+  switchSheetTab('edit')
+
+  document.getElementById('sheet-form-inner').innerHTML = buildSheetForm(s)
+  document.getElementById('sheet-roster-inner').innerHTML = buildRosterHtml(s)
+
+  document.getElementById('sheet-backdrop').classList.add('show')
+  document.getElementById('sheet').classList.add('open')
+}
+
+function switchSheetTab(tab) {
+  document.querySelectorAll('.sheet-tab').forEach(t => t.classList.toggle('active', t.dataset.stab === tab))
+  document.getElementById('stab-edit').classList.toggle('show', tab === 'edit')
+  document.getElementById('stab-roster').classList.toggle('show', tab === 'roster')
+}
+
+function closeSheet() {
+  document.getElementById('sheet-backdrop').classList.remove('show')
+  document.getElementById('sheet').classList.remove('open')
+}
+
+function fakeSave() {
+  closeSheet()
+}
+
+// Escape to close sheet
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet() })
+</script>
+</body>
+</html>

@@ -108,10 +108,26 @@ export function SessionPanel(props: Props) {
     return <ViewMode {...props} session={props.selectedSession} />
   }
   if (mode === 'edit' && props.selectedSession) {
-    return <FormMode {...props} session={props.selectedSession} isEdit />
+    // key forces remount when target session changes, resetting form state
+    // and firing FormMode's cleanup effect (which clears the dirty flag).
+    return (
+      <FormMode
+        key={`edit-${props.selectedSession.id}`}
+        {...props}
+        session={props.selectedSession}
+        isEdit
+      />
+    )
   }
   if (mode === 'create') {
-    return <FormMode {...props} session={null} isEdit={false} />
+    return (
+      <FormMode
+        key={`create-${props.createDefaultDate ?? 'default'}`}
+        {...props}
+        session={null}
+        isEdit={false}
+      />
+    )
   }
   if (mode === 'delete' && props.selectedSession) {
     return <DeleteMode {...props} session={props.selectedSession} />
@@ -324,6 +340,21 @@ function ViewMode({
   )
 }
 
+function shallowEqualForm(a: FormState, b: FormState): boolean {
+  return (
+    a.isBreak === b.isBreak &&
+    a.date === b.date &&
+    a.startTime === b.startTime &&
+    a.endTime === b.endTime &&
+    a.title === b.title &&
+    a.speaker === b.speaker &&
+    a.room === b.room &&
+    a.description === b.description &&
+    a.capacity === b.capacity &&
+    a.checkInCode === b.checkInCode
+  )
+}
+
 function FormMode({
   conference,
   session,
@@ -332,6 +363,7 @@ function FormMode({
   isEdit,
   onModeChange,
   onSaved,
+  onDirtyChange,
 }: Props & { session: AdminSession | null; isEdit: boolean }) {
   const router = useRouter()
 
@@ -364,6 +396,21 @@ function FormMode({
   useEffect(() => {
     if (!isEdit) titleRef.current?.focus()
   }, [isEdit])
+
+  // Track dirty state and report to parent so it can guard navigation away
+  // from an unsaved form (see ScheduleEditor's attemptNav).
+  const isDirty = useMemo(
+    () => !shallowEqualForm(form, initialForm),
+    [form, initialForm]
+  )
+  useEffect(() => {
+    onDirtyChange(isDirty)
+  }, [isDirty, onDirtyChange])
+  // On unmount, always clear — prevents a stale "dirty" flag after the form
+  // is replaced (save success, key-driven remount, etc.).
+  useEffect(() => {
+    return () => onDirtyChange(false)
+  }, [onDirtyChange])
 
   // rAF defers past Radix mount animation so scrollHeight is accurate
   useEffect(() => {

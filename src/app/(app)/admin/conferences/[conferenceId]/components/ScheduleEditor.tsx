@@ -2,15 +2,25 @@
 
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { Calendar, Coffee, Plus } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { decomposeTzIso } from '../../lib/datetime'
 import { SessionPanel, type PanelMode } from './SessionPanel'
 import type { AdminSession, ConferenceEditorView } from '../../types'
@@ -33,6 +43,19 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
     )
     const [createDefaultDate, setCreateDefaultDate] = useState<string | undefined>()
     const [pendingSavedId, setPendingSavedId] = useState<string | null>(null)
+    const [pendingNav, setPendingNav] = useState<(() => void) | null>(null)
+
+    // Track dirty state via a ref so attemptNav (called from the imperative
+    // handle and from stale closures) always reads the latest value.
+    const dirtyRef = useRef(false)
+    function handlePanelDirtyChange(dirty: boolean) {
+      dirtyRef.current = dirty
+    }
+
+    function attemptNav(action: () => void) {
+      if (dirtyRef.current) setPendingNav(() => action)
+      else action()
+    }
 
     // After a successful save (create or edit), router.refresh() repopulates
     // `view.sessions`. When the matching row arrives, flip the panel to view
@@ -47,19 +70,20 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
       }
     }, [sessions, pendingSavedId])
 
-    function openCreate(forDate?: string) {
-      setSelectedSession(null)
-      setCreateDefaultDate(forDate)
-      setMode('create')
-    }
+    // useCallback gives openCreate a stable identity so the imperative handle
+    // doesn't rebuild every render. Safe with empty deps: dirtyRef is a ref,
+    // and the setState calls are stable.
+    const openCreate = useCallback((forDate?: string) => {
+      const action = () => {
+        setSelectedSession(null)
+        setCreateDefaultDate(forDate)
+        setMode('create')
+      }
+      if (dirtyRef.current) setPendingNav(() => action)
+      else action()
+    }, [])
 
-    useImperativeHandle(
-      ref,
-      () => ({
-        openCreate: (date) => openCreate(date),
-      }),
-      []
-    )
+    useImperativeHandle(ref, () => ({ openCreate }), [openCreate])
 
     const groupedDays = useMemo(
       () => groupByDay(sessions, conference.timezone),
@@ -115,7 +139,7 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
                     selected={selectedSession?.id === s.id}
                     signupCount={signupCounts[s.id] ?? 0}
                     checkInCount={checkInCounts[s.id] ?? 0}
-                    onSelect={() => selectSession(s)}
+                    onSelect={() => attemptNav(() => selectSession(s))}
                   />
                 ))}
               </div>
@@ -142,9 +166,37 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
             onModeChange={changeMode}
             onSaved={(id) => setPendingSavedId(id)}
             onAfterDelete={afterDelete}
-            onDirtyChange={() => {}}
+            onDirtyChange={handlePanelDirtyChange}
           />
         </div>
+        <Dialog
+          open={pendingNav !== null}
+          onOpenChange={(open) => !open && setPendingNav(null)}
+        >
+          <DialogContent className="sm:max-w-[420px]">
+            <DialogHeader>
+              <DialogTitle>Discard unsaved changes?</DialogTitle>
+              <DialogDescription>
+                Your edits will be lost. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setPendingNav(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  const action = pendingNav
+                  setPendingNav(null)
+                  action?.()
+                }}
+              >
+                Discard changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }

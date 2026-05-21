@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { SessionPanel } from './SessionPanel'
 import { makeConference, makeSession } from './test-fixtures'
@@ -105,5 +105,30 @@ describe('SessionPanel', () => {
       />
     )
     expect(screen.getByLabelText(/title/i)).toHaveValue('')
+  })
+
+  it('disables delete button until the user types "delete"', () => {
+    const session = makeSession()
+    render(
+      <SessionPanel
+        conference={makeConference()}
+        sessions={[session]}
+        signupCounts={{}}
+        checkInCounts={{}}
+        mode="delete"
+        selectedSession={session}
+        createDefaultDate={undefined}
+        onModeChange={() => {}}
+        onSaved={() => {}}
+        onAfterDelete={() => {}}
+        onDirtyChange={() => {}}
+      />
+    )
+    const btn = screen.getByRole('button', { name: /delete session/i })
+    expect(btn).toBeDisabled()
+    fireEvent.change(screen.getByLabelText(/type delete to confirm/i), {
+      target: { value: 'delete' },
+    })
+    expect(btn).toBeEnabled()
   })
 })

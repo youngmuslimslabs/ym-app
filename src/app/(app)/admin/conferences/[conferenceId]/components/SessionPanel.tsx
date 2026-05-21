@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import { createSession, updateSession } from '../../client-actions'
+import { createSession, deleteSession, updateSession } from '../../client-actions'
 import {
   composeTzIso,
   dateRangeInclusive,
@@ -113,7 +113,9 @@ export function SessionPanel(props: Props) {
   if (mode === 'create') {
     return <FormMode {...props} session={null} isEdit={false} />
   }
-  // delete mode is added in Task 5
+  if (mode === 'delete' && props.selectedSession) {
+    return <DeleteMode {...props} session={props.selectedSession} />
+  }
   return <EmptyState />
 }
 
@@ -740,6 +742,103 @@ function FormMode({
         </Button>
         <Button size="sm" onClick={handleSubmit} disabled={pending}>
           {pending ? 'Saving…' : submitLabel}
+        </Button>
+      </footer>
+    </div>
+  )
+}
+
+function DeleteMode({
+  session,
+  signupCounts,
+  checkInCounts,
+  onModeChange,
+  onAfterDelete,
+}: Props & { session: AdminSession }) {
+  const router = useRouter()
+  const [confirm, setConfirm] = useState('')
+  const [pending, setPending] = useState(false)
+  const enabled = confirm.trim().toLowerCase() === 'delete' && !pending
+  const signups = signupCounts[session.id] ?? 0
+  const checkIns = checkInCounts[session.id] ?? 0
+
+  async function handleDelete() {
+    if (!enabled) return
+    setPending(true)
+    try {
+      const result = await deleteSession(session.id)
+      if (!result.success) {
+        toast.error(result.error ?? 'Could not delete')
+        return
+      }
+      toast.success(session.is_break ? 'Break deleted' : 'Session deleted')
+      onAfterDelete()
+      router.refresh()
+    } finally {
+      setPending(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <header className="p-6 pb-4 border-b">
+        <div className="text-xs uppercase tracking-widest text-destructive font-medium mb-2">
+          Confirm delete
+        </div>
+        <h2 className="text-lg font-semibold tracking-tight">
+          {session.is_break ? 'Delete this break?' : 'Delete this session?'}
+        </h2>
+        <p className="text-sm text-muted-foreground mt-2">
+          Permanently removes{' '}
+          <span className="text-foreground font-medium">
+            &ldquo;{session.title}&rdquo;
+          </span>
+          {!session.is_break && (signups > 0 || checkIns > 0) && (
+            <>
+              {' '}and {signups} signup{signups === 1 ? '' : 's'}
+              {checkIns > 0 && (
+                <>
+                  , {checkIns} check-in{checkIns === 1 ? '' : 's'}
+                </>
+              )}
+            </>
+          )}
+          . This cannot be undone.
+        </p>
+      </header>
+      <div className="px-6 py-4 flex-1">
+        <Label htmlFor="sp-confirm-delete" className="text-xs">
+          Type <span className="font-mono">delete</span> to confirm
+        </Label>
+        <Input
+          id="sp-confirm-delete"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          aria-label="Type delete to confirm"
+          className="mt-1 font-mono"
+          autoFocus
+        />
+      </div>
+      <footer className="px-6 py-3 border-t bg-muted/30 flex justify-end gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={pending}
+          onClick={() => onModeChange('view', session)}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={!enabled}
+          onClick={handleDelete}
+        >
+          {pending
+            ? 'Deleting…'
+            : session.is_break
+            ? 'Delete break'
+            : 'Delete session'}
         </Button>
       </footer>
     </div>

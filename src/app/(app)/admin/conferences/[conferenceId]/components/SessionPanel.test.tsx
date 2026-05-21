@@ -67,4 +67,43 @@ describe('SessionPanel', () => {
     expect(screen.getByRole('tab', { name: /^checked in/i })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /^not checked in/i })).toBeInTheDocument()
   })
+
+  it('prefills title input when entering edit mode', () => {
+    const session = makeSession({ title: 'Opening Keynote' })
+    render(
+      <SessionPanel
+        conference={makeConference()}
+        sessions={[session]}
+        signupCounts={{}}
+        checkInCounts={{}}
+        mode="edit"
+        selectedSession={session}
+        createDefaultDate={undefined}
+        onModeChange={() => {}}
+        onSaved={() => {}}
+        onAfterDelete={() => {}}
+        onDirtyChange={() => {}}
+      />
+    )
+    expect(screen.getByLabelText(/title/i)).toHaveValue('Opening Keynote')
+  })
+
+  it('shows blank form in create mode', () => {
+    render(
+      <SessionPanel
+        conference={makeConference()}
+        sessions={[]}
+        signupCounts={{}}
+        checkInCounts={{}}
+        mode="create"
+        selectedSession={null}
+        createDefaultDate="2026-06-02"
+        onModeChange={() => {}}
+        onSaved={() => {}}
+        onAfterDelete={() => {}}
+        onDirtyChange={() => {}}
+      />
+    )
+    expect(screen.getByLabelText(/title/i)).toHaveValue('')
+  })
 })

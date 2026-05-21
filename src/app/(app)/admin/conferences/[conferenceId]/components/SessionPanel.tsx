@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
+  AlertTriangle,
   Calendar,
   CheckCircle2,
   Clock,
@@ -14,10 +16,26 @@ import {
   X,
 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { decomposeTzIso } from '../../lib/datetime'
+import { cn } from '@/lib/utils'
+import { createSession, updateSession } from '../../client-actions'
+import {
+  composeTzIso,
+  dateRangeInclusive,
+  decomposeTzIso,
+} from '../../lib/datetime'
 import { loadRoster, type RosterEntry } from './loadRoster'
 import type { AdminSession, Conference } from '../../types'
 
@@ -38,13 +56,64 @@ interface Props {
   onDirtyChange: (dirty: boolean) => void
 }
 
+interface FormState {
+  isBreak: boolean
+  date: string
+  startTime: string
+  endTime: string
+  title: string
+  speaker: string
+  room: string
+  description: string
+  capacity: string // string so the input can be empty without becoming 0
+  checkInCode: string
+}
+
+function emptyForm(defaultDate: string, isBreak: boolean): FormState {
+  return {
+    isBreak,
+    date: defaultDate,
+    startTime: '09:00',
+    endTime: '10:00',
+    title: '',
+    speaker: '',
+    room: '',
+    description: '',
+    capacity: '',
+    checkInCode: '',
+  }
+}
+
+function fromSession(s: AdminSession, timezone: string): FormState {
+  const start = decomposeTzIso(s.start_at, timezone)
+  const end = decomposeTzIso(s.end_at, timezone)
+  return {
+    isBreak: s.is_break,
+    date: start.date,
+    startTime: start.time,
+    endTime: end.time,
+    title: s.title,
+    speaker: s.speaker ?? '',
+    room: s.room ?? '',
+    description: s.description ?? '',
+    capacity: s.capacity != null ? String(s.capacity) : '',
+    checkInCode: s.check_in_code ?? '',
+  }
+}
+
 export function SessionPanel(props: Props) {
   const { mode } = props
   if (mode === 'empty') return <EmptyState />
   if (mode === 'view' && props.selectedSession) {
     return <ViewMode {...props} session={props.selectedSession} />
   }
-  // edit / create / delete modes are added in later tasks
+  if (mode === 'edit' && props.selectedSession) {
+    return <FormMode {...props} session={props.selectedSession} isEdit />
+  }
+  if (mode === 'create') {
+    return <FormMode {...props} session={null} isEdit={false} />
+  }
+  // delete mode is added in Task 5
   return <EmptyState />
 }
 
@@ -249,6 +318,461 @@ function ViewMode({
           Edit
         </Button>
       </footer>
+    </div>
+  )
+}
+
+function FormMode({
+  conference,
+  session,
+  sessions,
+  createDefaultDate,
+  isEdit,
+  onModeChange,
+  onSaved,
+}: Props & { session: AdminSession | null; isEdit: boolean }) {
+  const router = useRouter()
+
+  const conferenceDays = useMemo(
+    () => dateRangeInclusive(conference.start_date, conference.end_date),
+    [conference.start_date, conference.end_date]
+  )
+  const initialForm = useMemo<FormState>(() => {
+    if (session) return fromSession(session, conference.timezone)
+    const fallbackDate =
+      createDefaultDate ?? conferenceDays[0] ?? conference.start_date
+    return emptyForm(fallbackDate, false)
+  }, [
+    session,
+    conference.timezone,
+    conferenceDays,
+    conference.start_date,
+    createDefaultDate,
+  ])
+
+  const [form, setForm] = useState<FormState>(initialForm)
+  const [pending, setPending] = useState(false)
+  const [touched, setTouched] = useState<Set<string>>(() => new Set())
+  const [attempted, setAttempted] = useState(false)
+  const descRef = useRef<HTMLTextAreaElement>(null)
+  const titleRef = useRef<HTMLInputElement>(null)
+
+  // Auto-focus title on create only — edit mode would steal focus from the
+  // user scanning existing values.
+  useEffect(() => {
+    if (!isEdit) titleRef.current?.focus()
+  }, [isEdit])
+
+  // rAF defers past Radix mount animation so scrollHeight is accurate
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      const el = descRef.current
+      if (!el) return
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight}px`
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [form.description])
+
+  function field<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function touch(key: string) {
+    setTouched((prev) => {
+      if (prev.has(key)) return prev
+      const next = new Set(prev)
+      next.add(key)
+      return next
+    })
+  }
+
+  const titleOk = form.title.trim().length > 0
+  const dateOk = conferenceDays.includes(form.date)
+  const startFmtOk = /^\d{2}:\d{2}$/.test(form.startTime)
+  const endFmtOk = /^\d{2}:\d{2}$/.test(form.endTime)
+  const endTimeOk = endFmtOk && startFmtOk && form.endTime > form.startTime
+  const capacityOk =
+    form.capacity === '' ||
+    (/^\d+$/.test(form.capacity.trim()) && Number(form.capacity) > 0)
+  const canSubmit = titleOk && dateOk && startFmtOk && endTimeOk && capacityOk
+
+  function showErr(key: string, ok: boolean): boolean {
+    return !ok && (attempted || touched.has(key))
+  }
+
+  // Non-blocking room conflict warning. Case-insensitive exact match.
+  const sessionId = session?.id ?? null
+  const roomConflict: AdminSession | null = useMemo(() => {
+    if (!form.room.trim()) return null
+    if (!startFmtOk || !endFmtOk || form.endTime <= form.startTime) return null
+    const startIso = composeTzIso(form.date, form.startTime, conference.timezone)
+    const endIso = composeTzIso(form.date, form.endTime, conference.timezone)
+    const roomLower = form.room.trim().toLowerCase()
+    return (
+      sessions.find(
+        (s) =>
+          s.id !== (sessionId ?? '') &&
+          !s.is_break &&
+          s.room != null &&
+          s.room.trim().toLowerCase() === roomLower &&
+          s.start_at < endIso &&
+          s.end_at > startIso
+      ) ?? null
+    )
+  }, [
+    form.room,
+    form.date,
+    form.startTime,
+    form.endTime,
+    conference.timezone,
+    sessionId,
+    sessions,
+    startFmtOk,
+    endFmtOk,
+  ])
+
+  async function handleSubmit() {
+    if (!canSubmit) {
+      setAttempted(true)
+      return
+    }
+    if (pending) return
+    setPending(true)
+    try {
+      const startIso = composeTzIso(form.date, form.startTime, conference.timezone)
+      const endIso = composeTzIso(form.date, form.endTime, conference.timezone)
+      const payload = {
+        conference_id: conference.id,
+        start_at: startIso,
+        end_at: endIso,
+        title: form.title.trim(),
+        description: form.description.trim() || null,
+        speaker: form.isBreak ? null : form.speaker.trim() || null,
+        room: form.room.trim() || null,
+        is_break: form.isBreak,
+        capacity:
+          form.isBreak || form.capacity.trim() === ''
+            ? null
+            : Number(form.capacity),
+        check_in_code: form.isBreak ? null : form.checkInCode.trim() || null,
+      }
+
+      const result = isEdit
+        ? await updateSession(session!.id, payload)
+        : await createSession(payload)
+
+      if (!result.success) {
+        toast.error(result.error ?? 'Could not save session')
+        return
+      }
+      toast.success(
+        isEdit
+          ? form.isBreak
+            ? 'Break updated'
+            : 'Session updated'
+          : form.isBreak
+          ? 'Break added'
+          : 'Session added'
+      )
+      const savedId = isEdit
+        ? session!.id
+        : (result as { success: true; id: string }).id
+      onSaved(savedId)
+      router.refresh()
+    } finally {
+      setPending(false)
+    }
+  }
+
+  function handleCancel() {
+    if (isEdit && session) onModeChange('view', session)
+    else onModeChange('empty', null)
+  }
+
+  const heading = isEdit
+    ? form.isBreak
+      ? 'Edit break'
+      : 'Edit session'
+    : form.isBreak
+    ? 'New break'
+    : 'New session'
+  const submitLabel = isEdit
+    ? 'Save changes'
+    : form.isBreak
+    ? 'Add break'
+    : 'Add session'
+
+  return (
+    <div className="flex flex-col h-full">
+      <header className="p-6 pb-4 border-b">
+        <h2 className="text-lg font-semibold tracking-tight">{heading}</h2>
+        {dateOk && (
+          <p className="text-sm text-muted-foreground mt-1">
+            {format(parseISO(form.date), 'EEEE, MMMM d')}
+          </p>
+        )}
+      </header>
+
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
+        <ModeToggle
+          isBreak={form.isBreak}
+          onToggle={() => field('isBreak', !form.isBreak)}
+        />
+
+        <div>
+          <Label className="text-xs">Day</Label>
+          <Select value={form.date} onValueChange={(v) => field('date', v)}>
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {conferenceDays.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {format(parseISO(d), 'EEEE, MMMM d')}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="sp-start" className="text-xs">
+              Start
+            </Label>
+            <Input
+              id="sp-start"
+              type="time"
+              value={form.startTime}
+              onChange={(e) => field('startTime', e.target.value)}
+              onBlur={() => touch('startTime')}
+              className={cn(
+                'mt-1 font-mono',
+                showErr('startTime', startFmtOk) &&
+                  'border-destructive focus-visible:ring-destructive'
+              )}
+            />
+            {showErr('startTime', startFmtOk) && (
+              <p className="text-xs text-destructive mt-1">
+                Enter a valid start time.
+              </p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="sp-end" className="text-xs">
+              End
+            </Label>
+            <Input
+              id="sp-end"
+              type="time"
+              value={form.endTime}
+              onChange={(e) => field('endTime', e.target.value)}
+              onBlur={() => touch('endTime')}
+              className={cn(
+                'mt-1 font-mono',
+                showErr('endTime', endTimeOk) &&
+                  'border-destructive focus-visible:ring-destructive'
+              )}
+            />
+            {showErr('endTime', endTimeOk) && (
+              <p className="text-xs text-destructive mt-1">
+                End must be after start.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="sp-title" className="text-xs">
+            Title
+          </Label>
+          <Input
+            id="sp-title"
+            ref={titleRef}
+            value={form.title}
+            onChange={(e) => field('title', e.target.value)}
+            onBlur={() => touch('title')}
+            placeholder={
+              form.isBreak
+                ? 'Coffee & Conversation'
+                : 'The Ethics of Community Building'
+            }
+            className={cn(
+              'mt-1',
+              showErr('title', titleOk) &&
+                'border-destructive focus-visible:ring-destructive'
+            )}
+          />
+          {showErr('title', titleOk) && (
+            <p className="text-xs text-destructive mt-1">Title is required.</p>
+          )}
+        </div>
+
+        {!form.isBreak && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="sp-speaker" className="text-xs">
+                Speaker
+              </Label>
+              <Input
+                id="sp-speaker"
+                value={form.speaker}
+                onChange={(e) => field('speaker', e.target.value)}
+                placeholder="Dr. Sameer Ansari"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="sp-room" className="text-xs">
+                Room
+              </Label>
+              <Input
+                id="sp-room"
+                value={form.room}
+                onChange={(e) => field('room', e.target.value)}
+                placeholder="Ballroom A"
+                className="mt-1"
+              />
+              {roomConflict && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3 shrink-0" />
+                  Overlaps with &ldquo;{roomConflict.title}&rdquo; in this room.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {form.isBreak && (
+          <div>
+            <Label htmlFor="sp-room-break" className="text-xs">
+              Location{' '}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </Label>
+            <Input
+              id="sp-room-break"
+              value={form.room}
+              onChange={(e) => field('room', e.target.value)}
+              placeholder="Mezzanine Foyer"
+              className="mt-1"
+            />
+          </div>
+        )}
+
+        <div>
+          <Label htmlFor="sp-description" className="text-xs">
+            Description{' '}
+            <span className="text-muted-foreground font-normal">
+              (optional)
+            </span>
+          </Label>
+          <Textarea
+            ref={descRef}
+            id="sp-description"
+            value={form.description}
+            onChange={(e) => field('description', e.target.value)}
+            className="mt-1 resize-none overflow-hidden"
+            style={{ minHeight: '4rem' }}
+          />
+        </div>
+
+        {!form.isBreak && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="sp-capacity" className="text-xs">
+                Capacity{' '}
+                <span className="text-muted-foreground font-normal">
+                  (optional)
+                </span>
+              </Label>
+              <Input
+                id="sp-capacity"
+                type="number"
+                min={1}
+                value={form.capacity}
+                onChange={(e) => field('capacity', e.target.value)}
+                onBlur={() => touch('capacity')}
+                placeholder="80"
+                className={cn(
+                  'mt-1 tabular-nums',
+                  showErr('capacity', capacityOk) &&
+                    'border-destructive focus-visible:ring-destructive'
+                )}
+              />
+              {showErr('capacity', capacityOk) && (
+                <p className="text-xs text-destructive mt-1">
+                  Must be a whole number greater than 0.
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="sp-code" className="text-xs">
+                Check-in code{' '}
+                <span className="text-muted-foreground font-normal">
+                  (optional)
+                </span>
+              </Label>
+              <Input
+                id="sp-code"
+                value={form.checkInCode}
+                onChange={(e) =>
+                  field('checkInCode', e.target.value.slice(0, 15))
+                }
+                placeholder="e.g. GATE, 7291"
+                className="mt-1 font-mono tracking-widest"
+              />
+              {form.checkInCode.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1 text-right tabular-nums">
+                  {form.checkInCode.length}/15
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <footer className="px-6 py-3 border-t bg-muted/30 flex justify-end gap-2">
+        <Button variant="ghost" size="sm" disabled={pending} onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button size="sm" onClick={handleSubmit} disabled={pending}>
+          {pending ? 'Saving…' : submitLabel}
+        </Button>
+      </footer>
+    </div>
+  )
+}
+
+function ModeToggle({
+  isBreak,
+  onToggle,
+}: {
+  isBreak: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="rounded-lg border bg-muted/40 p-3 flex items-center gap-3">
+      <div className="rounded-full bg-muted p-2">
+        {isBreak ? (
+          <Coffee className="w-4 h-4 text-muted-foreground" />
+        ) : (
+          <Users className="w-4 h-4 text-muted-foreground" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">{isBreak ? 'Break' : 'Session'}</p>
+        <p className="text-xs text-muted-foreground">
+          {isBreak
+            ? 'Information only — no signup or capacity'
+            : 'Attendees can sign up and check in'}
+        </p>
+      </div>
+      <Button variant="ghost" size="sm" onClick={onToggle} type="button">
+        {isBreak ? 'Make session' : 'Make break'}
+      </Button>
     </div>
   )
 }

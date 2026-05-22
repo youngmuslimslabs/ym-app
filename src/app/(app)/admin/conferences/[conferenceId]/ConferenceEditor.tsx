@@ -2,11 +2,12 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
   MapPin,
+  Plus,
 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
@@ -27,7 +28,7 @@ import { ConferenceStatusBadge } from '../components/ConferenceStatusBadge'
 import { TypeToConfirmDialog } from '../components/TypeToConfirmDialog'
 import { deleteConference, publishConference } from '../client-actions'
 import { ConferenceInfoForm } from './components/ConferenceInfoForm'
-import { ScheduleEditor } from './components/ScheduleEditor'
+import { ScheduleEditor, type ScheduleEditorHandle } from './components/ScheduleEditor'
 import { AttendeePicker } from './components/AttendeePicker'
 import { AdminFeedbackTab } from './components/AdminFeedbackTab'
 import type { ConferenceEditorView } from '../types'
@@ -45,6 +46,7 @@ export function ConferenceEditor({ initialView }: Props) {
   const [publishOpen, setPublishOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletePending, setDeletePending] = useState(false)
+  const scheduleRef = useRef<ScheduleEditorHandle>(null)
 
   async function handlePublish() {
     if (publishPending) return
@@ -122,6 +124,13 @@ export function ConferenceEditor({ initialView }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              onClick={() => scheduleRef.current?.openCreate()}
+            >
+              <Plus className="w-4 h-4" />
+              Add session
+            </Button>
             {isDraft && (
               <TooltipProvider>
                 <Tooltip>
@@ -174,7 +183,7 @@ export function ConferenceEditor({ initialView }: Props) {
           />
         </TabsContent>
         <TabsContent value="schedule" className="py-6">
-          <ScheduleEditor view={initialView} />
+          <ScheduleEditor ref={scheduleRef} view={initialView} />
         </TabsContent>
         <TabsContent value="attendees" className="py-6">
           <AttendeePicker

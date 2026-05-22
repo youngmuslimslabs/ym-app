@@ -190,7 +190,7 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
     }
 
     return (
-      <div className="grid grid-cols-2 min-h-[640px] border rounded-lg overflow-hidden">
+      <div className="grid grid-cols-2 h-full border-t overflow-hidden">
         <div className="border-r overflow-y-auto bg-muted/40">
           {groupedDays.map(({ date, sessions: daySessions }) => (
             <section key={date} className="pb-4 [&:not(:first-child)]:pt-2">

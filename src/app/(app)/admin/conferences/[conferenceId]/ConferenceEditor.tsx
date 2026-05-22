@@ -83,8 +83,12 @@ export function ConferenceEditor({ initialView }: Props) {
   }
 
   return (
-    <div>
-      <header className="px-6 md:px-8 pt-10 md:pt-12 pb-5 border-b">
+    // Lock to viewport on desktop so the schedule grid + tab scrollers stay
+    // inside the viewport. Below md, fall back to natural document scroll —
+    // AppShell renders a mobile header above us that would otherwise push
+    // the bottom of the page off-screen.
+    <div className="flex flex-col md:h-dvh md:overflow-hidden">
+      <header className="px-6 md:px-8 pt-10 md:pt-12 pb-5 border-b shrink-0">
         <Link
           href="/admin/conferences"
           className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-3"
@@ -152,40 +156,42 @@ export function ConferenceEditor({ initialView }: Props) {
         </div>
       </header>
 
-      <Tabs defaultValue="schedule" className="px-6 md:px-8 pt-6">
-        <TabsList>
-          <TabsTrigger value="info">
-            Info
-          </TabsTrigger>
-          <TabsTrigger value="schedule">
-            Schedule
-          </TabsTrigger>
-          <TabsTrigger value="attendees">
-            Attendees
-            <span className="ml-1.5 text-muted-foreground tabular-nums">
-              {invitedCount}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="feedback">
-            Feedback
-            {feedbackCount > 0 && (
+      <Tabs defaultValue="schedule" className="flex-1 flex flex-col min-h-0">
+        <div className="px-6 md:px-8 pt-6 shrink-0">
+          <TabsList>
+            <TabsTrigger value="info">
+              Info
+            </TabsTrigger>
+            <TabsTrigger value="schedule">
+              Schedule
+            </TabsTrigger>
+            <TabsTrigger value="attendees">
+              Attendees
               <span className="ml-1.5 text-muted-foreground tabular-nums">
-                {feedbackCount}
+                {invitedCount}
               </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
+            </TabsTrigger>
+            <TabsTrigger value="feedback">
+              Feedback
+              {feedbackCount > 0 && (
+                <span className="ml-1.5 text-muted-foreground tabular-nums">
+                  {feedbackCount}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="info" className="py-6">
+        <TabsContent value="info" className="py-6 px-6 md:px-8 overflow-y-auto flex-1 min-h-0 mt-0">
           <ConferenceInfoForm
             conference={conference}
             onDeleteClick={() => setDeleteOpen(true)}
           />
         </TabsContent>
-        <TabsContent value="schedule" className="py-6">
+        <TabsContent value="schedule" className="flex-1 min-h-0 mt-0">
           <ScheduleEditor ref={scheduleRef} view={initialView} />
         </TabsContent>
-        <TabsContent value="attendees" className="py-6">
+        <TabsContent value="attendees" className="py-6 px-6 md:px-8 overflow-y-auto flex-1 min-h-0 mt-0">
           <AttendeePicker
             conferenceId={conference.id}
             people={initialView.attendees.people}
@@ -193,7 +199,7 @@ export function ConferenceEditor({ initialView }: Props) {
             invitedUserIds={initialView.attendees.invitedUserIds}
           />
         </TabsContent>
-        <TabsContent value="feedback" className="py-6">
+        <TabsContent value="feedback" className="py-6 px-6 md:px-8 overflow-y-auto flex-1 min-h-0 mt-0">
           <AdminFeedbackTab
             sessions={initialView.sessions}
             feedbackBySession={initialView.feedbackBySession}

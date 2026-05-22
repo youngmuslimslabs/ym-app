@@ -46,11 +46,20 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
     const [pendingNav, setPendingNav] = useState<(() => void) | null>(null)
 
     // Track dirty state via a ref so attemptNav (called from the imperative
-    // handle and from stale closures) always reads the latest value.
+    // handle and from stale closures) always reads the latest value. The
+    // callback must be stable identity: SessionPanel's cleanup effect lists
+    // it in deps, and an inline arrow would re-fire on every parent render —
+    // briefly clearing the dirty flag mid-form and bypassing the guard.
     const dirtyRef = useRef(false)
-    function handlePanelDirtyChange(dirty: boolean) {
+    const handlePanelDirtyChange = useCallback((dirty: boolean) => {
       dirtyRef.current = dirty
-    }
+    }, [])
+
+    // Monotonic nonce: bumped on every openCreate so the create-mode FormMode
+    // remounts even when the same default date is reused. Without this, double-
+    // clicking the header "Add session" with the same date would keep the prior
+    // form's half-typed state.
+    const [createNonce, setCreateNonce] = useState(0)
 
     function attemptNav(action: () => void) {
       if (dirtyRef.current) setPendingNav(() => action)
@@ -60,6 +69,10 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
     // After a successful save (create or edit), router.refresh() repopulates
     // `view.sessions`. When the matching row arrives, flip the panel to view
     // mode against the fresh reference so the user sees the latest values.
+    // TODO: if the saved row never appears (RLS scope change, server filtering,
+    // refresh failure), pendingSavedId sits forever and the panel stays on the
+    // form. Add a ~3s timeout fallback that clears the id and shows a "saved,
+    // reload to see it" toast.
     useEffect(() => {
       if (!pendingSavedId) return
       const fresh = sessions.find((s) => s.id === pendingSavedId)
@@ -77,6 +90,7 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
       const action = () => {
         setSelectedSession(null)
         setCreateDefaultDate(forDate)
+        setCreateNonce((n) => n + 1)
         setMode('create')
       }
       if (dirtyRef.current) setPendingNav(() => action)
@@ -105,15 +119,73 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
       setMode('empty')
     }
 
-    // Empty conference: only the conference-level empty state. Don't also
-    // render SessionPanel — its "Select a session" message would stack below.
-    if (sessions.length === 0 && mode !== 'create') {
+    const panel = (
+      <SessionPanel
+        conference={conference}
+        sessions={sessions}
+        signupCounts={signupCounts}
+        checkInCounts={checkInCounts}
+        mode={mode}
+        selectedSession={selectedSession}
+        createDefaultDate={createDefaultDate}
+        createNonce={createNonce}
+        onModeChange={changeMode}
+        onSaved={(id) => setPendingSavedId(id)}
+        onAfterDelete={afterDelete}
+        onDirtyChange={handlePanelDirtyChange}
+      />
+    )
+
+    const discardDialog = (
+      <Dialog
+        open={pendingNav !== null}
+        onOpenChange={(open) => !open && setPendingNav(null)}
+      >
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Discard unsaved changes?</DialogTitle>
+            <DialogDescription>
+              Your edits will be lost. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPendingNav(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                const action = pendingNav
+                setPendingNav(null)
+                action?.()
+              }}
+            >
+              Discard changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+
+    // Empty conference: just the conference-level empty state (no panel) until
+    // the user clicks "Add first" and enters create mode — then render the form
+    // full-width since there's nothing to put in the left pane.
+    if (sessions.length === 0) {
       return (
-        <div className="py-8">
-          <EmptyConferenceState
-            onAdd={() => openCreate(conference.start_date)}
-          />
-        </div>
+        <>
+          {mode === 'create' ? (
+            <div className="max-w-2xl mx-auto border rounded-lg overflow-hidden min-h-[640px] flex flex-col bg-background">
+              {panel}
+            </div>
+          ) : (
+            <div className="py-8">
+              <EmptyConferenceState
+                onAdd={() => openCreate(conference.start_date)}
+              />
+            </div>
+          )}
+          {discardDialog}
+        </>
       )
     }
 
@@ -130,7 +202,7 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
                   {summarizeDay(daySessions)}
                 </span>
               </div>
-              <div className="px-[18px] flex flex-col gap-1.5">
+              <div className="mx-5 flex flex-col gap-1.5">
                 {daySessions.map((s) => (
                   <SessionRow
                     key={s.id}
@@ -142,61 +214,20 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
                     onSelect={() => attemptNav(() => selectSession(s))}
                   />
                 ))}
+                <button
+                  type="button"
+                  onClick={() => openCreate(date)}
+                  className="mt-1 rounded-md border border-dashed px-3 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-card hover:border-muted-foreground/60 flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add on {format(parseISO(date), 'EEEE')}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => openCreate(date)}
-                className="mx-[18px] mt-2.5 w-[calc(100%-36px)] rounded-md border border-dashed px-3 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-card hover:border-muted-foreground/60 inline-flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <Plus className="w-3 h-3" />
-                Add on {format(parseISO(date), 'EEEE')}
-              </button>
             </section>
           ))}
         </div>
-        <div className="bg-background flex flex-col">
-          <SessionPanel
-            conference={conference}
-            sessions={sessions}
-            signupCounts={signupCounts}
-            checkInCounts={checkInCounts}
-            mode={mode}
-            selectedSession={selectedSession}
-            createDefaultDate={createDefaultDate}
-            onModeChange={changeMode}
-            onSaved={(id) => setPendingSavedId(id)}
-            onAfterDelete={afterDelete}
-            onDirtyChange={handlePanelDirtyChange}
-          />
-        </div>
-        <Dialog
-          open={pendingNav !== null}
-          onOpenChange={(open) => !open && setPendingNav(null)}
-        >
-          <DialogContent className="sm:max-w-[420px]">
-            <DialogHeader>
-              <DialogTitle>Discard unsaved changes?</DialogTitle>
-              <DialogDescription>
-                Your edits will be lost. This cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setPendingNav(null)}>
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  const action = pendingNav
-                  setPendingNav(null)
-                  action?.()
-                }}
-              >
-                Discard changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <div className="bg-background flex flex-col">{panel}</div>
+        {discardDialog}
       </div>
     )
   }
@@ -259,7 +290,7 @@ function SessionRow({
           : 'border-transparent hover:bg-muted/60 hover:border-border/60'
       )}
     >
-      <div className="font-mono text-[10.5px] text-muted-foreground w-[62px] py-3.5 px-2.5 pl-4 text-right leading-tight flex flex-col justify-center shrink-0">
+      <div className="font-mono text-[11px] text-muted-foreground w-[62px] py-3.5 px-2.5 pl-4 text-right leading-tight flex flex-col justify-center shrink-0">
         <div>{startWall}</div>
         <div className="opacity-70">{endWall}</div>
       </div>
@@ -347,6 +378,8 @@ interface DayGroup {
   sessions: AdminSession[]
 }
 
+// Relies on `sessions` being sorted by start_at ascending (data.ts orders it).
+// Day keys are sorted defensively; within-day order is preserved from input.
 function groupByDay(sessions: AdminSession[], timezone: string): DayGroup[] {
   const map = new Map<string, AdminSession[]>()
   for (const s of sessions) {

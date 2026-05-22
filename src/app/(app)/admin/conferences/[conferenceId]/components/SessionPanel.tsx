@@ -50,6 +50,9 @@ interface Props {
   mode: PanelMode
   selectedSession: AdminSession | null
   createDefaultDate: string | undefined
+  // Bumped by the parent on each openCreate so the create-mode FormMode
+  // remounts even when consecutive opens reuse the same default date.
+  createNonce?: number
   onModeChange: (mode: PanelMode, session?: AdminSession | null) => void
   onSaved: (id: string) => void
   onAfterDelete: () => void
@@ -120,9 +123,11 @@ export function SessionPanel(props: Props) {
     )
   }
   if (mode === 'create') {
+    // Nonce in the key forces remount on each openCreate, even when the
+    // default date doesn't change (e.g., header "Add session" double-click).
     return (
       <FormMode
-        key={`create-${props.createDefaultDate ?? 'default'}`}
+        key={`create-${props.createNonce ?? 0}`}
         {...props}
         session={null}
         isEdit={false}

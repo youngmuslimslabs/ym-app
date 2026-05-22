@@ -1,8 +1,10 @@
 'use client'
 
 import Script from 'next/script'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { useState, useEffect, useCallback } from 'react'
+
+const supabase = createClient()
 
 const ALLOWED_DOMAIN = 'youngmuslims.com'
 

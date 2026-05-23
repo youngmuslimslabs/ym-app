@@ -36,6 +36,7 @@ All profile list sections use `ExpandableCardList` → `ExpandableCard` and must
 
 ## State Management
 - **React Context** for multi-page state (OnboardingContext)
+- **React Context** for cross-sibling mode flags on a single page — see `ProfileModeContext` (`isEditable`) used by `/profile` (edit) and `/people/[id]` (read-only). Prefer this over prop-drilling a flag through every section component.
 - **Custom Hooks** for single-page form state (useProfileForm)
 - Server Components + prop drilling for simple cases
 

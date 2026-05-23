@@ -59,6 +59,27 @@
 - [ ] Mobile responsiveness
 - [ ] Accessibility audit (keyboard navigation, screen readers)
 
+### A11y followups (carried over from 2026-02-16 audit)
+
+- [ ] **Step 1 Select trigger — Globe icon overlap.** Globe is absolutely positioned at `left-3 z-10`; add `pointer-events-none` (or move inside the trigger) so it doesn't intercept taps. (`src/app/onboarding/step1-personal-info.tsx:188`)
+- [ ] **QuickActionCard focus ring is on the wrong element.** `focus-visible:ring-2` lives on the Card but the inner `<Link>` is what gets focus. Move the ring to the Link, or hoist the focus styles. (`src/components/home/QuickActionCard.tsx:28`)
+- [ ] **PersonCard uses `role="link"` on a `<div>`.** Works for keyboard via `tabIndex` + `onKeyDown`, but a real `<a>` gives native right-click / open-in-new-tab and screen-reader semantics for free. (`src/app/(app)/people/components/PersonCard.tsx:40`)
+
+### Design strategy decisions (need product call, not engineering)
+
+These came out of the 2026-02-16 audit as "the app feels boring" — none are bugs, all need a direction call before implementation:
+
+- [ ] **Secondary accent color.** Blue alone is one-note. Warm (amber/gold) vs growth (teal) — pick one and add the token.
+- [ ] **Display font for hero moments.** Login title, onboarding headings, page headers — Geist Black variant, or a real display font.
+- [ ] **Card surface depth.** Default shadows on cards (not just on hover); subtle page-bg vs card-bg distinction beyond the 1% delta already in place.
+- [ ] **PersonCard gradient avatars.** Hash name → pick from a palette. Cheap visual lift for the People directory.
+- [ ] **Empty-state illustrations.** Lucide-in-circle is fine but flat. Decide whether to invest in SVG illustrations or hold the line on icon-only.
+- [ ] **Branded loading states.** PageLoader (pulsing favicon) is functional but forgettable.
+
+### Dark mode
+
+- [ ] **Wire up dark mode.** `darkMode: ["class"]` is configured in `tailwind.config.js` but nothing adds the `dark` class to `<html>`. Add a system-preference detector or a theme toggle. All OKLCH tokens already have dark variants in `globals.css`.
+
 ### Progressive Web App (PWA)
 - [ ] Test standalone mode behavior on iOS Safari
 - [ ] Consider splash screen configuration

@@ -216,3 +216,40 @@
 - **Current issue:** Every step looks identical (monotonous layout)
 - **Color:** Currently pure grayscale—consider adding one accent color
 - **Typography:** Using default font-sans—consider a display font for headings
+
+---
+
+## Admin Schedule Rebuild — Code Review Findings (2026-05-22)
+
+> Findings from a code review of `feature/admin-rebuild` before merge. Grouped by severity. Each item: short description, then file:line.
+
+### Silent data loss (fix before merge)
+
+- [ ] **Tab switch destroys unsaved form edits.** User edits a session, clicks Info/Attendees/Feedback — `<TabsContent>` unmounts `ScheduleEditor` entirely, FormMode's cleanup fires `onDirtyChange(false)`, no prompt. (`src/app/(app)/admin/conferences/[conferenceId]/ConferenceEditor.tsx:191`)
+- [ ] **FormMode Cancel button bypasses the dirty guard.** The most common discard path calls `onModeChange` directly with no confirmation, defeating the entire dirty-tracking system. (`SessionPanel.tsx:542`)
+- [ ] **`shallowEqualForm` doesn't trim, but submit does** → after saving e.g. `'  Title  '` the server returns `'Title'`, `initialForm` updates, `form` still has the padded original, isDirty stays true forever. Every later row click pops a spurious discard dialog. (`SessionPanel.tsx:348`)
+- [ ] **`attemptNav` silently overwrites a queued `pendingNav`.** Two row clicks before dismissing the discard dialog → first nav intent dropped, no UI hint. (`ScheduleEditor.tsx:64`)
+
+### Visible regressions
+
+- [ ] **Header "Add session" button no-ops on Info / Attendees / Feedback tabs.** Radix unmounts inactive TabsContent so `scheduleRef.current` is null; the optional chain swallows the click. Either auto-switch to Schedule first, or hide the button. (`ConferenceEditor.tsx:133`)
+- [ ] **Hardcoded `grid grid-cols-2` with no responsive layout.** Replaces the old mobile Sheet + desktop Dialog combo with a desktop-only two-column layout. CLAUDE.md mandates 375/393/430px testing. (`ScheduleEditor.tsx:193`)
+- [ ] **Focus regression on every mode transition except create-mode title.** Old Dialog provided auto-focus; the inline panel only focuses on create. view→edit, edit→view via Cancel, delete→view via Cancel all drop focus to `<body>`. (`SessionPanel.tsx:401`)
+
+### Correctness bugs (rare windows, real impact)
+
+- [ ] **`composeTzIso` DST spring-forward off-by-one writes the wrong UTC instant to the DB.** Documented as a "KNOWN LIMITATION" in the source; `SessionPanel.handleSubmit` calls it directly. Window: 02:00–07:00 wall clock on the second Sunday of March, US tz only. Fix sketch lives in `datetime.ts:16-18`; a pinned `it.skip` is waiting in `datetime.test.ts`. (`src/app/(app)/admin/conferences/lib/datetime.ts:19`)
+- [ ] **`roomConflict` ISO format mismatch creates false-positive overlap warnings.** DB timestamps come back as `+00:00`, freshly composed values are `.000Z`; char 19 ('+' vs '.') makes back-to-back sessions falsely flag as overlapping. Use numeric instant compare (`Date.parse`) or normalize both sides to `.000Z`. (`SessionPanel.tsx:473`)
+- [ ] **`pendingSavedId` effect can clobber user's deliberate navigation between save and refresh.** Same effect also pops the saved row into view after a Cancel-post-save. Track whether the user has navigated away (or made a fresh selection) since the save fired, and clear `pendingSavedId` in that case. (`ScheduleEditor.tsx:79`)
+- [ ] **Dirty stays true after a successful save until the refresh arrives** → spurious discard dialog if the user clicks another row in the ~200-500ms window. Clear the dirty flag inside `handleSubmit` on success, or have the parent reset it when `pendingSavedId` is set. (`SessionPanel.tsx:411`)
+- [ ] **`loadRoster` drops users who have a check-in but no signup.** ViewMode Stat panel shows "Checked in: 1" while the roster tab shows 0 attendees — admin can't see who actually checked in. Union signups+check-ins as the keyset. (`loadRoster.ts:49`)
+- [ ] **DeleteMode async promise not cancelled on unmount** — Cancel mid-delete still fires `onAfterDelete` against the (now-stale) parent, yanking the user off whatever page they navigated to. Add a `useRef` cancellation guard. (`SessionPanel.tsx:821`)
+
+### Smaller / latent
+
+- [ ] **`dateOk` silently disables Save with no field-level error** when an edited session's date is outside the (shortened) conference range. Surface the error on the Day Select. (`SessionPanel.tsx:445`)
+- [ ] **`endTime > startTime` string compare disallows midnight-crossing sessions** and the error message "End must be after start" is misleading. Either support overnight sessions or fix the error copy. (`SessionPanel.tsx:448`)
+- [ ] **`pendingSavedId` has no timeout fallback** (already TODO'd at `ScheduleEditor.tsx:73`). If the saved row never reappears (RLS scope change, refresh failure), the panel sits in form mode forever.
+- [ ] **`onDirtyChange` dual-effect pattern is fragile** — depends on parent's `useCallback([],)` identity; a future refactor that drops the memoization would silently break the discard guard. Consider computing dirty in the parent or wrapping cleanup so it only fires on true unmount. (`SessionPanel.tsx:411,416`)
+- [ ] **`loadRoster` `.order('created_at', ascending: true)` is dead code** — the final local sort overrides it. Remove the dead clause to avoid misleading future readers. (`loadRoster.ts:22`)
+- [ ] **`SessionPanel.test.tsx` 'roster filter tabs' test doesn't await the loadRoster promise** — asserts against the loading-frame snapshot. A regression that hides tabs behind loading state would still pass. (`SessionPanel.test.tsx:49`)

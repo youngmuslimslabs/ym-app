@@ -225,10 +225,10 @@
 
 ### Silent data loss (fix before merge)
 
-- [ ] **Tab switch destroys unsaved form edits.** User edits a session, clicks Info/Attendees/Feedback — `<TabsContent>` unmounts `ScheduleEditor` entirely, FormMode's cleanup fires `onDirtyChange(false)`, no prompt. (`src/app/(app)/admin/conferences/[conferenceId]/ConferenceEditor.tsx:191`)
-- [ ] **FormMode Cancel button bypasses the dirty guard.** The most common discard path calls `onModeChange` directly with no confirmation, defeating the entire dirty-tracking system. (`SessionPanel.tsx:542`)
-- [ ] **`shallowEqualForm` doesn't trim, but submit does** → after saving e.g. `'  Title  '` the server returns `'Title'`, `initialForm` updates, `form` still has the padded original, isDirty stays true forever. Every later row click pops a spurious discard dialog. (`SessionPanel.tsx:348`)
-- [ ] **`attemptNav` silently overwrites a queued `pendingNav`.** Two row clicks before dismissing the discard dialog → first nav intent dropped, no UI hint. (`ScheduleEditor.tsx:64`)
+- [x] **Tab switch destroys unsaved form edits.** Fixed by making `<Tabs>` controlled in `ConferenceEditor` and routing tab changes through a new `ScheduleEditorHandle.attemptNav` so they hit the same discard dialog as row clicks.
+- [x] **FormMode Cancel button bypasses the dirty guard.** Fixed via a new `onCancelRequest` prop on `SessionPanel` that pipes the Cancel click through the parent's `attemptNav`.
+- [x] **`shallowEqualForm` doesn't trim, but submit does.** Fixed by `.trim()`-ing both sides when comparing text fields in `shallowEqualForm`.
+- [x] **`attemptNav` silently overwrites a queued `pendingNav`.** Fixed by switching both `attemptNav` and `openCreate` to `setPendingNav((prev) => prev ?? action)` so the first queued action survives a second click.
 
 ### Visible regressions
 

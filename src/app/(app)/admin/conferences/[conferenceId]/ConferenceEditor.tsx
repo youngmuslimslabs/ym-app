@@ -46,7 +46,20 @@ export function ConferenceEditor({ initialView }: Props) {
   const [publishOpen, setPublishOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletePending, setDeletePending] = useState(false)
+  const [tab, setTab] = useState('schedule')
   const scheduleRef = useRef<ScheduleEditorHandle>(null)
+
+  // Intercept tab changes so leaving the Schedule tab with an unsaved
+  // session form triggers the same discard dialog as row clicks. The ref is
+  // only populated while ScheduleEditor is mounted (i.e., while the schedule
+  // tab is active), so it's null when switching from any other tab — in
+  // which case there's nothing to guard.
+  function handleTabChange(next: string) {
+    if (next === tab) return
+    const guard = scheduleRef.current?.attemptNav
+    if (guard) guard(() => setTab(next))
+    else setTab(next)
+  }
 
   async function handlePublish() {
     if (publishPending) return
@@ -156,7 +169,7 @@ export function ConferenceEditor({ initialView }: Props) {
         </div>
       </header>
 
-      <Tabs defaultValue="schedule" className="flex-1 flex flex-col min-h-0">
+      <Tabs value={tab} onValueChange={handleTabChange} className="flex-1 flex flex-col min-h-0">
         <div className="px-6 md:px-8 pt-6 shrink-0">
           <TabsList>
             <TabsTrigger value="info">

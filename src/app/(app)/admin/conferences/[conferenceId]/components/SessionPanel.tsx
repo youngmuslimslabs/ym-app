@@ -57,6 +57,10 @@ interface Props {
   onSaved: (id: string) => void
   onAfterDelete: () => void
   onDirtyChange: (dirty: boolean) => void
+  // Routes a leaving-the-form action through the parent's dirty guard so the
+  // Cancel button gets the same discard dialog as row clicks. If omitted,
+  // actions run immediately.
+  onCancelRequest?: (action: () => void) => void
 }
 
 interface FormState {
@@ -345,18 +349,21 @@ function ViewMode({
   )
 }
 
+// Submit normalises text fields with .trim(); compare the same way so a
+// saved form (server returns trimmed) doesn't show as dirty just because
+// the in-memory `form` still holds the user's padded original.
 function shallowEqualForm(a: FormState, b: FormState): boolean {
   return (
     a.isBreak === b.isBreak &&
     a.date === b.date &&
     a.startTime === b.startTime &&
     a.endTime === b.endTime &&
-    a.title === b.title &&
-    a.speaker === b.speaker &&
-    a.room === b.room &&
-    a.description === b.description &&
-    a.capacity === b.capacity &&
-    a.checkInCode === b.checkInCode
+    a.title.trim() === b.title.trim() &&
+    a.speaker.trim() === b.speaker.trim() &&
+    a.room.trim() === b.room.trim() &&
+    a.description.trim() === b.description.trim() &&
+    a.capacity.trim() === b.capacity.trim() &&
+    a.checkInCode.trim() === b.checkInCode.trim()
   )
 }
 
@@ -369,6 +376,7 @@ function FormMode({
   onModeChange,
   onSaved,
   onDirtyChange,
+  onCancelRequest,
 }: Props & { session: AdminSession | null; isEdit: boolean }) {
   const router = useRouter()
 
@@ -540,8 +548,15 @@ function FormMode({
   }
 
   function handleCancel() {
-    if (isEdit && session) onModeChange('view', session)
-    else onModeChange('empty', null)
+    const exit = () => {
+      if (isEdit && session) onModeChange('view', session)
+      else onModeChange('empty', null)
+    }
+    // Route through the parent's dirty guard so unsaved edits get the same
+    // discard dialog as row clicks / tab switches. Falls back to immediate
+    // exit if no guard was wired.
+    if (onCancelRequest) onCancelRequest(exit)
+    else exit()
   }
 
   const heading = isEdit

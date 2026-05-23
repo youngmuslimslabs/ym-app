@@ -27,6 +27,9 @@ import type { AdminSession, ConferenceEditorView } from '../../types'
 
 export interface ScheduleEditorHandle {
   openCreate: (date?: string) => void
+  // Run `action` once the user has confirmed leaving any unsaved form. Used
+  // by the parent ConferenceEditor to guard tab switches against data loss.
+  attemptNav: (action: () => void) => void
 }
 
 interface Props {
@@ -61,8 +64,11 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
     // form's half-typed state.
     const [createNonce, setCreateNonce] = useState(0)
 
+    // Don't overwrite an already-queued action — that would silently lose the
+    // user's first navigation intent when a second click lands before they
+    // dismiss the discard dialog.
     function attemptNav(action: () => void) {
-      if (dirtyRef.current) setPendingNav(() => action)
+      if (dirtyRef.current) setPendingNav((prev) => prev ?? action)
       else action()
     }
 
@@ -93,11 +99,22 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
         setCreateNonce((n) => n + 1)
         setMode('create')
       }
-      if (dirtyRef.current) setPendingNav(() => action)
+      if (dirtyRef.current) setPendingNav((prev) => prev ?? action)
       else action()
     }, [])
 
-    useImperativeHandle(ref, () => ({ openCreate }), [openCreate])
+    // Same shape as the local attemptNav above; exposed for the parent so
+    // tab switches at the ConferenceEditor level go through the same guard.
+    const attemptNavImperative = useCallback((action: () => void) => {
+      if (dirtyRef.current) setPendingNav((prev) => prev ?? action)
+      else action()
+    }, [])
+
+    useImperativeHandle(
+      ref,
+      () => ({ openCreate, attemptNav: attemptNavImperative }),
+      [openCreate, attemptNavImperative]
+    )
 
     const groupedDays = useMemo(
       () => groupByDay(sessions, conference.timezone),
@@ -133,6 +150,7 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
         onSaved={(id) => setPendingSavedId(id)}
         onAfterDelete={afterDelete}
         onDirtyChange={handlePanelDirtyChange}
+        onCancelRequest={attemptNav}
       />
     )
 

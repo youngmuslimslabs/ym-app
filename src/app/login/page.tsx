@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { YMLoginForm } from '@/components/auth/YMLoginForm'
 import { PageLoader } from '@/components/ui/page-loader'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { checkOnboardingComplete } from '@/lib/supabase/onboarding'
+
+const supabase = createClient()
 import { toUserMessage } from '@/lib/errors/userMessage'
 
 export default function LoginPage() {

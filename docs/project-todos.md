@@ -12,18 +12,9 @@
 
 ## Database
 
-### Schema ✅ COMPLETE
-- [x] Finalize data model (answer open questions in `database-schema.md`)
-- [x] Write migration SQL to drop old tables — `supabase/migrations/00001_drop_old_tables.sql`
-- [x] Write migration SQL to create new tables — `supabase/migrations/00003_create_tables.sql`
-- [x] Create enums — `supabase/migrations/00002_create_enums.sql`
-- [x] Apply migrations to Supabase — All 10 tables live with RLS enabled
-
 ### Seed Data (Partial)
 > ⚠️ **Note:** Current seed data is placeholder/sample data. Real production data (regions, subregions, NNs, users) needs to be obtained from Umar/Nooh.
 
-- [x] Seed `role_types` (19 roles) — `supabase/migrations/00004_seed_data.sql`
-- [x] Seed `departments` (8 departments)
 - [ ] [LAUNCH] Seed `teams` (per department)
 - [x] Seed `regions` (sample: Texas) — ⚠️ placeholder
 - [x] Seed `subregions` (sample: Houston, Dallas) — ⚠️ placeholder
@@ -33,92 +24,17 @@
 - [ ] [LAUNCH] Pre-populate `memberships`
 - [ ] [LAUNCH] Replace placeholder seeds (`regions`, `subregions`, `neighbor_nets`) with real data from NN database
 
-### Static Data Prepared
-- [x] US Universities list — 6,429 universities in `src/data/us-universities.json` (converted from CSV)
-
-### Auth ✅ COMPLETE
-- [x] Implement GSuite auth trigger (link users on first login) — `supabase/migrations/00005_auth_trigger.sql`
-- [x] Multi-layer domain validation (Google OAuth hint, client-side, middleware) — sufficient for internal app
+### Auth
 - [ ] [LAUNCH] Update OAuth client IDs for production
 
-### Security ✅ COMPLETE
-- [x] Add RLS policies — `supabase/migrations/00006_rls_policies.sql`
-- [x] Code review fixes — `supabase/migrations/00007_review_fixes.sql` (run this in Supabase!)
+### Security
 - [ ] [LAUNCH] **Manual review of RLS policies** — verify policies work as expected with real usage patterns
 
 ---
 
 ## UI
 
-### Reusable Components Created
-- [x] `SearchableCombobox` — Searchable dropdown with "Add new" option for custom entries
-- [x] `MonthYearPicker` — Month/Year selectors for date ranges
-- [x] `DateRangeInput` — Combines two MonthYearPickers with "current" checkbox
-- [x] Onboarding context (`OnboardingContext`) — State management for multi-step form
-
-### Layout & Navigation
-- [x] App shell/layout (header, nav, content area) — `AppShell` component with `SidebarProvider`
-- [x] Navigation component — `AppSidebar` with collapsible icon mode
-- [x] Profile icon with dropdown (avatar, name, logout) — User dropdown in sidebar footer
-- [x] Logout functionality — `signOut` in user dropdown
-
-### Onboarding ✅ COMPLETE
-- [x] Design onboarding flow (steps, fields) — 7 steps defined in `docs/plans/2026-01-03-onboarding-expansion-design.md`
-- [x] Build onboarding pages (multi-step form) — Steps 1-7 implemented with validation
-- [x] Form validation with blur error states (phone/email)
-- [x] Handle onboarding state (redirect if incomplete)
-- [x] Save onboarding data to Supabase
-
-### Onboarding Data Integration ✅ COMPLETE
-- [x] Step 2: Fetch subregions from Supabase (table: `subregions`)
-- [x] Step 2: Fetch NeighborNets from Supabase filtered by subregion (table: `neighbor_nets`)
-- [x] Step 3: Fetch Amir/Manager list from Supabase users table
-- [x] Step 4: Fetch Amir/Manager list from Supabase users table
-- [x] Step 5: Education data saves to `users.education` JSONB field
-- [x] Step 6: Skills save to `users.skills` TEXT[] field
-- [x] Step 7: Set `users.onboarding_completed_at` on completion
-
-### Landing Page (Home) ✅ COMPLETE
-- [x] Design landing page (what does user see after onboarding?) — Personal context card + quick actions
-- [x] Build landing page — `/home` with `AppShell`, `PersonalContextCard`, `QuickActionCard`
-- [x] Show user's role(s) — connected to Supabase
-
-### Profile Page ✅ COMPLETE
-- [x] Design profile page — Expandable card sections with inline editing
-- [x] Build profile page — `/profile` with personal info, YM roles, projects, education, skills
-- [x] Display user info from onboarding — Personal info section with inline edit
-- [x] Display role assignments — YM Roles section with expandable cards
-- [x] Display geographic association (NN/SR/Region) — In personal info section
-- [x] Connect to Supabase
-
 ### People Page
-- [x] Build people page — `/people` placeholder with "Coming soon"
-- [x] Design people directory — `docs/plans/2026-01-09-people-directory-design.md`
-
-#### Phase 1-3: Core Features ✅ COMPLETE
-- [x] Browse/search all YM members — Search by name implemented
-- [x] Filter by region/subregion/NN/role — Dropdown with nested submenus
-- [x] Advanced filtering: project type, project role, skills, years in YM — All filter categories working
-- [x] Filter pills with counts + clear actions
-- [x] Switchable card/table views — ViewToggle with shadcn Tabs
-- [x] Copy emails to clipboard action — CopyEmailsButton with toast
-
-#### Phase 4: Polish ✅ COMPLETE
-- [x] Empty states ("No people found")
-- [x] Loading skeletons — PersonCardSkeleton + PersonCardGridSkeleton
-- [x] Hide filters on mobile — Search-only on mobile
-- [x] **Pagination** — Load More button for card view (20 items at a time)
-
-#### Phase 5: Profile View ✅ COMPLETE
-- [x] **`/people/[id]` route** — Read-only profile view when clicking a person
-- [x] **Reuse profile components** with `isEditable={false}` prop — Uses `ProfileModeProvider`
-- [x] **Back to directory navigation** — Back button with smart URL preservation
-- See design doc Phase 5: `docs/plans/2026-01-09-people-directory-design.md#L362-L365`
-
-#### Cleanup Before Production ✅ COMPLETE
-- [x] Remove `/people-preview` test route
-- [x] Remove middleware exception for `/people-preview`
-- [x] Connect to real Supabase data
 
 #### Future: Org Chart (Deferred)
 - [ ] Org Chart — visual hierarchy explorer (separate from directory)
@@ -129,13 +45,8 @@
 
 ---
 
-## Integration (When DB + UI Converge) ✅ COMPLETE
+## Integration
 
-- [x] Connect onboarding form to users table
-- [x] Connect profile page to user data
-- [x] **Generate TypeScript types from schema** — `bun run db:types`
-- [x] Connect people page to users + roles
-- [x] Connect landing page to role_assignments
 - [ ] [LAUNCH] Test end-to-end auth flow
 
 ---
@@ -148,16 +59,11 @@
 - [ ] Mobile responsiveness
 - [ ] Accessibility audit (keyboard navigation, screen readers)
 
-### Progressive Web App (PWA) ✅ COMPLETE
-- [x] Explore iOS "Add to Home Screen" functionality for webapp
-  - [x] Research PWA requirements (manifest.json, service worker, icons)
-  - [x] Add Web App Manifest with proper iOS meta tags — `public/manifest.json`
-  - [x] Create app icons in required sizes (180x180 for iOS) — `apple-touch-icon.png`, `icon-192x192.png`, `icon-512x512.png`
-  - [x] Add `apple-touch-icon` and `apple-mobile-web-app-*` meta tags — via Next.js metadata in `layout.tsx`
-  - [ ] Test standalone mode behavior on iOS Safari
-  - [ ] Consider splash screen configuration
-  - [x] **Creative iOS Safari install banner** — `IOSInstallPrompt` component shows on iOS Safari only
-    - ⚠️ **TODO: Revisit** — Add animations, better timing, analytics, A/B testing (see component TODOs)
+### Progressive Web App (PWA)
+- [ ] Test standalone mode behavior on iOS Safari
+- [ ] Consider splash screen configuration
+- [x] **Creative iOS Safari install banner** — `IOSInstallPrompt` component shows on iOS Safari only
+  - ⚠️ **TODO: Revisit** — Add animations, better timing, analytics, A/B testing (see component TODOs)
 
 ---
 
@@ -200,28 +106,10 @@
 
 ## Testing
 
-### Foundation
-- [x] Set up Vitest testing framework
-- [x] Add test scripts to package.json (`bun test`, `bun run test:watch`)
-- [x] Create CI/CD workflow with test step (`.github/workflows/ci.yml`)
-- [x] Example unit test for `cn()` utility
-- [x] Migrate from npm to Bun package manager
-
-### Unit Tests ✅ COMPLETE
-- [x] Unit tests for validation functions (phone, email) — `src/lib/validation.test.ts` (23 test cases)
-- [x] Extract duplicated validation functions to shared module — `src/lib/validation.ts`
-
 ### Component Tests
-- [x] Component tests for onboarding step 1 (personal info) — `src/app/onboarding/step1-personal-info.test.tsx`
-- [x] Component tests for onboarding step 6 (skills) — `src/app/onboarding/step6-skills.test.tsx`
-- [x] Component tests for `OnboardingLayout` — `src/app/onboarding/components/OnboardingLayout.test.tsx`
 - [ ] [LAUNCH] Component tests for onboarding steps 2–5, 7
 
 ### E2E Tests
-- [x] Set up Playwright E2E framework — `playwright.config.ts`, `e2e/` directory
-- [x] Add test:e2e scripts to package.json
-- [x] Auth flow gate tests (unauthenticated redirects, login UI, public routes) — `e2e/auth.spec.ts`
-- [x] Onboarding gate tests (unauthenticated redirects) — `e2e/onboarding.spec.ts`
 - [ ] [LAUNCH] Authenticated onboarding flow (requires test Supabase project + test user) — skipped block in `e2e/onboarding.spec.ts`
 - [ ] [LAUNCH] Authenticated auth flow (signed-in redirect rules, domain validation) — skipped block in `e2e/auth.spec.ts`
 
@@ -229,22 +117,14 @@
 
 ## CI/CD Enhancements
 
-- [x] Coverage threshold mechanism — vitest measures all `src/**/*.{ts,tsx}` (with explicit excludes for vendored shadcn primitives, generated types, supabase wrappers, and contexts requiring real Supabase). Floors are set at the current honest values (~4–6%) so any PR that drops coverage fails CI. Ratchet up the floors in `vitest.config.mts` as more tests land.
 - [ ] [LAUNCH] Raise coverage thresholds to 80% — currently ~5%; depends on broader component test coverage. Track ratchet in commits to `vitest.config.mts`.
 - [ ] [LAUNCH] Add bundle size check (warn if build output grows significantly)
-- [x] E2E tests with Playwright to CI — separate `e2e` job in `.github/workflows/ci.yml`, browsers cached by Playwright version (not `bun.lock` hash), runs against `next start`.
-- [x] Security scanning (dependency audit) — `bun audit --audit-level=critical` blocks; `--audit-level=high` runs as a non-blocking warning step. `BUN_VERSION` pinned to `1.2.21` in CI + `netlify.toml`.
-- ~~Add accessibility checks (axe-core) to CI~~ — descoped per product call (2026-04-25)
 
 ---
 
 ## Technical Debt / Cleanup
 
-- [x] Fix production build error — switched to local fonts (Geist) to avoid network dependencies at build time
-- [x] Update baseline-browser-mapping package — updated via `bun update`
-- [x] Extract common onboarding step layout to shared component — `OnboardingLayout`, `OnboardingContent`, `OnboardingLoadingState`, `OnboardingErrorState` in `src/app/onboarding/components/`
-- [x] Add loading skeletons for Supabase data fetching — Added `loading.tsx` files for `/home`, `/people`, `/people/[id]`, `/profile` pages with appropriate skeletons
-- [ ] **Fix local jsdom CJS load error** — `bunx vitest run` (default jsdom env) crashes locally with `TypeError: LRUCache is not a constructor` at `node_modules/jsdom/lib/jsdom/living/css/helpers/css-values.js:42`. Transitive-dep mismatch between jsdom and `lru-cache`. CI is unaffected (clean install). Workaround already in place: pure-logic tests (e.g. `src/app/(app)/admin/conferences/lib/*.test.ts`) declare `// @vitest-environment node` to skip jsdom; that's a legitimate optimization but it's currently masking the bug for component tests. Fix via `package.json` `overrides`/`resolutions` pinning a compatible `lru-cache`, or wait for jsdom to release a fixed version.
+- [ ] **Fix local jsdom CJS load error** — `bunx vitest run` crashes locally with `TypeError: LRUCache is not a constructor` at `node_modules/jsdom/lib/jsdom/living/css/helpers/css-values.js:42`. Transitive-dep mismatch between jsdom and `lru-cache`. CI is unaffected (clean install). Workaround: pure-logic tests declare `// @vitest-environment node` to skip jsdom, but this masks the bug for component tests. Fix via `package.json` `overrides`/`resolutions` pinning a compatible `lru-cache`, or wait for jsdom to release a fixed version.
 
 ---
 
@@ -336,3 +216,40 @@
 - **Current issue:** Every step looks identical (monotonous layout)
 - **Color:** Currently pure grayscale—consider adding one accent color
 - **Typography:** Using default font-sans—consider a display font for headings
+
+---
+
+## Admin Schedule Rebuild — Code Review Findings (2026-05-22)
+
+> Findings from a code review of `feature/admin-rebuild` before merge. Grouped by severity. Each item: short description, then file:line.
+
+### Silent data loss (fix before merge)
+
+- [x] **Tab switch destroys unsaved form edits.** Fixed by making `<Tabs>` controlled in `ConferenceEditor` and routing tab changes through a new `ScheduleEditorHandle.attemptNav` so they hit the same discard dialog as row clicks.
+- [x] **FormMode Cancel button bypasses the dirty guard.** Fixed via a new `onCancelRequest` prop on `SessionPanel` that pipes the Cancel click through the parent's `attemptNav`.
+- [x] **`shallowEqualForm` doesn't trim, but submit does.** Fixed by `.trim()`-ing both sides when comparing text fields in `shallowEqualForm`.
+- [x] **`attemptNav` silently overwrites a queued `pendingNav`.** Fixed by switching both `attemptNav` and `openCreate` to `setPendingNav((prev) => prev ?? action)` so the first queued action survives a second click.
+
+### Visible regressions
+
+- [ ] **Header "Add session" button no-ops on Info / Attendees / Feedback tabs.** Radix unmounts inactive TabsContent so `scheduleRef.current` is null; the optional chain swallows the click. Either auto-switch to Schedule first, or hide the button. (`ConferenceEditor.tsx:133`)
+- [ ] **Hardcoded `grid grid-cols-2` with no responsive layout.** Replaces the old mobile Sheet + desktop Dialog combo with a desktop-only two-column layout. CLAUDE.md mandates 375/393/430px testing. (`ScheduleEditor.tsx:193`)
+- [ ] **Focus regression on every mode transition except create-mode title.** Old Dialog provided auto-focus; the inline panel only focuses on create. view→edit, edit→view via Cancel, delete→view via Cancel all drop focus to `<body>`. (`SessionPanel.tsx:401`)
+
+### Correctness bugs (rare windows, real impact)
+
+- [ ] **`composeTzIso` DST spring-forward off-by-one writes the wrong UTC instant to the DB.** Documented as a "KNOWN LIMITATION" in the source; `SessionPanel.handleSubmit` calls it directly. Window: 02:00–07:00 wall clock on the second Sunday of March, US tz only. Fix sketch lives in `datetime.ts:16-18`; a pinned `it.skip` is waiting in `datetime.test.ts`. (`src/app/(app)/admin/conferences/lib/datetime.ts:19`)
+- [ ] **`roomConflict` ISO format mismatch creates false-positive overlap warnings.** DB timestamps come back as `+00:00`, freshly composed values are `.000Z`; char 19 ('+' vs '.') makes back-to-back sessions falsely flag as overlapping. Use numeric instant compare (`Date.parse`) or normalize both sides to `.000Z`. (`SessionPanel.tsx:473`)
+- [ ] **`pendingSavedId` effect can clobber user's deliberate navigation between save and refresh.** Same effect also pops the saved row into view after a Cancel-post-save. Track whether the user has navigated away (or made a fresh selection) since the save fired, and clear `pendingSavedId` in that case. (`ScheduleEditor.tsx:79`)
+- [ ] **Dirty stays true after a successful save until the refresh arrives** → spurious discard dialog if the user clicks another row in the ~200-500ms window. Clear the dirty flag inside `handleSubmit` on success, or have the parent reset it when `pendingSavedId` is set. (`SessionPanel.tsx:411`)
+- [ ] **`loadRoster` drops users who have a check-in but no signup.** ViewMode Stat panel shows "Checked in: 1" while the roster tab shows 0 attendees — admin can't see who actually checked in. Union signups+check-ins as the keyset. (`loadRoster.ts:49`)
+- [ ] **DeleteMode async promise not cancelled on unmount** — Cancel mid-delete still fires `onAfterDelete` against the (now-stale) parent, yanking the user off whatever page they navigated to. Add a `useRef` cancellation guard. (`SessionPanel.tsx:821`)
+
+### Smaller / latent
+
+- [ ] **`dateOk` silently disables Save with no field-level error** when an edited session's date is outside the (shortened) conference range. Surface the error on the Day Select. (`SessionPanel.tsx:445`)
+- [ ] **`endTime > startTime` string compare disallows midnight-crossing sessions** and the error message "End must be after start" is misleading. Either support overnight sessions or fix the error copy. (`SessionPanel.tsx:448`)
+- [ ] **`pendingSavedId` has no timeout fallback** (already TODO'd at `ScheduleEditor.tsx:73`). If the saved row never reappears (RLS scope change, refresh failure), the panel sits in form mode forever.
+- [ ] **`onDirtyChange` dual-effect pattern is fragile** — depends on parent's `useCallback([],)` identity; a future refactor that drops the memoization would silently break the discard guard. Consider computing dirty in the parent or wrapping cleanup so it only fires on true unmount. (`SessionPanel.tsx:411,416`)
+- [ ] **`loadRoster` `.order('created_at', ascending: true)` is dead code** — the final local sort overrides it. Remove the dead clause to avoid misleading future readers. (`loadRoster.ts:22`)
+- [ ] **`SessionPanel.test.tsx` 'roster filter tabs' test doesn't await the loadRoster promise** — asserts against the loading-frame snapshot. A regression that hides tabs behind loading state would still pass. (`SessionPanel.test.tsx:49`)

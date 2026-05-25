@@ -26,7 +26,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { PersonListItem } from '../types'
-import { ROLE_CATEGORY_ICONS } from '../constants'
+import { ROLE_CATEGORY_ICONS, ROLE_CATEGORY_VARIANTS } from '../constants'
 
 // Column ids managed by this component. `hiddenColumns` accepts any of these.
 type DefaultColumnId = 'name' | 'roles' | 'region' | 'subregion' | 'skills'
@@ -132,12 +132,13 @@ export function PeopleTable({
         header: 'Roles',
         cell: ({ row }) => (
           <div className="flex flex-wrap gap-1 max-w-[280px]">
-            {row.original.roles.map((role) => {
+            {row.original.roles.map((role, i) => {
               const Icon = ROLE_CATEGORY_ICONS[role.category]
+              const variant = ROLE_CATEGORY_VARIANTS[role.category] ?? 'outline'
               return (
                 <Badge
-                  key={role.id}
-                  variant="outline"
+                  key={`${role.id}-${i}`}
+                  variant={variant}
                   className="gap-1 px-2 py-0.5 text-[11px] font-medium"
                 >
                   {Icon && <Icon className="h-3 w-3 opacity-70" aria-hidden="true" />}

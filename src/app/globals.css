@@ -23,6 +23,8 @@
     --destructive-foreground: 0.985 0 0;
     --success: 0.628 0.18 142;
     --success-foreground: 0.985 0 0;
+    --warning: 0.60 0.17 68;
+    --warning-foreground: 0.985 0 0;
     --border: 0.922 0 0;
     --input: 0.922 0 0;
     --ring: 0.445 0.14 261.872;
@@ -60,6 +62,8 @@
     --destructive-foreground: 0.985 0 0;
     --success: 0.75 0.16 142;
     --success-foreground: 0.145 0 0;
+    --warning: 0.72 0.17 68;
+    --warning-foreground: 0.145 0 0;
     --border: 0.269 0 0;
     --input: 0.269 0 0;
     --ring: 0.65 0.14 261.872;
@@ -86,6 +90,7 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+
 }
 
 @keyframes ym-status-pulse {

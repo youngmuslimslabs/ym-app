@@ -11,13 +11,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-/**
- * Lucide icon per role category.
- *
- * Categories share a single neutral badge style; the icon is the visual
- * differentiator. This keeps role taxonomy accessible (icons aren't a
- * color-only signal) and avoids hardcoded Tailwind hues in the design system.
- */
+/** Lucide icon per role category. */
 export const ROLE_CATEGORY_ICONS: Record<string, LucideIcon> = {
   ns: Landmark,
   council: Users,
@@ -26,4 +20,15 @@ export const ROLE_CATEGORY_ICONS: Record<string, LucideIcon> = {
   neighbor_net: Network,
   cabinet: Briefcase,
   cloud: Cloud,
+}
+
+/** Badge color variant per role category. */
+export const ROLE_CATEGORY_VARIANTS: Record<string, 'info' | 'success' | 'warning' | 'outline'> = {
+  ns: 'info',
+  council: 'info',
+  regional: 'success',
+  subregional: 'success',
+  neighbor_net: 'warning',
+  cabinet: 'warning',
+  cloud: 'outline',
 }

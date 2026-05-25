@@ -123,9 +123,16 @@ export function SessionSheet({
           <div className="text-xs uppercase tracking-widest text-primary font-medium">
             {dateLabel} · {timeRangeLabel}
           </div>
-          <SheetTitle className="text-2xl font-semibold tracking-tight">
-            {session.title}
-          </SheetTitle>
+          <div className="flex items-start justify-between gap-3">
+            <SheetTitle className="text-2xl font-semibold tracking-tight">
+              {session.title}
+            </SheetTitle>
+            {full && (
+              <span className="shrink-0 inline-flex items-center rounded-md bg-destructive text-destructive-foreground px-2.5 py-0.5 text-xs font-semibold">
+                Full
+              </span>
+            )}
+          </div>
           {session.speaker && (
             <p className="text-sm text-muted-foreground">{session.speaker}</p>
           )}
@@ -156,7 +163,7 @@ export function SessionSheet({
           </div>
         </SheetHeader>
 
-        <div className="p-6 flex-1 overflow-y-auto space-y-6">
+        <div className={cn('p-6 flex-1 overflow-y-auto space-y-6', full && 'opacity-60')}>
           {session.description ? (
             <p className="text-sm text-foreground/80 leading-relaxed">
               {session.description}

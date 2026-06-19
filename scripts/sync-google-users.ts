@@ -18,6 +18,8 @@
 import { google } from 'googleapis'
 import { createClient } from '@supabase/supabase-js'
 
+import { normalizeEmail } from '@/lib/email'
+
 // ---------------------------------------------------------------------------
 // Environment
 // ---------------------------------------------------------------------------
@@ -80,7 +82,10 @@ async function fetchAllGoogleUsers(): Promise<GoogleUser[]> {
     for (const user of res.data.users ?? []) {
       if (!user.primaryEmail) continue
       users.push({
-        email: user.primaryEmail,
+        // Normalize so the seeded row matches the OAuth login identity
+        // regardless of casing/whitespace (see src/lib/email.ts + migration
+        // 00017). Used for both the .eq('email', ...) lookup and the insert.
+        email: normalizeEmail(user.primaryEmail),
         firstName: user.name?.givenName ?? null,
         lastName: user.name?.familyName ?? null,
         avatarUrl: user.thumbnailPhotoUrl ?? null,

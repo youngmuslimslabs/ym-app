@@ -1,256 +1,143 @@
-# YM App - Project Todos
+# YM App — Product Roadmap
 
-> **`[LAUNCH]` prefix** marks items required before going live to real users. Grep `[LAUNCH]` to see the full launch-blocking punch list.
+> **Immediate goal: get the app working to test live at a convention next weekend (~June 27–28).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
-## Stakeholder Input (Blocking)
+## Confirmed product decisions (do not relitigate)
 
-- [ ] Review data model with Umar Khattak
-- [ ] Review data model with Nooh
-- [ ] Clarify which NN database is current (Version A vs B)
+- **Access is `@youngmuslims.com`-only, by design.** Every user has a youngmuslims.com Google account; no alumni/external login. The auth domain gate is correct, not a gap.
+- **`legal-lol` route stays as-is.** No real legal/privacy pages.
+- **PostHog is the error-monitoring + analytics tool.** No separate Sentry.
+- **No communications plan.**
+- **Intra-org PII visibility is acceptable.** Internal staff seeing each other's phone / personal email / ethnicity / DOB is fine; no field-level restriction needed.
+- **Freeze deploys to `main` during the convention weekend.** Avoids the PWA service worker swapping versions in attendees' open sessions mid-check-in (the optional reload-prompt code fix stays at P2 #28).
 
----
+## Data population model (how real data gets in)
 
-## Database
+There is **no bulk import** and **no data-model validation step**. Real org data enters three ways:
 
-### Seed Data (Partial)
-> ⚠️ **Note:** Current seed data is placeholder/sample data. Real production data (regions, subregions, NNs, users) needs to be obtained from Umar/Nooh.
+1. **Users** — created by the Google Workspace sync (`scripts/sync-google-users.ts`: writes email + first/last name + avatar) and/or on first login via the auth trigger. No manual user import.
+2. **Roles + memberships** — **self-selected by each user during onboarding** (`onboarding.ts` saveStep3 = `role_assignments`, saveStep2 = membership). NOT imported. → This makes onboarding (P0 #5) and the role picker (P0 #2) load-bearing.
+3. **Geography (regions / subregions / neighbor_nets)** — **owner-maintained seed data** (P0 #1). The owner has the real values; updated via migration before users onboard, because onboarding memberships reference `neighbor_nets`.
 
-- [ ] [LAUNCH] Seed `teams` (per department)
-- [x] Seed `regions` (sample: Texas) — ⚠️ placeholder
-- [x] Seed `subregions` (sample: Houston, Dallas) — ⚠️ placeholder
-- [x] Seed `neighbor_nets` (sample: Katy NN, Sugar Land NN, Downtown NN) — ⚠️ placeholder
-- [ ] [LAUNCH] Pre-populate `users` from NN database + alumni
-- [ ] [LAUNCH] Pre-populate `role_assignments` (current leadership)
-- [ ] [LAUNCH] Pre-populate `memberships`
-- [ ] [LAUNCH] Replace placeholder seeds (`regions`, `subregions`, `neighbor_nets`) with real data from NN database
+## Branching & Environments
 
-### Auth
-- [ ] [LAUNCH] Update OAuth client IDs for production
-
-### Security
-- [ ] [LAUNCH] **Manual review of RLS policies** — verify policies work as expected with real usage patterns
+Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on the **Netlify deploy preview**; merge to `main` (production). **Host is Netlify** (`netlify.toml` is source of truth). Migrations apply directly to the one Supabase project — review carefully and **back up before applying** (P0 #7 / P1 #10).
 
 ---
 
-## UI
+# 🚀 MVP — Required to Launch
 
-### People Page
+## P0 — Launch blockers (ordered by dependency / lead time)
 
-#### Future: Org Chart (Deferred)
-- [ ] Org Chart — visual hierarchy explorer (separate from directory)
-  - **Option A:** Simpler org chart — Geographic hierarchy only (Region → Subregion → NN)
-  - **Option B:** Scoped org charts by track — "Geographic", "Cabinet", "Cloud" as separate views
-  - Consider how to handle cross-cutting roles (NS members hold multiple functional roles)
-  - Navigation: TBD — explore alternatives to tabs/nested sidebar
+1. **[P0] Update geography seed data with real values** — replace the placeholder Texas / Houston-Dallas / Katy-Sugar Land-Downtown seeds (currently in `00004_seed_data.sql:64-97` and re-seeded in `00011_repair_dropped_tables.sql:169-189`) with the real **regions → subregions → neighbor_nets** the owner has. Do it as a **new migration** (e.g. `00016_real_geography_seed.sql`) that clears the placeholder rows and inserts the real hierarchy. **Must land before any user onboards**, because onboarding's membership picker references `neighbor_nets` (deleting a NN that a real membership already points to would break referential integrity). *Owner to provide the values.*
 
----
+2. **[P0] Fix privilege escalation — self-granted Event Admin** `[AUDIT]` — because roles are chosen by users in onboarding, the role picker (`fetchRoleTypes()`) exposes the `event_admin` system role, and any authenticated user can insert their own `role_assignments` row with `role_type_id = event_admin` and pass `requireAdmin()`. Add a `WITH CHECK` to the role_assignments INSERT/UPDATE policy excluding `category='system'` roles (`00006_rls_policies.sql:133-135`), filter `category='system'` out of `fetchRoleTypes()` (`roles.ts:23-26`) so it never appears in the onboarding/profile picker, and add a regression test asserting a non-admin event_admin insert is rejected.
 
-## Integration
+3. **[P0] Fix broken migration history** `[AUDIT]` — `00004_seed_data.sql:10` seeds `role_types.sort_order` before `00010` adds the column, so a clean `supabase db push` of the numbered files fails partway (`00011` header documents this happened). Move `sort_order` into `00003`'s CREATE (or split the seed after `00010`), verify the full sequence applies to an empty DB with zero errors, and regenerate `_run_all.sql` from the reconciled files. *Do this before adding the #1 geography migration so the history is clean.*
 
-- [ ] [LAUNCH] Test end-to-end auth flow
+4. **[P0] Fix email case-sensitivity in the auth trigger** `[AUDIT]` — `link_auth_to_user` matches Google-synced users by exact-case email (`00009:33-42`); a casing/whitespace mismatch falls through to INSERT, hits the `email UNIQUE` constraint inside the auth transaction, and **fails the entire login**. Risk is lower now that both the synced row and the OAuth identity are Google-sourced (usually canonical lowercase), but it's cheap defensive hardening: normalize emails (lowercase+trim) in the sync script and match case-insensitively (`lower(email)` / citext) with a unique index on `lower(email)`.
 
----
+5. **[P0] Onboarding write resilience + resumability** `[AUDIT]` — middleware hard-redirects any user without `onboarding_completed_at` to `/onboarding` on every route; the 604-line writer (`onboarding.ts`) is untested and is now the **sole source of every user's roles and membership**. A single failed DB write (flaky convention wifi) or an incomplete record can trap a user at step 1 with no recovery. Add retry-on-failure + clear error surfacing, and make steps resumable so a user returns to where they left off. *(Note: a full "skip onboarding" escape would leave the user with no role/membership data — prefer resilience/resumability over skip; decide if a skip is wanted.)* Exercise the failure paths before the convention.
 
-## Polish
+6. **[P0] Production OAuth + Google authorized origins** `[AUDIT]` — swap in prod Google OAuth credentials. Because login uses `signInWithIdToken` (Google Identity Services), the cutover dependency is the **Authorized JavaScript Origins** on the Google Cloud OAuth client (add `https://youngmuslims.com`), plus the Supabase Auth **Site URL** — not just redirect URIs.
 
-- [ ] Finalize loading state and error state patterns
-- [ ] Error handling
-- [ ] Loading states
-- [ ] Mobile responsiveness
-- [ ] Accessibility audit (keyboard navigation, screen readers)
-- [ ] **Wire up dark mode toggle.** `darkMode: ['class']` is configured in `tailwind.config.ts` and `globals.css` has dark OKLCH tokens, but nothing adds the `dark` class to `<html>`. Needs `next-themes` (or a hand-rolled system-pref detector + manual toggle).
+7. **[P0] Custom domain — `youngmuslims.com`** — point the app at the YM domain; provision SSL; update OAuth origins (#6). `[AUDIT]` Reconcile `trailingSlash: true` with registered redirect URIs and the manifest `start_url`/shortcuts to avoid `redirect_uri_mismatch`; review `netlify.toml` `publish = ".next"` against the Next.js Runtime v5 (re-test `/auth/callback` on a deploy preview).
 
-### Progressive Web App (PWA)
-- [ ] Test standalone mode behavior on iOS Safari
-- [ ] Consider splash screen configuration
-- [x] **Creative iOS Safari install banner** — `IOSInstallPrompt` component shows on iOS Safari only
-  - ⚠️ **TODO: Revisit** — Add animations, better timing, analytics, A/B testing (see component TODOs)
+8. **[P0] Confirm Supabase Pro tier** `[AUDIT]` — a Free-tier project **auto-pauses after ~7 days of inactivity** (prod goes fully offline) and has no PITR. Confirm Pro in the dashboard before the convention; this also enables daily backups for P1.
 
----
+9. **[P0] Manual RLS policy review** — verify policies against real users/roles once the geography seed (#1) is in and a few test users have onboarded. **Explicitly include:** the role self-assignment path (#2) and the `check_in_code` column read by attendees (`00013:421-430` — column-stripping in the query is cosmetic, so any attendee can read every session's check-in code and forge check-ins).
 
-## Product Analytics
+10. **[P0] End-to-end auth flow test** — manual, owner-assigned gate: confirm sign-in → onboarding (roles + membership saved) → directory works on the prod domain with a real account, immediately before go-live.
 
-- [ ] [LAUNCH] Integrate PostHog for event tracking and user analytics
+## P1 — Required for a safe, credible launch
 
----
+11. **[P1] Database backups + migration safety** `[AUDIT]` — confirm daily backups (needs Pro, #8); **document and rehearse one restore end-to-end**. Add a shadow-DB step (apply the full migration set to a throwaway Postgres on each PR) so ordering/idempotency breaks fail before prod, and write a per-migration rollback procedure. *With one environment, a bad direct-to-prod migration has no safety net.*
 
-## Environments & Deployment
+12. **[P1] Automated tests for the write paths** `[AUDIT]` — onboarding is now the sole source of roles/memberships, so this is high-value. Using the proven `loadRoster.test.ts` client-mock pattern, add a vitest suite for `onboarding.ts` (assert exact insert/update payloads per step — `saveStep3` role_assignments incl. end_date nulling, `saveStep2` membership update-vs-insert, `completeOnboarding`) and for `profileService.saveProfile` (upsert payload shape; deletes only after successful upsert). Remove `src/lib/supabase/**` from the coverage exclude for `onboarding.ts`.
 
-> Currently only one Supabase environment exists — production changes have no safety net. These items establish dev/prod separation, an automated deployment pipeline, and backup/restore.
+13. **[P1] Verify home / finance / docs content** `[AUDIT]` — *these are fully-built, shipping features, NOT stubs.* Do **not** hide or stub. Verify content is current: finance officers/dates (`FINANCE_DEPARTMENT.cfo`), the Jotform form ID, and the SOP/Drive links (link rot).
 
-### Environments
-- [ ] [LAUNCH] Stand up a separate **dev** Supabase project (distinct from prod)
-  - Separate project ref, URL, and anon/service keys
-  - Mirror schema via `supabase db push` from `supabase/migrations/`
-  - Seed with placeholder/sample data (prod gets real data only)
-- [ ] [LAUNCH] Split env vars per environment (`.env.development`, `.env.production`) and wire into Netlify contexts (Deploy Previews + Branch Deploys → dev, Production → prod)
-- [ ] [LAUNCH] Document environment switching + onboarding for new contributors in `README.md`
-- [ ] Decide whether a **staging** env is needed in addition to dev/prod (defer unless prod bugs leak through)
+14. **[P1] Fix user-visible correctness bugs:**
+    - `loadRoster` drops users who checked in but never signed up (`loadRoster.ts:49`)
+    - `roomConflict` false-positive overlap warnings from an ISO format mismatch (`SessionPanel.tsx:473`)
 
-### CI/CD Pipeline
-- [ ] [LAUNCH] Define branch strategy: `feature/*` → `dev` → `main` (prod)
-  - `feature/*` PRs auto-deploy Netlify preview pointed at **dev** Supabase
-  - Merges to `dev` auto-deploy the dev Netlify site
-  - Merges to `main` auto-deploy prod after CI passes
-- [ ] [LAUNCH] Branch protection on `main` and `dev`: require passing CI + 1 review, no direct pushes
-- [ ] [LAUNCH] Migration promotion flow: apply to dev first, verify, then apply to prod (no direct-to-prod migrations)
-- [ ] [LAUNCH] Rollback plan documented (Netlify rollback + migration down-scripts or point-in-time restore)
+15. **[P1] Directory pagination + scale** `[AUDIT]` — `fetchPeopleForDirectory` runs `.from('users').select('*')` with no pagination and filters client-side; won't scale once the Google sync loads the full org. Add server-side pagination + search (`range()` + `ilike`/FTS), select only the columns the list needs, and load-test `/people` with thousands of seeded rows.
 
-### Database Backups
-- [ ] [LAUNCH] Confirm Supabase automated daily backups are enabled on prod (check plan — Pro tier required for PITR)
-- [ ] [LAUNCH] Set up scheduled logical backups (`pg_dump` via GitHub Actions cron → secure storage like S3/R2) as a provider-independent fallback
-- [ ] [LAUNCH] Document + **test** the restore procedure on the dev environment (an untested backup is not a backup)
-- [ ] [LAUNCH] Retention policy: daily for 7 days, weekly for 4 weeks, monthly for 12 months (adjust per storage cost)
-- [ ] Consider alerting if a scheduled backup fails (cron job health check)
+16. **[P1] PostHog — analytics + error monitoring** `[AUDIT]` — wire up PostHog for event tracking **and error capture**. Replace the `NODE_ENV==='development'` console guards in `middleware.ts` with PostHog capture — today prod auth/onboarding/sign-out errors are silently swallowed. Confirm events arrive from a deploy preview.
+
+17. **[P1] Security headers / CSP** `[AUDIT]` — add a `headers()` block (next.config or `netlify.toml [[headers]]`): `X-Frame-Options: DENY` / `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, HSTS, and a CSP allowing self + the Supabase URL for `connect-src`.
+
+18. **[P1] Branded 404** `[AUDIT]` — add `not-found.tsx`; today `notFound()` (deleted/stale conference links) renders Next's bare 404 outside the app shell with no way back.
+
+19. **[P1] Mobile QA pass** — verify 375 / 393 / 430px; fix admin `grid-cols-2` desktop-only layout (`ScheduleEditor.tsx:193`) and the `/finance` Jotform 4000px iframe height on mobile.
+
+20. **[P1] Branch protection on `main`** — make the existing CI gate blocking (it already runs lint + tsc + audit + vitest + build + Playwright): require passing CI + 1 review, no direct pushes.
+
+21. **[P1] Root `README.md`** — setup, env vars, contributor onboarding.
+
+22. **[P1] PWA manifest + CI Node pin** `[AUDIT]` — add the two missing `/screenshots/*.png` (or remove the block) and fix `theme_color` to `#254FA0` in `manifest.json`; pin CI Node to match `netlify.toml` `NODE_VERSION=20`.
+
+## P2 — Strongly recommended (descope only if the week forces it)
+
+23. **[P2] Manual onboarding smoke test** — run all 7 steps with a real account, confirming roles + membership land correctly; include a deliberately interrupted/failed-write run.
+24. **[P2] Accessibility quick pass** — keyboard nav + obvious screen-reader gaps on auth, onboarding, directory.
+25. **[P2] Block client-set onboarding flag** `[AUDIT]` — the `users` UPDATE policy has no `WITH CHECK`, so a user can PATCH `onboarding_completed_at` directly (self-inflicted only). Add a `WITH CHECK`/trigger.
+26. **[P2] Avatar URL rot** `[AUDIT]` — Google photo URLs in `avatar_url` expire; unclaimed members' avatars will 404 over time. Copy to Supabase Storage at sync time or resolve live; verify the initials fallback.
+27. **[P2] Audit trail for destructive admin actions** `[AUDIT]` — `remove_attendee` (SECURITY DEFINER cascade), role grant/revoke, and conference publish are unlogged. Add an insert-only audit table (actor, action, target, timestamp).
+28. **[P2] Service-worker update UX** `[AUDIT]` — `sw.js` `skipWaiting()`+`clients.claim()` swaps JS in open tabs mid-session with no reload prompt. Add a "new version — reload" toast (Sonner is global). *Mitigated for the convention by the deploy freeze (see Confirmed decisions).*
+29. **[P2] Bulk email copy** `[AUDIT]` — `CopyEmailsButton` copies every member's email in one click. Internal-staff directory, so likely fine; decide keep vs remove.
 
 ---
 
-## Testing
+# 🔮 Future Roadmap (post-MVP)
 
-### Component Tests
-- [ ] [LAUNCH] Component tests for onboarding steps 2–5, 7
+## Quality & Test Hardening (begin right after launch)
 
-### E2E Tests
-- [ ] [LAUNCH] Authenticated onboarding flow (requires test Supabase project + test user) — skipped block in `e2e/onboarding.spec.ts`
-- [ ] [LAUNCH] Authenticated auth flow (signed-in redirect rules, domain validation) — skipped block in `e2e/auth.spec.ts`
+- Authenticated onboarding E2E (un-skip `e2e/onboarding.spec.ts:29`) — **first item post-launch**; every merge to prod is unguarded until then. Needs a seeded test user + `storageState` fixture.
+- Authenticated auth E2E — signed-in redirects, domain validation (un-skip `e2e/auth.spec.ts:61`)
+- Component tests for onboarding steps 2–5, 7
+- Raise coverage thresholds toward 80% (currently floored at ~3% in `vitest.config.mts`; ratchet up as tests land)
+- Bundle-size check in CI (warn on significant growth)
+- Fix local jsdom CJS load error (`LRUCache is not a constructor`) — pin a compatible `lru-cache`
 
----
+### Remaining admin-schedule findings (smaller / latent)
 
-## CI/CD Enhancements
+- `composeTzIso` DST spring-forward off-by-one writes the wrong UTC instant (US tz, 02:00–07:00 second Sunday of March) — pinned `it.skip` in `datetime.test.ts` (`datetime.ts:19`)
+- `pendingSavedId` can clobber deliberate navigation between save and refresh (`ScheduleEditor.tsx:79`); also needs a timeout fallback (`ScheduleEditor.tsx:73`)
+- Dirty flag stays true after a successful save until refresh → spurious discard dialog (`SessionPanel.tsx:411`)
+- DeleteMode async promise not cancelled on unmount (`SessionPanel.tsx:821`)
+- `dateOk` silently disables Save with no field-level error (`SessionPanel.tsx:445`)
+- `endTime > startTime` string compare disallows midnight-crossing sessions (`SessionPanel.tsx:448`)
+- Header "Add session" button no-ops on non-Schedule tabs (`ConferenceEditor.tsx:133`)
+- Focus regression on mode transitions (`SessionPanel.tsx:401`)
+- `onDirtyChange` dual-effect pattern is fragile (`SessionPanel.tsx:411,416`)
+- `loadRoster` dead `.order('created_at')` clause (`loadRoster.ts:22`)
+- `SessionPanel.test.tsx` roster-filter test asserts the loading frame (`SessionPanel.test.tsx:49`)
 
-- [ ] [LAUNCH] Raise coverage thresholds to 80% — currently ~5%; depends on broader component test coverage. Track ratchet in commits to `vitest.config.mts`.
-- [ ] [LAUNCH] Add bundle size check (warn if build output grows significantly)
+## UI / UX Polish
 
----
+- **Wire up dark mode toggle** — `darkMode: ['class']` + dark OKLCH tokens exist, but nothing adds the `dark` class to `<html>`. Needs `next-themes` or a hand-rolled toggle.
+- Finalize loading/error state patterns across the app
+- Onboarding motion & transitions (use the `frontend-design` skill): page transitions, step 7 celebration, segmented step indicator, step 1 welcome reveal, micro-interactions
+- PWA: test standalone mode on iOS Safari; consider splash screen config; revisit `IOSInstallPrompt` (animations, timing, analytics)
+- `SearchableCombobox`: always show a persistent "Add custom…" option; placeholder hint
 
-## Technical Debt / Cleanup
+## New Features
 
-- [ ] **Fix local jsdom CJS load error** — `bunx vitest run` crashes locally with `TypeError: LRUCache is not a constructor` at `node_modules/jsdom/lib/jsdom/living/css/helpers/css-values.js:42`. Transitive-dep mismatch between jsdom and `lru-cache`. CI is unaffected (clean install). Workaround: pure-logic tests declare `// @vitest-environment node` to skip jsdom, but this masks the bug for component tests. Fix via `package.json` `overrides`/`resolutions` pinning a compatible `lru-cache`, or wait for jsdom to release a fixed version.
+- **Org Chart** — visual hierarchy explorer (separate from the directory)
+  - Option A: geographic only (Region → Subregion → NN); Option B: scoped by track (Geographic / Cabinet / Cloud)
+  - Handle cross-cutting roles (NS members hold multiple functional roles); navigation TBD
 
----
+## Exploratory Spikes (research / ideation — no implementation yet)
 
-## Onboarding UX Enhancement
-
-> **How to implement:** Use the `frontend-design` skill when ready to build these.
-> Run: `use the frontend design skill to implement the onboarding motion/transitions`
-> The skill will guide you through creating distinctive, production-grade UI with motion.
-
-### Priority 1: Page Transitions (Foundation)
-- [ ] Install framer-motion: `bun add framer-motion`
-- [ ] Create `OnboardingTransition` wrapper component
-- [ ] Wrap each step's content with animated enter/exit
-- [ ] Direction-aware: forward slides left, back slides right
-- [ ] Smooth fade + translate (opacity 0→1, x: ±20px → 0)
-
-### Priority 2: Step 7 Celebration (Memorable Ending)
-- [ ] Install confetti library: `bun add canvas-confetti`
-- [ ] Animated SVG checkmark that draws itself on mount
-- [ ] Confetti burst triggered on page load
-- [ ] Personalized message using user's name from context
-- [ ] Staggered text reveal for heading and subtext
-
-### Priority 3: Step Indicator (Visual Progress)
-- [ ] Replace thin `<Progress>` bar with segmented step indicator
-- [ ] Show step numbers (1-7) connected by lines
-- [ ] Completed steps show checkmarks
-- [ ] Current step highlighted with animation
-- [ ] Optional: show step labels on hover/focus
-
-### Priority 4: Step 1 Welcome (First Impression)
-- [ ] Staggered reveal: heading → subtext → form fields (with delays)
-- [ ] Subtle background gradient or decorative element
-- [ ] Consider warm color accent for welcoming feel
-
-### Priority 5: Micro-interactions (Polish)
-- [ ] Step 6 skill badges: bouncy scale animation on selection
-- [ ] Steps 3-5: new cards animate in when added (slide + fade)
-- [ ] Button hover states: subtle lift/shadow effect
-- [ ] Input focus: glowing border animation
+- **Employment data integration** — referral network across members' companies (LinkedIn API limits, privacy/GDPR)
+- **Collective social media feed** — unified Instagram feed across NeighborNets (API restrictions, moderation)
+- **User engagement & retention** — social features, gamification, community features, personal value (prayer times, masjid info), notifications
 
 ---
 
-## Component Improvements
+## Recently shipped / corrections
 
-### SearchableCombobox UX
-- [ ] Always show "Add new option" at bottom of dropdown list (not just when typing)
-  - **Current behavior:** "Add new" only appears when user types something not in the list
-  - **Problem:** Users may not know they can add custom entries
-  - **Idea:** Show a persistent "Add custom..." option at the bottom, perhaps styled differently (muted, with + icon)
-  - **Open question:** How does this interact with the search/filter? Always visible, or only when list is short?
-- [ ] Consider placeholder text hint: "Select or type to add your own"
-
----
-
-## Exploratory / Spikes (Research & Ideation)
-
-> **Note:** These are exploratory tasks ("spikes") to investigate feasibility and brainstorm ideas. No immediate implementation required.
-
-### Career & Networking Features
-- [ ] **Spike: Employment data integration**
-  - Explore LinkedIn scraping or other methods to get info on where GSuite users work
-  - Use case: Enable YM members to give each other referrals at their companies
-  - Consider: LinkedIn API limitations, privacy concerns, alternative data sources (manual input, company email domains)
-  - Research: Legal/ethical considerations for scraping, GDPR/privacy compliance
-
-### Community Engagement Features
-- [ ] **Spike: Collective social media feed**
-  - Explore creating a unified Instagram feed from all NeighborNets
-  - Use case: Showcase community activity, events, and culture in one place
-  - Consider: Instagram API restrictions, hashtag aggregation, embedding options
-  - Research: Authentication requirements, rate limits, content moderation needs
-
-### User Engagement Strategy
-- [ ] **Spike: User engagement & retention**
-  - Brainstorm ways to get users to actively engage with the app beyond admin tasks
-  - Current state: App is primarily for administrators (onboarding, directory, profiles)
-  - Ideas to explore:
-    - Social features: commenting, reactions, posts/updates
-    - Gamification: achievements, leaderboards, participation streaks
-    - Community features: event RSVPs, resource sharing, Q&A forums
-    - Personal value: prayer times, Islamic resources, local masjid info
-    - Notifications: announcements, reminders, milestone celebrations
-  - Research: What keeps users coming back? Study successful community platforms
-
----
-
-### Design Notes
-- **Current issue:** Every step looks identical (monotonous layout)
-- **Color:** Currently pure grayscale—consider adding one accent color
-- **Typography:** Using default font-sans—consider a display font for headings
-
----
-
-## Admin Schedule Rebuild — Code Review Findings (2026-05-22)
-
-> Findings from a code review of `feature/admin-rebuild` before merge. Grouped by severity. Each item: short description, then file:line.
-
-### Silent data loss (fix before merge)
-
-- [x] **Tab switch destroys unsaved form edits.** Fixed by making `<Tabs>` controlled in `ConferenceEditor` and routing tab changes through a new `ScheduleEditorHandle.attemptNav` so they hit the same discard dialog as row clicks.
-- [x] **FormMode Cancel button bypasses the dirty guard.** Fixed via a new `onCancelRequest` prop on `SessionPanel` that pipes the Cancel click through the parent's `attemptNav`.
-- [x] **`shallowEqualForm` doesn't trim, but submit does.** Fixed by `.trim()`-ing both sides when comparing text fields in `shallowEqualForm`.
-- [x] **`attemptNav` silently overwrites a queued `pendingNav`.** Fixed by switching both `attemptNav` and `openCreate` to `setPendingNav((prev) => prev ?? action)` so the first queued action survives a second click.
-
-### Visible regressions
-
-- [ ] **Header "Add session" button no-ops on Info / Attendees / Feedback tabs.** Radix unmounts inactive TabsContent so `scheduleRef.current` is null; the optional chain swallows the click. Either auto-switch to Schedule first, or hide the button. (`ConferenceEditor.tsx:133`)
-- [ ] **Hardcoded `grid grid-cols-2` with no responsive layout.** Replaces the old mobile Sheet + desktop Dialog combo with a desktop-only two-column layout. CLAUDE.md mandates 375/393/430px testing. (`ScheduleEditor.tsx:193`)
-- [ ] **Focus regression on every mode transition except create-mode title.** Old Dialog provided auto-focus; the inline panel only focuses on create. view→edit, edit→view via Cancel, delete→view via Cancel all drop focus to `<body>`. (`SessionPanel.tsx:401`)
-
-### Correctness bugs (rare windows, real impact)
-
-- [ ] **`composeTzIso` DST spring-forward off-by-one writes the wrong UTC instant to the DB.** Documented as a "KNOWN LIMITATION" in the source; `SessionPanel.handleSubmit` calls it directly. Window: 02:00–07:00 wall clock on the second Sunday of March, US tz only. Fix sketch lives in `datetime.ts:16-18`; a pinned `it.skip` is waiting in `datetime.test.ts`. (`src/app/(app)/admin/conferences/lib/datetime.ts:19`)
-- [ ] **`roomConflict` ISO format mismatch creates false-positive overlap warnings.** DB timestamps come back as `+00:00`, freshly composed values are `.000Z`; char 19 ('+' vs '.') makes back-to-back sessions falsely flag as overlapping. Use numeric instant compare (`Date.parse`) or normalize both sides to `.000Z`. (`SessionPanel.tsx:473`)
-- [ ] **`pendingSavedId` effect can clobber user's deliberate navigation between save and refresh.** Same effect also pops the saved row into view after a Cancel-post-save. Track whether the user has navigated away (or made a fresh selection) since the save fired, and clear `pendingSavedId` in that case. (`ScheduleEditor.tsx:79`)
-- [ ] **Dirty stays true after a successful save until the refresh arrives** → spurious discard dialog if the user clicks another row in the ~200-500ms window. Clear the dirty flag inside `handleSubmit` on success, or have the parent reset it when `pendingSavedId` is set. (`SessionPanel.tsx:411`)
-- [ ] **`loadRoster` drops users who have a check-in but no signup.** ViewMode Stat panel shows "Checked in: 1" while the roster tab shows 0 attendees — admin can't see who actually checked in. Union signups+check-ins as the keyset. (`loadRoster.ts:49`)
-- [ ] **DeleteMode async promise not cancelled on unmount** — Cancel mid-delete still fires `onAfterDelete` against the (now-stale) parent, yanking the user off whatever page they navigated to. Add a `useRef` cancellation guard. (`SessionPanel.tsx:821`)
-
-### Smaller / latent
-
-- [ ] **`dateOk` silently disables Save with no field-level error** when an edited session's date is outside the (shortened) conference range. Surface the error on the Day Select. (`SessionPanel.tsx:445`)
-- [ ] **`endTime > startTime` string compare disallows midnight-crossing sessions** and the error message "End must be after start" is misleading. Either support overnight sessions or fix the error copy. (`SessionPanel.tsx:448`)
-- [ ] **`pendingSavedId` has no timeout fallback** (already TODO'd at `ScheduleEditor.tsx:73`). If the saved row never reappears (RLS scope change, refresh failure), the panel sits in form mode forever.
-- [ ] **`onDirtyChange` dual-effect pattern is fragile** — depends on parent's `useCallback([],)` identity; a future refactor that drops the memoization would silently break the discard guard. Consider computing dirty in the parent or wrapping cleanup so it only fires on true unmount. (`SessionPanel.tsx:411,416`)
-- [ ] **`loadRoster` `.order('created_at', ascending: true)` is dead code** — the final local sort overrides it. Remove the dead clause to avoid misleading future readers. (`loadRoster.ts:22`)
-- [ ] **`SessionPanel.test.tsx` 'roster filter tabs' test doesn't await the loadRoster promise** — asserts against the loading-frame snapshot. A regression that hides tabs behind loading state would still pass. (`SessionPanel.test.tsx:49`)
+- **CI already runs the full gate** — lint + tsc + `bun audit` + `vitest --coverage` + `next build` + Playwright e2e (`ci.yml`). The remaining gap is making it *blocking* (P1 #20), not adding steps.
+- 4 silent-data-loss holes in the admin schedule editor; color-coded role badge variants (PR #21); iOS Safari install banner (`IOSInstallPrompt`)
+- Placeholder seeds for `regions` / `subregions` / `neighbor_nets` (to be replaced with real values — see P0 #1)

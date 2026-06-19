@@ -1,10 +1,14 @@
 -- Migration: Reorder and rename role types
--- Adds sort_order column for hierarchy-based dropdown ordering (bottom-up)
--- Renames ambiguous cabinet roles and abbreviations
+-- Sets sort_order values (hierarchy-based, bottom-up) and renames ambiguous
+-- cabinet roles and abbreviations.
+--
+-- NOTE: the sort_order COLUMN is defined in 00003's CREATE TABLE (and seeded
+-- in 00004). It originally lived here as an ALTER TABLE ADD COLUMN, but that
+-- made 00004 (which already seeds sort_order) fail on a clean replay because
+-- the column did not yet exist. Moved to 00003 so the numbered migrations
+-- apply in order with zero errors, matching _run_all.sql. This migration now
+-- only sets the values and renames.
 -- =====================================
-
--- Add sort_order column
-ALTER TABLE role_types ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;
 
 -- Set sort_order (bottom-up hierarchy) and rename 3 roles in one migration
 UPDATE role_types SET sort_order = CASE code

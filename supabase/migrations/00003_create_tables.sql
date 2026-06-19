@@ -155,6 +155,7 @@ CREATE TABLE role_types (
   scope_type scope_type NOT NULL,
   max_per_scope INTEGER,                         -- NULL = unlimited
   description TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,         -- hierarchy ordering; values set in 00010
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 

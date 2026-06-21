@@ -106,7 +106,9 @@ describe('OnboardingLayout', () => {
       </OnboardingLayout>,
     )
 
-    expect(screen.getByText(/We saved your work in this browser/i)).toBeInTheDocument()
+    expect(screen.getByText(/Your last change failed to save/i)).toBeInTheDocument()
+    // The banner must not falsely claim browser persistence (there is none).
+    expect(screen.queryByText(/in this browser/i)).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /retry save/i }))
 

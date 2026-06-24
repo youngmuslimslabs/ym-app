@@ -26,6 +26,22 @@ Run `_run_all.sql` to execute all migrations in one go.
 supabase db push
 ```
 
+## Migration history integrity
+
+The numbered files (`00001_*` … `00017_*`) apply in **filename order** to a fresh
+database. `_run_all.sql` is the **canonical single-file bootstrap** and must stay
+consistent with the numbered files.
+
+> **Reconciled 2026-06:** `sort_order` was moved from an `ALTER TABLE ADD COLUMN`
+> in `00010` into `00003`'s `CREATE TABLE`. `00004` seeds `sort_order`, so the old
+> ordering failed a clean replay at `00004` ("column does not exist"). The numbered
+> sequence now matches `_run_all.sql`.
+
+Because there is a single Supabase environment, migrations are applied directly to
+production via `supabase db push` — **back up first**. Verify a clean zero-error
+replay on a throwaway/shadow database before relying on the numbered files for
+disaster recovery (the shadow-DB step in `docs/project-todos.md`).
+
 ## Migration Files
 
 | File | Description |

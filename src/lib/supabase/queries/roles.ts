@@ -30,7 +30,14 @@ export async function fetchRoleTypes(): Promise<{
       return { data: null, error: error.message }
     }
 
-    return { data, error: null }
+    // Defense-in-depth UX guard: never surface system-category roles (e.g.
+    // event_admin) in the onboarding/profile pickers. A user must not be able
+    // to self-assign Event Admin. The hard security boundary is the
+    // role_assignments RLS WITH CHECK in migration 00016; this keeps the role
+    // out of the picker so it isn't offered in the first place.
+    const filtered = data?.filter((rt) => rt.category !== 'system') ?? null
+
+    return { data: filtered, error: null }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to fetch role types'
     console.error('Role types fetch error:', err)

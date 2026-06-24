@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { google } from 'googleapis'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database.types'
+
+// Netlify extended function timeout — sync of ~2000 users takes ~5s but
+// give headroom for cold starts and larger orgs
+export const maxDuration = 60
 
 export async function POST() {
   const supabase = await createServerClient()
@@ -53,7 +58,9 @@ export async function POST() {
     for (const user of res.data.users ?? []) {
       if (!user.primaryEmail) continue
       googleUsers.push({
-        email: user.primaryEmail,
+        // Normalize to lowercase — Google can return mixed-case addresses,
+        // which would cause false "new user" hits and unique-constraint failures
+        email: user.primaryEmail.toLowerCase().trim(),
         firstName: user.name?.givenName ?? null,
         lastName: user.name?.familyName ?? null,
         avatarUrl: user.thumbnailPhotoUrl ?? null,
@@ -62,7 +69,7 @@ export async function POST() {
     pageToken = res.data.nextPageToken ?? undefined
   } while (pageToken)
 
-  const adminClient = createClient(supabaseUrl, serviceRoleKey)
+  const adminClient = createClient<Database>(supabaseUrl, serviceRoleKey)
   let created = 0, updated = 0, skipped = 0, errors = 0
 
   // Fetch all existing users via pagination (Supabase caps each page at 1000)
@@ -85,33 +92,39 @@ export async function POST() {
   const toInsert = googleUsers.filter((g) => !existingMap.has(g.email))
   const toCheck = googleUsers.filter((g) => existingMap.has(g.email))
 
-  // Bulk-insert all new users in one call
-  if (toInsert.length > 0) {
+  // Bulk-insert new users in chunks — one bad row won't wipe the entire cohort
+  const CHUNK = 50
+  for (let i = 0; i < toInsert.length; i += CHUNK) {
+    const chunk = toInsert.slice(i, i + CHUNK)
     const { error } = await adminClient.from('users').insert(
-      toInsert.map((g) => ({
+      chunk.map((g) => ({
         email: g.email,
         first_name: g.firstName,
         last_name: g.lastName,
         avatar_url: g.avatarUrl,
       }))
     )
-    if (error) errors += toInsert.length; else created += toInsert.length
+    if (error) errors += chunk.length; else created += chunk.length
   }
 
-  // Only update existing rows that have missing fields
-  for (const gUser of toCheck) {
-    const existing = existingMap.get(gUser.email)!
-    const updates: Record<string, string> = {}
-    if (!existing.first_name && gUser.firstName) updates.first_name = gUser.firstName
-    if (!existing.last_name && gUser.lastName) updates.last_name = gUser.lastName
-    if (!existing.avatar_url && gUser.avatarUrl) updates.avatar_url = gUser.avatarUrl
+  // Update existing rows with missing fields in parallel
+  const updateResults = await Promise.all(
+    toCheck.map(async (gUser) => {
+      const existing = existingMap.get(gUser.email)!
+      const updates: Record<string, string> = {}
+      if (!existing.first_name && gUser.firstName) updates.first_name = gUser.firstName
+      if (!existing.last_name && gUser.lastName) updates.last_name = gUser.lastName
+      if (!existing.avatar_url && gUser.avatarUrl) updates.avatar_url = gUser.avatarUrl
 
-    if (Object.keys(updates).length > 0) {
+      if (Object.keys(updates).length === 0) return 'skipped' as const
       const { error } = await adminClient.from('users').update(updates).eq('id', existing.id)
-      if (error) errors++; else updated++
-    } else {
-      skipped++
-    }
+      return error ? 'error' as const : 'updated' as const
+    })
+  )
+  for (const r of updateResults) {
+    if (r === 'skipped') skipped++
+    else if (r === 'updated') updated++
+    else errors++
   }
 
   return NextResponse.json({ created, updated, skipped, errors, total: googleUsers.length })

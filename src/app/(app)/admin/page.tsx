@@ -22,7 +22,7 @@ export default async function AdminToolsPage() {
       <div className="px-6 md:px-8 py-8 space-y-4">
         <div className="rounded-xl border bg-card p-6 flex items-start justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="rounded-full bg-muted/50 p-3 mt-0.5">
+            <div className="rounded-full bg-muted/50 p-4 mt-0.5">
               <Users className="w-5 h-5 text-muted-foreground" />
             </div>
             <div>

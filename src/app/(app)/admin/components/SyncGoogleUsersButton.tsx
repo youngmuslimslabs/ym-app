@@ -59,11 +59,11 @@ export function SyncGoogleUsersButton() {
 
       {state.status === 'done' && (
         <div className="flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+          <span className="flex items-center gap-1 text-primary font-medium">
             <UserPlus className="w-3.5 h-3.5" />
             {state.result.created} added
           </span>
-          <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium">
+          <span className="flex items-center gap-1 text-foreground font-medium">
             <UserCheck className="w-3.5 h-3.5" />
             {state.result.updated} updated
           </span>
@@ -77,6 +77,9 @@ export function SyncGoogleUsersButton() {
               {state.result.errors} errors
             </span>
           )}
+          <span className="text-muted-foreground">
+            of {state.result.total}
+          </span>
         </div>
       )}
 

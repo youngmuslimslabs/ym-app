@@ -15,9 +15,9 @@
 
 There is **no bulk import** and **no data-model validation step**. Real org data enters three ways:
 
-1. **Users** — created by the Google Workspace sync (`scripts/sync-google-users.ts`: writes email + first/last name + avatar) and/or on first login via the auth trigger. No manual user import.
-2. **Roles + memberships** — **self-selected by each user during onboarding** (`onboarding.ts` saveStep3 = `role_assignments`, saveStep2 = membership). NOT imported. → This makes onboarding (P0 #5) and the role picker (P0 #2) load-bearing.
-3. **Geography (regions / subregions / neighbor_nets)** — **owner-maintained seed data** (P0 #1). The owner has the real values; updated via migration before users onboard, because onboarding memberships reference `neighbor_nets`.
+1. **Users** — created by the Google Workspace sync (`scripts/sync-google-users.ts`: writes email + first/last name + avatar) and/or on first login via the auth trigger. No manual user import. **Status: 1,823 real users already loaded in prod** — the sync has run.
+2. **Roles + memberships** — **self-selected by each user during onboarding** (`onboarding.ts` saveStep3 = `role_assignments`, saveStep2 = membership). NOT imported. **Status: only ~8 memberships / ~18 role_assignments exist** — because real users can't place themselves until the real geography seed lands (#1).
+3. **Geography (regions / subregions / neighbor_nets)** — **owner-maintained seed data** (P0 #1). **Status: STILL placeholder** in prod (1 region "Texas", 3 fake NNs). This is the top remaining blocker.
 
 ## Branching & Environments
 
@@ -29,23 +29,23 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 ## P0 — Launch blockers (ordered by dependency / lead time)
 
-1. **[P0] Update geography seed data with real values** — replace the placeholder Texas / Houston-Dallas / Katy-Sugar Land-Downtown seeds (currently in `00004_seed_data.sql:64-97` and re-seeded in `00011_repair_dropped_tables.sql:169-189`) with the real **regions → subregions → neighbor_nets** the owner has. Do it as a **new migration** (e.g. `00016_real_geography_seed.sql`) that clears the placeholder rows and inserts the real hierarchy. **Must land before any user onboards**, because onboarding's membership picker references `neighbor_nets` (deleting a NN that a real membership already points to would break referential integrity). *Owner to provide the values.*
+1. **[P0] Update geography seed data with real values** — ⚠️ **THE top remaining blocker.** Prod still has only the placeholder Texas / Houston-Dallas / Katy-Sugar Land-Downtown seeds (`00004_seed_data.sql:64-97`, re-seeded in `00011_repair_dropped_tables.sql:169-189`). With 1,823 real users loaded but the real **regions → subregions → neighbor_nets** missing, **no one can pick their actual NeighborNet during onboarding** (only ~8 memberships exist as a result). Add the real hierarchy as a **new migration — next free number is `00018`** — that clears the placeholders and inserts the real rows, then apply with the same backup → dry-run → push → verify flow used for `00016`/`00017`. **Must land before users onboard** (a real membership pointing at a NN blocks deleting that NN). *Owner to provide the values.*
 
-2. **[P0] Fix privilege escalation — self-granted Event Admin** `[AUDIT]` — because roles are chosen by users in onboarding, the role picker (`fetchRoleTypes()`) exposes the `event_admin` system role, and any authenticated user can insert their own `role_assignments` row with `role_type_id = event_admin` and pass `requireAdmin()`. Add a `WITH CHECK` to the role_assignments INSERT/UPDATE policy excluding `category='system'` roles (`00006_rls_policies.sql:133-135`), filter `category='system'` out of `fetchRoleTypes()` (`roles.ts:23-26`) so it never appears in the onboarding/profile picker, and add a regression test asserting a non-admin event_admin insert is rejected.
+2. ✅ **[DONE] Privilege escalation — self-granted Event Admin** (PR #22, merged) — `00016` applied + **verified enforced on prod** (impersonation test rejected the self-grant). `WITH CHECK` on role_assignments INSERT/UPDATE excludes `category='system'`; `fetchRoleTypes()` filters system roles out of the picker. *Open follow-up: `people.ts:156` directory filter still lists "Event Admin" (read-only search; product decision — not a security issue).*
 
-3. **[P0] Fix broken migration history** `[AUDIT]` — `00004_seed_data.sql:10` seeds `role_types.sort_order` before `00010` adds the column, so a clean `supabase db push` of the numbered files fails partway (`00011` header documents this happened). Move `sort_order` into `00003`'s CREATE (or split the seed after `00010`), verify the full sequence applies to an empty DB with zero errors, and regenerate `_run_all.sql` from the reconciled files. *Do this before adding the #1 geography migration so the history is clean.*
+3. ✅ **[DONE] Broken migration history** (PR #24, merged) — `sort_order` moved into `00003`'s CREATE, redundant `ADD COLUMN` dropped from `00010`; the numbered sequence now matches `_run_all.sql`. *(Static-verified; a full fresh-replay against a shadow DB is still worth doing — see P1 #11.)*
 
-4. **[P0] Fix email case-sensitivity in the auth trigger** `[AUDIT]` — `link_auth_to_user` matches Google-synced users by exact-case email (`00009:33-42`); a casing/whitespace mismatch falls through to INSERT, hits the `email UNIQUE` constraint inside the auth transaction, and **fails the entire login**. Risk is lower now that both the synced row and the OAuth identity are Google-sourced (usually canonical lowercase), but it's cheap defensive hardening: normalize emails (lowercase+trim) in the sync script and match case-insensitively (`lower(email)` / citext) with a unique index on `lower(email)`.
+4. ✅ **[DONE] Email case-sensitivity in the auth trigger** (PR #23, merged) — `00017` applied + verified on prod: **21 real users' uppercase emails normalized** (0 case-duplicates), `lower(email)` unique index added, trigger now matches + normalizes case-insensitively, sync script normalizes at the source.
 
-5. **[P0] Onboarding write resilience + resumability** `[AUDIT]` — middleware hard-redirects any user without `onboarding_completed_at` to `/onboarding` on every route; the 604-line writer (`onboarding.ts`) is untested and is now the **sole source of every user's roles and membership**. A single failed DB write (flaky convention wifi) or an incomplete record can trap a user at step 1 with no recovery. Add retry-on-failure + clear error surfacing, and make steps resumable so a user returns to where they left off. *(Note: a full "skip onboarding" escape would leave the user with no role/membership data — prefer resilience/resumability over skip; decide if a skip is wanted.)* Exercise the failure paths before the convention.
+5. ✅ **[DONE — rescoped] Onboarding write resilience** (PR #25, merged) — investigation found the resilience was **already built** (retry banner + `flushPendingSaves` blocks completion on a failed save). The real defect was a one-line banner that falsely claimed browser persistence — fixed. localStorage persistence + resume-to-last-step were cut as YAGNI for single-sitting onboarding. *Known limitation (left as-is): only the last failed background save is retried at completion (needs two failures in one session to bite).*
 
 6. **[P0] Production OAuth + Google authorized origins** `[AUDIT]` — swap in prod Google OAuth credentials. Because login uses `signInWithIdToken` (Google Identity Services), the cutover dependency is the **Authorized JavaScript Origins** on the Google Cloud OAuth client (add `https://youngmuslims.com`), plus the Supabase Auth **Site URL** — not just redirect URIs.
 
-7. **[P0] Custom domain — `youngmuslims.com`** — point the app at the YM domain; provision SSL; update OAuth origins (#6). `[AUDIT]` Reconcile `trailingSlash: true` with registered redirect URIs and the manifest `start_url`/shortcuts to avoid `redirect_uri_mismatch`; review `netlify.toml` `publish = ".next"` against the Next.js Runtime v5 (re-test `/auth/callback` on a deploy preview).
+7. **[P0] Custom domain — `youngmuslims.com` + pick ONE host** — **both Netlify *and* Vercel currently build every PR** (confirmed in CI); decide on a single host before cutover so DNS, SSL, and OAuth origins all point to one place. Then point the app at the YM domain; provision SSL; update OAuth origins (#6). `[AUDIT]` Reconcile `trailingSlash: true` with registered redirect URIs and the manifest `start_url`/shortcuts to avoid `redirect_uri_mismatch`; review `netlify.toml` `publish = ".next"` against the Next.js Runtime v5 (re-test `/auth/callback` on a deploy preview).
 
 8. **[P0] Confirm Supabase Pro tier** `[AUDIT]` — a Free-tier project **auto-pauses after ~7 days of inactivity** (prod goes fully offline) and has no PITR. Confirm Pro in the dashboard before the convention; this also enables daily backups for P1.
 
-9. **[P0] Manual RLS policy review** — verify policies against real users/roles once the geography seed (#1) is in and a few test users have onboarded. **Explicitly include:** the role self-assignment path (#2) and the `check_in_code` column read by attendees (`00013:421-430` — column-stripping in the query is cosmetic, so any attendee can read every session's check-in code and forge check-ins).
+9. **[P0] Manual RLS policy review** — ✅ the role self-assignment path (#2) is now **verified enforced on prod**. **Still open:** the `check_in_code` column read by attendees (`00013:421-430` — column-stripping in the query is cosmetic, so any attendee can read every session's check-in code and forge check-ins). Re-sweep the rest against real users once more onboard.
 
 10. **[P0] End-to-end auth flow test** — manual, owner-assigned gate: confirm sign-in → onboarding (roles + membership saved) → directory works on the prod domain with a real account, immediately before go-live.
 
@@ -98,7 +98,6 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 - Component tests for onboarding steps 2–5, 7
 - Raise coverage thresholds toward 80% (currently floored at ~3% in `vitest.config.mts`; ratchet up as tests land)
 - Bundle-size check in CI (warn on significant growth)
-- Fix local jsdom CJS load error (`LRUCache is not a constructor`) — pin a compatible `lru-cache`
 
 ### Remaining admin-schedule findings (smaller / latent)
 
@@ -138,6 +137,8 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 ## Recently shipped / corrections
 
+- **2026-06 prod migration drop** — `00015` (conferences polish; **prod had been silently missing it**), `00016` (privilege-escalation fix), `00017` (email-casing fix) applied to prod via `supabase db push` and **verified live**. Remote ledger now at `00017`. PRs #22–#25 merged to `main`. Pre-apply backups at `/tmp/ym_prod_public_backup.sql` + `/tmp/ym_emails_pre_normalize.csv`.
+- ⚠️ **Operational follow-up: rotate the Supabase DB password + Personal Access Token** (exposed during the migration session). Note: resetting the DB password means re-linking the CLI.
+- Resolved: local jsdom CJS load error — the `lru-cache` override in `package.json` fixed it; the full vitest suite runs clean locally.
 - **CI already runs the full gate** — lint + tsc + `bun audit` + `vitest --coverage` + `next build` + Playwright e2e (`ci.yml`). The remaining gap is making it *blocking* (P1 #20), not adding steps.
 - 4 silent-data-loss holes in the admin schedule editor; color-coded role badge variants (PR #21); iOS Safari install banner (`IOSInstallPrompt`)
-- Placeholder seeds for `regions` / `subregions` / `neighbor_nets` (to be replaced with real values — see P0 #1)

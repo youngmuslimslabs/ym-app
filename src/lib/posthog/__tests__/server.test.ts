@@ -14,6 +14,7 @@ describe('getPostHogServer', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    process.env.NEXT_PUBLIC_POSTHOG_KEY = 'test-key'
   })
 
   it('returns a PostHog instance', async () => {

@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       conference_attendees: {
@@ -559,6 +584,53 @@ export type Database = {
           },
         ]
       }
+      sync_logs: {
+        Row: {
+          completed_at: string | null
+          created_count: number | null
+          errors_count: number | null
+          id: string
+          skipped_count: number | null
+          started_at: string
+          status: string
+          total_count: number | null
+          triggered_by: string
+          updated_count: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_count?: number | null
+          errors_count?: number | null
+          id?: string
+          skipped_count?: number | null
+          started_at?: string
+          status?: string
+          total_count?: number | null
+          triggered_by: string
+          updated_count?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_count?: number | null
+          errors_count?: number | null
+          id?: string
+          skipped_count?: number | null
+          started_at?: string
+          status?: string
+          total_count?: number | null
+          triggered_by?: string
+          updated_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_logs_triggered_by_fkey"
+            columns: ["triggered_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           created_at: string
@@ -730,7 +802,7 @@ export type Database = {
     Functions: {
       cancel_signup: { Args: { p_session_id: string }; Returns: Json }
       check_in_to_session: {
-        Args: { p_session_id: string; p_code: string }
+        Args: { p_code: string; p_session_id: string }
         Returns: Json
       }
       get_current_user_id: { Args: never; Returns: string }
@@ -887,6 +959,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       conference_status: ["draft", "published"],

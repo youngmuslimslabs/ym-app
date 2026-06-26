@@ -43,10 +43,12 @@ export function OnboardingReferenceProvider({ children }: { children: ReactNode 
         subregionsResult.error ?? neighborNetsResult.error ?? roleTypesResult.error
       if (firstError) {
         console.error('Onboarding reference load error:', firstError)
-        posthog.capture('onboarding_error', {
-          error_type: 'reference_data_load_failed',
-          error: String(firstError),
-        })
+        try {
+          posthog.capture('onboarding_error', {
+            error_type: 'reference_data_load_failed',
+            error_message: firstError,
+          })
+        } catch { /* observability must not affect error handling */ }
         setError(toUserMessage(firstError, { action: 'load setup data' }))
         setIsLoading(false)
         return

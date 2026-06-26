@@ -44,15 +44,17 @@ export async function updateSession(request: NextRequest) {
         if (getUserError) {
             // Only capture unexpected errors (not missing sessions, which are normal when logged out)
             if (getUserError.status !== 400) {
-                getPostHogServer().capture({
-                    distinctId: 'middleware',
-                    event: 'middleware_auth_error',
-                    properties: {
-                        error_status: getUserError.status,
-                        error_message: getUserError.message,
-                        path: request.nextUrl.pathname,
-                    },
-                })
+                try {
+                    getPostHogServer().capture({
+                        distinctId: 'middleware',
+                        event: 'middleware_auth_error',
+                        properties: {
+                            error_status: getUserError.status,
+                            error_message: getUserError.message,
+                            path: request.nextUrl.pathname,
+                        },
+                    })
+                } catch { /* observability must not affect request path */ }
             }
 
             // Don't redirect if already on login, auth, or onboarding pages (prevents redirect loop)
@@ -94,14 +96,16 @@ export async function updateSession(request: NextRequest) {
                 await supabase.auth.signOut()
             } catch (signOutError) {
                 // Capture sign out error but continue with redirect
-                getPostHogServer().capture({
-                    distinctId: 'middleware',
-                    event: 'middleware_domain_signout_failed',
-                    properties: {
-                        error: String(signOutError),
-                        path: request.nextUrl.pathname,
-                    },
-                })
+                try {
+                    getPostHogServer().capture({
+                        distinctId: user.id,
+                        event: 'middleware_domain_signout_failed',
+                        properties: {
+                            error_message: signOutError instanceof Error ? signOutError.message : String(signOutError),
+                            path: request.nextUrl.pathname,
+                        },
+                    })
+                } catch { /* observability must not affect request path */ }
             }
 
             const url = request.nextUrl.clone()
@@ -130,15 +134,17 @@ export async function updateSession(request: NextRequest) {
 
             // On DB error, let the request through rather than incorrectly redirecting
             if (queryError && queryError.code !== 'PGRST116') {
-                getPostHogServer().capture({
-                    distinctId: 'middleware',
-                    event: 'middleware_onboarding_query_error',
-                    properties: {
-                        error_code: queryError.code,
-                        error_message: queryError.message,
-                        path: request.nextUrl.pathname,
-                    },
-                })
+                try {
+                    getPostHogServer().capture({
+                        distinctId: user.id,
+                        event: 'middleware_onboarding_query_error',
+                        properties: {
+                            error_code: queryError.code,
+                            error_message: queryError.message,
+                            path: request.nextUrl.pathname,
+                        },
+                    })
+                } catch { /* observability must not affect request path */ }
                 return supabaseResponse
             }
 
@@ -159,14 +165,16 @@ export async function updateSession(request: NextRequest) {
         }
     } catch (error) {
         // Catch any unexpected errors in middleware
-        getPostHogServer().capture({
-            distinctId: 'middleware',
-            event: 'middleware_unexpected_error',
-            properties: {
-                error: String(error),
-                path: request.nextUrl.pathname,
-            },
-        })
+        try {
+            getPostHogServer().capture({
+                distinctId: 'middleware',
+                event: 'middleware_unexpected_error',
+                properties: {
+                    error_message: error instanceof Error ? error.message : String(error),
+                    path: request.nextUrl.pathname,
+                },
+            })
+        } catch { /* observability must not affect request path */ }
 
         // Allow request to continue if middleware fails
         // This prevents total app failure on middleware errors

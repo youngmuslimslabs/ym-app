@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
+import { usePostHog } from 'posthog-js/react'
 import { User, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProfileModeProvider } from '@/contexts/ProfileModeContext'
@@ -38,6 +39,7 @@ const EMPTY_PROFILE_DATA: ProfileFormState = {
 }
 
 export default function ProfilePage() {
+  const posthog = usePostHog()
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -69,7 +71,16 @@ export default function ProfilePage() {
   const handleSave = async () => {
     const result = await saveForm()
     if (!result.success) {
+      try {
+        posthog?.captureException(new Error(result.error ?? 'Profile save failed'), {
+          context: 'profile_save',
+        })
+      } catch { /* observability */ }
       throw new Error(result.error ?? 'save_profile_failed')
+    } else {
+      try {
+        posthog?.capture('profile_saved', { change_count: changeCount })
+      } catch { /* observability */ }
     }
   }
 
@@ -96,12 +107,20 @@ export default function ProfilePage() {
   const handleSaveAndLeave = async () => {
     const result = await saveForm()
     if (result.success) {
+      try {
+        posthog?.capture('profile_saved', { change_count: changeCount })
+      } catch { /* observability */ }
       setShowUnsavedModal(false)
       if (pendingNavigation) {
         window.location.href = pendingNavigation
       }
     } else {
       console.error('Save profile failed:', result.error)
+      try {
+        posthog?.captureException(new Error(result.error ?? 'Profile save failed'), {
+          context: 'profile_save',
+        })
+      } catch { /* observability */ }
       toast.error(toUserMessage(result.error, { action: 'save your profile' }))
     }
   }

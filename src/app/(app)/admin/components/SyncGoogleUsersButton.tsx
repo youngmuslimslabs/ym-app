@@ -28,13 +28,18 @@ export function SyncGoogleUsersButton() {
       const res = await fetch('/api/admin/sync-google-users', { method: 'POST' })
       const data = await res.json() as SyncResult & { error?: string }
       if (!res.ok) {
-        setState({ status: 'error', message: data.error ?? 'Sync failed' })
-        toast.error(data.error ?? 'Sync failed')
+        const message = res.status === 409
+          ? 'A sync is already running — try again in a moment'
+          : (data.error ?? 'Sync failed')
+        setState({ status: 'error', message })
+        toast.error(message)
         return
       }
       setState({ status: 'done', result: data })
       if (data.errors > 0) {
-        toast.error(`Sync finished with ${data.errors} error(s)`)
+        toast.error(`Sync finished with ${data.errors} error(s) — see details below`)
+      } else {
+        toast.success(`Sync complete — ${data.created} added, ${data.updated} updated`)
       }
     } catch {
       setState({ status: 'error', message: 'Network error — sync did not complete' })
@@ -48,7 +53,7 @@ export function SyncGoogleUsersButton() {
     <div className="flex flex-col items-end gap-3">
       <Button variant="outline" onClick={handleSync} disabled={syncing}>
         <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-        {syncing ? 'Syncing...' : state.status === 'done' ? 'Sync Again' : 'Sync Google Users'}
+        Sync Google Users
       </Button>
 
       {state.status === 'syncing' && (

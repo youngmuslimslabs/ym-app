@@ -64,6 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         if (user) {
           posthog?.identify(user.id, { email: user.email ?? undefined })
+        } else {
+          posthog?.reset()
         }
         setUser(user ?? null)
       }

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { getPostHogServer } from '@/lib/posthog/server'
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
@@ -41,9 +42,17 @@ export async function updateSession(request: NextRequest) {
 
         // Handle auth errors (network failures, invalid tokens, etc.)
         if (getUserError) {
-            // Only log unexpected errors (not missing sessions, which are normal when logged out)
-            if (process.env.NODE_ENV === 'development' && getUserError.status !== 400) {
-                console.error('Middleware auth error:', getUserError)
+            // Only capture unexpected errors (not missing sessions, which are normal when logged out)
+            if (getUserError.status !== 400) {
+                getPostHogServer().capture({
+                    distinctId: 'middleware',
+                    event: 'middleware_auth_error',
+                    properties: {
+                        error_status: getUserError.status,
+                        error_message: getUserError.message,
+                        path: request.nextUrl.pathname,
+                    },
+                })
             }
 
             // Don't redirect if already on login, auth, or onboarding pages (prevents redirect loop)
@@ -84,10 +93,15 @@ export async function updateSession(request: NextRequest) {
             try {
                 await supabase.auth.signOut()
             } catch (signOutError) {
-                // Log sign out error but continue with redirect
-                if (process.env.NODE_ENV === 'development') {
-                    console.error('Sign out error during domain validation:', signOutError)
-                }
+                // Capture sign out error but continue with redirect
+                getPostHogServer().capture({
+                    distinctId: 'middleware',
+                    event: 'middleware_domain_signout_failed',
+                    properties: {
+                        error: String(signOutError),
+                        path: request.nextUrl.pathname,
+                    },
+                })
             }
 
             const url = request.nextUrl.clone()
@@ -116,9 +130,15 @@ export async function updateSession(request: NextRequest) {
 
             // On DB error, let the request through rather than incorrectly redirecting
             if (queryError && queryError.code !== 'PGRST116') {
-                if (process.env.NODE_ENV === 'development') {
-                    console.error('Middleware onboarding query error:', queryError)
-                }
+                getPostHogServer().capture({
+                    distinctId: 'middleware',
+                    event: 'middleware_onboarding_query_error',
+                    properties: {
+                        error_code: queryError.code,
+                        error_message: queryError.message,
+                        path: request.nextUrl.pathname,
+                    },
+                })
                 return supabaseResponse
             }
 
@@ -139,9 +159,14 @@ export async function updateSession(request: NextRequest) {
         }
     } catch (error) {
         // Catch any unexpected errors in middleware
-        if (process.env.NODE_ENV === 'development') {
-            console.error('Unexpected middleware error:', error)
-        }
+        getPostHogServer().capture({
+            distinctId: 'middleware',
+            event: 'middleware_unexpected_error',
+            properties: {
+                error: String(error),
+                path: request.nextUrl.pathname,
+            },
+        })
 
         // Allow request to continue if middleware fails
         // This prevents total app failure on middleware errors

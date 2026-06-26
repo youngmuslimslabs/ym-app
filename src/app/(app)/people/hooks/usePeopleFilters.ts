@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Fuse, { type IFuseOptions } from 'fuse.js'
+import posthog from 'posthog-js'
 import type { PersonListItem, PeopleFilters } from '../types'
 
 const FUSE_OPTIONS: IFuseOptions<PersonListItem> = {
@@ -150,6 +151,12 @@ export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersRetu
   const setFilterValues = useCallback(
     (category: keyof Omit<PeopleFilters, 'search' | 'yearsInYM'>, values: string[]) => {
       setFilters((prev) => ({ ...prev, [category]: values }))
+      try {
+        posthog.capture('people_filter_applied', {
+          filter_category: category,
+          filter_count: values.length,
+        })
+      } catch { /* observability */ }
     },
     []
   )
@@ -163,6 +170,9 @@ export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersRetu
 
   const clearAllFilters = useCallback(() => {
     setFilters(getInitialFilters())
+    try {
+      posthog.capture('people_filter_cleared', {})
+    } catch { /* observability */ }
   }, [])
 
   const fuse = useMemo(() => new Fuse(people, FUSE_OPTIONS), [people])

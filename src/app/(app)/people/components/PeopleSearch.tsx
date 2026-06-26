@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import { Search, X } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
 import { Input } from '@/components/ui/input'
@@ -18,13 +19,20 @@ export function PeopleSearch({
   placeholder = 'Search people...',
 }: PeopleSearchProps) {
   const posthog = usePostHog()
+  const searchCaptureTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleChange = (newValue: string) => {
     onChange(newValue)
-    posthog?.capture('people_search_performed', {
-      query_length: newValue.length,
-      has_query: newValue.length > 0,
-    })
+    // debounce the analytics capture
+    if (searchCaptureTimer.current) clearTimeout(searchCaptureTimer.current)
+    searchCaptureTimer.current = setTimeout(() => {
+      try {
+        posthog?.capture('people_search_performed', {
+          query_length: newValue.length,
+          has_query: newValue.length > 0,
+        })
+      } catch { /* observability */ }
+    }, 300)
   }
 
   return (

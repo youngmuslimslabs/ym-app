@@ -39,7 +39,7 @@ export default function Step7() {
     }
 
     // Fire conversion event before navigating away
-    posthog?.capture('onboarding_completed', {})
+    posthog?.capture('onboarding_completed', { step: 7 })
 
     // Clear context data after saving
     clearData()

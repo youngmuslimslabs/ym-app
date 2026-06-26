@@ -101,12 +101,12 @@ All 7 steps fire on the "Next" button press, after `saveStepInBackground()` is c
 | `onboarding_step_completed` | `step5-education.tsx` | `{ step: 5, step_name: 'education', education_level }` |
 | `onboarding_step_completed` | `step6-skills.tsx` | `{ step: 6, step_name: 'skills', skill_count }` |
 | `onboarding_completed` | `step7-complete.tsx` | `{ step: 7 }` — conversion event |
-| `onboarding_data_load_failed` | `OnboardingContext.tsx` ~L157 | `{ error }` |
-| `onboarding_step_save_failed` | `OnboardingContext.tsx` ~L226 | `{ step, error }` |
-| `onboarding_complete_failed` | `OnboardingContext.tsx` ~L282 | `{ error }` |
-| `onboarding_reference_load_failed` | `OnboardingReferenceContext.tsx` ~L44 | `{ error }` |
+| `onboarding_error` | `OnboardingContext.tsx` | `{ error_type: 'data_load_failed', error_message }` |
+| `onboarding_error` | `OnboardingContext.tsx` | `{ error_type: 'step_save_failed', step, error_message }` |
+| `onboarding_error` | `OnboardingContext.tsx` | `{ error_type: 'complete_failed', error_message }` |
+| `onboarding_error` | `OnboardingReferenceContext.tsx` | `{ error_type: 'reference_data_load_failed', error_message }` |
 
-Use a single `onboarding_step_completed` event name with a `step` property — PostHog funnels work best with one event + a filter property, not 7 distinct event names.
+Use a single `onboarding_step_completed` event name with a `step` property — PostHog funnels work best with one event + a filter property, not 7 distinct event names. Similarly, all onboarding errors use a single `onboarding_error` event with an `error_type` discriminator property.
 
 ### High — Profile
 

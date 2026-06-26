@@ -87,6 +87,9 @@ export async function POST() {
         },
       })
     } catch { /* observability */ }
+    try {
+      await getPostHogServer().flush()
+    } catch { /* ignore flush errors */ }
     return NextResponse.json({ error: message }, { status })
   }
 
@@ -228,6 +231,9 @@ export async function POST() {
       },
     })
   } catch { /* observability */ }
+  try {
+    await getPostHogServer().flush()
+  } catch { /* ignore flush errors */ }
 
   return NextResponse.json(result)
 }

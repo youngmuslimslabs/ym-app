@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Search, X } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
 import { Input } from '@/components/ui/input'
@@ -20,6 +20,12 @@ export function PeopleSearch({
 }: PeopleSearchProps) {
   const posthog = usePostHog()
   const searchCaptureTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (searchCaptureTimer.current) clearTimeout(searchCaptureTimer.current)
+    }
+  }, [])
 
   const handleChange = (newValue: string) => {
     onChange(newValue)

@@ -5,19 +5,30 @@ export function register() {
 export const onRequestError = async (
   err: unknown,
   request: {
-    headers: { get: (key: string) => string | null }
-    url: string
+    path: string
+    method: string
+    headers: Record<string, string | string[] | undefined>
   },
-  _context: unknown
+  context: {
+    routerKind: string
+    routePath: string
+    routeType: string
+  }
 ) => {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { getPostHogServer } = await import('./src/lib/posthog/server')
     const posthog = getPostHogServer()
-    const sessionId = request.headers.get('X-POSTHOG-SESSION-ID')
-    const distinctId = request.headers.get('X-POSTHOG-DISTINCT-ID')
-    await posthog.captureException(err as Error, distinctId ?? 'server', {
-      $session_id: sessionId ?? undefined,
-      $current_url: request.url,
+
+    const rawSession = request.headers['x-posthog-session-id']
+    const rawDistinct = request.headers['x-posthog-distinct-id']
+    const sessionId = Array.isArray(rawSession) ? rawSession[0] : rawSession
+    const distinctId = Array.isArray(rawDistinct) ? rawDistinct[0] : rawDistinct
+
+    await posthog.captureExceptionImmediate(err, distinctId ?? 'server', {
+      ...(sessionId ? { $session_id: sessionId } : {}),
+      $current_url: request.path,
+      route_path: context.routePath,
+      route_type: context.routeType,
     })
   }
 }

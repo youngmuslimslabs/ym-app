@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import { RefreshCw, UserPlus, UserCheck, Minus, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -21,8 +22,10 @@ type State =
 
 export function SyncGoogleUsersButton() {
   const [state, setState] = useState<State>({ status: 'idle' })
+  const posthog = usePostHog()
 
   async function handleSync() {
+    posthog?.capture('admin_google_sync_initiated', {})
     setState({ status: 'syncing' })
     try {
       const res = await fetch('/api/admin/sync-google-users', { method: 'POST' })

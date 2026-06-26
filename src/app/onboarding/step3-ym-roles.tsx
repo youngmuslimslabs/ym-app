@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, X } from "lucide-react"
+import { usePostHog } from "posthog-js/react"
 
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -33,6 +34,7 @@ function createEmptyRole(): YMRoleEntry {
 
 export default function Step3() {
   const router = useRouter()
+  const posthog = usePostHog()
   const { data, updateData, saveStepInBackground, isLoading } = useOnboarding()
   const { roleTypes, users, isLoading: isLoadingData, error: loadError } = useOnboardingReference()
 
@@ -94,6 +96,11 @@ export default function Step3() {
     const stepData = { ymRoles: roles }
     updateData(stepData)
     saveStepInBackground(3, stepData)
+    posthog?.capture('onboarding_step_completed', {
+      step: 3,
+      step_name: 'ym_roles',
+      role_count: roles.length,
+    })
     router.push("/onboarding?step=4")
   }
 

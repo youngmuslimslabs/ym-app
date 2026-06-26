@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react'
+import posthog from 'posthog-js'
 import { useAuth } from './AuthContext'
 import {
   fetchOnboardingData,
@@ -155,6 +156,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error('Failed to load onboarding data:', error)
+        posthog.capture('onboarding_error', {
+          error_type: 'data_load_failed',
+          error: String(error),
+        })
       } finally {
         setIsLoading(false)
       }
@@ -224,6 +229,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       return result
     } catch (error) {
       console.error(`Error saving step ${step}:`, error)
+      posthog.capture('onboarding_error', {
+        error_type: 'step_save_failed',
+        step,
+        error: String(error),
+      })
       return { success: false, error: 'Failed to save' }
     } finally {
       setIsSaving(false)
@@ -280,6 +290,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       return result
     } catch (error) {
       console.error('Error completing onboarding:', error)
+      posthog.capture('onboarding_error', {
+        error_type: 'complete_failed',
+        error: String(error),
+      })
       return { success: false, error: 'Failed to complete onboarding' }
     } finally {
       setIsSaving(false)

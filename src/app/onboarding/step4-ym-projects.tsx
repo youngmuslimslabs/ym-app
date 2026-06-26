@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, X } from "lucide-react"
+import { usePostHog } from "posthog-js/react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,6 +49,7 @@ function createEmptyProject(): YMProjectEntry {
 
 export default function Step4() {
   const router = useRouter()
+  const posthog = usePostHog()
   const { data, updateData, saveStepInBackground, isLoading } = useOnboarding()
   const { users, isLoading: isLoadingData, error: loadError } = useOnboardingReference()
 
@@ -103,6 +105,11 @@ export default function Step4() {
     const stepData = { ymProjects: projects }
     updateData(stepData)
     saveStepInBackground(4, stepData)
+    posthog?.capture('onboarding_step_completed', {
+      step: 4,
+      step_name: 'ym_projects',
+      project_count: projects.length,
+    })
     router.push("/onboarding?step=5")
   }
 

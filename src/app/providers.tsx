@@ -11,6 +11,7 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
       person_profiles: 'identified_only',
       capture_pageview: false,
       enable_recording_console_log: true,
+      capture_exceptions: true,
     })
   }, [])
 

@@ -12,6 +12,7 @@ export function getPostHogServer(): PostHog {
       host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
       flushAt: 1,
       flushInterval: 0,
+      enableExceptionAutocapture: true,
     })
   }
   return client

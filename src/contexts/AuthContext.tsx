@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         supabase.auth.signOut()
         posthog?.reset()
+        posthog?.capture('auth_domain_validation_failed', { trigger: 'session_restore' })
         setUser(null)
       } else {
         if (user) {
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         supabase.auth.signOut()
         posthog?.reset()
+        posthog?.capture('auth_domain_validation_failed', { trigger: 'auth_state_change' })
         setUser(null)
       } else {
         if (user) {

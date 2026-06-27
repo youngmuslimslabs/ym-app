@@ -1,5 +1,5 @@
 import { SeverityNumber } from '@opentelemetry/api-logs'
-import { logs } from '@opentelemetry/api-logs'
+import { loggerProvider } from './otel'
 
 type LogAttrs = Record<string, string | number | boolean | undefined>
 
@@ -9,14 +9,15 @@ interface LogOptions {
   attrs?: LogAttrs
 }
 
+const otelLogger = loggerProvider.getLogger('ym-app')
+
 function emit(
   severity: SeverityNumber,
   severityText: string,
   message: string,
   options: LogOptions = {}
 ) {
-  const logger = logs.getLogger('ym-app')
-  logger.emit({
+  otelLogger.emit({
     body: message,
     severityNumber: severity,
     severityText,

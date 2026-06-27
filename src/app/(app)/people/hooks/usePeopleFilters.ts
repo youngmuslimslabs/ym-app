@@ -268,7 +268,12 @@ export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersRetu
 
   const loadMore = useCallback(() => {
     setVisibleCount((c) => c + PAGE_SIZE)
-  }, [])
+    try {
+      posthog.capture('people_load_more_clicked', {
+        visible_count: visibleCount + PAGE_SIZE,
+      })
+    } catch { /* observability */ }
+  }, [visibleCount])
 
   return {
     filters,

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getPostHogServer } from '@/lib/posthog/server'
+import { logger } from '@/lib/posthog/logger'
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
@@ -54,6 +55,13 @@ export async function updateSession(request: NextRequest) {
                             path: request.nextUrl.pathname,
                         },
                     })
+                    logger.error('middleware_auth_error', {
+                        attrs: {
+                            error_status: getUserError.status,
+                            error_message: getUserError.message,
+                            path: request.nextUrl.pathname,
+                        },
+                    })
                 } catch { /* observability must not affect request path */ }
             }
 
@@ -97,13 +105,15 @@ export async function updateSession(request: NextRequest) {
             } catch (signOutError) {
                 // Capture sign out error but continue with redirect
                 try {
+                    const errMsg = signOutError instanceof Error ? signOutError.message : String(signOutError)
                     getPostHogServer().capture({
                         distinctId: user.id,
                         event: 'middleware_domain_signout_failed',
-                        properties: {
-                            error_message: signOutError instanceof Error ? signOutError.message : String(signOutError),
-                            path: request.nextUrl.pathname,
-                        },
+                        properties: { error_message: errMsg, path: request.nextUrl.pathname },
+                    })
+                    logger.error('middleware_domain_signout_failed', {
+                        distinctId: user.id,
+                        attrs: { error_message: errMsg, path: request.nextUrl.pathname },
                     })
                 } catch { /* observability must not affect request path */ }
             }
@@ -144,6 +154,14 @@ export async function updateSession(request: NextRequest) {
                             path: request.nextUrl.pathname,
                         },
                     })
+                    logger.error('middleware_onboarding_query_error', {
+                        distinctId: user.id,
+                        attrs: {
+                            error_code: queryError.code,
+                            error_message: queryError.message,
+                            path: request.nextUrl.pathname,
+                        },
+                    })
                 } catch { /* observability must not affect request path */ }
                 return supabaseResponse
             }
@@ -166,13 +184,14 @@ export async function updateSession(request: NextRequest) {
     } catch (error) {
         // Catch any unexpected errors in middleware
         try {
+            const errMsg = error instanceof Error ? error.message : String(error)
             getPostHogServer().capture({
                 distinctId: 'middleware',
                 event: 'middleware_unexpected_error',
-                properties: {
-                    error_message: error instanceof Error ? error.message : String(error),
-                    path: request.nextUrl.pathname,
-                },
+                properties: { error_message: errMsg, path: request.nextUrl.pathname },
+            })
+            logger.error('middleware_unexpected_error', {
+                attrs: { error_message: errMsg, path: request.nextUrl.pathname },
             })
         } catch { /* observability must not affect request path */ }
 

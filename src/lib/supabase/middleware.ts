@@ -8,6 +8,10 @@ export async function updateSession(request: NextRequest) {
         request,
     })
 
+    logger.info('middleware_request', {
+        attrs: { path: request.nextUrl.pathname, method: request.method },
+    })
+
     try {
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -75,6 +75,9 @@ All profile list sections use `ExpandableCardList` → `ExpandableCard` and must
 - Pre-prod, no `dev` or staging branch — revisit when we go to production
 - Always verify current branch before making edits
 
+## Project Roadmap
+- **`docs/project-todos.md` is the single source of truth for what's left.** At the **end of every session**, update it: mark finished items `✅ **[DONE]**` (with a one-line note on how/where verified), add any newly-discovered work, and correct status that has drifted. Don't leave completed work showing as open.
+
 ## CI/CD
 - CI: `.github/workflows/ci.yml` — lint → type-check → build
 - Netlify: `netlify.toml` — keep `BUN_VERSION` in sync with CI

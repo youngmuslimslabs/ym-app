@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { google } from 'googleapis'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
+import { getPostHogServer } from '@/lib/posthog/server'
 import type { Database } from '@/types/database.types'
 
 // Netlify extended function timeout — sync of ~2000 users takes ~5s but
@@ -9,6 +10,7 @@ import type { Database } from '@/types/database.types'
 export const maxDuration = 60
 
 export async function POST() {
+  const startTime = Date.now()
   const supabase = await createServerClient()
   const {
     data: { user: authUser },
@@ -66,14 +68,28 @@ export async function POST() {
   }
 
   const syncLogId = syncLog?.id
+  const triggeredByUserId = userRow.id
 
-  async function failSync(message: string, status: number) {
+  async function failSync(message: string, status: number, step: string) {
     if (syncLogId) {
       await adminClient
         .from('sync_logs')
         .update({ status: 'failed', completed_at: new Date().toISOString() })
         .eq('id', syncLogId)
     }
+    try {
+      getPostHogServer().capture({
+        distinctId: triggeredByUserId,
+        event: 'admin_google_sync_failed',
+        properties: {
+          error_message: message,
+          step,
+        },
+      })
+    } catch { /* observability */ }
+    try {
+      await getPostHogServer().flush()
+    } catch { /* ignore flush errors */ }
     return NextResponse.json({ error: message }, { status })
   }
 
@@ -110,7 +126,7 @@ export async function POST() {
       pageToken = res.data.nextPageToken ?? undefined
     } while (pageToken)
   } catch {
-    return failSync('Failed to fetch users from Google', 502)
+    return failSync('Failed to fetch users from Google', 502, 'google_fetch')
   }
 
   // Fetch all existing users via pagination (Supabase caps each page at 1000)
@@ -122,7 +138,7 @@ export async function POST() {
       .from('users')
       .select('id, email, first_name, last_name, avatar_url')
       .range(page * PAGE, (page + 1) * PAGE - 1)
-    if (error) return failSync('Failed to fetch existing users', 500)
+    if (error) return failSync('Failed to fetch existing users', 500, 'fetch_existing')
     if (!data || data.length === 0) break
     allExisting.push(...(data as ExistingUser[]))
     if (data.length < PAGE) break
@@ -203,6 +219,21 @@ export async function POST() {
       })
       .eq('id', syncLogId)
   }
+
+  try {
+    getPostHogServer().capture({
+      distinctId: userRow.id,
+      event: 'admin_google_sync_completed',
+      properties: {
+        users_added: result.created,
+        users_updated: result.updated,
+        duration_ms: Date.now() - startTime,
+      },
+    })
+  } catch { /* observability */ }
+  try {
+    await getPostHogServer().flush()
+  } catch { /* ignore flush errors */ }
 
   return NextResponse.json(result)
 }

@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { Search, X } from 'lucide-react'
+import { usePostHog } from 'posthog-js/react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -16,13 +18,36 @@ export function PeopleSearch({
   onChange,
   placeholder = 'Search people...',
 }: PeopleSearchProps) {
+  const posthog = usePostHog()
+  const searchCaptureTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (searchCaptureTimer.current) clearTimeout(searchCaptureTimer.current)
+    }
+  }, [])
+
+  const handleChange = (newValue: string) => {
+    onChange(newValue)
+    // debounce the analytics capture
+    if (searchCaptureTimer.current) clearTimeout(searchCaptureTimer.current)
+    searchCaptureTimer.current = setTimeout(() => {
+      try {
+        posthog?.capture('people_search_performed', {
+          query_length: newValue.length,
+          has_query: newValue.length > 0,
+        })
+      } catch { /* observability */ }
+    }, 300)
+  }
+
   return (
     <div className="relative w-full sm:w-80">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
       <Input
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
         className="pl-9 pr-9 h-10 bg-background"
@@ -30,7 +55,7 @@ export function PeopleSearch({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => onChange('')}
+        onClick={() => handleChange('')}
         className={cn(
           'absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7',
           'text-muted-foreground hover:text-foreground',

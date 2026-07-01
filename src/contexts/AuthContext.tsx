@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
+import { usePostHog } from 'posthog-js/react'
 import { createClient } from '@/lib/supabase/client'
 
 const supabase = createClient()
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const posthog = usePostHog()
 
   useEffect(() => {
     const ALLOWED_DOMAIN = 'youngmuslims.com'
@@ -36,8 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.warn('User with invalid domain detected, signing out')
         }
         supabase.auth.signOut()
+        posthog?.reset()
+        posthog?.capture('auth_domain_validation_failed', { trigger: 'session_restore', email_domain: user.email?.split('@')[1] ?? 'unknown' })
         setUser(null)
       } else {
+        if (user) {
+          posthog?.identify(user.id, { email: user.email ?? undefined })
+        }
         setUser(user ?? null)
       }
       setLoading(false)
@@ -53,17 +60,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.warn('User with invalid domain attempted login, signing out')
         }
         supabase.auth.signOut()
+        posthog?.reset()
+        posthog?.capture('auth_domain_validation_failed', { trigger: 'auth_state_change', email_domain: user.email?.split('@')[1] ?? 'unknown' })
         setUser(null)
       } else {
+        if (user) {
+          posthog?.identify(user.id, { email: user.email ?? undefined })
+        } else {
+          posthog?.reset()
+        }
         setUser(user ?? null)
       }
       setLoading(false)
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [posthog])
 
   const signOut = async () => {
+    posthog?.reset()
     await serverSignOut()
   }
 

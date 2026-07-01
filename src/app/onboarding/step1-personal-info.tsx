@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Globe, Mail, Phone } from "lucide-react"
+import { usePostHog } from "posthog-js/react"
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -52,6 +53,7 @@ const ETHNICITIES = [
 
 export default function PersonalInfo() {
   const router = useRouter()
+  const posthog = usePostHog()
   const { data, updateData, saveStepInBackground, isLoading } = useOnboarding()
 
   // Initialize from context (supports back navigation and pre-fill)
@@ -99,6 +101,11 @@ export default function PersonalInfo() {
     const stepData = { phoneNumber, personalEmail, ethnicity, dateOfBirth }
     updateData(stepData)
     saveStepInBackground(1, stepData)
+    posthog?.capture('onboarding_step_completed', {
+      step: 1,
+      step_name: 'personal_info',
+      phone_provided: !!phoneNumber,
+    })
     router.push("/onboarding?step=2")
   }
 

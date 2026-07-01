@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import posthog from 'posthog-js'
 import { fetchCurrentUserProfile } from '@/lib/supabase/queries/profile'
 import { toUserMessage } from '@/lib/errors/userMessage'
 import type { ProfileFormState } from './useProfileForm'
@@ -28,6 +29,11 @@ export function useProfileData(): UseProfileDataReturn {
 
     if (fetchError) {
       console.error('Profile load error:', fetchError)
+      try {
+        posthog.capture('profile_load_failed', {
+          error_message: fetchError ?? 'unknown',
+        })
+      } catch { /* observability */ }
       setError(toUserMessage(fetchError, { action: 'load your profile' }))
       setProfileData(null)
     } else {

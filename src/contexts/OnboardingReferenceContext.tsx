@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import posthog from 'posthog-js'
 import { fetchSubregions, fetchAllNeighborNets, type Subregion, type NeighborNet } from '@/lib/supabase/queries/location'
 import { fetchRoleTypes, type RoleType } from '@/lib/supabase/queries/roles'
 import { fetchCompletedUsers, type UserOption } from '@/lib/supabase/queries/users'
@@ -42,6 +43,12 @@ export function OnboardingReferenceProvider({ children }: { children: ReactNode 
         subregionsResult.error ?? neighborNetsResult.error ?? roleTypesResult.error
       if (firstError) {
         console.error('Onboarding reference load error:', firstError)
+        try {
+          posthog.capture('onboarding_error', {
+            error_type: 'reference_data_load_failed',
+            error_message: firstError,
+          })
+        } catch { /* observability must not affect error handling */ }
         setError(toUserMessage(firstError, { action: 'load setup data' }))
         setIsLoading(false)
         return

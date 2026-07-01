@@ -12,6 +12,7 @@
  */
 
 import { useEffect } from 'react'
+import posthog from 'posthog-js'
 import localFont from 'next/font/local'
 
 const geistSans = localFont({
@@ -28,6 +29,10 @@ interface GlobalErrorProps {
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
   useEffect(() => {
     console.error('Global error:', error)
+  }, [error])
+
+  useEffect(() => {
+    posthog.captureException(error)
   }, [error])
 
   return (

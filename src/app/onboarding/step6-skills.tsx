@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { usePostHog } from "posthog-js/react"
 
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -34,6 +35,7 @@ const SKILLS = [
 
 export default function Step6() {
   const router = useRouter()
+  const posthog = usePostHog()
   const { data, updateData, saveStepInBackground, isLoading } = useOnboarding()
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>(
@@ -67,6 +69,11 @@ export default function Step6() {
     const stepData = { skills: selectedSkills }
     updateData(stepData)
     saveStepInBackground(6, stepData)
+    posthog?.capture('onboarding_step_completed', {
+      step: 6,
+      step_name: 'skills',
+      skill_count: selectedSkills.length,
+    })
     router.push("/onboarding?step=7")
   }
 

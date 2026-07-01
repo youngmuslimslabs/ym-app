@@ -62,6 +62,12 @@ All profile list sections use `ExpandableCardList` → `ExpandableCard` and must
 
 **Migrations:** `supabase/migrations/XXXXX_name.sql`, apply with `supabase db push`. Use unique constraints to prevent race conditions.
 
+## PostHog Patterns
+
+- **Route handlers must `await getPostHogServer().flush()` before returning** — Netlify freezes the process after response; unflushed events are lost. (`logger` uses `SimpleLogRecordProcessor` — synchronous, no flush needed.)
+- **Wrap every PostHog/logger call in its own try/catch inside error handlers** — observability must never affect the request path or suppress a `{ success: false }` return.
+- **No PII in event properties or log bodies** — only counts, booleans, IDs, error messages, and path strings. Never query text, filter values, phone numbers, or email addresses.
+
 ## Git
 - Conventional commits: `feat:`, `fix:`, `docs:`, etc.
 - **NEVER include Claude as co-author or add AI-generated footers**

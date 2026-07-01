@@ -89,8 +89,12 @@ export default function GoogleSignInButton({
       if (process.env.NODE_ENV === 'development') {
         console.error('Google sign in error:', error)
       }
-      // Pass the raw message up; the consumer translates with action context.
       const rawMessage = error instanceof Error ? error.message : String(error)
+      try {
+        import('posthog-js').then(({ default: posthog }) => {
+          posthog.capture('user_login_failed', { error_message: rawMessage })
+        })
+      } catch { /* observability */ }
       onError?.(rawMessage)
     } finally {
       setIsLoading(false)

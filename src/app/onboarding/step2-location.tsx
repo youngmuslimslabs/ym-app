@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { MapPin } from "lucide-react"
+import { usePostHog } from "posthog-js/react"
 
 import { Label } from "@/components/ui/label"
 import {
@@ -23,6 +24,7 @@ import {
 
 export default function Step2() {
   const router = useRouter()
+  const posthog = usePostHog()
   const { data, updateData, saveStepInBackground, isLoading } = useOnboarding()
   const { subregions, neighborNets: allNeighborNets, isLoading: isLoadingData, error: loadError } = useOnboardingReference()
 
@@ -60,6 +62,11 @@ export default function Step2() {
     const stepData = { subregionId, neighborNetId }
     updateData(stepData)
     saveStepInBackground(2, stepData)
+    posthog?.capture('onboarding_step_completed', {
+      step: 2,
+      step_name: 'location',
+      neighbor_net_id: neighborNetId,
+    })
     router.push("/onboarding?step=3")
   }
 

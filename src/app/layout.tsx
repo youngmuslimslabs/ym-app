@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper";
 import { ServiceWorkerRegistration } from "@/components/providers/ServiceWorkerRegistration";
 import { IOSInstallPrompt } from "@/components/pwa/IOSInstallPrompt";
 import { Toaster } from "@/components/ui/sonner";
+import { PostHogPageView } from "@/components/PostHogPageView";
+import { PHProvider } from "./providers";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -55,12 +58,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProviderWrapper>
-          <ServiceWorkerRegistration />
-          <IOSInstallPrompt />
-          {children}
-          <Toaster />
-        </AuthProviderWrapper>
+        <PHProvider>
+          <Suspense>
+            <PostHogPageView />
+          </Suspense>
+          <AuthProviderWrapper>
+            <ServiceWorkerRegistration />
+            <IOSInstallPrompt />
+            {children}
+            <Toaster />
+          </AuthProviderWrapper>
+        </PHProvider>
       </body>
     </html>
   );

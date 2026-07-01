@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, X } from "lucide-react"
+import { usePostHog } from "posthog-js/react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -67,6 +68,7 @@ function createEmptyEducation(): EducationEntry {
 
 export default function Step5() {
   const router = useRouter()
+  const posthog = usePostHog()
   const { data, updateData, saveStepInBackground, isLoading } = useOnboarding()
 
   // Education level state
@@ -127,6 +129,11 @@ export default function Step5() {
     const stepData = { educationLevel, education: requiresCollegeEducation ? education : [] }
     updateData(stepData)
     saveStepInBackground(5, stepData)
+    posthog?.capture('onboarding_step_completed', {
+      step: 5,
+      step_name: 'education',
+      education_level: educationLevel,
+    })
     router.push("/onboarding?step=6")
   }
 

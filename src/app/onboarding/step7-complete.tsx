@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle } from "lucide-react"
+import { usePostHog } from "posthog-js/react"
 
 import { useOnboarding } from "@/contexts/OnboardingContext"
 import { toUserMessage } from "@/lib/errors/userMessage"
@@ -13,6 +14,7 @@ import {
 
 export default function Step7() {
   const router = useRouter()
+  const posthog = usePostHog()
   const { completeOnboarding, flushPendingSaves, clearData, isSaving } = useOnboarding()
   const [error, setError] = useState<string | null>(null)
 
@@ -35,6 +37,9 @@ export default function Step7() {
       setError(toUserMessage(result.error, { action: 'finish setting up' }))
       return
     }
+
+    // Fire conversion event before navigating away
+    posthog?.capture('onboarding_completed', { step: 7 })
 
     // Clear context data after saving
     clearData()

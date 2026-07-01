@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { usePostHog } from 'posthog-js/react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
@@ -30,8 +31,17 @@ export function PeoplePageClient({ initialPeople, filterCategories }: PeoplePage
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const isMobile = useIsMobile()
+  const posthog = usePostHog()
   const [viewMode, setViewMode] = useState<ViewMode>(() =>
     readViewFromParams(new URLSearchParams(searchParams.toString())),
+  )
+
+  const handleViewChange = useCallback(
+    (newMode: ViewMode) => {
+      setViewMode(newMode)
+      posthog?.capture('people_view_toggled', { view_mode: newMode })
+    },
+    [posthog],
   )
 
   // viewMode → URL (immediate; toggle is a single discrete action)
@@ -100,7 +110,7 @@ export function PeoplePageClient({ initialPeople, filterCategories }: PeoplePage
               {/* View toggle + Copy emails - desktop only */}
               {!isMobile && (
                 <div className="flex items-center gap-1">
-                  <ViewToggle view={viewMode} onChange={setViewMode} />
+                  <ViewToggle view={viewMode} onChange={handleViewChange} />
                   <CopyEmailsButton people={filteredPeople} />
                 </div>
               )}

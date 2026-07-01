@@ -62,6 +62,8 @@ All profile list sections use `ExpandableCardList` → `ExpandableCard` and must
 
 **Migrations:** `supabase/migrations/XXXXX_name.sql`, apply with `supabase db push`. Use unique constraints to prevent race conditions.
 
+**Auth is Google Identity Services (`signInWithIdToken`), NOT an OAuth redirect flow.** Login = `GoogleSignInButton` (client-side ID-token JWT) → `signInWithIdToken`. The Google Cloud setting that matters is **Authorized JavaScript origins**, not redirect URIs — `redirect_uri_mismatch` cannot occur in this flow. `/auth/callback/route.ts` (`exchangeCodeForSession`) is **dead code** today (nothing links it); it only activates if you enable email confirmations/magic links — at which point `trailingSlash: true` starts mattering for that route.
+
 ## PostHog Patterns
 
 - **Route handlers must `await getPostHogServer().flush()` before returning** — Netlify freezes the process after response; unflushed events are lost. (`logger` uses `SimpleLogRecordProcessor` — synchronous, no flush needed.)

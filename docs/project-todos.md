@@ -1,6 +1,6 @@
 # YM App — Product Roadmap
 
-> **Immediate goal: get the app working to test live at a convention next weekend (~June 27–28).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
+> **Immediate goal: get the app working to test live at a convention on ~July 14 2026 (2 weeks away).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
 ## Confirmed product decisions (do not relitigate)
 
@@ -29,7 +29,7 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 ## P0 — Launch blockers (ordered by dependency / lead time)
 
-1. **[P0] Update geography seed data with real values** — ⚠️ **THE top remaining blocker.** Prod still has only the placeholder Texas / Houston-Dallas / Katy-Sugar Land-Downtown seeds (`00004_seed_data.sql:64-97`, re-seeded in `00011_repair_dropped_tables.sql:169-189`). With 1,823 real users loaded but the real **regions → subregions → neighbor_nets** missing, **no one can pick their actual NeighborNet during onboarding** (only ~8 memberships exist as a result). Add the real hierarchy as a **new migration — next free number is `00018`** — that clears the placeholders and inserts the real rows, then apply with the same backup → dry-run → push → verify flow used for `00016`/`00017`. **Must land before users onboard** (a real membership pointing at a NN blocks deleting that NN). *Owner to provide the values.*
+1. **[P0] Real geography seed + prod DB clean before convention** — ⚠️ **THE top remaining blocker. Convention ~July 14 2026 (2 weeks).** Two parts: (a) **Geography migration**: prod still has only the placeholder Texas / Houston-Dallas / Katy-Sugar Land-Downtown seeds (`00004_seed_data.sql:64-97`, re-seeded in `00011_repair_dropped_tables.sql:169-189`). The real NeighborNet hierarchy lives at https://docs.google.com/spreadsheets/d/1PTZMD5GAHxW3gV_M-Xtb0Kc48JQ3yZN3G_R8v034vCk/edit — pull regions → subregions → neighbor_nets and write migration `00021_real_geography.sql` (next free number after `00020`) that clears placeholders and inserts real rows, then apply with backup → dry-run → push → verify. **Without this, no one can pick their actual NeighborNet during onboarding** (only ~8 memberships exist as a result). *Owner to provide the values.* (b) **DB wipe scope**: decide whether to wipe the ~8 memberships / ~18 role_assignments (all from test accounts); the 1,823 Google-sync'd real users should stay. **Back up prod before any wipe.** (A real membership pointing at a NN blocks deleting that NN.)
 
 2. ✅ **[DONE] Privilege escalation — self-granted Event Admin** (PR #22, merged) — `00016` applied + **verified enforced on prod** (impersonation test rejected the self-grant). `WITH CHECK` on role_assignments INSERT/UPDATE excludes `category='system'`; `fetchRoleTypes()` filters system roles out of the picker. *Open follow-up: `people.ts:156` directory filter still lists "Event Admin" (read-only search; product decision — not a security issue).*
 
@@ -91,15 +91,15 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 31. ✅ **[DONE] PostHog — `forceFlush()` in route handlers** — only `sync-google-users/route.ts` calls `getPostHogServer()` and it already flushes before every return. No other route handlers to audit.
 
-32. ✅ **[DONE] PostHog — source maps upload** (PR #29) — `productionBrowserSourceMaps: true` added to `next.config.ts`; `netlify.toml` production build command now runs `posthog-cli sourcemaps inject && upload` after `bun run build`. **Action required:** add `POSTHOG_CLI_PERSONAL_API_KEY=phx_...` to Netlify environment variables (get a personal API key from PostHog → Settings → Personal API keys — this is different from the project token).
+32. ✅ **[DONE] PostHog — source maps upload** (PR #29) — `productionBrowserSourceMaps: true` in `next.config.ts`; production build runs `(posthog-cli sourcemaps inject && upload || true) && find .next -name '*.map' -delete` — upload is non-fatal (graceful degradation if key is missing), maps are always deleted from the deploy artifact regardless. `posthog-cli@0.2.4` pinned in `devDependencies`. **Action required:** add `POSTHOG_CLI_PERSONAL_API_KEY=phx_...` to Netlify environment variables (PostHog → Settings → Personal API keys — different from the project token).
 
 33. **[P2] PostHog — set up onboarding funnel dashboard** — manual PostHog UI task. Steps: (1) PostHog → Insights → New insight → Funnel; (2) Add step: event `onboarding_step_completed` filtered by `step = 1`, label "Step 1"; repeat for steps 2–6; (3) Add final step: event `onboarding_completed`, label "Complete"; (4) Set date range to "Since launch"; (5) Save as "Onboarding Funnel". This is the highest-value analytics view post-launch.
 
-34. **[P0] YMLC convention database wipe + clean seed** — ⚠️ **Convention starts ~July 14 2026 (2 weeks)**. Prod DB must be wiped of placeholder/test data and re-seeded from clean values before users onboard at the event. Scope: (a) clear all placeholder geography (regions/subregions/neighbornets) and replace with real values from the Google Sheet (see #35); (b) decide whether to wipe test user rows or keep the 1,823 Google-sync'd real users; (c) wipe test role_assignments and memberships (only ~8/~18 exist, all from test accounts). **Back up prod before any wipe.** This is a hard dependency on #35 (geography data).
+34. *(Merged into #1 — convention deadline + DB wipe scope folded there.)*
 
-35. **[P0] Populate geography from Google Sheet** — the real NeighborNet hierarchy lives at https://docs.google.com/spreadsheets/d/1PTZMD5GAHxW3gV_M-Xtb0Kc48JQ3yZN3G_R8v034vCk/edit — pull regions → subregions → neighbornets from it and write a migration (`00021_real_geography.sql`) that clears placeholders and inserts the real rows. This unblocks onboarding for all 1,823 users (currently no one can pick their real NeighborNet). Dependency for #34.
+35. *(Merged into #1 — Google Sheet URL and migration number folded there.)*
 
-36. **[P0] Fix onboarding UX** — the current 7-step flow is too complicated and clunky. Needs a UX rethink before the convention. Gather specific pain points (which steps feel heavy, what can be cut or combined) and redesign before July 14. This is P0 because broken/confusing onboarding at the convention = users give up before they're in the directory.
+36. **[P0] Fix onboarding UX** — ⚠️ **Convention July 14 2026 (2 weeks).** Current 7-step flow is too complicated. **Scope cap:** identify which steps can be combined or cut to reach ≤ 4 steps; get owner sign-off on the reduced flow before implementing. Do not redesign open-endedly. Document: which steps feel heavy, what can be cut or combined, what's the minimum viable flow for a first-time user at the convention.
 
 ---
 

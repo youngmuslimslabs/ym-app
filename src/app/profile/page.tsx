@@ -72,9 +72,8 @@ export default function ProfilePage() {
     const result = await saveForm()
     if (!result.success) {
       try {
-        posthog?.captureException(new Error(result.error ?? 'Profile save failed'), {
-          context: 'profile_save',
-        })
+        posthog?.captureException(new Error(result.error ?? 'Profile save failed'), { context: 'profile_save' })
+        posthog?.capture('profile_save_failed', { error: result.error ?? 'unknown' })
       } catch { /* observability */ }
       throw new Error(result.error ?? 'save_profile_failed')
     } else {
@@ -117,9 +116,8 @@ export default function ProfilePage() {
     } else {
       console.error('Save profile failed:', result.error)
       try {
-        posthog?.captureException(new Error(result.error ?? 'Profile save failed'), {
-          context: 'profile_save',
-        })
+        posthog?.captureException(new Error(result.error ?? 'Profile save failed'), { context: 'profile_save' })
+        posthog?.capture('profile_save_failed', { error: result.error ?? 'unknown' })
       } catch { /* observability */ }
       toast.error(toUserMessage(result.error, { action: 'save your profile' }))
     }

@@ -165,10 +165,7 @@ export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersRetu
     (category: keyof Omit<PeopleFilters, 'search' | 'yearsInYM'>) => {
       setFilters((prev) => ({ ...prev, [category]: [] }))
       try {
-        posthog.capture('people_filter_applied', {
-          filter_category: category,
-          filter_count: 0,
-        })
+        posthog.capture('people_filter_cleared', { filter_category: category })
       } catch { /* observability */ }
     },
     []

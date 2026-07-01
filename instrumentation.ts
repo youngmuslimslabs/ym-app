@@ -1,7 +1,5 @@
 import { logs } from '@opentelemetry/api-logs'
 
-export { loggerProvider } from './src/lib/posthog/otel'
-
 export function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     import('./src/lib/posthog/otel').then(({ loggerProvider }) => {

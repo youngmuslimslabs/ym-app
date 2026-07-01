@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         supabase.auth.signOut()
         posthog?.reset()
-        posthog?.capture('auth_domain_validation_failed', { trigger: 'session_restore' })
+        posthog?.capture('auth_domain_validation_failed', { trigger: 'session_restore', email_domain: user.email?.split('@')[1] ?? 'unknown' })
         setUser(null)
       } else {
         if (user) {
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         supabase.auth.signOut()
         posthog?.reset()
-        posthog?.capture('auth_domain_validation_failed', { trigger: 'auth_state_change' })
+        posthog?.capture('auth_domain_validation_failed', { trigger: 'auth_state_change', email_domain: user.email?.split('@')[1] ?? 'unknown' })
         setUser(null)
       } else {
         if (user) {

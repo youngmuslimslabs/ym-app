@@ -64,42 +64,9 @@ All profile list sections use `ExpandableCardList` → `ExpandableCard` and must
 
 ## PostHog Patterns
 
-Two separate tools — don't conflate them:
-
-| Tool | Import | Purpose |
-|---|---|---|
-| `posthog.capture()` / `usePostHog()` | `posthog-js/react`, `@/lib/posthog/server` | User behavior events — funnels, analytics, error tracking |
-| `logger` | `@/lib/posthog/logger` | Server operational logs — what a developer needs to debug a prod failure |
-
-**Client-side events:** `usePostHog()` hook inside `'use client'` components. Already initialized via `PHProvider` in `src/app/providers.tsx`.
-
-**Server-side events:** `getPostHogServer()` singleton from `@/lib/posthog/server`. Always `await flush()` before returning in route handlers (serverless process may freeze before batch sends).
-
-**OTel logs:** `logger.info/warn/error(message, { distinctId?, attrs? })` from `@/lib/posthog/logger`. Server-side only. Use `logger.error()` alongside `getPostHogServer().capture()` for errors — the event goes to analytics, the log goes to PostHog Logs for debugging.
-
-**What to log vs. capture:**
-- `logger.error` + `posthog.capture` together: middleware failures, route handler failures, DB errors
-- `logger.warn`: unexpected-but-recoverable situations (domain validation rejection, unusual auth state)
-- `logger.info`: admin action audit trail (sync started/completed)
-- Do NOT log: individual page loads, successful DB reads, anything with PII in the body
-
-**Safety rule — observability must never affect the request path:**
-```typescript
-// ✅ Always wrap PostHog/logger calls in their own try/catch in catch blocks
-try {
-  getPostHogServer().capture({ ... })
-  logger.error('event_name', { ... })
-} catch { /* never let observability crash the handler */ }
-```
-
-**PII rules:** Never log or capture query text, filter values, phone numbers, or email addresses as event properties. Only log counts, booleans, IDs, error messages, and path strings.
-
-**Route handler flush (serverless):**
-```typescript
-// Required in every route handler that calls getPostHogServer() or logger
-await getPostHogServer().flush()
-// logger uses SimpleLogRecordProcessor — sends synchronously, no flush needed
-```
+- **Route handlers must `await getPostHogServer().flush()` before returning** — Netlify freezes the process after response; unflushed events are lost. (`logger` uses `SimpleLogRecordProcessor` — synchronous, no flush needed.)
+- **Wrap every PostHog/logger call in its own try/catch inside error handlers** — observability must never affect the request path or suppress a `{ success: false }` return.
+- **No PII in event properties or log bodies** — only counts, booleans, IDs, error messages, and path strings. Never query text, filter values, phone numbers, or email addresses.
 
 ## Git
 - Conventional commits: `feat:`, `fix:`, `docs:`, etc.

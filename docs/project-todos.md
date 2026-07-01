@@ -49,6 +49,8 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 10. **[P0] End-to-end auth flow test** — manual, owner-assigned gate: confirm sign-in → onboarding (roles + membership saved) → directory works on the prod domain with a real account, immediately before go-live.
 
+36. **[P0] Reassess + simplify onboarding flow** — ⚠️ **Convention July 14 2026 (2 weeks).** Current 7-step flow is too clunky and long for first-time users at the convention. **Scope cap:** identify which steps can be combined or cut to reach ≤ 4 steps; get owner sign-off on the reduced flow before implementing. Do not redesign open-endedly.
+
 ## P1 — Required for a safe, credible launch
 
 11. **[P1] Database backups + migration safety** `[AUDIT]` — confirm daily backups (needs Pro, #8); **document and rehearse one restore end-to-end**. Add a shadow-DB step (apply the full migration set to a throwaway Postgres on each PR) so ordering/idempotency breaks fail before prod, and write a per-migration rollback procedure. *With one environment, a bad direct-to-prod migration has no safety net.*
@@ -99,7 +101,7 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 35. *(Merged into #1 — Google Sheet URL and migration number folded there.)*
 
-36. **[P0] Fix onboarding UX** — ⚠️ **Convention July 14 2026 (2 weeks).** Current 7-step flow is too complicated. **Scope cap:** identify which steps can be combined or cut to reach ≤ 4 steps; get owner sign-off on the reduced flow before implementing. Do not redesign open-endedly. Document: which steps feel heavy, what can be cut or combined, what's the minimum viable flow for a first-time user at the convention.
+36. *(Moved to P0 section.)*
 
 ---
 

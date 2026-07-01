@@ -87,13 +87,19 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 28. **[P2] Service-worker update UX** `[AUDIT]` — `sw.js` `skipWaiting()`+`clients.claim()` swaps JS in open tabs mid-session with no reload prompt. Add a "new version — reload" toast (Sonner is global). *Mitigated for the convention by the deploy freeze (see Confirmed decisions).*
 29. **[P2] Bulk email copy** `[AUDIT]` — `CopyEmailsButton` copies every member's email in one click. Internal-staff directory, so likely fine; decide keep vs remove.
 
-30. **[P2] PostHog — remove noisy middleware_request log** — `logger.info('middleware_request')` fires on every page load (`src/lib/supabase/middleware.ts`). With 1,800 users this generates enormous log volume. Remove it; only log WARN/ERROR paths (domain rejections, auth failures, DB errors) which are already wired.
+30. ✅ **[DONE] PostHog — remove noisy middleware_request log** — removed from `src/lib/supabase/middleware.ts` (PR #29).
 
-31. **[P2] PostHog — add `forceFlush()` to all route handlers** — serverless functions (Netlify) may freeze before `posthog-node` flushes its event queue. Already done in `sync-google-users/route.ts`; audit any future route handlers that call `getPostHogServer().capture()` and add `await getPostHogServer().flush()` before each `return`. (`SimpleLogRecordProcessor` in the logger sends synchronously — no flush needed there.)
+31. ✅ **[DONE] PostHog — `forceFlush()` in route handlers** — only `sync-google-users/route.ts` calls `getPostHogServer()` and it already flushes before every return. No other route handlers to audit.
 
-32. **[P2] PostHog — upload source maps for error tracking** — minified prod bundles produce unreadable stack traces in PostHog Error Tracking. Add a build step to upload source maps: `bunx posthog-cli sourcemaps upload --directory .next`. Requires a PostHog personal API key (not the project token) in CI env vars.
+32. ✅ **[DONE] PostHog — source maps upload** (PR #29) — `productionBrowserSourceMaps: true` added to `next.config.ts`; `netlify.toml` production build command now runs `posthog-cli sourcemaps inject && upload` after `bun run build`. **Action required:** add `POSTHOG_CLI_PERSONAL_API_KEY=phx_...` to Netlify environment variables (get a personal API key from PostHog → Settings → Personal API keys — this is different from the project token).
 
-33. **[P2] PostHog — set up onboarding funnel dashboard** — create a Funnel insight in PostHog using `onboarding_step_completed` (steps 1–6) → `onboarding_completed` to see where users drop off. This is the highest-value analytics view post-launch.
+33. **[P2] PostHog — set up onboarding funnel dashboard** — manual PostHog UI task. Steps: (1) PostHog → Insights → New insight → Funnel; (2) Add step: event `onboarding_step_completed` filtered by `step = 1`, label "Step 1"; repeat for steps 2–6; (3) Add final step: event `onboarding_completed`, label "Complete"; (4) Set date range to "Since launch"; (5) Save as "Onboarding Funnel". This is the highest-value analytics view post-launch.
+
+34. **[P0] YMLC convention database wipe + clean seed** — ⚠️ **Convention starts ~July 14 2026 (2 weeks)**. Prod DB must be wiped of placeholder/test data and re-seeded from clean values before users onboard at the event. Scope: (a) clear all placeholder geography (regions/subregions/neighbornets) and replace with real values from the Google Sheet (see #35); (b) decide whether to wipe test user rows or keep the 1,823 Google-sync'd real users; (c) wipe test role_assignments and memberships (only ~8/~18 exist, all from test accounts). **Back up prod before any wipe.** This is a hard dependency on #35 (geography data).
+
+35. **[P0] Populate geography from Google Sheet** — the real NeighborNet hierarchy lives at https://docs.google.com/spreadsheets/d/1PTZMD5GAHxW3gV_M-Xtb0Kc48JQ3yZN3G_R8v034vCk/edit — pull regions → subregions → neighbornets from it and write a migration (`00021_real_geography.sql`) that clears placeholders and inserts the real rows. This unblocks onboarding for all 1,823 users (currently no one can pick their real NeighborNet). Dependency for #34.
+
+36. **[P0] Fix onboarding UX** — the current 7-step flow is too complicated and clunky. Needs a UX rethink before the convention. Gather specific pain points (which steps feel heavy, what can be cut or combined) and redesign before July 14. This is P0 because broken/confusing onboarding at the convention = users give up before they're in the directory.
 
 ---
 

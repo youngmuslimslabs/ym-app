@@ -11,9 +11,10 @@
 [context.deploy-preview]
   command = "bun run build"
 
-# Production settings
+# Production settings — inject + upload source maps to PostHog after build
+# Requires POSTHOG_CLI_PERSONAL_API_KEY in Netlify environment variables
 [context.production]
-  command = "bun run build"
+  command = "bun run build && bunx posthog-cli sourcemaps inject --directory .next && bunx posthog-cli sourcemaps upload --directory .next"
 
 # Local development with Netlify Dev CLI
 [dev]

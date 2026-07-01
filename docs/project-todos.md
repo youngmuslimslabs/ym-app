@@ -63,7 +63,7 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 15. **[P1] Directory pagination + scale** `[AUDIT]` — `fetchPeopleForDirectory` runs `.from('users').select('*')` with no pagination and filters client-side; won't scale once the Google sync loads the full org. Add server-side pagination + search (`range()` + `ilike`/FTS), select only the columns the list needs, and load-test `/people` with thousands of seeded rows.
 
-16. **[P1] PostHog — analytics + error monitoring** `[AUDIT]` — wire up PostHog for event tracking **and error capture**. Replace the `NODE_ENV==='development'` console guards in `middleware.ts` with PostHog capture — today prod auth/onboarding/sign-out errors are silently swallowed. Confirm events arrive from a deploy preview.
+16. ✅ **[DONE] PostHog — analytics + error monitoring** (PR #28, pending merge) — full suite wired: event tracking (onboarding funnel, profile, people directory, admin), error capture (`instrumentation.ts` `onRequestError` + `error.tsx` + `global-error.tsx`), session replay (all sessions, console logs enabled), user identity (`identify`/`reset` in `AuthContext`), OTel logs to PostHog Logs (`src/lib/posthog/logger.ts`). Middleware errors replaced. `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_POSTHOG_HOST` needed in Netlify env vars. *Follow-up items: see P2 #30–#33.*
 
 17. **[P1] Security headers / CSP** `[AUDIT]` — add a `headers()` block (next.config or `netlify.toml [[headers]]`): `X-Frame-Options: DENY` / `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, HSTS, and a CSP allowing self + the Supabase URL for `connect-src`.
 
@@ -86,6 +86,14 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 27. **[P2] Audit trail for destructive admin actions** `[AUDIT]` — `remove_attendee` (SECURITY DEFINER cascade), role grant/revoke, and conference publish are unlogged. Add an insert-only audit table (actor, action, target, timestamp).
 28. **[P2] Service-worker update UX** `[AUDIT]` — `sw.js` `skipWaiting()`+`clients.claim()` swaps JS in open tabs mid-session with no reload prompt. Add a "new version — reload" toast (Sonner is global). *Mitigated for the convention by the deploy freeze (see Confirmed decisions).*
 29. **[P2] Bulk email copy** `[AUDIT]` — `CopyEmailsButton` copies every member's email in one click. Internal-staff directory, so likely fine; decide keep vs remove.
+
+30. **[P2] PostHog — remove noisy middleware_request log** — `logger.info('middleware_request')` fires on every page load (`src/lib/supabase/middleware.ts`). With 1,800 users this generates enormous log volume. Remove it; only log WARN/ERROR paths (domain rejections, auth failures, DB errors) which are already wired.
+
+31. **[P2] PostHog — add `forceFlush()` to all route handlers** — serverless functions (Netlify) may freeze before `posthog-node` flushes its event queue. Already done in `sync-google-users/route.ts`; audit any future route handlers that call `getPostHogServer().capture()` and add `await getPostHogServer().flush()` before each `return`. (`SimpleLogRecordProcessor` in the logger sends synchronously — no flush needed there.)
+
+32. **[P2] PostHog — upload source maps for error tracking** — minified prod bundles produce unreadable stack traces in PostHog Error Tracking. Add a build step to upload source maps: `bunx posthog-cli sourcemaps upload --directory .next`. Requires a PostHog personal API key (not the project token) in CI env vars.
+
+33. **[P2] PostHog — set up onboarding funnel dashboard** — create a Funnel insight in PostHog using `onboarding_step_completed` (steps 1–6) → `onboarding_completed` to see where users drop off. This is the highest-value analytics view post-launch.
 
 ---
 

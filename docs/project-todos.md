@@ -1,6 +1,6 @@
 # YM App — Product Roadmap
 
-> **Immediate goal: get the app working to test live at a convention next weekend (~June 27–28).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
+> **Immediate goal: get the app working to test live at a convention on ~July 14 2026 (2 weeks away).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
 ## Confirmed product decisions (do not relitigate)
 
@@ -29,7 +29,7 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 ## P0 — Launch blockers (ordered by dependency / lead time)
 
-1. **[P0] Update geography seed data with real values** — ⚠️ **THE top remaining blocker.** Prod still has only the placeholder Texas / Houston-Dallas / Katy-Sugar Land-Downtown seeds (`00004_seed_data.sql:64-97`, re-seeded in `00011_repair_dropped_tables.sql:169-189`). With 1,823 real users loaded but the real **regions → subregions → neighbor_nets** missing, **no one can pick their actual NeighborNet during onboarding** (only ~8 memberships exist as a result). Add the real hierarchy as a **new migration — next free number is `00018`** — that clears the placeholders and inserts the real rows, then apply with the same backup → dry-run → push → verify flow used for `00016`/`00017`. **Must land before users onboard** (a real membership pointing at a NN blocks deleting that NN). *Owner to provide the values.*
+1. **[P0] Real geography seed + prod DB clean before convention** — ⚠️ **THE top remaining blocker. Convention ~July 14 2026 (2 weeks).** Two parts: (a) **Geography migration**: prod still has only the placeholder Texas / Houston-Dallas / Katy-Sugar Land-Downtown seeds (`00004_seed_data.sql:64-97`, re-seeded in `00011_repair_dropped_tables.sql:169-189`). The real NeighborNet hierarchy lives at https://docs.google.com/spreadsheets/d/1PTZMD5GAHxW3gV_M-Xtb0Kc48JQ3yZN3G_R8v034vCk/edit — pull regions → subregions → neighbor_nets and write migration `00021_real_geography.sql` (next free number after `00020`) that clears placeholders and inserts real rows, then apply with backup → dry-run → push → verify. **Without this, no one can pick their actual NeighborNet during onboarding** (only ~8 memberships exist as a result). *Owner to provide the values.* (b) **DB wipe scope**: decide whether to wipe the ~8 memberships / ~18 role_assignments (all from test accounts); the 1,823 Google-sync'd real users should stay. **Back up prod before any wipe.** (A real membership pointing at a NN blocks deleting that NN.)
 
 2. ✅ **[DONE] Privilege escalation — self-granted Event Admin** (PR #22, merged) — `00016` applied + **verified enforced on prod** (impersonation test rejected the self-grant). `WITH CHECK` on role_assignments INSERT/UPDATE excludes `category='system'`; `fetchRoleTypes()` filters system roles out of the picker. *Open follow-up: `people.ts:156` directory filter still lists "Event Admin" (read-only search; product decision — not a security issue).*
 
@@ -43,11 +43,13 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 7. ✅ **[DONE] Custom domain + single host** — **Netlify** chosen as the sole host; app served at **`app.youngmuslims.com`** (subdomain, not apex) with DNS managed via Squarespace and SSL provisioned. OAuth origins updated to match (#6).
 
-8. **[P0] Confirm Supabase Pro tier** `[AUDIT]` — a Free-tier project **auto-pauses after ~7 days of inactivity** (prod goes fully offline) and has no PITR. Confirm Pro in the dashboard before the convention; this also enables daily backups for P1.
+8. **[P0] Upgrade Supabase to Pro tier** `[AUDIT]` — ⚠️ **Confirmed FREE in the dashboard 2026-06-30** (project `ym-app-dev`) — this is now a hard blocker, not just a check. A Free-tier project **auto-pauses after ~7 days of inactivity** (prod goes fully offline) and has no PITR. **Before upgrading, verify `ym-app-dev` is the same project the prod Netlify env (`NEXT_PUBLIC_SUPABASE_URL`) points at** — the URL Config in #7 was set on `ym-app-dev`, so if prod points elsewhere that work landed on the wrong project. Upgrading also enables daily backups for P1.
 
 9. **[P0] Manual RLS policy review** — ✅ the role self-assignment path (#2) is now **verified enforced on prod**. **Still open:** the `check_in_code` column read by attendees (`00013:421-430` — column-stripping in the query is cosmetic, so any attendee can read every session's check-in code and forge check-ins). Re-sweep the rest against real users once more onboard.
 
 10. **[P0] End-to-end auth flow test** — manual, owner-assigned gate: confirm sign-in → onboarding (roles + membership saved) → directory works on the prod domain with a real account, immediately before go-live.
+
+36. **[P0] Reassess + simplify onboarding flow** — ⚠️ **Convention July 14 2026 (2 weeks).** Current 7-step flow is too clunky and long for first-time users at the convention. **Scope cap:** identify which steps can be combined or cut to reach ≤ 4 steps; get owner sign-off on the reduced flow before implementing. Do not redesign open-endedly.
 
 ## P1 — Required for a safe, credible launch
 
@@ -87,13 +89,19 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 28. **[P2] Service-worker update UX** `[AUDIT]` — `sw.js` `skipWaiting()`+`clients.claim()` swaps JS in open tabs mid-session with no reload prompt. Add a "new version — reload" toast (Sonner is global). *Mitigated for the convention by the deploy freeze (see Confirmed decisions).*
 29. **[P2] Bulk email copy** `[AUDIT]` — `CopyEmailsButton` copies every member's email in one click. Internal-staff directory, so likely fine; decide keep vs remove.
 
-30. **[P2] PostHog — remove noisy middleware_request log** — `logger.info('middleware_request')` fires on every page load (`src/lib/supabase/middleware.ts`). With 1,800 users this generates enormous log volume. Remove it; only log WARN/ERROR paths (domain rejections, auth failures, DB errors) which are already wired.
+30. ✅ **[DONE] PostHog — remove noisy middleware_request log** — removed from `src/lib/supabase/middleware.ts` (PR #29).
 
-31. **[P2] PostHog — add `forceFlush()` to all route handlers** — serverless functions (Netlify) may freeze before `posthog-node` flushes its event queue. Already done in `sync-google-users/route.ts`; audit any future route handlers that call `getPostHogServer().capture()` and add `await getPostHogServer().flush()` before each `return`. (`SimpleLogRecordProcessor` in the logger sends synchronously — no flush needed there.)
+31. ✅ **[DONE] PostHog — `forceFlush()` in route handlers** — only `sync-google-users/route.ts` calls `getPostHogServer()` and it already flushes before every return. No other route handlers to audit.
 
-32. **[P2] PostHog — upload source maps for error tracking** — minified prod bundles produce unreadable stack traces in PostHog Error Tracking. Add a build step to upload source maps: `bunx posthog-cli sourcemaps upload --directory .next`. Requires a PostHog personal API key (not the project token) in CI env vars.
+32. ✅ **[DONE] PostHog — source maps upload** (PR #29) — `productionBrowserSourceMaps: true` in `next.config.ts`; production build runs `(posthog-cli sourcemaps inject && upload || true) && find .next -name '*.map' -delete` — upload is non-fatal (graceful degradation if key is missing), maps are always deleted from the deploy artifact regardless. `posthog-cli@0.2.4` pinned in `devDependencies`. **Action required:** add `POSTHOG_CLI_PERSONAL_API_KEY=phx_...` to Netlify environment variables (PostHog → Settings → Personal API keys — different from the project token).
 
-33. **[P2] PostHog — set up onboarding funnel dashboard** — create a Funnel insight in PostHog using `onboarding_step_completed` (steps 1–6) → `onboarding_completed` to see where users drop off. This is the highest-value analytics view post-launch.
+33. **[P2] PostHog — set up onboarding funnel dashboard** — manual PostHog UI task. Steps: (1) PostHog → Insights → New insight → Funnel; (2) Add step: event `onboarding_step_completed` filtered by `step = 1`, label "Step 1"; repeat for steps 2–6; (3) Add final step: event `onboarding_completed`, label "Complete"; (4) Set date range to "Since launch"; (5) Save as "Onboarding Funnel". This is the highest-value analytics view post-launch.
+
+34. *(Merged into #1 — convention deadline + DB wipe scope folded there.)*
+
+35. *(Merged into #1 — Google Sheet URL and migration number folded there.)*
+
+36. *(Moved to P0 section.)*
 
 ---
 

@@ -76,6 +76,7 @@ All profile list sections use `ExpandableCardList` → `ExpandableCard` and must
 - Branches: `main` is the integration branch; cut `feature/*` from `main` and merge back to `main`
 - Pre-prod, no `dev` or staging branch — revisit when we go to production
 - Always verify current branch before making edits
+- **Always mirror to remote**: immediately `git push` after every commit, and when creating a new branch also create it on the remote (`git push -u origin <branch>`) — never leave local commits or branches unpushed.
 
 ## Project Roadmap
 - **`docs/project-todos.md` is the single source of truth for what's left.** At the **end of every session**, update it: mark finished items `✅ **[DONE]**` (with a one-line note on how/where verified), add any newly-discovered work, and correct status that has drifted. Don't leave completed work showing as open.

@@ -116,7 +116,8 @@ CREATE TABLE neighbor_nets (
   is_active BOOLEAN DEFAULT true NOT NULL,
   is_expansion BOOLEAN DEFAULT false NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  CONSTRAINT neighbor_nets_subregion_name_unique UNIQUE (subregion_id, name)  -- no duplicate NN names within a subregion
 );
 CREATE INDEX idx_neighbor_nets_subregion ON neighbor_nets(subregion_id);
 
@@ -165,6 +166,9 @@ CREATE INDEX idx_memberships_user ON memberships(user_id);
 CREATE INDEX idx_memberships_nn ON memberships(neighbor_net_id);
 CREATE INDEX idx_memberships_subregion ON memberships(subregion_id);
 CREATE INDEX idx_memberships_region ON memberships(region_id);
+CREATE INDEX idx_memberships_status ON memberships(status);
+-- One active membership per user (guards onboarding double-submit)
+CREATE UNIQUE INDEX idx_memberships_user_active ON memberships(user_id) WHERE status = 'active';
 
 -- Role system ----------------------------------------------------------------
 CREATE TABLE role_types (
@@ -203,6 +207,11 @@ CREATE INDEX idx_role_assignments_scope ON role_assignments(scope_id);
 CREATE INDEX idx_role_assignments_active ON role_assignments(is_active);
 CREATE INDEX idx_role_assignments_amir ON role_assignments(amir_user_id);
 CREATE INDEX idx_role_assignments_user_active_roles ON role_assignments(user_id, is_active) WHERE is_active = true;
+-- Double-submit guards (users double-clicking "Next" in onboarding); standard vs custom roles handled separately
+CREATE UNIQUE INDEX idx_role_assignments_unique ON role_assignments(user_id, role_type_id, start_date)
+  WHERE role_type_id IS NOT NULL AND role_type_custom IS NULL;
+CREATE UNIQUE INDEX idx_role_assignments_custom_unique ON role_assignments(user_id, role_type_custom, start_date)
+  WHERE role_type_custom IS NOT NULL AND role_type_id IS NULL;
 
 -- User projects --------------------------------------------------------------
 CREATE TABLE user_projects (
@@ -233,6 +242,11 @@ CREATE TABLE user_projects (
 CREATE INDEX idx_user_projects_user ON user_projects(user_id);
 CREATE INDEX idx_user_projects_type ON user_projects(project_type);
 CREATE INDEX idx_user_projects_amir ON user_projects(amir_user_id);
+-- Double-submit guards; standard vs custom project types handled separately
+CREATE UNIQUE INDEX idx_user_projects_unique ON user_projects(user_id, project_type, start_year, start_month)
+  WHERE project_type IS NOT NULL AND project_type_custom IS NULL;
+CREATE UNIQUE INDEX idx_user_projects_custom_unique ON user_projects(user_id, project_type_custom, start_year, start_month)
+  WHERE project_type_custom IS NOT NULL AND project_type IS NULL;
 
 -- Conferences ----------------------------------------------------------------
 CREATE TABLE conferences (

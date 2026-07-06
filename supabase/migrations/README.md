@@ -25,6 +25,11 @@ sets of changes were folded in:
    + `point_of_contact_user_id` + hierarchy CHECK); `memberships.subregion_id` with
    the location CHECK relaxed to "at most one"; `is_expansion` on the three geography
    tables.
+3. **Restored integrity guards** — re-added unique indexes the intended `00007`/`00008`
+   migrations defined but that were missing from live (live had been bootstrapped from
+   the drifted `_run_all.sql`): onboarding double-submit guards on `role_assignments`
+   and `user_projects`, one-active-membership-per-user, and unique NeighborNet names
+   within a subregion.
 
 ## Rebuilding
 

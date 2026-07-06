@@ -251,6 +251,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         const error: PendingSaveError = { step, error: result.error || 'Failed to save', data: stepData }
         failedSaveRef.current = error
         setPendingSaveError(error)
+        // A returned { success:false } (e.g. an RLS/DB rejection that doesn't
+        // throw) never reached the catch below, so it was previously invisible
+        // in telemetry. Capture it here — error is a generic app string, no PII.
+        try {
+          posthog.capture('onboarding_error', {
+            error_type: 'step_save_rejected',
+            step,
+            error_message: result.error || 'unknown',
+          })
+        } catch { /* observability must not affect error handling */ }
       } else {
         // Clear error if this step previously failed and now succeeded
         if (failedSaveRef.current?.step === step) {
@@ -270,6 +280,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (result.success) {
       failedSaveRef.current = null
       setPendingSaveError(null)
+    } else {
+      try {
+        posthog.capture('onboarding_error', {
+          error_type: 'flush_retry_rejected',
+          step: failed.step,
+          error_message: result.error || 'unknown',
+        })
+      } catch { /* observability must not affect error handling */ }
     }
     return result
   }, [saveStepData])

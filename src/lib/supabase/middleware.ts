@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getPostHogServer } from '@/lib/posthog/server'
 import { logger } from '@/lib/posthog/logger'
+import { claimUserByEmail } from '@/lib/supabase/claim-user'
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
@@ -136,11 +137,35 @@ export async function updateSession(request: NextRequest) {
         const isProtectedRoute = !isPublicRoute && !isOnboardingRoute
 
         if (user && (isProtectedRoute || isOnboardingRoute)) {
-            const { data: userData, error: queryError } = await supabase
+            let { data: userData, error: queryError } = await supabase
                 .from('users')
                 .select('onboarding_completed_at')
                 .eq('auth_id', user.id)
-                .single()
+                .maybeSingle()
+
+            // Self-heal: an authenticated (domain-validated) user with no linked
+            // row means their pre-provisioned users row was never claimed by the
+            // on_auth_user_created trigger (it only fires on the first-ever
+            // auth.users insert). Link it by email now — service-role, because
+            // RLS forbids the user from setting auth_id on a NULL-auth_id row —
+            // then re-read so redirect logic uses the real onboarding status.
+            // Scope: this only claims rows where auth_id IS NULL. A row already
+            // claimed by a stale/mismatched auth_id is intentionally left alone
+            // (won't match), so no repeated writes fix it — that's a separate case.
+            if (!queryError && !userData && user.email) {
+                try {
+                    const { claimed } = await claimUserByEmail(user.id, user.email)
+                    if (claimed) {
+                        const reread = await supabase
+                            .from('users')
+                            .select('onboarding_completed_at')
+                            .eq('auth_id', user.id)
+                            .maybeSingle()
+                        userData = reread.data
+                        queryError = reread.error
+                    }
+                } catch { /* self-heal must never break the request path */ }
+            }
 
             // On DB error, let the request through rather than incorrectly redirecting
             if (queryError && queryError.code !== 'PGRST116') {

@@ -28,19 +28,24 @@ sets of changes were folded in:
 
 ## Rebuilding
 
-The remote pre-prod DB still carries the old `00001`–`00019` ledger; it will be
-**wiped and rebuilt from this baseline before real users onboard** (data is all
-seed/fake; real users re-sync from Google Workspace). Until then, do **not**
-`supabase db push` against remote — the ledgers diverge by design.
+The remote pre-prod DB was **rebuilt from this baseline on 2026-07-06** — its
+migration ledger now holds only `00001`. Data was all seed/fake and was wiped;
+real users re-sync from Google Workspace. It will be wiped + rebuilt once more
+before real users onboard.
 
-To rebuild from scratch (local, requires Docker):
+To rebuild from scratch locally (requires Docker):
 
 ```bash
 supabase db reset   # applies 00001_initial_schema.sql, then ../seed.sql
 ```
 
-> ⚠️ **Not yet replay-verified.** This baseline was assembled from live
-> introspection but has not been applied to a fresh database (Docker was
-> unavailable at squash time). Run `supabase db reset` on a local stack and
-> confirm a zero-error replay before trusting it for the prod rebuild, then
-> regenerate `src/types/database.types.ts` (`supabase gen types typescript`).
+Without Docker, the remote can be rebuilt directly (what was done on 2026-07-06):
+`pg_dump` a backup, then `psql --single-transaction` a drop-public-objects +
+`\i 00001_initial_schema.sql` + `\i ../seed.sql` script (atomic — rolls back on
+any error), then reset `supabase_migrations.schema_migrations` to a single row.
+
+> ✅ **Replay-verified 2026-07-06.** Applied atomically to the linked remote
+> (Postgres 17.6) via `psql --single-transaction` (drop → baseline → seed, zero
+> errors — a clean replay), migration ledger reset to this single baseline, and
+> `src/types/database.types.ts` regenerated (`bunx tsc --noEmit` clean). A
+> `pg_dump` backup was taken first.

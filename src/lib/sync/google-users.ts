@@ -20,7 +20,8 @@ import type { Database } from '@/types/database.types'
 
 const DIRECTORY_SCOPE = 'https://www.googleapis.com/auth/admin.directory.user.readonly'
 const WORKSPACE_DOMAIN = 'youngmuslims.com'
-const INSERT_CHUNK = 50
+const INSERT_CHUNK = 50 // rows per bulk insert
+const UPDATE_BATCH = 50 // concurrent update requests per batch
 const EXISTING_PAGE = 1000
 
 export interface GoogleSyncCredentials {
@@ -43,6 +44,22 @@ export interface SyncResult {
   skipped: number
   errors: number
   total: number
+}
+
+/** Diagnostics for a single row that failed to insert or update. */
+export interface RowError {
+  email: string
+  phase: 'insert' | 'update'
+  message: string
+}
+
+export interface UpsertOptions {
+  /**
+   * Called once per failed row so a caller can surface diagnostics. The CLI
+   * script logs these to the console; the route omits it deliberately — emails
+   * must not reach telemetry/logs (see CLAUDE.md PII rule).
+   */
+  onRowError?: (error: RowError) => void
 }
 
 /**
@@ -121,7 +138,9 @@ type ExistingUser = {
 export async function upsertGoogleUsers(
   supabase: SupabaseClient<Database>,
   googleUsers: SyncUser[],
+  options: UpsertOptions = {},
 ): Promise<SyncResult> {
+  const { onRowError } = options
   // Load all existing users (Supabase caps each page at 1000).
   const allExisting: ExistingUser[] = []
   for (let page = 0; ; page++) {
@@ -166,16 +185,20 @@ export async function upsertGoogleUsers(
           last_name: g.lastName,
           avatar_url: g.avatarUrl,
         })
-        if (rowErr) errors += 1
-        else created += 1
+        if (rowErr) {
+          errors += 1
+          onRowError?.({ email: g.email, phase: 'insert', message: rowErr.message })
+        } else {
+          created += 1
+        }
       }
     }
   }
 
   // Update existing rows with missing fields — batched to cap concurrent
   // connections.
-  for (let i = 0; i < toCheck.length; i += INSERT_CHUNK) {
-    const batch = toCheck.slice(i, i + INSERT_CHUNK)
+  for (let i = 0; i < toCheck.length; i += UPDATE_BATCH) {
+    const batch = toCheck.slice(i, i + UPDATE_BATCH)
     const batchResults = await Promise.all(
       batch.map(async (gUser) => {
         const existing = existingMap.get(gUser.email)!
@@ -186,7 +209,11 @@ export async function upsertGoogleUsers(
 
         if (Object.keys(updates).length === 0) return 'skipped' as const
         const { error } = await supabase.from('users').update(updates).eq('id', existing.id)
-        return error ? ('error' as const) : ('updated' as const)
+        if (error) {
+          onRowError?.({ email: gUser.email, phase: 'update', message: error.message })
+          return 'error' as const
+        }
+        return 'updated' as const
       }),
     )
     for (const r of batchResults) {

@@ -71,7 +71,11 @@ async function main() {
   console.log(`Found ${googleUsers.length} Google Workspace users.\n`)
 
   const supabase = createClient<Database>(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
-  const result = await upsertGoogleUsers(supabase, googleUsers)
+  const result = await upsertGoogleUsers(supabase, googleUsers, {
+    // This is the recovery path — surface which rows failed and why.
+    onRowError: ({ email, phase, message }) =>
+      console.error(`  ${phase} error for ${email}: ${message}`),
+  })
 
   console.log('--- Sync Summary ---')
   console.log(`  New users added:  ${result.created}`)

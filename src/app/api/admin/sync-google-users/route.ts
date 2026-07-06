@@ -112,8 +112,10 @@ export async function POST() {
   try {
     result = await upsertGoogleUsers(adminClient, googleUsers)
   } catch (e) {
-    const step = e instanceof SyncStepError ? e.step : 'upsert'
-    return failSync('Failed to fetch existing users', 500, step)
+    if (e instanceof SyncStepError) {
+      return failSync(e.message, 500, e.step)
+    }
+    return failSync('Failed to upsert users', 500, 'upsert')
   }
 
   if (syncLogId) {

@@ -3,7 +3,11 @@
  *
  * Fetches all @youngmuslims.com users from Google Workspace Admin Directory
  * and upserts them into the public.users table. Safe to run multiple times —
- * never overwrites user-provided data.
+ * never overwrites user-provided data. This is a thin wrapper around the shared
+ * sync core (src/lib/sync/google-users.ts) that the /admin route also uses, so
+ * fetch + normalization + upsert behavior is identical across both triggers.
+ * Unlike the route it needs no app login, which makes it the recovery path when
+ * you're locked out of the app.
  *
  * Prerequisites:
  *   1. Google Cloud service account with Admin SDK API enabled
@@ -15,11 +19,13 @@
  *   bun run sync:google
  */
 
-import { google } from 'googleapis'
 import { createClient } from '@supabase/supabase-js'
 
-import { normalizeEmail } from '@/lib/email'
-import { normalizeName } from '@/lib/name'
+import {
+  fetchGoogleWorkspaceUsers,
+  upsertGoogleUsers,
+} from '@/lib/sync/google-users'
+import type { Database } from '@/types/database.types'
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -50,134 +56,31 @@ function checkEnv() {
 }
 
 // ---------------------------------------------------------------------------
-// Google Admin SDK
-// ---------------------------------------------------------------------------
-
-interface GoogleUser {
-  email: string
-  firstName: string | null
-  lastName: string | null
-  avatarUrl: string | null
-}
-
-async function fetchAllGoogleUsers(): Promise<GoogleUser[]> {
-  const auth = new google.auth.JWT({
-    email: GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: GOOGLE_PRIVATE_KEY,
-    scopes: ['https://www.googleapis.com/auth/admin.directory.user.readonly'],
-    subject: GOOGLE_ADMIN_EMAIL,
-  })
-
-  const directory = google.admin({ version: 'directory_v1', auth })
-  const users: GoogleUser[] = []
-  let pageToken: string | undefined
-
-  do {
-    const res = await directory.users.list({
-      domain: 'youngmuslims.com',
-      maxResults: 500,
-      pageToken,
-      projection: 'basic',
-    })
-
-    for (const user of res.data.users ?? []) {
-      if (!user.primaryEmail) continue
-      users.push({
-        // Normalize so the seeded row matches the OAuth login identity
-        // regardless of casing/whitespace (see src/lib/email.ts + migration
-        // 00017). Used for both the .eq('email', ...) lookup and the insert.
-        email: normalizeEmail(user.primaryEmail),
-        // Fix all-upper/all-lower Directory names at write time so new and
-        // backfilled users match migration 00021's casing (see src/lib/name.ts).
-        firstName: normalizeName(user.name?.givenName ?? null),
-        lastName: normalizeName(user.name?.familyName ?? null),
-        avatarUrl: user.thumbnailPhotoUrl ?? null,
-      })
-    }
-
-    pageToken = res.data.nextPageToken ?? undefined
-  } while (pageToken)
-
-  return users
-}
-
-// ---------------------------------------------------------------------------
-// Sync logic
+// Sync
 // ---------------------------------------------------------------------------
 
 async function main() {
   checkEnv()
 
   console.log('Fetching Google Workspace users...')
-  const googleUsers = await fetchAllGoogleUsers()
+  const googleUsers = await fetchGoogleWorkspaceUsers({
+    serviceAccountEmail: GOOGLE_SERVICE_ACCOUNT_EMAIL!,
+    privateKey: GOOGLE_PRIVATE_KEY!,
+    adminEmail: GOOGLE_ADMIN_EMAIL!,
+  })
   console.log(`Found ${googleUsers.length} Google Workspace users.\n`)
 
-  const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
-
-  let created = 0
-  let updated = 0
-  let skipped = 0
-  let errors = 0
-
-  for (const gUser of googleUsers) {
-    const { data: existing, error: lookupError } = await supabase
-      .from('users')
-      .select('id, first_name, last_name, avatar_url')
-      .eq('email', gUser.email)
-      .maybeSingle()
-
-    if (lookupError) {
-      console.error(`  Lookup error for ${gUser.email}:`, lookupError.message)
-      errors++
-      continue
-    }
-
-    if (!existing) {
-      // New user — insert
-      const { error } = await supabase.from('users').insert({
-        email: gUser.email,
-        first_name: gUser.firstName,
-        last_name: gUser.lastName,
-        avatar_url: gUser.avatarUrl,
-      })
-      if (error) {
-        console.error(`  Insert error for ${gUser.email}:`, error.message)
-        errors++
-      } else {
-        created++
-      }
-    } else {
-      // Existing user — only fill in NULL fields
-      const updates: Record<string, string> = {}
-      if (!existing.first_name && gUser.firstName) updates.first_name = gUser.firstName
-      if (!existing.last_name && gUser.lastName) updates.last_name = gUser.lastName
-      if (!existing.avatar_url && gUser.avatarUrl) updates.avatar_url = gUser.avatarUrl
-
-      if (Object.keys(updates).length > 0) {
-        const { error } = await supabase
-          .from('users')
-          .update(updates)
-          .eq('id', existing.id)
-        if (error) {
-          console.error(`  Update error for ${gUser.email}:`, error.message)
-          errors++
-        } else {
-          updated++
-        }
-      } else {
-        skipped++
-      }
-    }
-  }
+  const supabase = createClient<Database>(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+  const result = await upsertGoogleUsers(supabase, googleUsers)
 
   console.log('--- Sync Summary ---')
-  console.log(`  New users added:  ${created}`)
-  console.log(`  Users updated:    ${updated}`)
-  console.log(`  Already current:  ${skipped}`)
-  console.log(`  Errors:           ${errors}`)
-  console.log(`  Total processed:  ${googleUsers.length}`)
+  console.log(`  New users added:  ${result.created}`)
+  console.log(`  Users updated:    ${result.updated}`)
+  console.log(`  Already current:  ${result.skipped}`)
+  console.log(`  Errors:           ${result.errors}`)
+  console.log(`  Total processed:  ${result.total}`)
 
-  if (errors > 0) process.exit(1)
+  if (result.errors > 0) process.exit(1)
 }
 
 main().catch((err) => {

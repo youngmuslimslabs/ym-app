@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
-import { google } from 'googleapis'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { getPostHogServer } from '@/lib/posthog/server'
-import { normalizeName } from '@/lib/name'
+import {
+  fetchGoogleWorkspaceUsers,
+  upsertGoogleUsers,
+  SyncStepError,
+} from '@/lib/sync/google-users'
 import type { Database } from '@/types/database.types'
 
 // Netlify extended function timeout — sync of ~2000 users takes ~5s but
@@ -94,119 +97,24 @@ export async function POST() {
     return NextResponse.json({ error: message }, { status })
   }
 
-  const auth = new google.auth.JWT({
-    email: serviceEmail,
-    key: privateKey,
-    scopes: ['https://www.googleapis.com/auth/admin.directory.user.readonly'],
-    subject: adminEmail,
-  })
-
-  const directory = google.admin({ version: 'directory_v1', auth })
-  const googleUsers: { email: string; firstName: string | null; lastName: string | null; avatarUrl: string | null }[] = []
-  let pageToken: string | undefined
-
+  let googleUsers
   try {
-    do {
-      const res = await directory.users.list({
-        domain: 'youngmuslims.com',
-        maxResults: 500,
-        pageToken,
-        projection: 'basic',
-      })
-      for (const user of res.data.users ?? []) {
-        if (!user.primaryEmail) continue
-        googleUsers.push({
-          // Normalize to lowercase — Google can return mixed-case addresses,
-          // which would cause false "new user" hits and unique-constraint failures
-          email: user.primaryEmail.toLowerCase().trim(),
-          // Fix all-upper/all-lower Directory names at write time so new and
-          // backfilled users are stored correctly cased (see src/lib/name.ts).
-          firstName: normalizeName(user.name?.givenName ?? null),
-          lastName: normalizeName(user.name?.familyName ?? null),
-          avatarUrl: user.thumbnailPhotoUrl ?? null,
-        })
-      }
-      pageToken = res.data.nextPageToken ?? undefined
-    } while (pageToken)
+    googleUsers = await fetchGoogleWorkspaceUsers({
+      serviceAccountEmail: serviceEmail,
+      privateKey,
+      adminEmail,
+    })
   } catch {
     return failSync('Failed to fetch users from Google', 502, 'google_fetch')
   }
 
-  // Fetch all existing users via pagination (Supabase caps each page at 1000)
-  type ExistingUser = { id: string; email: string; first_name: string | null; last_name: string | null; avatar_url: string | null }
-  const allExisting: ExistingUser[] = []
-  const PAGE = 1000
-  for (let page = 0; ; page++) {
-    const { data, error } = await adminClient
-      .from('users')
-      .select('id, email, first_name, last_name, avatar_url')
-      .range(page * PAGE, (page + 1) * PAGE - 1)
-    if (error) return failSync('Failed to fetch existing users', 500, 'fetch_existing')
-    if (!data || data.length === 0) break
-    allExisting.push(...(data as ExistingUser[]))
-    if (data.length < PAGE) break
+  let result
+  try {
+    result = await upsertGoogleUsers(adminClient, googleUsers)
+  } catch (e) {
+    const step = e instanceof SyncStepError ? e.step : 'upsert'
+    return failSync('Failed to fetch existing users', 500, step)
   }
-  const existingMap = new Map(allExisting.map((u) => [u.email, u]))
-
-  // Split into new vs existing
-  const toInsert = googleUsers.filter((g) => !existingMap.has(g.email))
-  const toCheck = googleUsers.filter((g) => existingMap.has(g.email))
-
-  let created = 0, updated = 0, skipped = 0, errors = 0
-
-  // Bulk-insert new users in chunks. On chunk failure, retry row-by-row to
-  // isolate bad rows so a single bad email doesn't silently drop 49 good users.
-  const CHUNK = 50
-  for (let i = 0; i < toInsert.length; i += CHUNK) {
-    const chunk = toInsert.slice(i, i + CHUNK)
-    const { error } = await adminClient.from('users').insert(
-      chunk.map((g) => ({
-        email: g.email,
-        first_name: g.firstName,
-        last_name: g.lastName,
-        avatar_url: g.avatarUrl,
-      }))
-    )
-    if (!error) {
-      created += chunk.length
-    } else {
-      // Retry individually so only the bad row(s) count as errors
-      for (const g of chunk) {
-        const { error: rowErr } = await adminClient.from('users').insert({
-          email: g.email,
-          first_name: g.firstName,
-          last_name: g.lastName,
-          avatar_url: g.avatarUrl,
-        })
-        if (rowErr) errors += 1; else created += 1
-      }
-    }
-  }
-
-  // Update existing rows with missing fields — batched to cap concurrent DB connections
-  for (let i = 0; i < toCheck.length; i += CHUNK) {
-    const batch = toCheck.slice(i, i + CHUNK)
-    const batchResults = await Promise.all(
-      batch.map(async (gUser) => {
-        const existing = existingMap.get(gUser.email)!
-        const updates: Record<string, string> = {}
-        if (!existing.first_name && gUser.firstName) updates.first_name = gUser.firstName
-        if (!existing.last_name && gUser.lastName) updates.last_name = gUser.lastName
-        if (!existing.avatar_url && gUser.avatarUrl) updates.avatar_url = gUser.avatarUrl
-
-        if (Object.keys(updates).length === 0) return 'skipped' as const
-        const { error } = await adminClient.from('users').update(updates).eq('id', existing.id)
-        return error ? 'error' as const : 'updated' as const
-      })
-    )
-    for (const r of batchResults) {
-      if (r === 'skipped') skipped++
-      else if (r === 'updated') updated++
-      else errors++
-    }
-  }
-
-  const result = { created, updated, skipped, errors, total: googleUsers.length }
 
   if (syncLogId) {
     await adminClient

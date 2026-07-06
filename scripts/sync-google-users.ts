@@ -19,6 +19,7 @@ import { google } from 'googleapis'
 import { createClient } from '@supabase/supabase-js'
 
 import { normalizeEmail } from '@/lib/email'
+import { normalizeName } from '@/lib/name'
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -86,8 +87,10 @@ async function fetchAllGoogleUsers(): Promise<GoogleUser[]> {
         // regardless of casing/whitespace (see src/lib/email.ts + migration
         // 00017). Used for both the .eq('email', ...) lookup and the insert.
         email: normalizeEmail(user.primaryEmail),
-        firstName: user.name?.givenName ?? null,
-        lastName: user.name?.familyName ?? null,
+        // Fix all-upper/all-lower Directory names at write time so new and
+        // backfilled users match migration 00021's casing (see src/lib/name.ts).
+        firstName: normalizeName(user.name?.givenName ?? null),
+        lastName: normalizeName(user.name?.familyName ?? null),
         avatarUrl: user.thumbnailPhotoUrl ?? null,
       })
     }

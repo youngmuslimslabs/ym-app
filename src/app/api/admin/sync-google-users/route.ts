@@ -3,6 +3,7 @@ import { google } from 'googleapis'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { getPostHogServer } from '@/lib/posthog/server'
+import { normalizeName } from '@/lib/name'
 import type { Database } from '@/types/database.types'
 
 // Netlify extended function timeout — sync of ~2000 users takes ~5s but
@@ -118,8 +119,10 @@ export async function POST() {
           // Normalize to lowercase — Google can return mixed-case addresses,
           // which would cause false "new user" hits and unique-constraint failures
           email: user.primaryEmail.toLowerCase().trim(),
-          firstName: user.name?.givenName ?? null,
-          lastName: user.name?.familyName ?? null,
+          // Fix all-upper/all-lower Directory names at write time so new and
+          // backfilled users are stored correctly cased (see src/lib/name.ts).
+          firstName: normalizeName(user.name?.givenName ?? null),
+          lastName: normalizeName(user.name?.familyName ?? null),
           avatarUrl: user.thumbnailPhotoUrl ?? null,
         })
       }

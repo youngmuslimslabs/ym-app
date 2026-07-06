@@ -60,7 +60,7 @@ All profile list sections use `ExpandableCardList` → `ExpandableCard` and must
 
 **DB functions return `{ success: boolean; error?: string }`** — distinguish "not found" vs "connection error", never fail silently.
 
-**Migrations:** `supabase/migrations/XXXXX_name.sql`, apply with `supabase db push`. Use unique constraints to prevent race conditions.
+**Migrations:** schema is **one consolidated baseline** (`supabase/migrations/00001_initial_schema.sql`) + `supabase/seed.sql` (role_types only). For any DB change — edit baseline/seed, run SQL, back up, regen types — use the **`ym-db-changes`** skill. Use unique constraints to prevent race conditions.
 
 **Auth is Google Identity Services (`signInWithIdToken`), NOT an OAuth redirect flow.** Login = `GoogleSignInButton` (client-side ID-token JWT) → `signInWithIdToken`. The Google Cloud setting that matters is **Authorized JavaScript origins**, not redirect URIs — `redirect_uri_mismatch` cannot occur in this flow. `/auth/callback/route.ts` (`exchangeCodeForSession`) is **dead code** today (nothing links it); it only activates if you enable email confirmations/magic links — at which point `trailingSlash: true` starts mattering for that route.
 

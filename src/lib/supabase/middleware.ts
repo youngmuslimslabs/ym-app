@@ -9,6 +9,12 @@ export async function updateSession(request: NextRequest) {
         request,
     })
 
+    // PROTOTYPE-ONLY: remove before merge — public, auth-free preview of the
+    // profile-completion gating pattern at /gating-preview.
+    if (request.nextUrl.pathname.startsWith('/gating-preview')) {
+        return supabaseResponse
+    }
+
     try {
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,

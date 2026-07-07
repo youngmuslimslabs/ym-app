@@ -87,9 +87,12 @@ const subregions = new Map();  // name -> { code, region, is_expansion }
 const nns = [];
 
 for (const r of data) {
-  const region = r[col['Region']].trim();
-  const sr = r[col['SR']].trim();
-  const nn = r[col['NN']].trim();
+  // `?? ''` guards against a hand-edited CSV row that drops trailing empty
+  // columns (would otherwise throw on .trim() of undefined). sqlStr/bool below
+  // already tolerate undefined, so only these explicit trims need the guard.
+  const region = (r[col['Region']] ?? '').trim();
+  const sr = (r[col['SR']] ?? '').trim();
+  const nn = (r[col['NN']] ?? '').trim();
 
   if (region) {
     const code = REGION_CODE[region];

@@ -3,10 +3,11 @@ import { createClient } from '@/lib/supabase/client'
 export interface Subregion {
   id: string
   name: string
-  region_id: string
+  // Nullable: region-less expansion subregions (DMV/West/etc.) have no parent region.
+  region_id: string | null
   regions?: {
     name: string
-  }
+  } | null
 }
 
 export interface NeighborNet {

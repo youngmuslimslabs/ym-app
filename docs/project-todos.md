@@ -29,6 +29,13 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 
 ## P0 — Launch blockers (ordered by dependency / lead time)
 
+> **⭐ [P0 · TOP PRIORITY — FINAL GO-LIVE TASK] Set up all data for the YMLC conference — conference is ~2026-07-12 (5 days out, as of 2026-07-07).** Stand up everything the app needs to run the conference live: the `conferences` row (scope / dates / timezone), its `sessions` + schedule, and any attendee/roster setup. This is the **last** task to execute — do it immediately before the conference, *after* every upstream dependency is in place:
+> - **Geography seed** (#1 below) — now addressed by **PR #33** (118 NNs + cabinet, applied + verified; pending merge).
+> - **Google Workspace sync re-run** — `users` is currently **0 rows** (the DB was wiped; the "1,823" figures below are pre-wipe/stale). The sync must be re-run to repopulate users before anyone — including conference attendees — can be placed.
+> - **Roles / memberships** — self-selected during onboarding; NNC/leadership seeding (see the deferred `role_assignments` follow-up) also depends on the sync.
+>
+> Treat this as the final data-readiness checklist for go-live.
+
 1. **[P0] Real geography seed + prod DB clean before convention** — ⚠️ **THE top remaining blocker. Convention ~July 14 2026 (2 weeks).** Two parts: (a) **Geography seed**: after the 2026-07 squash, `supabase/seed.sql` intentionally seeds **only `role_types`** — no placeholder geography (the old Texas/Houston seeds are gone). The real NeighborNet hierarchy lives at https://docs.google.com/spreadsheets/d/1PTZMD5GAHxW3gV_M-Xtb0Kc48JQ3yZN3G_R8v034vCk/edit — pull regions → subregions → neighbor_nets and add them to `seed.sql` (set `is_expansion` where relevant), then rebuild (`supabase db reset`) and verify. **Without this, no one can pick their actual NeighborNet during onboarding** (only ~8 memberships exist as a result). *Owner to provide the values.* (b) **DB wipe scope**: decide whether to wipe the ~8 memberships / ~18 role_assignments (all from test accounts); the 1,823 Google-sync'd real users should stay. **Back up prod before any wipe.** (A real membership pointing at a NN blocks deleting that NN.)
 
 2. ✅ **[DONE] Privilege escalation — self-granted Event Admin** (PR #22, merged) — `00016` applied + **verified enforced on prod** (impersonation test rejected the self-grant). `WITH CHECK` on role_assignments INSERT/UPDATE excludes `category='system'`; `fetchRoleTypes()` filters system roles out of the picker. *Open follow-up: `people.ts:156` directory filter still lists "Event Admin" (read-only search; product decision — not a security issue).*

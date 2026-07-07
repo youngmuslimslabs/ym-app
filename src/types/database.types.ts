@@ -261,28 +261,40 @@ export type Database = {
       }
       neighbor_nets: {
         Row: {
+          address: string | null
           created_at: string
+          fundraising_link: string | null
           id: string
           is_active: boolean
           is_expansion: boolean
+          location: string | null
+          meeting_day: string | null
           name: string
           subregion_id: string
           updated_at: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
+          fundraising_link?: string | null
           id?: string
           is_active?: boolean
           is_expansion?: boolean
+          location?: string | null
+          meeting_day?: string | null
           name: string
           subregion_id: string
           updated_at?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
+          fundraising_link?: string | null
           id?: string
           is_active?: boolean
           is_expansion?: boolean
+          location?: string | null
+          meeting_day?: string | null
           name?: string
           subregion_id?: string
           updated_at?: string
@@ -614,7 +626,7 @@ export type Database = {
           is_active: boolean
           is_expansion: boolean
           name: string
-          region_id: string
+          region_id: string | null
           updated_at: string
         }
         Insert: {
@@ -624,7 +636,7 @@ export type Database = {
           is_active?: boolean
           is_expansion?: boolean
           name: string
-          region_id: string
+          region_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -634,7 +646,7 @@ export type Database = {
           is_active?: boolean
           is_expansion?: boolean
           name?: string
-          region_id?: string
+          region_id?: string | null
           updated_at?: string
         }
         Relationships: [

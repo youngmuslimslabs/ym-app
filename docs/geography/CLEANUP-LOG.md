@@ -127,5 +127,23 @@ Loaded into Supabase (project `todqvyzdvpnwuuonxwch`, us-east-2) as seed:
 - **Live parity**: the live DB was ALTERed + seeded out-of-band via psql (the
   baseline is consolidated, not a forward migration), so a fresh `db reset`
   from the baseline reproduces the same schema. The two must stay in sync.
-- **People deferred**: NNCs / coordinators / core-team are NOT seeded — they
-  become `role_assignments` in a post-Google-sync step that resolves emails.
+- **NNCs seeded (post-sync)**: after `bun run sync:google` (1,826 users), the
+  resolver assigned **85 / 118** NeighborNet Coordinators from the roster's
+  `Coordinator Email` column. 35 of those emails were **name-resolved** against
+  the synced directory (30 unique first+last matches + 5 spelling variants, e.g.
+  `Mohammad Eljack → mohamed.eljack@`) and back-filled into `nn-master-cleaned.csv`
+  so the roster is email-complete. `match-nnc-names.mjs` is the one-time enrichment
+  that found them; its output now lives in the CSV, so routine seeding uses only
+  `generate-nnc-assignments.mjs`. Remaining 33 need roster fixes: 12 name-only
+  unmatched (incl. `Ayan` = 4 people, `Shakir Shanawaz` ≠ the only `Mohammed
+  Shanawaz`), 20 with no coordinator listed, 1 dead email (NYIT `hamza.khan2@`).
+- **Core-team** still deferred (`Core Team Member 1/2` — owner hasn't provided).
+
+### Rebuild / re-sync order
+People-dependent rows can't be canonical seed (users don't exist at `db reset`).
+Full rebuild is **three ordered steps**:
+1. `supabase db reset` → schema + `seed.sql` (role_types, cabinet) + `seed_geography.sql`. **No users.**
+2. `bun run sync:google` → users appear (fresh UUIDs each wipe).
+3. `psql … -f supabase/seed/nnc_assignments.sql` → NNC `role_assignments`,
+   **re-resolved by email** at apply time. Idempotent (`NOT EXISTS` = one NNC/NN)
+   and durable across wipes precisely because it stores emails, never UUIDs.

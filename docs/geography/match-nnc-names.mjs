@@ -1,8 +1,16 @@
 #!/usr/bin/env node
-// Diagnostic: emit SQL that matches the NAME-ONLY coordinators (NNC name present,
-// no email) against public.users by first/last name, so we can see which resolve
-// uniquely vs ambiguously. Prints SQL to stdout — pipe into psql.
-//   node docs/geography/match-nnc-names.mjs | psql ...
+// ONE-TIME ENRICHMENT (not part of routine seeding). Matches NAME-ONLY
+// coordinators (NNC name present, no email) against public.users by first/last
+// name, to discover their emails. The emails it found have already been
+// back-filled into nn-master-cleaned.csv, so routine NNC seeding uses only
+// generate-nnc-assignments.mjs. Re-run this only when NEW name-only coordinators
+// are added to the roster and you need to find their accounts.
+//
+// Modes (prints SQL to stdout — pipe into psql):
+//   (default)  diagnostic: list matching users per roster name
+//   --insert   seed NNCs for names that resolve to exactly one user
+//   --fuzzy    surface fuzzy candidates for names with no exact match (review only)
+//   node docs/geography/match-nnc-names.mjs [--insert|--fuzzy] | psql ...
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';

@@ -35,6 +35,10 @@ Writes: `users` (phone, personal_email, ethnicity, date_of_birth), `memberships`
 
 **Part 1 stays exactly this minimal.** Current role stays (one tap, seeds the directory).
 
+**Interaction (Part 1):**
+- **Auto-advance on answer.** Single-selects (ethnicity, subregion, NeighborNet, current role) advance the instant they're tapped. Native date selection fires `change` → auto-advance. Text fields (phone, email) advance on **Return/Enter**, with a "Continue" button fallback — we do NOT auto-advance on keystroke (can't tell when typing is done).
+- **Native iOS pickers.** DOB = `<input type="date">`; role/project month-year ranges = `<input type="month">` — both render the native iOS wheel picker (research-confirmed). Caveats: iOS ignores `min`/`max` on date inputs, so range limits (DOB age floor, no-future dates) are enforced in **JS**; and the control is only lightly stylable (Safari `inline-flex` width/padding quirks) — acceptable since native is the goal. Works in PWA/standalone.
+
 ---
 
 ## Part 2 — the six "sections" & completion
@@ -108,7 +112,7 @@ No per-feature gate map. One rule everywhere:
 
 - `users.onboarding_completed_at` — **now means Part 1 done** (semantics narrowed). Middleware still redirects null → `/onboarding`.
 - **NEW `users.profile_completed_at`** (timestamptz, nullable) — set when all 6 sections resolved (filled or skipped-where-allowed). Feature gates check this.
-- Roles/Projects "skipped" state needs a representation (e.g. a per-user boolean/flag or treating "resolved with zero entries + explicit skip" as done) so an empty roles list can be distinguished from "not yet answered." **Open implementation detail — decide during build** (candidate: `users.roles_skipped` / `projects_skipped` booleans, or a `profile_sections_resolved` set).
+- **Skipped Roles/Projects = simply no rows** in `role_assignments` / `user_projects` (owner decision — no skip flag). Completeness is the single `profile_completed_at` signal, set when the user finishes the Part-2 flow (tapping "I haven't done any" for empty sections). *Cost:* an empty table is ambiguous across sessions (skipped vs unanswered), so skip-then-abandon means re-tapping skip on return (one tap). Acceptable — whole-profile gating drives completion in a sitting.
 
 ---
 
@@ -123,10 +127,9 @@ No per-feature gate map. One rule everywhere:
 
 ## Open items to confirm / decide at build
 
-1. Convention-week: confirm RSVP/save is ungated during the event (not just check-in).
-2. Representation of "skipped" Roles/Projects in the schema (see Data model).
-3. Migration for `profile_completed_at` — coordinate number (geography seed also in flight; use `ym-db-changes` skill / consolidated baseline).
-4. How gates read completion in client components (`useAuth()` gives auth user only — needs the profile row / a `ProfileCompletionContext` fed from a server component).
+1. Convention-week: is check-in the only event-day exception, or also ungate RSVP/save?
+2. Migration for `profile_completed_at` — coordinate number (geography seed also in flight; use `ym-db-changes` skill / consolidated baseline).
+3. How gates read completion in client components (`useAuth()` gives auth user only — needs the profile row / a `ProfileCompletionContext` fed from a server component).
 
 ## Not doing (YAGNI)
 

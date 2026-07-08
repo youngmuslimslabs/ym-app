@@ -44,7 +44,7 @@ Completion is tracked across 6 sections: `personal`, `location`, `roles`, `proje
 ### Decisions (owner-confirmed 2026-07-07)
 
 1. **Gate depth = WHOLE PROFILE.** A gated action requires *all* of Part 2 done (or skipped where allowed) before it proceeds.
-2. **Gate map** — browsing always open; only outbound actions gate (table below). Convention check-in never gated.
+2. **Gate trigger = uniform** — no per-feature map. Strip on every page; while `profile_completed_at` is null, tapping *any action button* on any page pops the completion notice. Navigation/browsing always free. (One time-boxed convention exception — see below.)
 3. **Completion layout = MENU (hub).** Overview of remaining sections; tap in any order; progress saves as you go. (No Linear variant.)
 4. **Required scope = lean.** Part 1 minimal. **Roles and Projects are skippable** ("I haven't done any YM roles/projects" is a first-class choice), since a user may genuinely have none.
 5. **Signal = `profile_completed_at`.** Fires only when every section is resolved — *resolved* meaning filled OR (for Roles/Projects) explicitly skipped.
@@ -80,17 +80,15 @@ Completion is tracked across 6 sections: `personal`, `location`, `roles`, `proje
 
 ---
 
-## Gate map (#2)
+## Gate trigger (#2) — uniform
 
-| Surface | Open (never gated) | Gated (requires `profile_completed_at`) |
-|---|---|---|
-| Home | all | — |
-| People | browse directory, view any profile | Contact / message a member |
-| Finance | view officers, budget info | Submit a reimbursement request |
-| Docs | all | — |
-| Convention | view full schedule | RSVP / save a session |
+No per-feature gate map. One rule everywhere:
 
-**Convention-week exception (~2026-07-14, time-boxed):** during the event, **all** convention actions are ungated — check-in *and* RSVP/save — to avoid friction at the door. Outside the event, RSVP gates normally. *(Assumption pending final confirm: extends the "don't gate check-in" call to RSVP for the event only.)*
+- The **slim strip** sits at the top of every app page.
+- While `profile_completed_at` is null, tapping **any action button** (Check in, RSVP/save, Contact a member, Submit a reimbursement, etc.) pops the completion **notice** → full-screen Menu completion → returns and continues the action.
+- **Navigation & browsing are always free** — moving between pages, opening a member profile, reading the schedule/docs never gate. Only *action* buttons do (otherwise an incomplete user is trapped).
+
+**Convention-week exception (~2026-07-14, time-boxed):** during the event, **check-in is ungated** to avoid lines at the door. *Open: also ungate RSVP/save during the event, or keep check-in the only carve-out?* Outside the event, everything is uniform.
 
 ---
 

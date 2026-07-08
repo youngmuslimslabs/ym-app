@@ -99,7 +99,10 @@ CREATE TABLE regions (
 
 CREATE TABLE subregions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  region_id UUID NOT NULL REFERENCES regions(id) ON DELETE CASCADE,
+  -- Nullable: some subregions are region-less expansion areas (e.g. DMV, West,
+  -- Minnesota) that don't roll up to a named region. is_expansion is a separate
+  -- axis — a subregion can be an expansion AND belong to a region.
+  region_id UUID REFERENCES regions(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   code TEXT UNIQUE NOT NULL,
   is_active BOOLEAN DEFAULT true NOT NULL,
@@ -113,6 +116,10 @@ CREATE TABLE neighbor_nets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   subregion_id UUID NOT NULL REFERENCES subregions(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
+  location TEXT,          -- masjid / community-center name where the NN meets
+  address TEXT,           -- street address (often blank in the roster)
+  meeting_day TEXT,       -- weekday the NN meets, e.g. 'Friday' (free text)
+  fundraising_link TEXT,  -- giving.ymsite.com campaign URL for the NN
   is_active BOOLEAN DEFAULT true NOT NULL,
   is_expansion BOOLEAN DEFAULT false NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
@@ -137,7 +144,8 @@ CREATE TABLE cabinet_teams (
   name TEXT NOT NULL,
   is_active BOOLEAN DEFAULT true NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  CONSTRAINT cabinet_teams_department_name_unique UNIQUE (department_id, name)  -- no duplicate team names within a department
 );
 CREATE INDEX idx_cabinet_teams_department ON cabinet_teams(department_id);
 

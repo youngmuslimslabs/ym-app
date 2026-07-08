@@ -4,11 +4,13 @@
 -- Canonical reference data loaded after migrations on `supabase db reset`
 -- (wired via config.toml [db.seed] sql_paths = ["./seed.sql"]).
 --
--- Only role_types is seeded here — it's the one table with real, decided data.
--- Geography (regions/subregions/neighbor_nets) and the cabinet department/team
--- structure are owner-provided and get added when those values land (see
--- docs/project-todos.md P0 #1 + the deferred cabinet cluster). Users arrive via
--- the Google Workspace sync, not the seed.
+-- This file holds the hand-curated reference data: role_types and the cabinet
+-- department/team structure. Geography (regions/subregions/neighbor_nets) is
+-- machine-generated from the cleaned NN roster into supabase/seed_geography.sql
+-- (regenerate with `node docs/geography/generate-geo-seed.mjs`); both files are
+-- wired via config.toml [db.seed] sql_paths. Users arrive via the Google
+-- Workspace sync, not the seed; leadership (NNCs, dept heads, team leads) is
+-- role_assignments applied after that sync, not seeded here.
 --
 -- Dev/test fixtures (mock users, conference smoke test, feedback eyeball) live
 -- in supabase/seed/*.sql and are run by hand — they are NOT part of this seed.
@@ -36,3 +38,34 @@ INSERT INTO role_types (name, code, category, scope_type, max_per_scope, descrip
   ('NS Member',                     'ns_member',        'ns',           'national',           NULL, 'Member of National Shura',                             19),
   ('Event Admin',                   'event_admin',      'system',       'national',           NULL, 'Can create and manage conferences, sessions, rosters', 100)
 ON CONFLICT (code) DO NOTHING;
+
+-- ============================================================================
+-- Cabinet structure: departments -> teams (owner-provided 2026-07-06)
+-- ============================================================================
+INSERT INTO cabinet_departments (name, code) VALUES
+  ('IT',              'IT'),
+  ('Operations',      'OPS'),
+  ('Marketing',       'MKT'),
+  ('Finance',         'FIN'),
+  ('Societal Impact', 'SI'),
+  ('Fundraising',     'FR')
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO cabinet_teams (department_id, name) VALUES
+  ((SELECT id FROM cabinet_departments WHERE code = 'IT'),  'Website'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'IT'),  'App'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'OPS'), 'MYI'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'OPS'), 'Alumni'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'OPS'), 'QC'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'OPS'), 'Prof Dev'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'MKT'), 'Social Media'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'MKT'), 'Video Production'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'MKT'), 'Design'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'MKT'), 'Merch'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'FIN'), 'Payments'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'SI'),  'Writing'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'SI'),  'Civic Engagement'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'SI'),  'Local Efforts'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'FR'),  'Systems'),
+  ((SELECT id FROM cabinet_departments WHERE code = 'FR'),  'Donor Stewardship')
+ON CONFLICT (department_id, name) DO NOTHING;

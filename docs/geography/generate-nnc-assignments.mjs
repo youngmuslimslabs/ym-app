@@ -12,8 +12,9 @@
 //
 // The SQL is self-resolving and idempotent:
 //   - an email with no matching user is dropped by the JOIN (reported at gen time),
-//   - a NOT EXISTS guard enforces one NNC per NN (role_types.max_per_scope = 1),
-//   - re-running inserts nothing new.
+//   - the NOT EXISTS guard is what enforces one NNC per NN + makes re-runs no-ops
+//     (the DB does NOT enforce this: role_types.max_per_scope is advisory, and
+//     idx_role_assignments_unique keys on start_date, which is NULL here).
 //
 // Coordinators given by NAME with no email, and NNs with no coordinator, are NOT
 // handled here — they have no email to resolve and need manual assignment.

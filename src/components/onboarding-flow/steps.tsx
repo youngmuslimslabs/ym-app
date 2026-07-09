@@ -95,11 +95,11 @@ export function TextStep({
           <p className="text-sm text-destructive">{errorMessage}</p>
         )}
       </div>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-end gap-3">
+        <span className="text-xs text-muted-foreground">press Enter ↵</span>
         <Button onClick={onNext} disabled={!canAdvance} className="min-w-32">
           {ctaLabel}
         </Button>
-        <span className="text-xs text-muted-foreground">press Enter ↵</span>
       </div>
     </div>
   )
@@ -152,7 +152,7 @@ export function SelectStep({
           ))}
         </SelectContent>
       </Select>
-      <div>
+      <div className="flex justify-end">
         <Button onClick={onNext} disabled={!value} className="min-w-32">
           Continue
         </Button>
@@ -207,8 +207,9 @@ export function ComboboxStep({
         placeholder={placeholder}
         searchPlaceholder={searchPlaceholder}
         allowCustom={allowCustom}
+        className="h-14 text-base"
       />
-      <div>
+      <div className="flex justify-end">
         <Button onClick={onNext} disabled={!value} className="min-w-32">
           Continue
         </Button>
@@ -251,8 +252,9 @@ export function DateStep({
         placeholder="Select your date of birth"
         fromYear={fromYear}
         toYear={toYear}
+        className="h-14 text-base"
       />
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex justify-end">
         <Button onClick={onNext} disabled={!value} className="min-w-32">
           Continue
         </Button>

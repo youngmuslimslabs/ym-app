@@ -210,7 +210,7 @@ export function OnboardingFlow({
         <button
           type="button"
           onClick={flow.back}
-          className="mt-4 -ml-1 flex w-fit items-center gap-1 rounded-md px-1 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          className="mt-4 -ml-1 flex w-fit items-center gap-1 rounded-md px-1 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:fixed sm:left-6 sm:top-6 sm:z-10 sm:mt-0 sm:ml-0"
         >
           <ChevronLeft className="h-4 w-4" /> Back
         </button>

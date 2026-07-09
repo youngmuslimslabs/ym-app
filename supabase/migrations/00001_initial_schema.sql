@@ -560,7 +560,11 @@ BEGIN
   END IF;
 
   SELECT check_in_code INTO v_code FROM sessions WHERE id = p_session_id;
-  IF v_code IS NULL OR v_code <> p_code THEN
+  -- Case-insensitive match: codes are shared verbally / on signage, so a code
+  -- printed 'AB12' must still validate when typed 'ab12' (mobile keyboards
+  -- often don't auto-capitalize this field). Both sides are already trimmed
+  -- client-side; lower() makes the comparison case-agnostic.
+  IF v_code IS NULL OR lower(v_code) <> lower(p_code) THEN
     RETURN jsonb_build_object('success', false, 'error', 'Invalid code');
   END IF;
 

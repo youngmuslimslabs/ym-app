@@ -181,7 +181,10 @@ BEGIN
   END;
 
   -- ============================================================
-  -- Step 10: check_in_to_session — wrong code, then correct, then again.
+  -- Step 10: check_in_to_session — wrong code, then correct (case-insensitive),
+  -- then again. Session A's stored code is 'AAAA'; 10b checks in with lowercase
+  -- 'aaaa' to prove the match is case-insensitive, 10c uses 'AAAA' to prove both
+  -- casings resolve to the same check-in.
   -- Expected: {success:false}, {success:true,alreadyCheckedIn:false}, {success:true,alreadyCheckedIn:true}
   -- ============================================================
   v_result := check_in_to_session(v_session_a, 'WRONG');
@@ -191,10 +194,11 @@ BEGIN
     RAISE EXCEPTION '[10a] FAIL: %', v_result;
   END IF;
 
-  v_result := check_in_to_session(v_session_a, 'AAAA');
+  -- Lowercase against a stored 'AAAA' — must still succeed (case-insensitive).
+  v_result := check_in_to_session(v_session_a, 'aaaa');
   IF (v_result->>'success')::boolean = true
      AND (v_result->>'alreadyCheckedIn')::boolean = false THEN
-    RAISE NOTICE '[10b] PASS: %', v_result;
+    RAISE NOTICE '[10b] PASS (case-insensitive): %', v_result;
   ELSE
     RAISE EXCEPTION '[10b] FAIL: %', v_result;
   END IF;

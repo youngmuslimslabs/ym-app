@@ -125,5 +125,8 @@ describe('loadRoster', () => {
     expect(walkIn).toBeDefined()
     expect(walkIn?.name).toBe('Walk In')
     expect(walkIn?.checkedInAt).toBe('2026-06-01T13:10:00Z')
+    expect(walkIn?.isWalkIn).toBe(true)
+    const signup = res.entries.find((e) => e.userId === 'u1')
+    expect(signup?.isWalkIn).toBe(false)
   })
 })

@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/client'
+import { resolveEmbeddedName, type EmbeddedUserName } from '@/lib/name'
 
 export interface RosterEntry {
   userId: string
   name: string
   checkedInAt: string | null
+  isWalkIn: boolean
 }
 
 // Data fetch — runs in the browser via the public Supabase client. RLS gates
@@ -28,32 +30,19 @@ export async function loadRoster(
   if (signupsRes.error) return { entries: [], error: signupsRes.error.message }
   if (checkInsRes.error) return { entries: [], error: checkInsRes.error.message }
 
-  // Supabase returns the embedded users row as either an object (one FK) or
-  // an array depending on the relation; we narrow defensively.
-  type EmbeddedUser =
-    | { first_name: string | null; last_name: string | null }
-    | { first_name: string | null; last_name: string | null }[]
-    | null
-  type SignupRow = { user_id: string; users: EmbeddedUser }
-  type CheckInRow = { user_id: string; checked_in_at: string; users: EmbeddedUser }
-
-  const resolveName = (u: EmbeddedUser): string => {
-    const row = Array.isArray(u) ? u[0] : u
-    const first = row?.first_name ?? ''
-    const last = row?.last_name ?? ''
-    return `${first} ${last}`.trim() || 'Unknown attendee'
-  }
+  type Embedded = EmbeddedUserName | EmbeddedUserName[] | null
+  type SignupRow = { user_id: string; users: Embedded }
+  type CheckInRow = { user_id: string; checked_in_at: string; users: Embedded }
 
   const entryMap = new Map<string, RosterEntry>()
   for (const row of (signupsRes.data ?? []) as SignupRow[]) {
     entryMap.set(row.user_id, {
       userId: row.user_id,
-      name: resolveName(row.users),
+      name: resolveEmbeddedName(row.users),
       checkedInAt: null,
+      isWalkIn: false,
     })
   }
-  // Merge check-ins: attach timestamp to signups, and include walk-ins
-  // (checked in but never signed up) — they must still appear on the roster.
   for (const row of (checkInsRes.data ?? []) as CheckInRow[]) {
     const existing = entryMap.get(row.user_id)
     if (existing) {
@@ -61,8 +50,9 @@ export async function loadRoster(
     } else {
       entryMap.set(row.user_id, {
         userId: row.user_id,
-        name: resolveName(row.users),
+        name: resolveEmbeddedName(row.users),
         checkedInAt: row.checked_in_at,
+        isWalkIn: true,
       })
     }
   }

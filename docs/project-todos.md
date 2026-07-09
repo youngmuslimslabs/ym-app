@@ -127,6 +127,11 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 - **Passed**: phone validation (letters stripped, incomplete blocked with inline error), gibberish search empty state, bad/malformed-UUID profile not-found (no 500), DOB date bounds.
 - **Coverage gaps** (blocked): admin/conference editor (account not event-admin), attendee conference view (0 conferences), live onboarding walkthrough (already onboarded + read-only DB MCP), logout (would kill the manual-login session).
 
+### Decisions to consider (surfaced by the QA sweep — owner's call, not bugs)
+
+- **[CONSIDER] Admin access model + denied-access feedback (was F-06).** `/admin` correctly redirects non-admins to `/home`, but silently. Two open questions: (a) *which roles* should have admin — e.g. should Sub-Regional Secretary General see it at all, or only Event Admins? and (b) should a denied direct-navigation to `/admin` show a "you don't have access" toast instead of a silent bounce? Today only someone typing the URL hits this (no nav link for non-admins). Decide the intended privilege model before adding any feedback.
+- **[CONSIDER] Directory filtering on mobile (was F-09).** The `/people` toolbar (Filter, card/table toggle, Copy emails) is intentionally hidden below the mobile breakpoint (`{!isMobile && …}`) — only Search shows. Given the convention is phone-heavy, decide whether attendees should be able to **filter** the directory on a phone (search alone may be enough, or Filter could move into a bottom-sheet/drawer). Purely a UX scope call.
+
 ---
 
 # 🔮 Future Roadmap (post-MVP)

@@ -39,6 +39,25 @@ describe('OnboardingFlow (Part 1 wiring)', () => {
     expect(screen.getByRole('textbox')).toHaveValue('(555) 111-2222')
   })
 
+  it('lets you proceed from an already-answered single-select after going Back (no re-selection needed)', async () => {
+    const user = userEvent.setup()
+    render(<OnboardingFlow />)
+    await user.type(screen.getByRole('textbox'), '5551112222{Enter}')
+    await user.type(screen.getByRole('textbox'), 'me@example.com{Enter}')
+    // ethnicity → pick one → auto-advances to DOB
+    await user.click(screen.getByRole('combobox'))
+    await user.click(await screen.findByRole('option', { name: 'Arab' }))
+    expect(screen.getByText('Your date of birth')).toBeInTheDocument()
+    // go Back to the answered ethnicity screen
+    await user.click(screen.getByRole('button', { name: /back/i }))
+    expect(screen.getByText('How do you identify?')).toBeInTheDocument()
+    // without changing the selection, Continue must move forward
+    const cta = screen.getByRole('button', { name: /continue/i })
+    expect(cta).toBeEnabled()
+    await user.click(cta)
+    expect(screen.getByText('Your date of birth')).toBeInTheDocument()
+  })
+
   it('a single-select (ethnicity) auto-advances to the date-of-birth step', async () => {
     const user = userEvent.setup()
     render(<OnboardingFlow />)

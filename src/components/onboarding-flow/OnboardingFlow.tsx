@@ -30,8 +30,15 @@ const NEIGHBORNETS: Record<string, string[]> = {
 const asOptions = (labels: string[] = []): SelectOption[] =>
   labels.map((v) => ({ value: v, label: v }))
 
+// Real role_types (name, by sort_order) from the DB, hardcoded here only for the
+// auth-free preview; the live flow fetches these from Supabase at DB-integration.
 const ROLES: SelectOption[] = [
-  'Amir', 'Naib Amir', 'Muhtamim Tarbiyah', 'Muhtamim Talim', 'Secretary', 'General Body Member',
+  'NeighborNet Coordinator', 'Core Team Member', 'Sub-Regional Coordinator',
+  'Sub-Regional Secretary General', 'Regional Coordinator', 'Regional Cloud Rep',
+  'Regional Special Projects', 'Cloud Coordinator', 'Cloud Member', 'Cabinet Chair',
+  'Cabinet Secretary General', 'Cabinet Department Head', 'Cabinet Team Lead',
+  'Cabinet Team Member', 'National Coordinator', 'NS Secretary General',
+  'Council Coordinator', 'National Cloud Rep', 'NS Member', 'Event Admin',
 ].map((v) => ({ value: v, label: v }))
 
 const STEPS = [
@@ -102,6 +109,7 @@ export function OnboardingFlow({
           placeholder="Select your ethnicity"
           searchPlaceholder="Search…"
           onSelect={(v) => choose('ethnicity', v)}
+          onNext={flow.next}
         />
       )
       break
@@ -129,6 +137,7 @@ export function OnboardingFlow({
             if (v !== val('subregion')) set('neighbornet', '')
             choose('subregion', v)
           }}
+          onNext={flow.next}
         />
       )
       break
@@ -140,6 +149,7 @@ export function OnboardingFlow({
           value={val('neighbornet')}
           placeholder="Select your NeighborNet"
           onSelect={(v) => choose('neighbornet', v)}
+          onNext={flow.next}
         />
       )
       break
@@ -152,6 +162,7 @@ export function OnboardingFlow({
           value={val('role')}
           placeholder="Select your current role"
           onSelect={(v) => choose('role', v)}
+          onNext={flow.next}
         />
       )
       break

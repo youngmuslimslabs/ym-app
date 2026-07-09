@@ -114,6 +114,7 @@ interface SelectStepProps {
   label: string
   options: SelectOption[]
   onSelect: (value: string) => void
+  onNext: () => void
   value?: string
   placeholder?: string
   help?: string
@@ -121,7 +122,9 @@ interface SelectStepProps {
 
 /**
  * Typeform single choice on the proven shadcn <Select>. Picking an option fires
- * onSelect (the flow sets the answer and auto-advances).
+ * onSelect (the flow sets the answer and auto-advances). The Continue button is
+ * the forward affordance when a value is already set — e.g. after navigating Back
+ * to an answered screen, where no new selection fires.
  * NOTE (roadmap): later upgrade to full-width tappable tiles + search-at-top /
  * the Nationality soft-suggestion combobox — see docs/project-todos.md.
  */
@@ -129,6 +132,7 @@ export function SelectStep({
   label,
   options,
   onSelect,
+  onNext,
   value,
   placeholder = 'Select an option',
   help,
@@ -148,6 +152,11 @@ export function SelectStep({
           ))}
         </SelectContent>
       </Select>
+      <div>
+        <Button onClick={onNext} disabled={!value} className="min-w-32">
+          Continue
+        </Button>
+      </div>
     </div>
   )
 }
@@ -156,6 +165,7 @@ interface ComboboxStepProps {
   label: string
   options: SelectOption[]
   onSelect: (value: string) => void
+  onNext: () => void
   value?: string
   placeholder?: string
   searchPlaceholder?: string
@@ -174,6 +184,7 @@ export function ComboboxStep({
   label,
   options,
   onSelect,
+  onNext,
   value,
   placeholder = 'Select an option',
   searchPlaceholder = 'Search…',
@@ -197,6 +208,11 @@ export function ComboboxStep({
         searchPlaceholder={searchPlaceholder}
         allowCustom={allowCustom}
       />
+      <div>
+        <Button onClick={onNext} disabled={!value} className="min-w-32">
+          Continue
+        </Button>
+      </div>
     </div>
   )
 }

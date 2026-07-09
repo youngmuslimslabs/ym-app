@@ -101,7 +101,7 @@ describe('SelectStep (Typeform single-select via shadcn Select)', () => {
   ]
 
   it('renders the label and a select trigger with the placeholder', () => {
-    render(<SelectStep label="How do you identify?" options={OPTIONS} placeholder="Select one" onSelect={vi.fn()} />)
+    render(<SelectStep label="How do you identify?" options={OPTIONS} placeholder="Select one" onSelect={vi.fn()} onNext={vi.fn()} />)
     expect(screen.getByText('How do you identify?')).toBeInTheDocument()
     expect(screen.getByRole('combobox')).toBeInTheDocument()
     expect(screen.getByText('Select one')).toBeInTheDocument()
@@ -110,10 +110,22 @@ describe('SelectStep (Typeform single-select via shadcn Select)', () => {
   it('calls onSelect with the chosen value when an option is picked', async () => {
     const onSelect = vi.fn()
     const user = userEvent.setup()
-    render(<SelectStep label="How do you identify?" options={OPTIONS} onSelect={onSelect} />)
+    render(<SelectStep label="How do you identify?" options={OPTIONS} onSelect={onSelect} onNext={vi.fn()} />)
     await user.click(screen.getByRole('combobox'))
     await user.click(await screen.findByRole('option', { name: 'Other' }))
     expect(onSelect).toHaveBeenCalledWith('other')
+  })
+
+  it('shows a Continue button — disabled with no value, enabled once set — so a preserved answer can advance (Back-nav fix)', async () => {
+    const onNext = vi.fn()
+    const user = userEvent.setup()
+    const { rerender } = render(<SelectStep label="X" options={OPTIONS} onSelect={vi.fn()} onNext={onNext} />)
+    expect(screen.getByRole('button', { name: /continue/i })).toBeDisabled()
+    rerender(<SelectStep label="X" options={OPTIONS} value="other" onSelect={vi.fn()} onNext={onNext} />)
+    const cta = screen.getByRole('button', { name: /continue/i })
+    expect(cta).toBeEnabled()
+    await user.click(cta)
+    expect(onNext).toHaveBeenCalledOnce()
   })
 })
 
@@ -124,7 +136,7 @@ describe('ComboboxStep (searchable combobox single-select)', () => {
   ]
 
   it('renders the label and a combobox trigger', () => {
-    render(<ComboboxStep label="How do you identify?" options={OPTIONS} onSelect={vi.fn()} />)
+    render(<ComboboxStep label="How do you identify?" options={OPTIONS} onSelect={vi.fn()} onNext={vi.fn()} />)
     expect(screen.getByText('How do you identify?')).toBeInTheDocument()
     expect(screen.getByRole('combobox')).toBeInTheDocument()
   })
@@ -132,10 +144,22 @@ describe('ComboboxStep (searchable combobox single-select)', () => {
   it('calls onSelect with the plain string value when an option is picked', async () => {
     const onSelect = vi.fn()
     const user = userEvent.setup()
-    render(<ComboboxStep label="How do you identify?" options={OPTIONS} onSelect={onSelect} />)
+    render(<ComboboxStep label="How do you identify?" options={OPTIONS} onSelect={onSelect} onNext={vi.fn()} />)
     await user.click(screen.getByRole('combobox'))
     await user.click(await screen.findByRole('option', { name: 'Bosnian' }))
     expect(onSelect).toHaveBeenCalledWith('Bosnian')
+  })
+
+  it('shows a Continue button — disabled with no value, enabled once set — so a preserved answer can advance (Back-nav fix)', async () => {
+    const onNext = vi.fn()
+    const user = userEvent.setup()
+    const { rerender } = render(<ComboboxStep label="X" options={OPTIONS} onSelect={vi.fn()} onNext={onNext} />)
+    expect(screen.getByRole('button', { name: /continue/i })).toBeDisabled()
+    rerender(<ComboboxStep label="X" options={OPTIONS} value="Bosnian" onSelect={vi.fn()} onNext={onNext} />)
+    const cta = screen.getByRole('button', { name: /continue/i })
+    expect(cta).toBeEnabled()
+    await user.click(cta)
+    expect(onNext).toHaveBeenCalledOnce()
   })
 })
 

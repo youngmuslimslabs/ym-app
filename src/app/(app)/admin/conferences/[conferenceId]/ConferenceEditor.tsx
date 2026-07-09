@@ -68,7 +68,11 @@ export function ConferenceEditor({ initialView }: Props) {
       return
     }
     setPendingCreate(true)
-    setTab('schedule')
+    // Route through the shared tab-change path so any future origin-tab
+    // dirty guard (Info form, Attendees) still runs. If the guard defers
+    // the tab flip pendingCreate stays true and the effect fires only
+    // after Schedule mounts.
+    handleTabChange('schedule')
   }
 
   // Intercept tab changes so leaving the Schedule tab with an unsaved

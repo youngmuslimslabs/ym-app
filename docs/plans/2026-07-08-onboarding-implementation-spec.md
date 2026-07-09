@@ -50,7 +50,12 @@ New lightweight one-field-per-screen flow (replaces the current 7-step wizard). 
 | Current role | `role_assignments` (1 active row) | `SearchableCombobox` (role types) | on select |
 | Done | — | — | "Enter the app" |
 
-**Writes (Part 1):** reuse existing targeted saves — `saveStep1` (personal), `saveStep2` (location/membership), + a lightweight `role_assignments` insert (role_type_id, is_active=true, start_date null). Completion → `onboarding_completed_at = now()` (`completeOnboarding`). *(Open: reuse step-saves vs a slim dedicated Part-1 save — see §6.)*
+**Writes (Part 1):** reuse existing targeted saves — `saveStep1` (personal), `saveStep2` (location/membership), + a lightweight `role_assignments` insert (role_type_id, is_active=true, start_date null). Completion → `onboarding_completed_at = now()` (`completeOnboarding`). *(Open: reuse step-saves vs a slim dedicated Part-1 save — see §12.)*
+
+**Navigation & auto-advance (Part 1):**
+- **Back** on every screen — returns to the previous screen with the entered value preserved (state held in the flow, not lost).
+- **Auto-advance:** a *pick* (select / native date / combobox) advances immediately on selection. A *text* field (phone, email) advances on **Enter/Return** — the mobile keyboard's "Go/return" key **and** the desktop Enter key. **Not** on keystroke (that would jump mid-typing). A visible **Continue** button is always present as the explicit path on both platforms.
+- Desktop keyboard: Enter = advance, Shift+Tab / a Back button = previous.
 
 ---
 
@@ -68,12 +73,12 @@ New lightweight one-field-per-screen flow (replaces the current 7-step wizard). 
 
 ---
 
-## 4. Shared edits required (single edits, NOT forks — they propagate to all callers)
+## 4. Shared edits (owner-confirmed — single edits that propagate to all callers)
 
-These change the shared component once; every caller (profile edit, read-only, Part 2) inherits it. **Each needs a yes:**
+These change the shared component once; every caller (Part 2, **`/profile` edit**, read-only) inherits it. This is not a fork.
 
-1. **Contribution tags replace the description textareas.** Swap the `Textarea` "What did you do?" for a new `TagChipSelector` in `YMRolesSection.tsx` (`role.description` → `role_assignments.notes`) and `YMProjectsSection.tsx` (`user_projects.description`). **This also changes the `/profile` edit experience** to tags. Confirm that's desired (recommended — consistency).
-2. **New generic `TagChipSelector({options, selected, onToggle})`** — extract the chip toggle UI from `SkillsChipSelector` (currently coupled to a section header + `ProfileModeContext`). Reuse for both skills and the new contribution tags.
+1. **Contribution tags replace the description textareas** in `YMRolesSection.tsx` (`role.description` → `role_assignments.notes`) and `YMProjectsSection.tsx` (`user_projects.description`) — **and on `/profile` too** (confirmed; consistency).
+2. **One generic `TagChipSelector` powers both skills and contribution tags** — it's the *same chip component skills uses today*, extracted and decoupled from the section header + `ProfileModeContext`. `SkillsChipSelector` is refactored to consume it. Full spec in §9 (incl. the "add your own" fill-in).
 
 ---
 
@@ -109,10 +114,46 @@ The prototype's `ProfileCompletionContext` computes completeness client-side fro
 
 ---
 
-## 8. Open decisions (need owner)
+## 9. `TagChipSelector` spec (generic — skills + contribution tags)
 
-1. **Tags on `/profile` too** (§4.1) — OK to change the profile edit description fields to tag chips app-wide? (recommended)
-2. **Part 1 replaces the current 7-step onboarding** entirely — confirm we retire the existing wizard, not run both.
-3. **Gate rebuild** — confirm the demo bottom-sheet gate is replaced by notice→full-screen (per design). *(Already decided in design doc; restating because demo code exists.)*
-4. **Part-1 write path** (§2) — reuse existing `saveStep1/2` or a slim dedicated Part-1 save.
-5. Carry-overs from design doc: convention check-in-only exception; `profile_completed_at` migration coordination with geography seed.
+One component, two callers. Decoupled from any section header / `ProfileModeContext`.
+- **Props:** `{ options: string[], selected: string[], onToggle(v), allowCustom?: boolean, min?: number }`.
+- **Render:** tappable `Badge`-style chips; selected = primary fill + check icon. Chips **wrap** to multiple rows — never truncate a row, never horizontal-scroll.
+- **"Add your own" fill-in** (`allowCustom`, ON for contribution tags; skills stays a fixed list): a persistent **"+ Add your own"** chip → reveals an inline text input → Enter (or comma) commits it as a new selected chip. Mirrors the CLAUDE.md "SearchableCombobox always-show Add custom…" pattern.
+- **Overflow / long text:** the inline input **grows with content up to the container width, then wraps**; a committed long custom chip **wraps its label (max ~2 lines)** rather than overflowing. No layout break, no horizontal scroll. Verify at 320px and desktop.
+- **Reuse:** skills = `allowCustom:false, min:3`; contribution tags = `allowCustom:true`.
+
+## 10. Field input & validation (source of truth = current onboarding, documented here)
+
+Answer to "define specifics, or pull from onboarding, or both?" → **both.** Current onboarding is the *source of truth* for the rules; this table *records* them so nothing is lost when the wizard is retired, and so the iOS date gap is explicit.
+
+| Field | Allowed / format | Rule source (current) | Notes |
+|---|---|---|---|
+| Phone | digits, auto-format `(555) 123-4567` | `isValidPhone` (step1) | required |
+| Personal email | valid email | `isValidEmail` (step1) | required |
+| Ethnicity | one of fixed `ETHNICITIES` list | step1 const | required |
+| DOB | date, **range enforced in JS** (≥1940, ≤ today−10y) | step1 DatePicker `fromYear/toYear` | native input ignores min/max on iOS → JS-validate |
+| Subregion / NeighborNet | a DB row; NN filtered by subregion | `fetchSubregions` / `fetchAllNeighborNets` | required |
+| Current role | a `role_types` row (or custom) | `fetchRoleTypes` (system roles filtered) | required |
+| Role / Project type | DB row / const, custom allowed | step3 / step4 combobox | required per entry |
+| Start month + year | month + year | step3 / step4 validation | required per entry |
+| Field of study | free text, trimmed non-empty | step5 | required if college |
+| Skills | ≥3 from fixed list | step6 | min 3 |
+
+## 11. Desktop / responsive (must work on both — not mobile-only)
+
+The app is a **sidebar shell on desktop** (`AppShell`), single column on mobile. Per surface:
+- **Part 1 typeform** — runs *outside* the shell (full-page, like `/onboarding` today). Desktop: centered max-width column (~480px) + Enter/Back keys. Mobile: full-width.
+- **Completion hub + sections** — mobile: full-screen slide-up. **Desktop: a large centered modal/dialog** (not a phone-height sheet) *or* a `/profile/complete` page inside the shell (see §12.2). Reused sections are already responsive (they run on `/profile` desktop today).
+- **Gate notice** — centered dialog; identical both platforms.
+- **Slim strip** — top of the content column; inside `<main>` on desktop, full-width on mobile.
+- **Native date input** — desktop shows the browser date control; iOS shows the wheel.
+- **Test widths:** 320 / 375 / 393 / 430 / 768 / 1280+.
+
+## 12. Open decisions (need owner)
+
+1. **Part-1 write path** (§2) — reuse existing `saveStep1/2` (+ role insert), or a slim dedicated Part-1 save. *(Lean: reuse step-saves.)*
+2. **Completion hub on desktop** (§11) — centered modal vs a `/profile/complete` page in the shell. *(Lean: modal — keeps gate→complete→return in place on both platforms.)*
+3. Carry-overs: convention check-in-only exception; `profile_completed_at` migration coordination with geography seed.
+
+**Resolved this round:** tags = one generic chip component (same as skills) + applied on `/profile` too, with an "add your own" fill-in that wraps gracefully; retire the old 7-step wizard; gate = notice→full-screen; Part-1 auto-advance (pick = immediate, text = Enter on mobile *and* desktop) + Back on every screen; desktop is a first-class target throughout.

@@ -2,6 +2,7 @@
 
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
+import { AppCompletion } from '@/components/profile-completion/AppCompletion'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -28,7 +29,7 @@ export function AppShell({ children }: AppShellProps) {
         </header>
         {/* Main content */}
         <main className="flex-1">
-          {children}
+          <AppCompletion>{children}</AppCompletion>
         </main>
       </SidebarInset>
     </SidebarProvider>

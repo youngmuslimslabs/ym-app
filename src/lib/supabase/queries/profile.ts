@@ -207,6 +207,28 @@ export async function fetchUserProfileById(userId: string): Promise<{
 }
 
 /**
+ * Read the current user's `profile_completed_at` flag — the durable, skip-safe
+ * signal the feature gates use for "profile complete". Lightweight (one column),
+ * separate from the full profile fetch so it doesn't touch the save path.
+ * Returns null when not set / not authenticated / on error (fail-closed).
+ */
+export async function fetchProfileCompletedAt(): Promise<string | null> {
+  try {
+    const supabase = createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) return null
+    const { data } = await supabase
+      .from('users')
+      .select('profile_completed_at')
+      .eq('auth_id', authUser.id)
+      .maybeSingle()
+    return data?.profile_completed_at ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Fetch the current authenticated user's profile
  * @returns Profile data and error state
  */

@@ -32,13 +32,16 @@ const asOptions = (labels: string[] = []): SelectOption[] =>
 
 // Real role_types (name, by sort_order) from the DB, hardcoded here only for the
 // auth-free preview; the live flow fetches these from Supabase at DB-integration.
+// System-category roles (e.g. Event Admin) are intentionally excluded — mirrors
+// fetchRoleTypes()'s `category !== 'system'` filter so a user can't self-assign
+// admin. (Hard boundary is the role_assignments RLS in migration 00016.)
 const ROLES: SelectOption[] = [
   'NeighborNet Coordinator', 'Core Team Member', 'Sub-Regional Coordinator',
   'Sub-Regional Secretary General', 'Regional Coordinator', 'Regional Cloud Rep',
   'Regional Special Projects', 'Cloud Coordinator', 'Cloud Member', 'Cabinet Chair',
   'Cabinet Secretary General', 'Cabinet Department Head', 'Cabinet Team Lead',
   'Cabinet Team Member', 'National Coordinator', 'NS Secretary General',
-  'Council Coordinator', 'National Cloud Rep', 'NS Member', 'Event Admin',
+  'Council Coordinator', 'National Cloud Rep', 'NS Member',
 ].map((v) => ({ value: v, label: v }))
 
 const STEPS = [

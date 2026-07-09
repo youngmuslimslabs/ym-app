@@ -1,20 +1,22 @@
 'use client'
 
-import { ChevronLeft, UserRoundPen, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, CheckCircle2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { formatPhoneNumber, isValidPhone, isValidEmail } from '@/lib/validation'
 
 import { useOnboardingFlow } from './useOnboardingFlow'
-import { TextStep, ChoiceStep, DateStep, type ChoiceOption } from './steps'
+import { TextStep, SelectStep, ComboboxStep, DateStep, type SelectOption } from './steps'
 
 // NOTE: static option lists for the auth-free preview. At DB-integration time these
-// come from Supabase (ethnicity const + subregions/neighbor_nets/role_types tables).
-const ETHNICITIES: ChoiceOption[] = [
+// come from Supabase (subregions/neighbor_nets/role_types tables). Ethnicity becomes
+// the shared Nationality list + soft-suggestion combobox — see docs/project-todos.md.
+const ETHNICITIES: SelectOption[] = [
   'Arab', 'South Asian', 'Black / African American', 'White', 'Hispanic / Latino',
   'East Asian', 'Southeast Asian', 'Persian', 'Turkish', 'Mixed', 'Other',
 ].map((v) => ({ value: v, label: v }))
 
-const SUBREGIONS: ChoiceOption[] = ['Houston', 'Dallas', 'Austin', 'DMV', 'Bay Area'].map(
+const SUBREGIONS: SelectOption[] = ['Houston', 'Dallas', 'Austin', 'DMV', 'Bay Area'].map(
   (v) => ({ value: v, label: v }),
 )
 
@@ -25,16 +27,20 @@ const NEIGHBORNETS: Record<string, string[]> = {
   DMV: ['Northern Virginia', 'Maryland', 'DC'],
   'Bay Area': ['South Bay', 'East Bay', 'Peninsula'],
 }
-const asOptions = (labels: string[] = []): ChoiceOption[] =>
+const asOptions = (labels: string[] = []): SelectOption[] =>
   labels.map((v) => ({ value: v, label: v }))
 
-const ROLES: ChoiceOption[] = [
+const ROLES: SelectOption[] = [
   'Amir', 'Naib Amir', 'Muhtamim Tarbiyah', 'Muhtamim Talim', 'Secretary', 'General Body Member',
 ].map((v) => ({ value: v, label: v }))
 
 const STEPS = [
-  'welcome', 'phone', 'email', 'ethnicity', 'dob', 'subregion', 'neighbornet', 'role', 'done',
+  'phone', 'email', 'ethnicity', 'dob', 'subregion', 'neighbornet', 'role', 'done',
 ]
+
+// DOB range mirrors the original onboarding's DatePicker (1940 … today − 10y).
+const DOB_FROM_YEAR = 1940
+const DOB_TO_YEAR = new Date().getFullYear() - 10
 
 export function OnboardingFlow({
   onComplete,
@@ -54,25 +60,6 @@ export function OnboardingFlow({
 
   let content: React.ReactNode = null
   switch (flow.stepId) {
-    case 'welcome':
-      content = (
-        <div className="flex flex-col items-center gap-5 text-center">
-          <div className="grid h-16 w-16 place-items-center rounded-full bg-primary/10 text-primary">
-            <UserRoundPen className="h-8 w-8" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-balance">
-            Let&rsquo;s set up your profile
-          </h1>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            A few quick questions so we can place you in your NeighborNet and add you to the
-            directory. About a minute.
-          </p>
-          <Button size="lg" className="mt-2 w-full" onClick={flow.next}>
-            Get started
-          </Button>
-        </div>
-      )
-      break
     case 'phone':
       content = (
         <TextStep
@@ -84,6 +71,9 @@ export function OnboardingFlow({
           value={val('phone')}
           onChange={(v) => set('phone', v)}
           onNext={flow.next}
+          format={formatPhoneNumber}
+          validate={isValidPhone}
+          errorMessage="Please enter a valid 10-digit phone number"
         />
       )
       break
@@ -98,15 +88,19 @@ export function OnboardingFlow({
           value={val('email')}
           onChange={(v) => set('email', v)}
           onNext={flow.next}
+          validate={isValidEmail}
+          errorMessage="Please enter a valid email address"
         />
       )
       break
     case 'ethnicity':
       content = (
-        <ChoiceStep
+        <ComboboxStep
           label="How do you identify?"
           options={ETHNICITIES}
-          selected={val('ethnicity')}
+          value={val('ethnicity')}
+          placeholder="Select your ethnicity"
+          searchPlaceholder="Search…"
           onSelect={(v) => choose('ethnicity', v)}
         />
       )
@@ -115,18 +109,21 @@ export function OnboardingFlow({
       content = (
         <DateStep
           label="Your date of birth"
-          value={val('dob')}
-          onChange={(v) => set('dob', v)}
+          value={flow.answers.dob as Date | undefined}
+          onChange={(d) => flow.setAnswer('dob', d)}
           onNext={flow.next}
+          fromYear={DOB_FROM_YEAR}
+          toYear={DOB_TO_YEAR}
         />
       )
       break
     case 'subregion':
       content = (
-        <ChoiceStep
+        <SelectStep
           label="Which subregion are you in?"
           options={SUBREGIONS}
-          selected={val('subregion')}
+          value={val('subregion')}
+          placeholder="Select your subregion"
           onSelect={(v) => {
             // reset dependent neighbornet when subregion changes
             if (v !== val('subregion')) set('neighbornet', '')
@@ -137,21 +134,23 @@ export function OnboardingFlow({
       break
     case 'neighbornet':
       content = (
-        <ChoiceStep
+        <SelectStep
           label="And your NeighborNet?"
           options={asOptions(NEIGHBORNETS[val('subregion')])}
-          selected={val('neighbornet')}
+          value={val('neighbornet')}
+          placeholder="Select your NeighborNet"
           onSelect={(v) => choose('neighbornet', v)}
         />
       )
       break
     case 'role':
       content = (
-        <ChoiceStep
+        <SelectStep
           label="Your current role"
           help="Just your current title — you'll add your full history later."
           options={ROLES}
-          selected={val('role')}
+          value={val('role')}
+          placeholder="Select your current role"
           onSelect={(v) => choose('role', v)}
         />
       )

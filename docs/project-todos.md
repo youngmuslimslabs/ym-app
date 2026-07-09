@@ -136,6 +136,8 @@ Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on 
 - Onboarding motion & transitions (use the `frontend-design` skill): page transitions, step 7 celebration, segmented step indicator, step 1 welcome reveal, micro-interactions
 - PWA: test standalone mode on iOS Safari; consider splash screen config; revisit `IOSInstallPrompt` (animations, timing, analytics)
 - `SearchableCombobox`: always show a persistent "Add custom…" option; placeholder hint
+- **Part-1 onboarding single-selects → typeform big-tap style.** The constrained single-selects (subregion, NeighborNet, current role) ship on the proven shadcn `<Select>` for launch. Later, upgrade them to Typeform-style full-width tappable option tiles + auto-advance on tap. (Ethnicity/Nationality already uses the searchable `SearchableCombobox` — its list/label work is the Nationality item above.)
+- **Part-1 onboarding DOB → native mobile date input.** DOB ships on the proven shadcn `DatePicker` (calendar) for launch. Later, make the native `<input type="date">` iOS wheel work per spec §11: JS-validate the range (iOS ignores `min`/`max`), require a Continue button, and stop the keystroke/partial-date auto-advance.
 
 ## New Features
 

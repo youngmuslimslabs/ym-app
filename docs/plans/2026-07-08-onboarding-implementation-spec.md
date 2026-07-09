@@ -52,10 +52,12 @@ New lightweight one-field-per-screen flow (replaces the current 7-step wizard). 
 
 **Writes (Part 1):** reuse existing targeted saves — `saveStep1` (personal), `saveStep2` (location/membership), + a lightweight `role_assignments` insert (role_type_id, is_active=true, start_date null). Completion → `onboarding_completed_at = now()` (`completeOnboarding`). *(Open: reuse step-saves vs a slim dedicated Part-1 save — see §12.)*
 
-**Navigation & auto-advance (Part 1):**
-- **Back** on every screen — returns to the previous screen with the entered value preserved (state held in the flow, not lost).
-- **Auto-advance:** a *pick* (select / native date / combobox) advances immediately on selection. A *text* field (phone, email) advances on **Enter/Return** — the mobile keyboard's "Go/return" key **and** the desktop Enter key. **Not** on keystroke (that would jump mid-typing). A visible **Continue** button is always present as the explicit path on both platforms.
-- Desktop keyboard: Enter = advance, Shift+Tab / a Back button = previous.
+**Navigation & auto-advance (Part 1) — follow Typeform's patterns exactly:**
+- **Single-tap answers auto-advance instantly.** A select, native date pick, or combobox selection jumps to the next screen the moment it's chosen (Typeform: a single choice = advance; no OK button).
+- **Typed / multi-select answers wait for Enter/OK.** Phone, email (and any multi-select) advance on **Enter/Return** — never on keystroke (that would jump mid-typing). Show Typeform's **"press Enter ↵"** affordance beside the field; on mobile the keyboard's blue **"Go/return"** key does the same job. A visible **Continue** button is always present as the explicit fallback.
+- **Back on every screen** — returns to the previous screen with the entered value preserved (state held in the flow, not lost).
+- Desktop keyboard: Enter = advance; Back button (or Shift+Tab to the control) = previous.
+- **General rule (Typeform parity):** the interaction model, keyboard behavior, "press Enter" hint, and single-tap-advance vs Enter-to-advance split should all match Typeform — it's the pattern users already know.
 
 ---
 
@@ -140,7 +142,7 @@ Answer to "define specifics, or pull from onboarding, or both?" → **both.** Cu
 | Field of study | free text, trimmed non-empty | step5 | required if college |
 | Skills | ≥3 from fixed list | step6 | min 3 |
 
-## 11. Desktop / responsive (must work on both — not mobile-only)
+## 11. Desktop / responsive / native mobile inputs (must work on both)
 
 The app is a **sidebar shell on desktop** (`AppShell`), single column on mobile. Per surface:
 - **Part 1 typeform** — runs *outside* the shell (full-page, like `/onboarding` today). Desktop: centered max-width column (~480px) + Enter/Back keys. Mobile: full-width.
@@ -149,6 +151,14 @@ The app is a **sidebar shell on desktop** (`AppShell`), single column on mobile.
 - **Slim strip** — top of the content column; inside `<main>` on desktop, full-width on mobile.
 - **Native date input** — desktop shows the browser date control; iOS shows the wheel.
 - **Test widths:** 320 / 375 / 393 / 430 / 768 / 1280+.
+
+**Native mobile inputs — prefer them wherever possible:**
+- **Dates** → `input type=date` (DOB), `input type=month` (role/project ranges) → native iOS wheel (and native Android pickers). JS-validate ranges (iOS ignores `min`/`max`).
+- **Keyboards** → `type=tel` (phone → numeric pad), `type=email` (email keyboard with @), plus correct `inputmode` / `autocomplete` so the right keyboard + autofill appear.
+- **Plain single-selects** (e.g. ethnicity) → native `<select>` → iOS opens the native wheel; pairs cleanly with auto-advance on `change`.
+- **Custom `SearchableCombobox` only where search / add-custom is required** (role types; NeighborNet if the list is long). Otherwise prefer the native control.
+- **Principle:** native where it improves the mobile experience (date wheel, right keyboard, better a11y, less code); custom only when native can't do the job (search, tag chips). Accept native controls' limited styling.
+- Desktop: the same inputs fall back to the browser's native desktop controls — fine.
 
 ## 12. Open decisions (need owner)
 

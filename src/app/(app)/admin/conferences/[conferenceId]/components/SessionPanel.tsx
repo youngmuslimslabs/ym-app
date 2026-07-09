@@ -468,8 +468,15 @@ function FormMode({
   const roomConflict: AdminSession | null = useMemo(() => {
     if (!form.room.trim()) return null
     if (!startFmtOk || !endFmtOk || form.endTime <= form.startTime) return null
-    const startIso = composeTzIso(form.date, form.startTime, conference.timezone)
-    const endIso = composeTzIso(form.date, form.endTime, conference.timezone)
+    // Compare as numeric ms, not ISO strings — Postgres returns TIMESTAMPTZ as
+    // "…+00:00" while composeTzIso emits "…Z", so lexicographic compare would
+    // treat the same instant as different and flag spurious conflicts.
+    const startMs = Date.parse(
+      composeTzIso(form.date, form.startTime, conference.timezone)
+    )
+    const endMs = Date.parse(
+      composeTzIso(form.date, form.endTime, conference.timezone)
+    )
     const roomLower = form.room.trim().toLowerCase()
     return (
       sessions.find(
@@ -478,8 +485,8 @@ function FormMode({
           !s.is_break &&
           s.room != null &&
           s.room.trim().toLowerCase() === roomLower &&
-          s.start_at < endIso &&
-          s.end_at > startIso
+          Date.parse(s.start_at) < endMs &&
+          Date.parse(s.end_at) > startMs
       ) ?? null
     )
   }, [

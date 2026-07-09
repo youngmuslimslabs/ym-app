@@ -19,7 +19,7 @@ export function ProfileNotFound() {
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
               <User className="h-5 w-5 text-muted-foreground" />
             </div>
-            <h1 className="text-lg font-semibold">Error</h1>
+            <h1 className="text-lg font-semibold">Not Found</h1>
           </div>
         </div>
       </header>

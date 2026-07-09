@@ -7,20 +7,51 @@ import { useProfileData } from '@/app/profile/hooks/useProfileData'
 import { fetchProfileCompletedAt } from '@/lib/supabase/queries/profile'
 import { computeProfileCompletion } from '@/lib/profile-completion'
 
-import { CompletionProvider } from './CompletionProvider'
+import { CompletionProvider, useCompletion } from './CompletionProvider'
 import { CompletionStrip } from './CompletionStrip'
+
+// Actionable elements that get gated while the profile is incomplete. Plain
+// navigation <a> links are intentionally excluded so browsing stays free;
+// external action links (target="_blank", e.g. a finance form) are included.
+const ACTIONABLE_SELECTOR =
+  'button, [role="button"], input[type="submit"], input[type="button"], a[target="_blank"]'
+
+/**
+ * Wraps the page content and, while the profile is incomplete, intercepts clicks
+ * on any actionable element (capture phase) and pops the completion gate instead.
+ * Exhaustive by construction — every button in the content area is gated without
+ * per-button wiring. The sidebar/header live outside this subtree (nav stays
+ * free); the strip and gate dialog are excluded via [data-completion-allow].
+ */
+export function GatedContent({ children }: { children: React.ReactNode }) {
+  const { requireComplete } = useCompletion()
+
+  function handleClickCapture(e: React.MouseEvent) {
+    const el = (e.target as HTMLElement).closest(ACTIONABLE_SELECTOR)
+    if (!el || el.closest('[data-completion-allow]')) return
+    e.preventDefault()
+    e.stopPropagation()
+    // Incomplete → this opens the gate; proceed is a no-op (the action is blocked).
+    requireComplete('continue', () => {})
+  }
+
+  // display:contents keeps this wrapper out of the layout box tree while still
+  // sitting in the DOM event path, so capture works without affecting page CSS.
+  return (
+    <div className="contents" onClickCapture={handleClickCapture}>
+      {children}
+    </div>
+  )
+}
 
 /**
  * Mounts the profile-completion gating around the authenticated app:
- * - provides `requireComplete(action, proceed)` (via CompletionProvider) so any
- *   action button can gate itself behind a complete profile;
- * - renders the "Finish setting up your profile" strip at the top of app pages
- *   while the profile is incomplete.
+ * - the "Finish setting up your profile" strip at the top of app pages while incomplete;
+ * - a uniform gate that blocks every content-area action button until complete.
  *
  * `isComplete` is the durable `profile_completed_at` flag (skip-safe), NOT the
- * client-side percent — the percent only drives the strip's display count.
- * Fails safe: until both the flag and profile data have loaded, it renders
- * children with no gating chrome, so a slow/failed fetch never blocks the app.
+ * client-side percent. Fails safe: until data loads, renders children with no
+ * gating chrome, so a slow/failed fetch never blocks the app.
  */
 export function AppCompletion({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -48,12 +79,9 @@ export function AppCompletion({ children }: { children: React.ReactNode }) {
   const goToComplete = () => router.push('/complete-profile')
 
   return (
-    <CompletionProvider
-      completion={{ ...completion, isComplete }}
-      onGoToComplete={goToComplete}
-    >
+    <CompletionProvider completion={{ ...completion, isComplete }} onGoToComplete={goToComplete}>
       {!isComplete && (
-        <div className="px-4 pt-4 md:px-6">
+        <div className="px-4 pt-4 md:px-6" data-completion-allow>
           <CompletionStrip
             resolvedCount={completion.resolvedCount}
             total={completion.total}
@@ -62,7 +90,7 @@ export function AppCompletion({ children }: { children: React.ReactNode }) {
           />
         </div>
       )}
-      {children}
+      {isComplete ? children : <GatedContent>{children}</GatedContent>}
     </CompletionProvider>
   )
 }

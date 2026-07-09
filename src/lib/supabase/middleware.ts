@@ -15,6 +15,7 @@ export async function updateSession(request: NextRequest) {
     if (
         request.nextUrl.pathname.startsWith('/gating-preview') ||
         request.nextUrl.pathname.startsWith('/onboarding-v2') ||
+        request.nextUrl.pathname.startsWith('/complete-profile') ||
         request.nextUrl.pathname === '/onboarding-prototype.html'
     ) {
         return supabaseResponse

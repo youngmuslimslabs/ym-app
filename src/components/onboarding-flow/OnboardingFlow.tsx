@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronLeft, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, Check, MapPin, BadgeCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { formatPhoneNumber, isValidPhone, isValidEmail } from '@/lib/validation'
@@ -177,23 +177,52 @@ export function OnboardingFlow({
         />
       )
       break
-    case 'done':
+    case 'done': {
+      const nnLabel = neighborNetsFor(val('subregion')).find(
+        (o) => o.value === val('neighbornet'),
+      )?.label
+      const roleLabel = roles.find((o) => o.value === val('role'))?.label
       content = (
-        <div className="flex flex-col items-center gap-5 text-center">
-          <div className="grid h-16 w-16 place-items-center rounded-full bg-primary/10 text-primary">
-            <CheckCircle2 className="h-8 w-8" />
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-3">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+              <Check className="h-3.5 w-3.5" strokeWidth={3} /> You&rsquo;re all set
+            </span>
+            <h1 className="text-3xl font-bold tracking-tight text-balance">
+              Welcome to Young Muslims.
+            </h1>
+            <p className="text-[15px] leading-relaxed text-muted-foreground">
+              You&rsquo;re in the directory and placed in your NeighborNet. Round out the rest of
+              your profile whenever you&rsquo;re ready — it unlocks the full app.
+            </p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">You&rsquo;re in!</h1>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            You&rsquo;re set up and added to the directory. You can round out the rest of your
-            profile any time.
-          </p>
-          <Button size="lg" className="mt-2 w-full" onClick={() => onComplete?.(flow.answers)}>
+
+          {(nnLabel || roleLabel) && (
+            <dl className="divide-y divide-border overflow-hidden rounded-xl border bg-card">
+              {nnLabel && (
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <dt className="text-sm text-muted-foreground">NeighborNet</dt>
+                  <dd className="ml-auto text-sm font-medium">{nnLabel}</dd>
+                </div>
+              )}
+              {roleLabel && (
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <BadgeCheck className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <dt className="text-sm text-muted-foreground">Role</dt>
+                  <dd className="ml-auto text-sm font-medium">{roleLabel}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+
+          <Button size="lg" className="w-full" onClick={() => onComplete?.(flow.answers)}>
             Enter the app
           </Button>
         </div>
       )
       break
+    }
   }
 
   return (

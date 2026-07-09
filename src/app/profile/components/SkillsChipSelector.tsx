@@ -1,8 +1,9 @@
 'use client'
 
-import { Check, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { TagChipSelector } from '@/components/tag-chip-selector'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import { cn } from '@/lib/utils'
 
@@ -61,64 +62,31 @@ export function SkillsChipSelector({
           )}
         </div>
         {isEditable && (
-          <Badge
-            variant={isValid ? 'default' : 'secondary'}
-            className="shrink-0"
-          >
+          <Badge variant={isValid ? 'default' : 'secondary'} className="shrink-0">
             {selectionCount} selected
           </Badge>
         )}
       </div>
 
-      {!isEditable && selectedSkillItems.length === 0 ? (
+      {isEditable ? (
+        <TagChipSelector
+          options={SKILLS.map((skill) => ({ value: skill.id, label: skill.label }))}
+          selected={selectedSkills}
+          onToggle={onToggle}
+        />
+      ) : selectedSkillItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-center rounded-lg border border-dashed">
           <Sparkles className="h-10 w-10 text-muted-foreground/50 mb-3" />
           <p className="text-sm text-muted-foreground">No skills added yet</p>
         </div>
       ) : (
-      <div className="flex flex-wrap gap-3">
-        {isEditable
-          ? SKILLS.map((skill) => {
-              const isSelected = selectedSkills.includes(skill.id)
-
-              return (
-                <button
-                  key={skill.id}
-                  type="button"
-                  onClick={() => onToggle(skill.id)}
-                  className={cn(
-                    'group focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full',
-                    'transition-all duration-200'
-                  )}
-                >
-                  <Badge
-                    variant={isSelected ? 'default' : 'secondary'}
-                    className={cn(
-                      'px-3 py-1.5 text-sm cursor-pointer transition-all duration-200',
-                      'flex items-center gap-1.5',
-                      isSelected && 'pr-2.5',
-                      !isSelected && 'hover:bg-accent hover:text-accent-foreground'
-                    )}
-                  >
-                    {isSelected && (
-                      <Check className="h-3 w-3" />
-                    )}
-                    {skill.label}
-                  </Badge>
-                </button>
-              )
-            })
-          : selectedSkillItems.map((skill) => (
-              <Badge
-                key={skill.id}
-                variant="default"
-                className="px-3 py-1.5 text-sm"
-              >
-                {skill.label}
-              </Badge>
-            ))
-        }
-      </div>
+        <div className="flex flex-wrap gap-3">
+          {selectedSkillItems.map((skill) => (
+            <Badge key={skill.id} variant="default" className="px-3 py-1.5 text-sm">
+              {skill.label}
+            </Badge>
+          ))}
+        </div>
       )}
     </section>
   )

@@ -69,7 +69,7 @@ export function SessionCard({
             Full
           </span>
         )}
-        {inProgress && signedUp && (
+        {inProgress && (
           <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-primary font-medium">
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             Happening now

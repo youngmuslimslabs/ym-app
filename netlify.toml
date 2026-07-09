@@ -20,3 +20,32 @@
 [dev]
   command = "bun run dev"
   port = 3000
+
+# Security headers applied to every response served through Netlify.
+# Wildcards on supabase.co / posthog.com / googleusercontent.com are used
+# rather than exact hosts so deploy previews and future project rotations
+# don't require a config change. Tightening to exact hosts is a follow-up
+# once the prod project URL stabilises.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    Content-Security-Policy = """
+      default-src 'self'; \
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://*.posthog.com https://cdn.jotfor.ms; \
+      style-src 'self' 'unsafe-inline'; \
+      img-src 'self' data: blob: https://*.googleusercontent.com https://accounts.google.com https://*.supabase.co; \
+      font-src 'self' data:; \
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://accounts.google.com; \
+      frame-src https://accounts.google.com https://form.jotform.com; \
+      worker-src 'self' blob:; \
+      manifest-src 'self'; \
+      object-src 'none'; \
+      base-uri 'self'; \
+      form-action 'self'; \
+      frame-ancestors 'none'\
+    """

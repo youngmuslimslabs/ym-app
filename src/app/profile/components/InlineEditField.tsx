@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, type ReactNode } from 'react'
+import { useState, useRef, useEffect, useId, type ReactNode } from 'react'
 import { Pencil } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -62,6 +62,9 @@ export function InlineEditField(props: InlineEditFieldProps) {
     props.type === 'date' ? props.value : props.value
   )
   const [hasError, setHasError] = useState(false)
+  // Stable id so the <Label> is associated with whichever control is mounted
+  // (display button, text input, select trigger, or date trigger).
+  const fieldId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   // Ref to track latest tempValue for click-outside handler (avoids stale closure)
@@ -196,7 +199,7 @@ export function InlineEditField(props: InlineEditFieldProps) {
 
   return (
     <div ref={containerRef} className={cn('flex flex-col gap-1.5', className)}>
-      <Label>{label}</Label>
+      <Label htmlFor={fieldId}>{label}</Label>
 
       {!isEditing ? (
         <button
@@ -229,6 +232,8 @@ export function InlineEditField(props: InlineEditFieldProps) {
               )}
               <Input
                 ref={inputRef}
+                id={fieldId}
+                name={fieldId}
                 type={props.type}
                 value={tempValue as string}
                 onChange={(e) => {
@@ -257,7 +262,7 @@ export function InlineEditField(props: InlineEditFieldProps) {
                 }
               }}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger id={fieldId} className="w-full">
                 <SelectValue placeholder={props.placeholder} />
               </SelectTrigger>
               <SelectContent>
@@ -272,6 +277,7 @@ export function InlineEditField(props: InlineEditFieldProps) {
             <Popover open onOpenChange={(open) => !open && setIsEditing(false)}>
               <PopoverTrigger asChild>
                 <Button
+                  id={fieldId}
                   variant="outline"
                   className="w-full justify-start text-left font-normal"
                 >

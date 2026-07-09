@@ -53,6 +53,16 @@ describe('InlineEditField — text commit behavior', () => {
     expect(screen.getByText('Too short')).toBeInTheDocument()
   })
 
+  it('associates the label with the input so it is reachable by its accessible name', async () => {
+    const user = userEvent.setup()
+    render(<InlineEditField type="text" label="Nickname" value="" onChange={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: /click to add/i }))
+
+    // getByLabelText resolves only when <Label htmlFor> is wired to the input id
+    expect(screen.getByLabelText('Nickname')).toBe(screen.getByRole('textbox'))
+  })
+
   it('does not commit when Escape is pressed (cancel)', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()

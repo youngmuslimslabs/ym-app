@@ -17,9 +17,8 @@ export async function loadRoster(
   const [signupsRes, checkInsRes] = await Promise.all([
     supabase
       .from('session_signups')
-      .select('user_id, created_at, users(first_name, last_name)')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true }),
+      .select('user_id, users(first_name, last_name)')
+      .eq('session_id', sessionId),
     supabase
       .from('session_check_ins')
       .select('user_id, checked_in_at, users(first_name, last_name)')

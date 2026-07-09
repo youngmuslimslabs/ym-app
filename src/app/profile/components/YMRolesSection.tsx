@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react'
 import { UserX, Loader2 } from 'lucide-react'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { TagChipSelector } from '@/components/tag-chip-selector'
+import {
+  CONTRIBUTION_TAGS,
+  parseTags,
+  serializeTags,
+  toggleTag,
+} from './contribution-tags'
 import {
   SearchableCombobox,
   type ComboboxOption,
@@ -228,12 +234,16 @@ export function YMRolesSection({
               </div>
 
               <div className="space-y-1.5">
-                <Label>What did you do? (optional)</Label>
-                <Textarea
-                  value={role.description ?? ''}
-                  onChange={(e) => onUpdateRole(index, { description: e.target.value })}
-                  placeholder="Describe your responsibilities and achievements..."
-                  rows={3}
+                <Label>What did you focus on? (optional)</Label>
+                <TagChipSelector
+                  options={CONTRIBUTION_TAGS}
+                  selected={parseTags(role.description)}
+                  onToggle={(tag) =>
+                    onUpdateRole(index, {
+                      description: serializeTags(toggleTag(parseTags(role.description), tag)),
+                    })
+                  }
+                  allowCustom
                 />
               </div>
             </div>

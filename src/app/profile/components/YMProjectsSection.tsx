@@ -4,7 +4,13 @@ import { useState, useEffect } from 'react'
 import { Briefcase } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { TagChipSelector } from '@/components/tag-chip-selector'
+import {
+  CONTRIBUTION_TAGS,
+  parseTags,
+  serializeTags,
+  toggleTag,
+} from './contribution-tags'
 import {
   SearchableCombobox,
   type ComboboxOption,
@@ -229,12 +235,16 @@ export function YMProjectsSection({
             </div>
 
             <div className="space-y-1.5">
-              <Label>Description (optional)</Label>
-              <Textarea
-                value={project.description ?? ''}
-                onChange={(e) => onUpdateProject(index, { description: e.target.value })}
-                placeholder="Describe the project and your contributions..."
-                rows={3}
+              <Label>What did you focus on? (optional)</Label>
+              <TagChipSelector
+                options={CONTRIBUTION_TAGS}
+                selected={parseTags(project.description)}
+                onToggle={(tag) =>
+                  onUpdateProject(index, {
+                    description: serializeTags(toggleTag(parseTags(project.description), tag)),
+                  })
+                }
+                allowCustom
               />
             </div>
           </div>

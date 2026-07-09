@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Onboarding → Profile completion — full flow — YM App</title>
+<style>
+  :root{
+    --background: oklch(1 0 0);--foreground: oklch(0.21 0.02 262);--card: oklch(1 0 0);
+    --muted: oklch(0.97 0.008 262);--muted-foreground: oklch(0.55 0.02 262);--border: oklch(0.922 0.01 262);
+    --primary: oklch(0.445 0.14 261.872);--primary-foreground: oklch(0.99 0 0);
+    --primary-05: oklch(0.445 0.14 261.872 / 0.05);--primary-08: oklch(0.445 0.14 261.872 / 0.08);
+    --primary-10: oklch(0.445 0.14 261.872 / 0.10);--primary-20: oklch(0.445 0.14 261.872 / 0.22);
+    --radius: 0.65rem;--shadow-lift: 0 12px 40px oklch(0.21 0.02 262 / 0.14);--ok: oklch(0.62 0.15 150);
+    --chev: "%23888fa5";
+  }
+  :root[data-theme="dark"]{
+    --background: oklch(0.17 0.015 262);--foreground: oklch(0.96 0.008 262);--card: oklch(0.205 0.018 262);
+    --muted: oklch(0.26 0.02 262);--muted-foreground: oklch(0.7 0.02 262);--border: oklch(0.31 0.02 262);
+    --primary: oklch(0.65 0.14 261.872);--primary-foreground: oklch(0.16 0.02 262);
+    --primary-05: oklch(0.65 0.14 261.872 / 0.08);--primary-08: oklch(0.65 0.14 261.872 / 0.12);
+    --primary-10: oklch(0.65 0.14 261.872 / 0.16);--primary-20: oklch(0.65 0.14 261.872 / 0.28);
+    --shadow-lift: 0 12px 40px oklch(0 0 0 / 0.5);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--muted);color:var(--foreground);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;display:flex;justify-content:center;padding:24px 12px 80px}
+  .phone{position:relative;width:100%;max-width:440px;background:var(--background);border:1px solid var(--border);border-radius:22px;overflow:hidden;box-shadow:0 12px 40px oklch(0.21 0.02 262 / 0.10);display:flex;flex-direction:column;min-height:820px}
+  svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+  .harness{border-bottom:1px dashed var(--border);background:var(--muted);padding:12px 16px}
+  .harness .label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);font-weight:600;margin-bottom:8px}
+  .hrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .hbtn{border:1px solid var(--border);background:var(--background);color:var(--foreground);font:inherit;font-size:12px;font-weight:600;padding:6px 11px;border-radius:8px;cursor:pointer;transition:all .2s ease}
+  .hbtn:hover{border-color:var(--primary-20)}
+  .seg{display:inline-flex;gap:4px;background:var(--background);border:1px solid var(--border);border-radius:9px;padding:3px;margin-left:auto}
+  .seg button{border:0;background:transparent;color:var(--muted-foreground);font:inherit;font-size:12px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;transition:all .2s ease}
+  .seg button[aria-selected="true"]{background:var(--primary);color:var(--primary-foreground)}
+  .harness .hint{font-size:11px;color:var(--muted-foreground);margin-top:8px}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font:inherit;font-weight:600;font-size:14px;border:0;border-radius:var(--radius);cursor:pointer;background:var(--primary);color:var(--primary-foreground);padding:10px 16px;transition:opacity .2s ease}
+  .btn:hover{opacity:.92}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn.block{width:100%}
+  .btn.lg{padding:14px 16px;font-size:15px}
+  .btn.ghost{background:transparent;color:var(--muted-foreground)}
+  .btn.ghost:hover{color:var(--foreground);opacity:1}
+  .bar{height:8px;flex:1;background:var(--primary-20);border-radius:99px;overflow:hidden}
+  .bar>span{display:block;height:100%;background:var(--primary);border-radius:99px;transition:width .35s cubic-bezier(.4,0,.2,1)}
+  .pct{font-size:12px;font-weight:600;color:var(--muted-foreground);white-space:nowrap}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--primary)}
+
+  /* onboarding */
+  .ob{display:flex;flex-direction:column;flex:1;min-height:0}
+  .ob-top{padding:16px 18px 0}.ob-top .bar{height:6px}
+  .ob-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px;padding:24px 22px}
+  .ob-body.tall{justify-content:flex-start;padding-top:40px}
+  .ob-q{font-size:24px;font-weight:800;letter-spacing:-0.02em;text-wrap:balance}
+  .ob-help{font-size:13.5px;color:var(--muted-foreground);margin-top:-12px}
+  .field{width:100%;border:1px solid var(--border);background:var(--card);border-radius:var(--radius);padding:14px 15px;font:inherit;font-size:16px;color:var(--foreground)}
+  .field:focus{outline:2px solid var(--primary);outline-offset:1px;border-color:transparent}
+  .opts{display:flex;flex-direction:column;gap:9px}
+  .opts.wrap{flex-direction:row;flex-wrap:wrap}
+  .opt{border:1px solid var(--border);background:var(--card);border-radius:var(--radius);padding:13px 15px;font-size:14.5px;font-weight:500;cursor:pointer;transition:all .18s ease;text-align:left}
+  .opt:hover{border-color:var(--primary-20)}
+  .opt.sel{border-color:var(--primary);background:var(--primary-05);color:var(--primary);font-weight:600}
+  .opts.wrap .opt{border-radius:99px;padding:9px 15px}
+  .ob-foot{padding:16px 22px calc(18px + env(safe-area-inset-bottom));display:flex;gap:12px}
+  .center{text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
+  .bigicon{width:64px;height:64px;border-radius:50%;background:var(--primary-10);color:var(--primary);display:grid;place-items:center;font-size:30px}
+
+  /* app */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;letter-spacing:-0.01em}
+  .brand .logo{width:26px;height:26px;border-radius:7px;background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;font-size:13px;font-weight:800}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--primary-10);color:var(--primary);display:grid;place-items:center;font-weight:700;font-size:13px;border:1px solid var(--primary-20)}
+  .page{padding:18px 18px 26px;display:flex;flex-direction:column;gap:18px}
+  .strip{display:flex;align-items:center;gap:12px;border:1px solid var(--primary-20);background:var(--primary-05);border-radius:var(--radius);padding:11px 14px;cursor:pointer;transition:background .2s ease}
+  .strip:hover{background:var(--primary-08)}
+  .strip .lead{color:var(--primary);font-size:16px}
+  .strip .txt{flex:1;font-size:13px;font-weight:600}
+  .strip .txt small{display:block;font-weight:500;color:var(--muted-foreground);font-size:11px;margin-top:1px}
+  .strip .minibar{width:60px;height:6px;background:var(--primary-20);border-radius:99px;overflow:hidden;flex:none}
+  .strip .minibar>span{display:block;height:100%;background:var(--primary);border-radius:99px;transition:width .35s ease}
+  .strip .chev{color:var(--primary);font-size:16px}
+  .done-quiet{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:var(--card);border-radius:var(--radius);padding:13px 15px;font-size:14px;font-weight:600;color:var(--muted-foreground)}
+  .done-quiet .chk{color:var(--ok);font-size:18px}
+  h1.conf{font-size:26px;font-weight:800;letter-spacing:-0.02em;margin:5px 0 6px}
+  .sub{font-size:13.5px;color:var(--muted-foreground);max-width:34ch}
+  .sessions{display:flex;flex-direction:column;gap:12px}
+  .scard{border:1px solid var(--border);background:var(--card);border-radius:var(--radius);padding:16px;cursor:pointer;transition:border-color .2s ease}
+  .scard:hover{border-color:var(--primary-20)}
+  .scard .st{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .scard h4{font-size:15px;font-weight:700;letter-spacing:-0.01em}
+  .scard .time{font-size:12px;font-weight:600;color:var(--muted-foreground);white-space:nowrap}
+  .scard .speaker{font-size:13px;color:var(--muted-foreground);margin-top:3px}
+  .scard .meta{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted-foreground);margin-top:11px}
+  .scard .save{margin-top:13px;display:flex}
+  .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;border:1px solid var(--primary-20);color:var(--primary);background:var(--primary-05)}
+
+  /* gate */
+  .scrim{position:absolute;inset:0;background:oklch(0.21 0.02 262 / 0.5);opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:40}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .notice{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%) scale(.97);width:calc(100% - 48px);max-width:360px;background:var(--background);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lift);padding:22px;z-index:50;opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease}
+  .notice.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  .notice .lock{width:44px;height:44px;border-radius:12px;background:var(--primary-10);color:var(--primary);display:grid;place-items:center;font-size:20px;margin-bottom:14px}
+  .notice h3{font-size:17px;font-weight:800;letter-spacing:-0.02em;margin-bottom:7px}
+  .notice p{font-size:13.5px;color:var(--muted-foreground);margin-bottom:18px}
+  .notice .actions{display:flex;flex-direction:column;gap:4px}
+
+  /* completion full-screen */
+  .fs{position:absolute;inset:0;background:var(--background);z-index:60;display:none;flex-direction:column;transform:translateY(100%);transition:transform .34s cubic-bezier(.32,.72,0,1)}
+  .fs.mounted{display:flex}.fs.on{transform:translateY(0)}
+  .fs-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--border)}
+  .fs-head .nav{border:0;background:transparent;color:var(--muted-foreground);font-size:20px;cursor:pointer;line-height:1;padding:2px;display:flex}
+  .fs-head .ttl{font-size:14px;font-weight:700;flex:1}
+  .fs-head .step{font-size:12px;font-weight:600;color:var(--muted-foreground)}
+  .fs-body{flex:1;overflow:auto;padding:22px 20px;display:flex;flex-direction:column;gap:18px}
+  .fs-foot{padding:14px 20px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--background);display:flex;flex-direction:column;gap:8px}
+  .fs-foot .req-note{font-size:11px;color:var(--muted-foreground);text-align:center}
+  .lead-line{display:flex;flex-direction:column;gap:6px}
+  .fs-body h2{font-size:21px;font-weight:800;letter-spacing:-0.02em}
+  .lead-sub{font-size:13.5px;color:var(--muted-foreground)}
+  .fs-rows{display:flex;flex-direction:column;gap:10px}
+  .fs-row{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--card);cursor:pointer;transition:border-color .2s ease}
+  .fs-row:hover{border-color:var(--primary-20)}
+  .fs-row .rdot{font-size:18px;color:var(--muted-foreground)}
+  .fs-row.done .rdot{color:var(--primary)}
+  .fs-row .rtxt{flex:1;font-size:14px;font-weight:600}
+  .fs-row .rtxt small{display:block;font-weight:500;color:var(--muted-foreground);font-size:12px;margin-top:1px}
+  .fs-row.done .rtxt{color:var(--muted-foreground)}
+  .fs-row .rchev{color:var(--muted-foreground);font-size:16px}
+
+  /* real form bits */
+  .form{display:flex;flex-direction:column;gap:16px}
+  .fgroup{display:flex;flex-direction:column;gap:7px}
+  .flabel{font-size:13px;font-weight:600}
+  .flabel .req{color:var(--primary);margin-left:1px}
+  .flabel .optm{color:var(--muted-foreground);font-weight:500;font-size:12px;margin-left:4px}
+  .sel,.finput{width:100%;border:1px solid var(--border);background:var(--card);border-radius:var(--radius);padding:12px 13px;font:inherit;font-size:15px;color:var(--foreground)}
+  .sel{padding-right:34px;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23888fa5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>');background-repeat:no-repeat;background-position:right 11px center;cursor:pointer}
+  .sel:focus,.finput:focus{outline:2px solid var(--primary);outline-offset:1px;border-color:transparent}
+  .sel:invalid{color:var(--muted-foreground)}
+  .entry{border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:15px;background:var(--card)}
+  .entry .ehead{display:flex;justify-content:space-between;align-items:center}
+  .entry .etitle{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted-foreground)}
+  .entry .remove{border:0;background:transparent;color:var(--muted-foreground);cursor:pointer;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:4px}
+  .entry .remove:hover{color:var(--foreground)}
+  .row2{display:flex;gap:10px}.row2>*{flex:1;min-width:0}
+  .checkrow{display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer;user-select:none}
+  .checkbox{width:20px;height:20px;border:1px solid var(--border);border-radius:6px;display:grid;place-items:center;color:transparent;flex:none;transition:all .15s ease}
+  .checkbox.on{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+  .addbtn{border:1px dashed var(--border);background:transparent;color:var(--primary);font:inherit;font-weight:600;font-size:13.5px;padding:12px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+  .addbtn:hover{border-color:var(--primary-20);background:var(--primary-05)}
+  .tagnote{font-size:12px;color:var(--muted-foreground)}
+
+  .toast{position:absolute;top:14px;left:50%;transform:translate(-50%,-24px);background:var(--foreground);color:var(--background);font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:11px;display:flex;align-items:center;gap:8px;opacity:0;pointer-events:none;transition:all .28s ease;z-index:70;box-shadow:0 8px 30px oklch(0 0 0 / 0.25)}
+  .toast.on{opacity:1;transform:translate(-50%,0)}.toast .chk{color:var(--ok)}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+  <div class="phone" id="phone">
+    <div class="harness">
+      <div class="label">Prototype controls — not part of the app</div>
+      <div class="hrow">
+        <button class="hbtn" id="btnRestart">▸ Start from onboarding</button>
+        <button class="hbtn" id="btnSkip">Skip to app</button>
+        <div class="seg" id="modeSeg" role="tablist" aria-label="Completion layout">
+          <button role="tab" data-mode="menu" aria-selected="true">Menu</button>
+          <button role="tab" data-mode="linear" aria-selected="false">Linear</button>
+        </div>
+      </div>
+      <div class="hint">Full-fidelity Part-2 forms: required fields, repeatable Roles/Projects, month-year ranges, Education college branch, ≥3 skills.</div>
+    </div>
+
+    <div id="screen"></div>
+
+    <div class="scrim" id="scrim"></div>
+    <div class="notice" id="notice" role="dialog" aria-modal="true" aria-labelledby="noticeTitle">
+      <div class="lock" id="noticeLock"></div>
+      <h3 id="noticeTitle">Complete your profile to check in</h3>
+      <p id="noticeBody">Finish setting up your profile so organizers and members know who you are. It takes a couple of minutes.</p>
+      <div class="actions">
+        <button class="btn block" id="noticeGo">Complete my profile</button>
+        <button class="btn ghost block" id="noticeNot">Not now</button>
+      </div>
+    </div>
+    <div class="fs" id="fs" role="dialog" aria-modal="true"></div>
+    <div class="toast" id="toast"><span class="chk" id="toastIcon"></span><span id="toastMsg"></span></div>
+  </div>
+
+<script>
+(function(){
+  const ic = {
+    userpen:'<path d="M2 21a8 8 0 0 1 10.82-7.49"/><path d="M21.38 16.63a1 1 0 0 0-3-3l-4.01 4.01a2 2 0 0 0-.51.85l-.84 2.87a.5.5 0 0 0 .62.62l2.87-.84a2 2 0 0 0 .85-.5z"/><circle cx="10" cy="8" r="5"/>',
+    check:'<path d="M21.8 10A10 10 0 1 1 17 3.34"/><path d="m9 11 3 3L22 4"/>',
+    circle:'<circle cx="12" cy="12" r="9"/>',
+    lock:'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+    chev:'<path d="m9 18 6-6-6-6"/>', back:'<path d="m15 18-6-6 6-6"/>',
+    chk:'<path d="M20 6 9 17l-5-5"/>', x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', plus:'<path d="M5 12h14"/><path d="M12 5v14"/>'
+  };
+  const svg=(n,e='')=>`<svg class="i ${e}" viewBox="0 0 24 24">${ic[n]}</svg>`;
+  const esc=s=>String(s).replace(/"/g,'&quot;');
+
+  // option lists (representative)
+  const ROLE_TYPES=['Amir','Naib Amir','Muhtamim Tarbiyah','Muhtamim Talim','Muhtamim Tabligh','Secretary','General Body Member','Other'];
+  const PROJECT_TYPES=['Ijtema','Convention','Fundraiser','Community Service','Sports Tournament','Study Circle','Other'];
+  const MANAGERS=['Br. Yusuf Ali','Br. Ahmad Khan','Sr. Fatima Noor','Br. Omar Siddiqui','Someone else'];
+  const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const YEARS=(()=>{const a=[];for(let y=2026;y>=2012;y--)a.push(String(y));return a;})();
+  const GRAD_YEARS=(()=>{const a=[];for(let y=2029;y>=2015;y--)a.push(String(y));return a;})();
+  const EDU_LEVELS=['In high school','High-school graduate','In or completed college'];
+  const SCHOOLS=['University of Houston','UT Austin','Texas A&M','Rice University','UT Dallas','Other'];
+  const DEGREES=['Associate','Bachelor’s','Master’s','Doctorate','Professional','Other'];
+  const CONTRIB=['Led a team','Logistics','Fundraising','Mentorship','Content / Media','Ops','Event planning','Outreach'];
+  const SKILLS=['Leadership','Public Speaking','Event Planning','Fundraising','Graphic Design','Video Editing','Social Media','Writing','Teaching','Mentorship','Programming','Data / Analytics','Photography','Marketing','Finance','Operations','Recruiting','Counseling','Arabic','Qur’an Recitation'];
+
+  const OB = [
+    {id:'welcome'},
+    {id:'phone', kind:'input', q:"What's your phone number?", ph:'(555) 123-4567', type:'tel'},
+    {id:'email', kind:'input', q:'Your personal email', ph:'you@email.com', type:'email'},
+    {id:'ethnicity', kind:'pick', q:'How do you identify?', opts:['Arab','South Asian','Black / African American','White','Hispanic / Latino','East Asian','Persian','Other']},
+    {id:'dob', kind:'input', q:'Your date of birth', ph:'MM / DD / YYYY', type:'text'},
+    {id:'subregion', kind:'pick', q:'Which subregion are you in?', opts:['Houston','Dallas','Austin','DMV','Bay Area']},
+    {id:'nn', kind:'pick', q:'And your NeighborNet?', opts:['Katy','Sugar Land','Downtown','Pearland']},
+    {id:'role', kind:'pick', q:'Your current role', help:'Just your current title — you’ll add your full history later.', opts:['Amir','Naib Amir','Muhtamim Tarbiyah','Secretary','General Body Member']},
+    {id:'done'}
+  ];
+  const P2 = [
+    {key:'roles', label:'Role history', hint:'Roles you’ve held'},
+    {key:'projects', label:'Projects', hint:'Projects you’ve worked on'},
+    {key:'education', label:'Education', hint:'Level, and school if applicable'},
+    {key:'skills', label:'Skills', hint:'Pick at least 3'}
+  ];
+  const ALL=['personal','location','roles','projects','education','skills'];
+
+  const S={ screen:'onboarding', ob:0, compMode:'menu', done:new Set(), pending:'check in',
+    data:{ roles:[blankExp()], projects:[blankExp()], education:{level:'', entries:[blankEdu()]}, skills:[] } };
+  function blankExp(){return{type:'',yourRole:'',manager:'',sm:'',sy:'',current:false,em:'',ey:'',tags:[]};}
+  function blankEdu(){return{school:'',degree:'',field:'',gy:''};}
+
+  const pct=()=>Math.round(S.done.size/ALL.length*100);
+  const p2remaining=()=>P2.filter(s=>!S.done.has(s.key));
+
+  const screen=document.getElementById('screen');
+  const scrim=document.getElementById('scrim'), notice=document.getElementById('notice'), fs=document.getElementById('fs');
+  document.getElementById('noticeLock').innerHTML=svg('lock');
+  document.getElementById('toastIcon').innerHTML=svg('chk');
+
+  // ---------- base render ----------
+  function render(){ S.screen==='onboarding'?renderOnboarding():renderApp(); }
+
+  function renderOnboarding(){
+    const step=OB[S.ob], prog=Math.round(S.ob/(OB.length-1)*100);
+    let body='';
+    if(step.id==='welcome'){
+      body=`<div class="ob-body"><div class="center"><div class="bigicon">${svg('userpen')}</div>
+        <div class="ob-q">Let’s set up your profile</div>
+        <div class="ob-help">A few quick questions so we can place you in your NeighborNet and add you to the directory. About a minute.</div></div></div>
+        <div class="ob-foot"><button class="btn block lg" data-next>Get started</button></div>`;
+    } else if(step.id==='done'){
+      body=`<div class="ob-body"><div class="center"><div class="bigicon" style="color:var(--ok);background:oklch(0.62 0.15 150 / 0.12)">${svg('check')}</div>
+        <div class="ob-q">You’re in!</div>
+        <div class="ob-help">You’re set up and added to the directory. You can round out the rest of your profile any time.</div></div></div>
+        <div class="ob-foot"><button class="btn block lg" data-enter>Enter the app</button></div>`;
+    } else if(step.kind==='input'){
+      body=`<div class="ob-body"><div class="ob-q">${step.q}</div>
+        <input class="field" id="obInput" type="${step.type}" placeholder="${step.ph}" autocomplete="off"/></div>
+        <div class="ob-foot"><button class="btn block lg" id="obNext" data-next disabled>Continue</button></div>`;
+    } else {
+      body=`<div class="ob-body tall"><div class="ob-q">${step.q}</div>
+        ${step.help?`<div class="ob-help">${step.help}</div>`:''}
+        <div class="opts">${step.opts.map(o=>`<button class="opt" data-pick="${esc(o)}">${o}</button>`).join('')}</div></div>`;
+    }
+    screen.innerHTML=`<div class="ob"><div class="ob-top"><div class="bar"><span style="width:${prog}%"></span></div></div>${body}</div>`;
+    if(step.kind==='input'){
+      const inp=document.getElementById('obInput'), nb=document.getElementById('obNext');
+      inp.focus(); inp.oninput=()=>{nb.disabled=inp.value.trim().length===0;};
+      inp.onkeydown=e=>{if(e.key==='Enter'&&!nb.disabled)advanceOb();}; nb.onclick=advanceOb;
+    } else { const nx=screen.querySelector('[data-next]'); if(nx)nx.onclick=advanceOb; }
+    const en=screen.querySelector('[data-enter]'); if(en)en.onclick=enterApp;
+    screen.querySelectorAll('[data-pick]').forEach(b=>b.onclick=advanceOb);
+  }
+  function advanceOb(){ if(S.ob<OB.length-1){S.ob++;renderOnboarding();} }
+  function enterApp(){ S.screen='app'; S.done=new Set(['personal','location']); render(); }
+
+  function renderApp(){
+    const complete=S.done.size===ALL.length;
+    const strip= complete
+      ? `<div class="done-quiet">${svg('check','chk')} Profile complete</div>`
+      : `<div class="strip" id="stripEl" role="button" tabindex="0">${svg('userpen','lead')}
+          <div class="txt">Finish setting up your profile<small>${S.done.size} of ${ALL.length} sections done</small></div>
+          <div class="minibar"><span style="width:${pct()}%"></span></div>
+          <div class="pct" style="min-width:30px">${pct()}%</div>${svg('chev','chev')}</div>`;
+    const SESS=[{t:'Opening Keynote: Faith & Leadership',time:'9:00 AM',sp:'Sh. Omar Suleiman',room:'Main Hall'},
+      {t:'Building Your NeighborNet',time:'10:30 AM',sp:'Br. Yusuf Ali',room:'Room 204'},
+      {t:'Youth Mental Health Panel',time:'1:00 PM',sp:'Panel',room:'Room 110'}];
+    screen.innerHTML=`<div class="topbar"><div class="brand"><span class="logo">YM</span> Young Muslims</div><div class="avatar">YA</div></div>
+      <div class="page">${strip}
+        <div><div class="eyebrow">July 14, 2026</div><h1 class="conf">YM Convention 2026</h1>
+          <p class="sub">Browse the full schedule freely — check-in and RSVP ask you to finish your profile.</p></div>
+        <button class="btn block lg" id="checkinBtn">Check in</button>
+        <div class="sessions">${SESS.map((s,i)=>`<div class="scard" data-i="${i}"><div class="st"><h4>${s.t}</h4><span class="time">${s.time}</span></div>
+          <div class="speaker">${s.sp}</div><div class="meta">${svg('pin')} ${s.room}</div><div class="save"><span class="badge">Save session</span></div></div>`).join('')}</div></div>`;
+    const st=document.getElementById('stripEl'); if(st)st.onclick=()=>openCompletion('strip');
+    document.getElementById('checkinBtn').onclick=()=>attempt('check in');
+    screen.querySelectorAll('.scard').forEach(el=>el.onclick=()=>attempt('save this session'));
+  }
+
+  // ---------- gate ----------
+  function attempt(action){
+    S.pending=action;
+    if(S.done.size===ALL.length){ toast(action==='check in'?'You’re checked in':'Saved'); return; }
+    document.getElementById('noticeTitle').textContent=`Complete your profile to ${action}`;
+    scrim.classList.add('on'); notice.classList.add('on');
+  }
+  function closeNotice(){ notice.classList.remove('on'); if(!fs.classList.contains('on')) scrim.classList.remove('on'); }
+  document.getElementById('noticeGo').onclick=()=>{ closeNotice(); openCompletion('gate'); };
+  document.getElementById('noticeNot').onclick=closeNotice;
+  scrim.onclick=()=>{ if(notice.classList.contains('on')) closeNotice(); };
+
+  // ---------- completion ----------
+  let comp={from:'gate', view:'hub'};
+  function openCompletion(from){
+    comp={from, view:'hub'};
+    if(S.compMode==='linear'){ const r=p2remaining(); comp.view=r.length?r[0].key:'hub'; }
+    fs.classList.add('mounted');
+    requestAnimationFrame(()=>{ scrim.classList.add('on'); fs.classList.add('on'); });
+    renderCompletion();
+  }
+  function closeCompletion(){ fs.classList.remove('on'); scrim.classList.remove('on'); setTimeout(()=>fs.classList.remove('mounted'),340); render(); }
+  function finishReturn(){
+    closeCompletion();
+    const done=S.done.size===ALL.length;
+    if(done && comp.from==='gate') toast(S.pending==='check in'?'Profile complete — you’re checked in':'Profile complete — saved');
+    else if(done) toast('Profile complete');
+    else { const n=p2remaining().length; toast(`Saved — ${n} section${n===1?'':'s'} left`); }
+  }
+
+  function renderCompletion(){ if(S.compMode==='menu' && comp.view==='hub') renderHub(); else renderSection(comp.view); }
+
+  function renderHub(){
+    const rows=P2.map(s=>{ const d=S.done.has(s.key);
+      return `<div class="fs-row ${d?'done':''}" data-sec="${s.key}">${svg(d?'check':'circle','rdot')}
+        <div class="rtxt">${s.label}<small>${d?'Added':s.hint}</small></div>${d?'':svg('chev','rchev')}</div>`; }).join('');
+    const allDone=S.done.size===ALL.length;
+    fs.innerHTML=`<div class="fs-head"><button class="nav" data-act="close" aria-label="Close">${svg('x')}</button>
+        <div class="ttl">Complete your profile</div><div class="step">${pct()}%</div></div>
+      <div class="fs-body"><div class="lead-line"><h2>A few more details</h2>
+          <div class="lead-sub">Pick up any section — your progress saves as you go.</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><div class="bar"><span style="width:${pct()}%"></span></div><div class="pct">${S.done.size} of ${ALL.length}</div></div>
+        <div class="fs-rows">${rows}</div></div>
+      <div class="fs-foot"><button class="btn block lg" data-act="done">${allDone?'Finish':'Save & continue later'}</button></div>`;
+  }
+
+  function renderSection(key){
+    const s=P2.find(x=>x.key===key);
+    const meta = S.compMode==='linear' ? {idx:P2.findIndex(x=>x.key===key)+1, total:P2.length} : null;
+    const backAct = S.compMode==='linear' ? 'close' : 'hub';
+    const cta = S.compMode==='linear' ? 'Continue' : 'Save';
+    let body='';
+    if(key==='roles') body=expForm(rolesCfg, S.data.roles);
+    else if(key==='projects') body=expForm(projectsCfg, S.data.projects);
+    else if(key==='education') body=eduForm(S.data.education);
+    else if(key==='skills') body=skillsForm(S.data.skills);
+    fs.innerHTML=`<div class="fs-head"><button class="nav" data-act="${backAct}" aria-label="Back">${svg('back')}</button>
+        <div class="ttl">${S.compMode==='linear'?'Complete your profile':s.label}</div>
+        <div class="step">${meta?meta.idx+' of '+meta.total:''}</div></div>
+      <div class="fs-body">${body}</div>
+      <div class="fs-foot"><button class="btn block lg" data-act="save" id="secSave">${cta}</button>
+        <div class="req-note"><span style="color:var(--primary)">*</span> required</div></div>`;
+    validate();
+  }
+
+  // ---- experience (roles / projects) ----
+  const rolesCfg={key:'roles',noun:'Role',q:'What roles have you held?',typeLabel:'Role',typeOpts:ROLE_TYPES,typePh:'Select a role',yourRole:false,currentLabel:'I currently hold this role',addLabel:'Add another role'};
+  const projectsCfg={key:'projects',noun:'Project',q:'What projects have you worked on?',typeLabel:'Project',typeOpts:PROJECT_TYPES,typePh:'Select a project',yourRole:true,currentLabel:'I’m currently on this project',addLabel:'Add another project'};
+
+  function sel(f,opts,val,ph){ return `<select class="sel" data-f="${f}">`+`<option value="" ${val?'':'selected'} disabled hidden>${ph}</option>`+opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')+`</select>`; }
+
+  function expForm(cfg, arr){
+    if(!arr.length) arr.push(blankExp());
+    const cards=arr.map((e,i)=>`
+      <div class="entry" data-idx="${i}">
+        <div class="ehead"><div class="etitle">${cfg.noun} ${i+1}</div>${arr.length>1?`<button class="remove" data-act="remove" data-idx="${i}">${svg('x')} Remove</button>`:''}</div>
+        <div class="fgroup"><label class="flabel">${cfg.typeLabel}<span class="req">*</span></label>${sel('type',cfg.typeOpts,e.type,cfg.typePh)}</div>
+        ${cfg.yourRole?`<div class="fgroup"><label class="flabel">Your role<span class="optm">optional</span></label><input class="finput" data-f="yourRole" value="${esc(e.yourRole)}" placeholder="e.g., Logistics Lead"/></div>`:''}
+        <div class="fgroup"><label class="flabel">Amir / Manager<span class="optm">optional</span></label>${sel('manager',MANAGERS,e.manager,'Select a person')}</div>
+        <div class="fgroup"><label class="flabel">Start<span class="req">*</span></label><div class="row2">${sel('sm',MONTHS,e.sm,'Month')}${sel('sy',YEARS,e.sy,'Year')}</div></div>
+        <label class="checkrow" data-act="current" data-idx="${i}"><span class="checkbox ${e.current?'on':''}">${svg('chk')}</span> ${cfg.currentLabel}</label>
+        ${e.current?'':`<div class="fgroup"><label class="flabel">End<span class="optm">optional</span></label><div class="row2">${sel('em',MONTHS,e.em,'Month')}${sel('ey',YEARS,e.ey,'Year')}</div></div>`}
+        <div class="fgroup"><label class="flabel">What did you focus on?<span class="optm">optional</span></label>
+          <div class="tagnote">Tap any that apply</div>
+          <div class="opts wrap">${CONTRIB.map(t=>`<button class="opt ${(e.tags||[]).includes(t)?'sel':''}" data-act="tag" data-tag="${esc(t)}">${t}</button>`).join('')}</div></div>
+      </div>`).join('');
+    return `<div class="lead-line"><h2>${cfg.q}</h2><div class="lead-sub">Add each ${cfg.noun.toLowerCase()} you’ve held. You can add more than one.</div></div>
+      <div class="form">${cards}<button class="addbtn" data-act="add">${svg('plus')} ${cfg.addLabel}</button></div>`;
+  }
+
+  function scrapeExp(key){
+    const arr=[];
+    fs.querySelectorAll('.entry').forEach(card=>{
+      const g=f=>{const el=card.querySelector(`[data-f="${f}"]`);return el?el.value:'';};
+      const tags=Array.from(card.querySelectorAll('[data-act="tag"].sel')).map(b=>b.dataset.tag);
+      arr.push({type:g('type'),yourRole:g('yourRole'),manager:g('manager'),sm:g('sm'),sy:g('sy'),
+        current:card.querySelector('.checkbox')?.classList.contains('on')||false,em:g('em'),ey:g('ey'),tags});
+    });
+    S.data[key]=arr.length?arr:[blankExp()];
+  }
+  const expValid=arr=>arr.length>0 && arr.every(e=>e.type && e.sm && e.sy);
+
+  // ---- education ----
+  function eduForm(edu){
+    const college = edu.level==='In or completed college';
+    let entries='';
+    if(college){
+      if(!edu.entries.length) edu.entries.push(blankEdu());
+      entries=`<div class="lead-sub" style="margin-top:2px">Add your college(s).</div>`+edu.entries.map((e,i)=>`
+        <div class="entry" data-idx="${i}">
+          <div class="ehead"><div class="etitle">School ${i+1}</div>${edu.entries.length>1?`<button class="remove" data-act="eduremove" data-idx="${i}">${svg('x')} Remove</button>`:''}</div>
+          <div class="fgroup"><label class="flabel">School<span class="req">*</span></label>${sel('school',SCHOOLS,e.school,'Select a school')}</div>
+          <div class="fgroup"><label class="flabel">Degree<span class="req">*</span></label>${sel('degree',DEGREES,e.degree,'Select a degree')}</div>
+          <div class="fgroup"><label class="flabel">Field of study<span class="req">*</span></label><input class="finput" data-f="field" value="${esc(e.field)}" placeholder="e.g., Computer Science"/></div>
+          <div class="fgroup"><label class="flabel">Graduation year<span class="req">*</span></label>${sel('gy',GRAD_YEARS,e.gy,'Select a year')}</div>
+        </div>`).join('')+`<button class="addbtn" data-act="eduadd">${svg('plus')} Add another school</button>`;
+    }
+    return `<div class="lead-line"><h2>Your education</h2><div class="lead-sub">Tell us your current level.</div></div>
+      <div class="form"><div class="fgroup"><label class="flabel">Education level<span class="req">*</span></label>${sel('level',EDU_LEVELS,edu.level,'Select your level')}</div>${entries}</div>`;
+  }
+  function scrapeEdu(){
+    const edu=S.data.education;
+    const lvl=fs.querySelector('[data-f="level"]'); edu.level=lvl?lvl.value:'';
+    const arr=[];
+    fs.querySelectorAll('.entry').forEach(card=>{
+      const g=f=>{const el=card.querySelector(`[data-f="${f}"]`);return el?el.value:'';};
+      arr.push({school:g('school'),degree:g('degree'),field:g('field'),gy:g('gy')});
+    });
+    if(arr.length) edu.entries=arr;
+  }
+  const eduValid=edu=>!!edu.level && (edu.level!=='In or completed college' || (edu.entries.length>0 && edu.entries.some(e=>e.school&&e.degree&&e.field&&e.field.trim()&&e.gy)));
+
+  // ---- skills ----
+  function skillsForm(sel){
+    return `<div class="lead-line"><h2>Your top skills</h2><div class="lead-sub">Select at least 3.</div></div>
+      <div class="opts wrap">${SKILLS.map(s=>`<button class="opt ${sel.includes(s)?'sel':''}" data-act="skill" data-skill="${esc(s)}">${s}</button>`).join('')}</div>`;
+  }
+  function scrapeSkills(){ S.data.skills=Array.from(fs.querySelectorAll('[data-act="skill"].sel')).map(b=>b.dataset.skill); }
+  const skillsValid=arr=>arr.length>=3;
+
+  function scrapeCurrent(){
+    const k=comp.view;
+    if(k==='roles'||k==='projects') scrapeExp(k);
+    else if(k==='education') scrapeEdu();
+    else if(k==='skills') scrapeSkills();
+  }
+  function currentValid(){
+    const k=comp.view;
+    if(k==='roles') return expValid(S.data.roles);
+    if(k==='projects') return expValid(S.data.projects);
+    if(k==='education') return eduValid(S.data.education);
+    if(k==='skills') return skillsValid(S.data.skills);
+    return false;
+  }
+  function validate(){ const b=document.getElementById('secSave'); if(b) b.disabled=!currentValid(); }
+
+  // ---------- fs event delegation ----------
+  fs.addEventListener('change', e=>{
+    if(comp.view==='hub') return;
+    const isLevel = e.target.matches('[data-f="level"]');
+    scrapeCurrent();
+    if(isLevel){ renderSection('education'); } else validate();
+  });
+  fs.addEventListener('input', e=>{ if(comp.view==='hub') return; scrapeCurrent(); validate(); });
+  fs.addEventListener('click', e=>{
+    const el=e.target.closest('[data-act],[data-sec]'); if(!el) return;
+    const act=el.dataset.act;
+    if(el.dataset.sec){ if(!S.done.has(el.dataset.sec)){ comp.view=el.dataset.sec; renderCompletion(); } return; }
+    if(act==='close'){ finishReturn(); return; }
+    if(act==='hub'){ scrapeCurrent(); comp.view='hub'; renderCompletion(); return; }
+    if(act==='done'){ finishReturn(); return; }
+    if(act==='tag'){ el.classList.toggle('sel'); scrapeCurrent(); validate(); return; }
+    if(act==='skill'){ el.classList.toggle('sel'); scrapeCurrent(); validate(); return; }
+    if(act==='current'){ scrapeCurrent(); const i=+el.dataset.idx; const k=comp.view; S.data[k][i].current=!S.data[k][i].current; renderSection(k); return; }
+    if(act==='add'){ scrapeCurrent(); S.data[comp.view].push(blankExp()); renderSection(comp.view); return; }
+    if(act==='remove'){ scrapeCurrent(); S.data[comp.view].splice(+el.dataset.idx,1); renderSection(comp.view); return; }
+    if(act==='eduadd'){ scrapeCurrent(); S.data.education.entries.push(blankEdu()); renderSection('education'); return; }
+    if(act==='eduremove'){ scrapeCurrent(); S.data.education.entries.splice(+el.dataset.idx,1); renderSection('education'); return; }
+    if(act==='save'){
+      scrapeCurrent(); if(!currentValid()) return;
+      S.done.add(comp.view);
+      if(S.compMode==='linear'){ const r=p2remaining(); if(r.length===0){ finishReturn(); } else { comp.view=r[0].key; renderCompletion(); } }
+      else { comp.view='hub'; renderCompletion(); }
+      return;
+    }
+  });
+
+  // ---------- toast ----------
+  let tt; const toastEl=document.getElementById('toast');
+  function toast(m){ document.getElementById('toastMsg').textContent=m; toastEl.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>toastEl.classList.remove('on'),2600); }
+
+  // ---------- harness ----------
+  document.getElementById('btnRestart').onclick=()=>{ S.screen='onboarding'; S.ob=0; S.done=new Set();
+    S.data={roles:[blankExp()],projects:[blankExp()],education:{level:'',entries:[blankEdu()]},skills:[]};
+    closeNotice(); fs.classList.remove('on','mounted'); scrim.classList.remove('on'); render(); };
+  document.getElementById('btnSkip').onclick=()=>enterApp();
+  const modeSeg=document.getElementById('modeSeg');
+  modeSeg.addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; S.compMode=b.dataset.mode;
+    Array.from(modeSeg.children).forEach(x=>x.setAttribute('aria-selected',x===b));
+    if(fs.classList.contains('on')) openCompletion(comp.from); });
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -10,8 +10,12 @@ export async function updateSession(request: NextRequest) {
     })
 
     // PROTOTYPE-ONLY: remove before merge — public, auth-free preview of the
-    // profile-completion gating pattern at /gating-preview.
-    if (request.nextUrl.pathname.startsWith('/gating-preview')) {
+    // profile-completion gating pattern at /gating-preview, plus the static
+    // onboarding prototype HTML (public/onboarding-prototype.html) for mobile testing.
+    if (
+        request.nextUrl.pathname.startsWith('/gating-preview') ||
+        request.nextUrl.pathname === '/onboarding-prototype.html'
+    ) {
         return supabaseResponse
     }
 

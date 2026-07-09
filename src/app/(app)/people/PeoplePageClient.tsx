@@ -90,7 +90,7 @@ export function PeoplePageClient({ initialPeople, filterCategories }: PeoplePage
               <PeopleSearch
                 value={filters.search}
                 onChange={setSearch}
-                placeholder="Search people..."
+                placeholder="Search"
               />
 
               {/* Filters - desktop only */}

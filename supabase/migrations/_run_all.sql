@@ -60,6 +60,7 @@ CREATE TABLE users (
   education JSONB DEFAULT '[]'::jsonb,
   skills TEXT[] DEFAULT '{}',
   onboarding_completed_at TIMESTAMPTZ,
+  profile_completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );

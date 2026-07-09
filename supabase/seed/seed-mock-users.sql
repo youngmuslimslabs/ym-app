@@ -35,6 +35,18 @@ INSERT INTO users (email, first_name, last_name, phone, skills, onboarding_compl
   ('faisal.saleh@test.ym.org', 'Faisal', 'Saleh', '555-0129', ARRAY['finance', 'budgeting'], NOW()),
   ('rania.ibrahim@test.ym.org', 'Rania', 'Ibrahim', '555-0130', ARRAY['marketing', 'campaigns'], NOW());
 
+-- Mark every other mock user as profile-complete (Part 2 done) so both gating
+-- states — "complete" and "finish setting up your profile" — are represented.
+-- profile_completed_at IS NOT NULL is the signal the feature gates read.
+UPDATE users u
+SET profile_completed_at = NOW()
+FROM (
+  SELECT id, ROW_NUMBER() OVER (ORDER BY email) AS rn
+  FROM users
+  WHERE email LIKE '%@test.ym.org'
+) ranked
+WHERE u.id = ranked.id AND ranked.rn % 2 = 0;
+
 -- Create memberships for all mock users (distribute across 3 NeighborNets)
 INSERT INTO memberships (user_id, neighbor_net_id, status, joined_at)
 SELECT

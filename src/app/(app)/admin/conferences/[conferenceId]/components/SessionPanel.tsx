@@ -607,8 +607,13 @@ function FormMode({
         <div>
           <Label className="text-xs">Day</Label>
           <Select value={form.date} onValueChange={(v) => field('date', v)}>
-            <SelectTrigger className="mt-1">
-              <SelectValue />
+            <SelectTrigger
+              className={cn(
+                'mt-1',
+                !dateOk && 'border-destructive focus-visible:ring-destructive'
+              )}
+            >
+              <SelectValue placeholder="Pick a day" />
             </SelectTrigger>
             <SelectContent>
               {conferenceDays.map((d) => (
@@ -618,6 +623,11 @@ function FormMode({
               ))}
             </SelectContent>
           </Select>
+          {!dateOk && (
+            <p className="text-xs text-destructive mt-1">
+              Pick a day within the conference dates.
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">

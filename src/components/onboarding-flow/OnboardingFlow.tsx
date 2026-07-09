@@ -4,18 +4,14 @@ import { ChevronLeft, CheckCircle2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { formatPhoneNumber, isValidPhone, isValidEmail } from '@/lib/validation'
+import { NATIONALITY_OPTIONS } from '@/lib/constants/nationalities'
 
 import { useOnboardingFlow } from './useOnboardingFlow'
 import { TextStep, SelectStep, ComboboxStep, DateStep, type SelectOption } from './steps'
 
 // NOTE: static option lists for the auth-free preview. At DB-integration time these
-// come from Supabase (subregions/neighbor_nets/role_types tables). Ethnicity becomes
-// the shared Nationality list + soft-suggestion combobox — see docs/project-todos.md.
-const ETHNICITIES: SelectOption[] = [
-  'Arab', 'South Asian', 'Black / African American', 'White', 'Hispanic / Latino',
-  'East Asian', 'Southeast Asian', 'Persian', 'Turkish', 'Mixed', 'Other',
-].map((v) => ({ value: v, label: v }))
-
+// come from Supabase (subregions/neighbor_nets/role_types tables). Nationality is a
+// shared constant (not RLS-gated), so it works without auth.
 const SUBREGIONS: SelectOption[] = ['Houston', 'Dallas', 'Austin', 'DMV', 'Bay Area'].map(
   (v) => ({ value: v, label: v }),
 )
@@ -106,11 +102,13 @@ export function OnboardingFlow({
     case 'ethnicity':
       content = (
         <ComboboxStep
-          label="How do you identify?"
-          options={ETHNICITIES}
+          label="What's your nationality?"
+          help="Pick the closest match, or type your own."
+          options={NATIONALITY_OPTIONS}
           value={val('ethnicity')}
-          placeholder="Select your ethnicity"
-          searchPlaceholder="Search…"
+          placeholder="Select your nationality"
+          searchPlaceholder="Search nationalities…"
+          allowCustom
           onSelect={(v) => choose('ethnicity', v)}
           onNext={flow.next}
         />

@@ -77,6 +77,28 @@ describe('TagChipSelector', () => {
       expect(onToggle).not.toHaveBeenCalled()
     })
 
+    it('commits a trimmed custom value on blur (clicking out of the field)', async () => {
+      const onToggle = vi.fn()
+      const user = userEvent.setup()
+      render(<TagChipSelector options={OPTIONS} selected={[]} onToggle={onToggle} allowCustom />)
+      await user.click(screen.getByRole('button', { name: /add your own/i }))
+      await user.type(screen.getByRole('textbox'), '  Ran a booth  ')
+      await user.tab() // blur the field
+      expect(onToggle).toHaveBeenCalledWith('Ran a booth')
+    })
+
+    it('does not commit an empty custom value on blur, and closes the input', async () => {
+      const onToggle = vi.fn()
+      const user = userEvent.setup()
+      render(<TagChipSelector options={OPTIONS} selected={[]} onToggle={onToggle} allowCustom />)
+      await user.click(screen.getByRole('button', { name: /add your own/i }))
+      await user.type(screen.getByRole('textbox'), '   ')
+      await user.tab()
+      expect(onToggle).not.toHaveBeenCalled()
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /add your own/i })).toBeInTheDocument()
+    })
+
     it('renders a selected value not present in options as a custom chip', () => {
       render(
         <TagChipSelector options={OPTIONS} selected={['Ran a booth']} onToggle={vi.fn()} allowCustom />,

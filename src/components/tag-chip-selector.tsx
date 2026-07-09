@@ -109,7 +109,9 @@ export function TagChipSelector({
             }
           }}
           onBlur={() => {
-            if (!draft.trim()) setAdding(false)
+            // Clicking out of the field commits a non-empty draft, then closes.
+            commitDraft()
+            setAdding(false)
           }}
           placeholder="Type and press Enter"
           className={cn(

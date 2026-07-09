@@ -46,11 +46,11 @@ describe('OnboardingFlow (Part 1 wiring)', () => {
     await user.type(screen.getByRole('textbox'), 'me@example.com{Enter}')
     // ethnicity → pick one → auto-advances to DOB
     await user.click(screen.getByRole('combobox'))
-    await user.click(await screen.findByRole('option', { name: 'Arab' }))
+    await user.click(await screen.findByRole('option', { name: 'American' }))
     expect(screen.getByText('Your date of birth')).toBeInTheDocument()
     // go Back to the answered ethnicity screen
     await user.click(screen.getByRole('button', { name: /back/i }))
-    expect(screen.getByText('How do you identify?')).toBeInTheDocument()
+    expect(screen.getByText("What's your nationality?")).toBeInTheDocument()
     // without changing the selection, Continue must move forward
     const cta = screen.getByRole('button', { name: /continue/i })
     expect(cta).toBeEnabled()
@@ -63,9 +63,9 @@ describe('OnboardingFlow (Part 1 wiring)', () => {
     render(<OnboardingFlow />)
     await user.type(screen.getByRole('textbox'), '5551112222{Enter}')
     await user.type(screen.getByRole('textbox'), 'me@example.com{Enter}')
-    expect(screen.getByText('How do you identify?')).toBeInTheDocument()
+    expect(screen.getByText("What's your nationality?")).toBeInTheDocument()
     await user.click(screen.getByRole('combobox'))
-    await user.click(await screen.findByRole('option', { name: 'Arab' }))
+    await user.click(await screen.findByRole('option', { name: 'American' }))
     expect(screen.getByText('Your date of birth')).toBeInTheDocument()
   })
 })

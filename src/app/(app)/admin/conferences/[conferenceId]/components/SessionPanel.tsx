@@ -18,6 +18,7 @@ import {
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -32,9 +33,10 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { createSession, deleteSession, updateSession } from '../../client-actions'
 import {
-  composeTzIso,
+  composeSessionIsos,
   dateRangeInclusive,
   decomposeTzIso,
+  nextDay,
 } from '../../lib/datetime'
 import { loadRoster, type RosterEntry } from './loadRoster'
 import type { AdminSession, Conference } from '../../types'
@@ -68,6 +70,7 @@ interface FormState {
   date: string
   startTime: string
   endTime: string
+  endsNextDay: boolean
   title: string
   speaker: string
   room: string
@@ -82,6 +85,7 @@ function emptyForm(defaultDate: string, isBreak: boolean): FormState {
     date: defaultDate,
     startTime: '09:00',
     endTime: '10:00',
+    endsNextDay: false,
     title: '',
     speaker: '',
     room: '',
@@ -99,6 +103,7 @@ function fromSession(s: AdminSession, timezone: string): FormState {
     date: start.date,
     startTime: start.time,
     endTime: end.time,
+    endsNextDay: start.date !== end.date,
     title: s.title,
     speaker: s.speaker ?? '',
     room: s.room ?? '',
@@ -206,10 +211,19 @@ function ViewMode({
   }, [entries, filter, search])
 
   const counts = useMemo(() => {
-    if (!entries) return { all: 0, in: 0, out: 0 }
+    if (!entries) return { all: 0, in: 0, out: 0, walkIns: 0 }
     let inCount = 0
-    for (const e of entries) if (e.checkedInAt !== null) inCount += 1
-    return { all: entries.length, in: inCount, out: entries.length - inCount }
+    let walkIns = 0
+    for (const e of entries) {
+      if (e.checkedInAt !== null) inCount += 1
+      if (e.isWalkIn) walkIns += 1
+    }
+    return {
+      all: entries.length,
+      in: inCount,
+      out: entries.length - inCount,
+      walkIns,
+    }
   }, [entries])
 
   return (
@@ -252,6 +266,11 @@ function ViewMode({
               session.capacity != null
                 ? `${signups} / ${session.capacity}`
                 : String(signups)
+            }
+            hint={
+              counts.walkIns > 0
+                ? `+${counts.walkIns} walk-in${counts.walkIns === 1 ? '' : 's'}`
+                : undefined
             }
           />
           <Stat label="Checked in" value={checkIns === 0 ? '—' : String(checkIns)} />
@@ -451,13 +470,24 @@ function FormMode({
 
   const titleOk = form.title.trim().length > 0
   const dateOk = conferenceDays.includes(form.date)
+  // When "Ends next day" is on, the end wall clock lands on date+1 — that day
+  // must also be a valid conference day.
+  const endDateOk = !form.endsNextDay || conferenceDays.includes(nextDay(form.date))
   const startFmtOk = /^\d{2}:\d{2}$/.test(form.startTime)
   const endFmtOk = /^\d{2}:\d{2}$/.test(form.endTime)
-  const endTimeOk = endFmtOk && startFmtOk && form.endTime > form.startTime
+  // Two branches: same-day sessions need end > start; midnight-cross needs any
+  // non-equal end (equal would be a 24-hour block).
+  const endTimeOk =
+    endFmtOk &&
+    startFmtOk &&
+    (form.endsNextDay
+      ? form.endTime !== form.startTime
+      : form.endTime > form.startTime)
   const capacityOk =
     form.capacity === '' ||
     (/^\d+$/.test(form.capacity.trim()) && Number(form.capacity) > 0)
-  const canSubmit = titleOk && dateOk && startFmtOk && endTimeOk && capacityOk
+  const canSubmit =
+    titleOk && dateOk && endDateOk && startFmtOk && endTimeOk && capacityOk
 
   function showErr(key: string, ok: boolean): boolean {
     return !ok && (attempted || touched.has(key))
@@ -467,9 +497,19 @@ function FormMode({
   const sessionId = session?.id ?? null
   const roomConflict: AdminSession | null = useMemo(() => {
     if (!form.room.trim()) return null
-    if (!startFmtOk || !endFmtOk || form.endTime <= form.startTime) return null
-    const startIso = composeTzIso(form.date, form.startTime, conference.timezone)
-    const endIso = composeTzIso(form.date, form.endTime, conference.timezone)
+    if (!endTimeOk) return null
+    // Compare as numeric ms — Postgres returns TIMESTAMPTZ as "…+00:00" while
+    // composeTzIso emits "…Z", so lexicographic compare would treat the same
+    // instant as different and flag spurious conflicts.
+    const { startIso, endIso } = composeSessionIsos(
+      form.date,
+      form.startTime,
+      form.endTime,
+      conference.timezone,
+      form.endsNextDay
+    )
+    const startMs = Date.parse(startIso)
+    const endMs = Date.parse(endIso)
     const roomLower = form.room.trim().toLowerCase()
     return (
       sessions.find(
@@ -478,8 +518,8 @@ function FormMode({
           !s.is_break &&
           s.room != null &&
           s.room.trim().toLowerCase() === roomLower &&
-          s.start_at < endIso &&
-          s.end_at > startIso
+          Date.parse(s.start_at) < endMs &&
+          Date.parse(s.end_at) > startMs
       ) ?? null
     )
   }, [
@@ -487,11 +527,11 @@ function FormMode({
     form.date,
     form.startTime,
     form.endTime,
+    form.endsNextDay,
     conference.timezone,
     sessionId,
     sessions,
-    startFmtOk,
-    endFmtOk,
+    endTimeOk,
   ])
 
   async function handleSubmit() {
@@ -502,8 +542,13 @@ function FormMode({
     if (pending) return
     setPending(true)
     try {
-      const startIso = composeTzIso(form.date, form.startTime, conference.timezone)
-      const endIso = composeTzIso(form.date, form.endTime, conference.timezone)
+      const { startIso, endIso } = composeSessionIsos(
+        form.date,
+        form.startTime,
+        form.endTime,
+        conference.timezone,
+        form.endsNextDay
+      )
       const payload = {
         conference_id: conference.id,
         start_at: startIso,
@@ -592,8 +637,13 @@ function FormMode({
         <div>
           <Label className="text-xs">Day</Label>
           <Select value={form.date} onValueChange={(v) => field('date', v)}>
-            <SelectTrigger className="mt-1">
-              <SelectValue />
+            <SelectTrigger
+              className={cn(
+                'mt-1',
+                !dateOk && 'border-destructive focus-visible:ring-destructive'
+              )}
+            >
+              <SelectValue placeholder="Pick a day" />
             </SelectTrigger>
             <SelectContent>
               {conferenceDays.map((d) => (
@@ -603,6 +653,11 @@ function FormMode({
               ))}
             </SelectContent>
           </Select>
+          {!dateOk && (
+            <p className="text-xs text-destructive mt-1">
+              Pick a day within the conference dates.
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -646,10 +701,27 @@ function FormMode({
             />
             {showErr('endTime', endTimeOk) && (
               <p className="text-xs text-destructive mt-1">
-                End must be after start.
+                {form.endsNextDay
+                  ? 'End time cannot equal start time.'
+                  : 'End must be after start.'}
               </p>
             )}
           </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+            <Checkbox
+              checked={form.endsNextDay}
+              onCheckedChange={(v) => field('endsNextDay', v === true)}
+            />
+            <span className="text-xs">Ends next day</span>
+          </label>
+          {form.endsNextDay && !endDateOk && (
+            <p className="text-xs text-destructive">
+              The next day is outside the conference dates.
+            </p>
+          )}
         </div>
 
         <div>
@@ -943,13 +1015,28 @@ function ModeToggle({
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: string
+  hint?: string
+}) {
   return (
     <div>
       <div className="text-xs text-muted-foreground uppercase tracking-wider">
         {label}
       </div>
-      <div className="text-lg font-semibold tabular-nums mt-0.5">{value}</div>
+      <div className="text-lg font-semibold tabular-nums mt-0.5">
+        {value}
+        {hint && (
+          <span className="ml-2 text-xs font-normal text-muted-foreground tabular-nums">
+            {hint}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

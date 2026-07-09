@@ -13,6 +13,9 @@ env:
   # Pin to a concrete version so audit/build outputs are deterministic.
   # `bun audit` requires >=1.2.13. Keep in lockstep with netlify.toml.
   BUN_VERSION: "1.2.21"
+  # Match netlify.toml NODE_VERSION so Bun uses the same Node runtime the
+  # production build runs on (Netlify sets NODE_VERSION=20).
+  NODE_VERSION: "20"
 
 jobs:
   ci:
@@ -26,6 +29,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -75,6 +83,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2

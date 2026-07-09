@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useBottomSheetDragToDismiss } from '@/hooks/use-bottom-sheet-drag'
 import { createClient } from '@/lib/supabase/client'
+import { resolveEmbeddedName, type EmbeddedUserName } from '@/lib/name'
 import {
   Sheet,
   SheetContent,
@@ -256,24 +257,15 @@ async function loadComments(
     rating: number
     comment: string | null
     created_at: string
-    users:
-      | { first_name: string | null; last_name: string | null }
-      | { first_name: string | null; last_name: string | null }[]
-      | null
+    users: EmbeddedUserName | EmbeddedUserName[] | null
   }
-  const comments: CommentRow[] = ((data ?? []) as FeedbackRow[]).map((row) => {
-    const u = Array.isArray(row.users) ? row.users[0] : row.users
-    const first = u?.first_name ?? ''
-    const last = u?.last_name ?? ''
-    const authorName = `${first} ${last}`.trim() || 'Unknown attendee'
-    return {
-      id: row.id,
-      rating: row.rating,
-      comment: row.comment,
-      createdAt: row.created_at,
-      authorName,
-    }
-  })
+  const comments: CommentRow[] = ((data ?? []) as FeedbackRow[]).map((row) => ({
+    id: row.id,
+    rating: row.rating,
+    comment: row.comment,
+    createdAt: row.created_at,
+    authorName: resolveEmbeddedName(row.users),
+  }))
 
   return { comments, error: null }
 }

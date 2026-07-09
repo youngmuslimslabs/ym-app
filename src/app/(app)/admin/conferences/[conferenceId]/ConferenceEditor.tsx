@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -48,6 +48,28 @@ export function ConferenceEditor({ initialView }: Props) {
   const [deletePending, setDeletePending] = useState(false)
   const [tab, setTab] = useState('schedule')
   const scheduleRef = useRef<ScheduleEditorHandle>(null)
+  // Header "Add session" is available on every tab, but ScheduleEditor is only
+  // mounted on the Schedule tab. Setting this flag switches to Schedule and
+  // triggers the create form once the editor commits.
+  const [pendingCreate, setPendingCreate] = useState(false)
+
+  useEffect(() => {
+    if (!pendingCreate) return
+    if (tab !== 'schedule') return
+    // Ref is populated on the same commit ScheduleEditor mounts on, so it's
+    // available by the time this effect runs.
+    scheduleRef.current?.openCreate()
+    setPendingCreate(false)
+  }, [pendingCreate, tab])
+
+  function handleAddSession() {
+    if (tab === 'schedule') {
+      scheduleRef.current?.openCreate()
+      return
+    }
+    setPendingCreate(true)
+    setTab('schedule')
+  }
 
   // Intercept tab changes so leaving the Schedule tab with an unsaved
   // session form triggers the same discard dialog as row clicks. The ref is
@@ -141,10 +163,7 @@ export function ConferenceEditor({ initialView }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              onClick={() => scheduleRef.current?.openCreate()}
-            >
+            <Button variant="outline" onClick={handleAddSession}>
               <Plus className="w-4 h-4" />
               Add session
             </Button>

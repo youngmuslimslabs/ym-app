@@ -11,38 +11,26 @@ interface JotformEmbedProps {
 export function JotformEmbed({
   formId,
   title = 'Jotform',
-  minHeight = 4000
+  minHeight = 1000
 }: JotformEmbedProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const scriptLoadedRef = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const hasReceivedResizeRef = useRef(false)
 
   useEffect(() => {
-    // Only load the script once
-    if (scriptLoadedRef.current) return
-
-    // Check if script is already loaded
-    const existingScript = document.querySelector(
-      'script[src*="for-form-embed-handler"]'
-    )
-
-    if (existingScript) {
-      scriptLoadedRef.current = true
-      return
+    // Load the Jotform embed-handler script once (it's a shared global helper);
+    // if a previous mount already added it, don't add a duplicate.
+    if (!document.querySelector('script[src*="for-form-embed-handler"]')) {
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js'
+      script.async = true
+      document.body.appendChild(script)
     }
 
-    // Create and load the Jotform embed handler script
-    const script = document.createElement('script')
-    script.src = 'https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js'
-    script.async = true
-    script.onload = () => {
-      scriptLoadedRef.current = true
-    }
-
-    document.body.appendChild(script)
-
-    // Listen for resize messages from Jotform
+    // Always register the resize listener on mount — even when the script was
+    // already loaded by an earlier mount. (Previously this returned early when
+    // the script existed, so auto-resize silently broke on remount and the
+    // iframe stayed stuck at its initial height.)
     const handleMessage = (e: MessageEvent) => {
       if (!e.data || typeof e.data !== 'string') return
 
@@ -70,15 +58,13 @@ export function JotformEmbed({
       }
     }, 3000)
 
-    // Cleanup function
+    // Cleanup: remove this mount's listener/timer. The shared embed-handler
+    // script is intentionally left in the DOM for reuse across mounts.
     return () => {
       clearTimeout(fallbackTimer)
       window.removeEventListener('message', handleMessage)
-      if (script.parentNode) {
-        script.parentNode.removeChild(script)
-      }
     }
-  }, [minHeight])
+  }, [])
 
   return (
     <div ref={containerRef} style={{ minHeight: '500px', position: 'relative' }}>

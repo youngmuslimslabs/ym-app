@@ -35,6 +35,10 @@ export function DateRangeInput({
 }: DateRangeInputProps) {
   // Generate unique ID to avoid duplicate IDs when multiple instances render
   const checkboxId = React.useId()
+  // Roles and projects are historical: a start or end date can't be in the
+  // future, so cap the selectable year at the current year. (Prevents e.g. a
+  // "current" role that starts in 2030.)
+  const maxYear = new Date().getFullYear()
   const handleStartMonthChange = (month: number) => {
     onChange({ startMonth: month, startYear, endMonth, endYear, isCurrent })
   }
@@ -71,6 +75,7 @@ export function DateRangeInput({
             year={startYear}
             onMonthChange={handleStartMonthChange}
             onYearChange={handleStartYearChange}
+            maxYear={maxYear}
             disabled={disabled}
           />
         </div>
@@ -82,6 +87,7 @@ export function DateRangeInput({
               year={endYear}
               onMonthChange={handleEndMonthChange}
               onYearChange={handleEndYearChange}
+              maxYear={maxYear}
               disabled={disabled}
             />
           </div>

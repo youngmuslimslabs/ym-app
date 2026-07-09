@@ -25,7 +25,9 @@
 # Wildcards on supabase.co / posthog.com / googleusercontent.com are used
 # rather than exact hosts so deploy previews and future project rotations
 # don't require a config change. Tightening to exact hosts is a follow-up
-# once the prod project URL stabilises.
+# once the prod project URL stabilises. The CSP is a single-line string —
+# TOML multiline basic strings preserve leading whitespace on the first
+# content line, which would inject spaces into the header value.
 [[headers]]
   for = "/*"
   [headers.values]
@@ -33,19 +35,7 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
-    Content-Security-Policy = """
-      default-src 'self'; \
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://*.posthog.com https://cdn.jotfor.ms; \
-      style-src 'self' 'unsafe-inline'; \
-      img-src 'self' data: blob: https://*.googleusercontent.com https://accounts.google.com https://*.supabase.co; \
-      font-src 'self' data:; \
-      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://accounts.google.com; \
-      frame-src https://accounts.google.com https://form.jotform.com; \
-      worker-src 'self' blob:; \
-      manifest-src 'self'; \
-      object-src 'none'; \
-      base-uri 'self'; \
-      form-action 'self'; \
-      frame-ancestors 'none'\
-    """
+    # camera/microphone/geolocation are allow-listed to https://form.jotform.com
+    # so the finance embed can use those APIs if a form ever needs them.
+    Permissions-Policy = "camera=(self \"https://form.jotform.com\"), microphone=(self \"https://form.jotform.com\"), geolocation=(self \"https://form.jotform.com\"), interest-cohort=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://*.posthog.com https://cdn.jotfor.ms; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.googleusercontent.com https://accounts.google.com https://*.supabase.co; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://accounts.google.com https://apis.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com https://form.jotform.com https://submit.jotform.com https://www.jotform.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"

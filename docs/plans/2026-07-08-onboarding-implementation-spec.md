@@ -160,6 +160,27 @@ The app is a **sidebar shell on desktop** (`AppShell`), single column on mobile.
 - **Principle:** native where it improves the mobile experience (date wheel, right keyboard, better a11y, less code); custom only when native can't do the job (search, tag chips). Accept native controls' limited styling.
 - Desktop: the same inputs fall back to the browser's native desktop controls — fine.
 
+## 13. Build status (2026-07-09) + remaining integration
+
+**Built + tested + on PR #36 preview** (262 tests, tsc + build green):
+- `TagChipSelector` (+ `SkillsChipSelector` refactor) · contribution tags in Roles/Projects
+- Part-1 typeform: `useOnboardingFlow`, Text/Choice/Date steps, `OnboardingFlow` → preview `/onboarding-v2`
+- `computeProfileCompletion` · Part-2 completion hub `ProfileCompletion` → preview `/onboarding-v2/complete`
+- Gating: `CompletionStrip`, `CompletionGate` (notice), `CompletionProvider` (`requireComplete`)
+
+**Remaining integration — needs the prod DB (the agreed stop point):**
+1. **MIGRATION (owner applies via `ym-db-changes`, coordinate w/ geography branch):**
+   ```sql
+   ALTER TABLE public.users ADD COLUMN IF NOT EXISTS profile_completed_at timestamptz;
+   ```
+   The gate reads `profile_completed_at != null` for `isComplete` (skip-safe); `computeProfileCompletion` drives the strip/hub *display* only.
+2. **Wire `CompletionProvider` into `(app)/layout.tsx`** — server-fetch the user's profile + `profile_completed_at`, pass `completion` (with `isComplete = flag != null`) + `onGoToComplete={() => router.push('/profile/complete')}`.
+3. **Render `CompletionStrip`** at the top of `<main>` in `app-shell.tsx` while incomplete.
+4. **Wrap action buttons** (Convention check-in/RSVP, People contact, Finance request) with `requireComplete(action, proceed)`.
+5. **Hub Finish** sets `profile_completed_at = now()` (extend `saveProfile` or a dedicated call).
+6. **Part-1 real data + writes**: swap the static option lists for Supabase (subregions/NNs/role_types), wire writes via `saveStep1/saveStep2` + role insert, JS-validate phone/email/DOB; then **retire the old 7-step `/onboarding`** (point middleware at the new flow).
+7. Remove PROTOTYPE-ONLY code (gating-preview, onboarding-v2 routes, demo `profile-completion` files, middleware exemptions).
+
 ## 12. Open decisions (need owner)
 
 1. **Part-1 write path** (§2) — reuse existing `saveStep1/2` (+ role insert), or a slim dedicated Part-1 save. *(Lean: reuse step-saves.)*

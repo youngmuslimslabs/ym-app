@@ -1,7 +1,12 @@
 // @vitest-environment node
 // Pure logic — no DOM needed. Faster than the default jsdom env.
 import { describe, it, expect } from 'vitest'
-import { composeTzIso, decomposeTzIso, dateRangeInclusive } from './datetime'
+import {
+  composeSessionIsos,
+  composeTzIso,
+  dateRangeInclusive,
+  decomposeTzIso,
+} from './datetime'
 
 describe('composeTzIso', () => {
   it('handles EST (winter, no DST)', () => {
@@ -131,6 +136,36 @@ describe('compose/decompose round-trip', () => {
     expect(decomposeTzIso(iso, 'America/Phoenix')).toEqual({
       date: '2026-07-15',
       time: '14:30',
+    })
+  })
+})
+
+describe('composeSessionIsos', () => {
+  it('keeps end on the same day when endTime > startTime', () => {
+    expect(
+      composeSessionIsos('2026-07-15', '09:00', '10:30', 'America/New_York')
+    ).toEqual({
+      startIso: '2026-07-15T13:00:00.000Z',
+      endIso: '2026-07-15T14:30:00.000Z',
+    })
+  })
+
+  it('rolls end to the next day when endTime < startTime (midnight cross)', () => {
+    // 23:00 → 01:00 EDT on July 15 → 03:00 UTC July 16 → 05:00 UTC July 16
+    expect(
+      composeSessionIsos('2026-07-15', '23:00', '01:00', 'America/New_York')
+    ).toEqual({
+      startIso: '2026-07-16T03:00:00.000Z',
+      endIso: '2026-07-16T05:00:00.000Z',
+    })
+  })
+
+  it('rolls the next day across a month boundary', () => {
+    expect(
+      composeSessionIsos('2026-07-31', '23:30', '00:30', 'America/New_York')
+    ).toEqual({
+      startIso: '2026-08-01T03:30:00.000Z',
+      endIso: '2026-08-01T04:30:00.000Z',
     })
   })
 })

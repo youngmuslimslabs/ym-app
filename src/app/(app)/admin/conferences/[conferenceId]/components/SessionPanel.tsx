@@ -32,7 +32,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { createSession, deleteSession, updateSession } from '../../client-actions'
 import {
-  composeTzIso,
+  composeSessionIsos,
   dateRangeInclusive,
   decomposeTzIso,
 } from '../../lib/datetime'
@@ -453,7 +453,9 @@ function FormMode({
   const dateOk = conferenceDays.includes(form.date)
   const startFmtOk = /^\d{2}:\d{2}$/.test(form.startTime)
   const endFmtOk = /^\d{2}:\d{2}$/.test(form.endTime)
-  const endTimeOk = endFmtOk && startFmtOk && form.endTime > form.startTime
+  // endTime !== startTime, not endTime > startTime — midnight-crossing sessions
+  // (e.g. 23:00 → 01:00) roll into the next day and are valid.
+  const endTimeOk = endFmtOk && startFmtOk && form.endTime !== form.startTime
   const capacityOk =
     form.capacity === '' ||
     (/^\d+$/.test(form.capacity.trim()) && Number(form.capacity) > 0)
@@ -467,16 +469,18 @@ function FormMode({
   const sessionId = session?.id ?? null
   const roomConflict: AdminSession | null = useMemo(() => {
     if (!form.room.trim()) return null
-    if (!startFmtOk || !endFmtOk || form.endTime <= form.startTime) return null
+    if (!startFmtOk || !endFmtOk || form.endTime === form.startTime) return null
     // Compare as numeric ms, not ISO strings — Postgres returns TIMESTAMPTZ as
     // "…+00:00" while composeTzIso emits "…Z", so lexicographic compare would
     // treat the same instant as different and flag spurious conflicts.
-    const startMs = Date.parse(
-      composeTzIso(form.date, form.startTime, conference.timezone)
+    const { startIso: startCandidate, endIso: endCandidate } = composeSessionIsos(
+      form.date,
+      form.startTime,
+      form.endTime,
+      conference.timezone
     )
-    const endMs = Date.parse(
-      composeTzIso(form.date, form.endTime, conference.timezone)
-    )
+    const startMs = Date.parse(startCandidate)
+    const endMs = Date.parse(endCandidate)
     const roomLower = form.room.trim().toLowerCase()
     return (
       sessions.find(
@@ -509,8 +513,12 @@ function FormMode({
     if (pending) return
     setPending(true)
     try {
-      const startIso = composeTzIso(form.date, form.startTime, conference.timezone)
-      const endIso = composeTzIso(form.date, form.endTime, conference.timezone)
+      const { startIso, endIso } = composeSessionIsos(
+        form.date,
+        form.startTime,
+        form.endTime,
+        conference.timezone
+      )
       const payload = {
         conference_id: conference.id,
         start_at: startIso,

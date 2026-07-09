@@ -75,6 +75,30 @@ export function decomposeTzIso(
   }
 }
 
+// Compose a session's start + end TIMESTAMPTZ ISOs together, honoring
+// midnight-crossing sessions. If `endTime <= startTime`, the end is
+// interpreted as the same wall-clock time on the following day (e.g. a
+// 23:00 → 01:00 late-night session). Zero-length sessions (endTime ===
+// startTime) are the caller's problem — this helper does not validate
+// them and will happily emit a 24-hour block.
+export function composeSessionIsos(
+  date: string,
+  startTime: string,
+  endTime: string,
+  timezone: string
+): { startIso: string; endIso: string } {
+  const startIso = composeTzIso(date, startTime, timezone)
+  const endDate = endTime > startTime ? date : addOneDay(date)
+  const endIso = composeTzIso(endDate, endTime, timezone)
+  return { startIso, endIso }
+}
+
+function addOneDay(date: string): string {
+  const d = new Date(`${date}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
 // Range of YYYY-MM-DD strings between start and end inclusive. Used by the
 // SessionEditor's day picker to limit choices to the conference's days.
 // Returns `[]` if `endDate < startDate` (inverted range — caller's bug, not

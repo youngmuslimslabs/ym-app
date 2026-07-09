@@ -25,14 +25,15 @@ describe('JotformEmbed — auto-resize', () => {
     expect(iframe.style.height).toBe('1500px')
   })
 
-  it('still resizes on a remount when the embed script already exists (regression)', () => {
-    // First mount loads the script...
-    const first = render(<JotformEmbed formId="123" title="Test Form" />)
-    expect(document.querySelector('script[src*="for-form-embed-handler"]')).not.toBeNull()
-    first.unmount()
+  it('still resizes when the embed script already exists at mount (regression)', () => {
+    // Pre-seed the embed-handler script so the component mounts straight into
+    // the "script already present" branch — the exact case the old code
+    // early-returned on, skipping the message-listener setup. This test fails on
+    // the pre-fix code (no listener -> iframe stays at its initial height).
+    const existing = document.createElement('script')
+    existing.src = 'https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js'
+    document.body.appendChild(existing)
 
-    // ...second mount must still register its message listener even though the
-    // script is already in the DOM.
     render(<JotformEmbed formId="123" title="Test Form" />)
     const iframe = screen.getByTitle('Test Form') as HTMLIFrameElement
 

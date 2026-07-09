@@ -233,7 +233,6 @@ export function InlineEditField(props: InlineEditFieldProps) {
               <Input
                 ref={inputRef}
                 id={fieldId}
-                name={fieldId}
                 type={props.type}
                 value={tempValue as string}
                 onChange={(e) => {

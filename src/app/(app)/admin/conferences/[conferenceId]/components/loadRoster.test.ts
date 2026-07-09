@@ -94,4 +94,36 @@ describe('loadRoster', () => {
     expect(res.entries).toEqual([])
     expect(res.error).toBe('rls violation')
   })
+
+  it('includes walk-ins (checked in but never signed up)', async () => {
+    signupsResult = {
+      data: [
+        { user_id: 'u1', users: { first_name: 'Alice', last_name: 'A' } },
+      ],
+      error: null,
+    }
+    checkInsResult = {
+      data: [
+        {
+          user_id: 'u1',
+          checked_in_at: '2026-06-01T13:02:00Z',
+          users: { first_name: 'Alice', last_name: 'A' },
+        },
+        {
+          user_id: 'u9',
+          checked_in_at: '2026-06-01T13:10:00Z',
+          users: { first_name: 'Walk', last_name: 'In' },
+        },
+      ],
+      error: null,
+    }
+
+    const res = await loadRoster('s1')
+    expect(res.error).toBeNull()
+    expect(res.entries).toHaveLength(2)
+    const walkIn = res.entries.find((e) => e.userId === 'u9')
+    expect(walkIn).toBeDefined()
+    expect(walkIn?.name).toBe('Walk In')
+    expect(walkIn?.checkedInAt).toBe('2026-06-01T13:10:00Z')
+  })
 })

@@ -22,43 +22,52 @@ export async function loadRoster(
       .order('created_at', { ascending: true }),
     supabase
       .from('session_check_ins')
-      .select('user_id, checked_in_at')
+      .select('user_id, checked_in_at, users(first_name, last_name)')
       .eq('session_id', sessionId),
   ])
 
   if (signupsRes.error) return { entries: [], error: signupsRes.error.message }
   if (checkInsRes.error) return { entries: [], error: checkInsRes.error.message }
 
-  const checkInMap = new Map<string, string>()
-  for (const c of (checkInsRes.data ?? []) as {
-    user_id: string
-    checked_in_at: string
-  }[]) {
-    checkInMap.set(c.user_id, c.checked_in_at)
-  }
-
   // Supabase returns the embedded users row as either an object (one FK) or
   // an array depending on the relation; we narrow defensively.
-  type SignupRow = {
-    user_id: string
-    users:
-      | { first_name: string | null; last_name: string | null }
-      | { first_name: string | null; last_name: string | null }[]
-      | null
+  type EmbeddedUser =
+    | { first_name: string | null; last_name: string | null }
+    | { first_name: string | null; last_name: string | null }[]
+    | null
+  type SignupRow = { user_id: string; users: EmbeddedUser }
+  type CheckInRow = { user_id: string; checked_in_at: string; users: EmbeddedUser }
+
+  const resolveName = (u: EmbeddedUser): string => {
+    const row = Array.isArray(u) ? u[0] : u
+    const first = row?.first_name ?? ''
+    const last = row?.last_name ?? ''
+    return `${first} ${last}`.trim() || 'Unknown attendee'
   }
-  const entries: RosterEntry[] = ((signupsRes.data ?? []) as SignupRow[]).map(
-    (row) => {
-      const u = Array.isArray(row.users) ? row.users[0] : row.users
-      const first = u?.first_name ?? ''
-      const last = u?.last_name ?? ''
-      const name = `${first} ${last}`.trim() || 'Unknown attendee'
-      return {
+
+  const entryMap = new Map<string, RosterEntry>()
+  for (const row of (signupsRes.data ?? []) as SignupRow[]) {
+    entryMap.set(row.user_id, {
+      userId: row.user_id,
+      name: resolveName(row.users),
+      checkedInAt: null,
+    })
+  }
+  // Merge check-ins: attach timestamp to signups, and include walk-ins
+  // (checked in but never signed up) — they must still appear on the roster.
+  for (const row of (checkInsRes.data ?? []) as CheckInRow[]) {
+    const existing = entryMap.get(row.user_id)
+    if (existing) {
+      existing.checkedInAt = row.checked_in_at
+    } else {
+      entryMap.set(row.user_id, {
         userId: row.user_id,
-        name,
-        checkedInAt: checkInMap.get(row.user_id) ?? null,
-      }
+        name: resolveName(row.users),
+        checkedInAt: row.checked_in_at,
+      })
     }
-  )
+  }
+  const entries: RosterEntry[] = Array.from(entryMap.values())
 
   // Stable order: checked-in first by time, then everyone else by name.
   entries.sort((a, b) => {

@@ -47,8 +47,8 @@ export function DaySchedule(props: Props) {
     <div className="pb-16">
       {days.map((day) => (
         <section key={day.dayKey}>
-          <div className="sticky top-0 z-10 px-6 md:px-8 py-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-            <h2 className="text-lg font-semibold tracking-tight">{day.dayLabel}</h2>
+          <div className="sticky top-0 z-10 px-6 md:px-8 py-3 bg-muted/80 backdrop-blur supports-[backdrop-filter]:bg-muted/70 border-y">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-primary">{day.dayLabel}</h2>
           </div>
 
           <div className="px-6 md:px-8 pt-6 space-y-8">

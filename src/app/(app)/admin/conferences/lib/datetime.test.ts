@@ -6,6 +6,7 @@ import {
   composeTzIso,
   dateRangeInclusive,
   decomposeTzIso,
+  nextDay,
 } from './datetime'
 
 describe('composeTzIso', () => {
@@ -72,15 +73,22 @@ describe('composeTzIso', () => {
     ).toThrow(/Invalid date\/time/)
   })
 
-  // KNOWN LIMITATION pinned as a skipped test — see the comment in
-  // datetime.ts. Removing `.skip` once the offset-derivation is fixed will
-  // light this up as a regression guard.
-  it.skip('handles spring-forward boundary (currently 1h off)', () => {
+  it('handles spring-forward boundary (03:30 EDT is 07:30Z, not 08:30Z)', () => {
     // 03:30 on 2026-03-08 in NY is unambiguously EDT (DST started at 02:00).
-    // Correct UTC: 07:30. Function currently returns 08:30 (sampled EST offset).
+    // Two-pass offset resolution samples EDT (-4) at the candidate instant,
+    // returning 07:30Z rather than the pre-transition EST (-5) 08:30Z.
     expect(
       composeTzIso('2026-03-08', '03:30', 'America/New_York')
     ).toBe('2026-03-08T07:30:00.000Z')
+  })
+
+  it('handles fall-back boundary (01:30 EDT is 05:30Z)', () => {
+    // On 2026-11-01 at 02:00 EDT, clocks fall back to 01:00 EST. 01:30 is
+    // ambiguous — either 01:30 EDT (05:30Z) or 01:30 EST (06:30Z). We treat
+    // the input as the first (pre-transition) occurrence.
+    expect(
+      composeTzIso('2026-11-01', '01:30', 'America/New_York')
+    ).toBe('2026-11-01T05:30:00.000Z')
   })
 })
 
@@ -141,7 +149,7 @@ describe('compose/decompose round-trip', () => {
 })
 
 describe('composeSessionIsos', () => {
-  it('keeps end on the same day when endTime > startTime', () => {
+  it('keeps end on the same day by default', () => {
     expect(
       composeSessionIsos('2026-07-15', '09:00', '10:30', 'America/New_York')
     ).toEqual({
@@ -150,23 +158,48 @@ describe('composeSessionIsos', () => {
     })
   })
 
-  it('rolls end to the next day when endTime < startTime (midnight cross)', () => {
-    // 23:00 → 01:00 EDT on July 15 → 03:00 UTC July 16 → 05:00 UTC July 16
+  it('rolls end to the next day when endsNextDay is true', () => {
     expect(
-      composeSessionIsos('2026-07-15', '23:00', '01:00', 'America/New_York')
+      composeSessionIsos('2026-07-15', '23:00', '01:00', 'America/New_York', true)
     ).toEqual({
       startIso: '2026-07-16T03:00:00.000Z',
       endIso: '2026-07-16T05:00:00.000Z',
     })
   })
 
-  it('rolls the next day across a month boundary', () => {
+  it('rolls next day across a month boundary when endsNextDay is true', () => {
     expect(
-      composeSessionIsos('2026-07-31', '23:30', '00:30', 'America/New_York')
+      composeSessionIsos('2026-07-31', '23:30', '00:30', 'America/New_York', true)
     ).toEqual({
       startIso: '2026-08-01T03:30:00.000Z',
       endIso: '2026-08-01T04:30:00.000Z',
     })
+  })
+
+  it('does NOT interpret endTime < startTime as an implicit next-day roll', () => {
+    // Reversed-time typo: admin types end=08:00 for a 09:00-start session.
+    // The old inference behavior would silently roll to next day and persist
+    // a ~23h session; the explicit endsNextDay=false must respect the input.
+    expect(
+      composeSessionIsos('2026-07-15', '09:00', '08:00', 'America/New_York', false)
+    ).toEqual({
+      startIso: '2026-07-15T13:00:00.000Z',
+      endIso: '2026-07-15T12:00:00.000Z',
+    })
+  })
+})
+
+describe('nextDay', () => {
+  it('advances by one calendar day', () => {
+    expect(nextDay('2026-07-15')).toBe('2026-07-16')
+  })
+
+  it('spans a month boundary', () => {
+    expect(nextDay('2026-07-31')).toBe('2026-08-01')
+  })
+
+  it('spans a year boundary', () => {
+    expect(nextDay('2026-12-31')).toBe('2027-01-01')
   })
 })
 

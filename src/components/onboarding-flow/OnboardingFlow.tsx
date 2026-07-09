@@ -48,11 +48,21 @@ const STEPS = [
 const DOB_FROM_YEAR = 1940
 const DOB_TO_YEAR = new Date().getFullYear() - 10
 
+interface OnboardingFlowProps {
+  onComplete?: (answers: Record<string, unknown>) => void
+  // Real reference data (injected by the authenticated page). When omitted, the
+  // hardcoded preview lists are used so the anonymous preview + tests still work.
+  subregions?: SelectOption[]
+  neighborNetsFor?: (subregionValue: string) => SelectOption[]
+  roles?: SelectOption[]
+}
+
 export function OnboardingFlow({
   onComplete,
-}: {
-  onComplete?: (answers: Record<string, unknown>) => void
-}) {
+  subregions = SUBREGIONS,
+  neighborNetsFor = (s) => asOptions(NEIGHBORNETS[s]),
+  roles = ROLES,
+}: OnboardingFlowProps) {
   const flow = useOnboardingFlow(STEPS)
   const val = (id: string) => (flow.answers[id] as string) ?? ''
   const set = (id: string, v: string) => flow.setAnswer(id, v)
@@ -130,7 +140,7 @@ export function OnboardingFlow({
       content = (
         <SelectStep
           label="Which subregion are you in?"
-          options={SUBREGIONS}
+          options={subregions}
           value={val('subregion')}
           placeholder="Select your subregion"
           onSelect={(v) => {
@@ -146,7 +156,7 @@ export function OnboardingFlow({
       content = (
         <SelectStep
           label="And your NeighborNet?"
-          options={asOptions(NEIGHBORNETS[val('subregion')])}
+          options={neighborNetsFor(val('subregion'))}
           value={val('neighbornet')}
           placeholder="Select your NeighborNet"
           onSelect={(v) => choose('neighbornet', v)}
@@ -159,7 +169,7 @@ export function OnboardingFlow({
         <SelectStep
           label="Your current role"
           help="Just your current title — you'll add your full history later."
-          options={ROLES}
+          options={roles}
           value={val('role')}
           placeholder="Select your current role"
           onSelect={(v) => choose('role', v)}

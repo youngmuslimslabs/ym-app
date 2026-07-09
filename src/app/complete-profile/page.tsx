@@ -1,19 +1,46 @@
 'use client'
 
-// PROTOTYPE-ONLY: auth-free preview of the Part-2 completion hub (mock data).
-// Real usage fetches the signed-in user's profile via useProfileData.
+// Part-2 profile completion — the real, authenticated "finish setting up your
+// profile" flow. Reached from the completion strip or a gated action button.
+// Fetches the signed-in user's profile; on finish sets profile_completed_at,
+// which clears the strip + lifts the feature gates.
 
+import { useRouter } from 'next/navigation'
+
+import { useProfileData } from '@/app/profile/hooks/useProfileData'
+import { markProfileComplete } from '@/lib/supabase/queries/profile'
 import { ProfileCompletion } from '@/components/profile-completion/ProfileCompletion'
-import type { ProfileFormState } from '@/app/profile/hooks/useProfileForm'
 
-const MOCK: ProfileFormState = {
-  phoneNumber: '(555) 123-4567',
-  personalEmail: 'me@example.com',
-  ethnicity: 'Arab',
-  dateOfBirth: new Date('2000-01-01'),
-  neighborNetId: 'nn1',
-}
+export default function CompleteProfilePage() {
+  const router = useRouter()
+  const { profileData, isLoading, error } = useProfileData()
 
-export default function ProfileCompletionPreviewPage() {
-  return <ProfileCompletion initialData={MOCK} onComplete={() => {}} />
+  if (isLoading || (!profileData && !error)) {
+    return (
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg items-center justify-center px-5">
+        <p className="text-sm text-muted-foreground">Loading your profile…</p>
+      </div>
+    )
+  }
+
+  if (error || !profileData) {
+    return (
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center gap-3 px-5 text-center">
+        <p className="text-sm text-muted-foreground">
+          {error ?? 'We couldn’t load your profile. Please try again.'}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <ProfileCompletion
+      initialData={profileData}
+      onComplete={async () => {
+        await markProfileComplete()
+        router.push('/home')
+      }}
+      onExit={() => router.push('/home')}
+    />
+  )
 }

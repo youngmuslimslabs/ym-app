@@ -47,9 +47,13 @@ function StatusIcon({ status }: { status: SectionStatus }) {
 export function ProfileCompletion({
   initialData,
   onComplete,
+  onExit,
 }: {
   initialData: ProfileFormState
+  /** Called after a successful save when every section is resolved. */
   onComplete?: () => void
+  /** Called after a successful "Save & continue later" (still incomplete). */
+  onExit?: () => void
 }) {
   const form = useProfileForm(initialData)
   const [skipped, setSkipped] = useState<Set<SectionKey>>(new Set())
@@ -75,9 +79,13 @@ export function ProfileCompletion({
 
   async function finish() {
     const ok = await persist()
-    if (ok) {
+    if (!ok) return
+    if (completion.isComplete) {
       toast.success('Profile complete')
       onComplete?.()
+    } else {
+      toast.success('Progress saved')
+      onExit?.()
     }
   }
 

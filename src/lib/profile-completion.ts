@@ -35,14 +35,19 @@ export const SECTION_ORDER: SectionKey[] = [
 /** Part-2 sections that can be legitimately empty ("I have none") and thus skipped. */
 export const SKIPPABLE_SECTIONS: SectionKey[] = ['roles', 'projects']
 
-/** A role/project is complete once its type is chosen. Dates are optional and
- * approximate (owner decision) — requiring exact start month/year pushed users to
- * guess or skip, degrading data. The type is the only hard requirement. */
+/** A ROLE is complete once its type is chosen — a position ("Amir") is meaningful
+ * on its own, and requiring exact dates pushed users to guess or skip. */
 export function roleValid(r: YMRoleEntry): boolean {
   return Boolean(r.roleTypeId || r.roleTypeCustom)
 }
+/** A PROJECT needs a type AND a start (month + year): a project category with no
+ * "when" isn't useful data. */
 export function projectValid(p: YMProjectEntry): boolean {
-  return Boolean(p.projectType || p.projectTypeCustom)
+  return Boolean((p.projectType || p.projectTypeCustom) && p.startMonth && p.startYear)
+}
+/** Project has its type but is missing the required start date. */
+export function projectNeedsStart(p: YMProjectEntry): boolean {
+  return Boolean(p.projectType || p.projectTypeCustom) && !(p.startMonth && p.startYear)
 }
 
 /** True when a repeatable entry was added but left with no meaningful data —
@@ -86,7 +91,7 @@ export function computeProfileCompletion(
         (data.educationLevel !== 'college' ||
           (data.education?.length && data.education.some(eduEntryValid))),
     ),
-    skills: Boolean(data.skills && data.skills.length >= 3),
+    skills: Boolean(data.skills && data.skills.length >= 1),
   }
 
   const sections = {} as Record<SectionKey, SectionStatus>

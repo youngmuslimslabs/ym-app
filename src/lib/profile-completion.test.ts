@@ -29,9 +29,10 @@ describe('entry validity (approximate dates OK — type is the only requirement)
     expect(roleValid({ id: 'r', isCurrent: true, startMonth: 1, startYear: 2022 })).toBe(false)
   })
 
-  it('projectValid: valid with just a type', () => {
-    expect(projectValid({ id: 'p', isCurrent: false, projectType: 'Ijtema' })).toBe(true)
-    expect(projectValid({ id: 'p', isCurrent: false, startYear: 2021 })).toBe(false)
+  it('projectValid: a project needs a type AND a start date (category alone is not enough)', () => {
+    expect(projectValid({ id: 'p', isCurrent: false, projectType: 'Ijtema' })).toBe(false)
+    expect(projectValid({ id: 'p', isCurrent: false, projectType: 'Ijtema', startMonth: 3, startYear: 2021 })).toBe(true)
+    expect(projectValid({ id: 'p', isCurrent: false, startMonth: 3, startYear: 2021 })).toBe(false)
   })
 
   it('a dateless role still marks the roles section done', () => {
@@ -95,8 +96,9 @@ describe('computeProfileCompletion', () => {
     ).toBe('done')
   })
 
-  it('skills done only at 3+', () => {
-    expect(computeProfileCompletion({ skills: ['a', 'b'] }).sections.skills).toBe('todo')
+  it('skills done with at least one selected (no hard quota)', () => {
+    expect(computeProfileCompletion({ skills: [] }).sections.skills).toBe('todo')
+    expect(computeProfileCompletion({ skills: ['a'] }).sections.skills).toBe('done')
     expect(computeProfileCompletion({ skills: ['a', 'b', 'c'] }).sections.skills).toBe('done')
   })
 

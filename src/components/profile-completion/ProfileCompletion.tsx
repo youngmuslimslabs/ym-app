@@ -39,7 +39,7 @@ const PART2: { key: SectionKey; label: string; hint: string; skippable?: boolean
   { key: 'roles', label: 'Role history', hint: 'Roles you’ve held', skippable: true },
   { key: 'projects', label: 'Projects', hint: 'Projects you’ve worked on', skippable: true },
   { key: 'education', label: 'Education', hint: 'Level, and school if applicable' },
-  { key: 'skills', label: 'Skills', hint: 'Pick at least 3' },
+  { key: 'skills', label: 'Skills', hint: 'Select what applies' },
 ]
 
 function StatusIcon({ status }: { status: SectionStatus }) {

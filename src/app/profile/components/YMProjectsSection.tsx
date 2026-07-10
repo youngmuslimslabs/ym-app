@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Briefcase } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -21,7 +21,7 @@ import { ExpandableCard, ExpandableCardList } from './ExpandableCard'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import type { YMProjectEntry } from '@/contexts/OnboardingContext'
 import { fetchAllUsersForSelection } from '@/lib/supabase/queries/users'
-import { projectValid } from '@/lib/profile-completion'
+import { projectValid, projectNeedsStart } from '@/lib/profile-completion'
 
 // Project types (can be expanded)
 const PROJECT_TYPES: ComboboxOption[] = [
@@ -100,6 +100,13 @@ export function YMProjectsSection({
     const firstInvalid = projects.find((p) => !projectValid(p))
     if (firstInvalid) setExpandedId(firstInvalid.id)
   }, [showErrors, projects])
+
+  // Expand a newly-added entry so it's ready to fill (not collapsed).
+  const prevCount = useRef(projects.length)
+  useEffect(() => {
+    if (projects.length > prevCount.current) setExpandedId(projects[projects.length - 1].id)
+    prevCount.current = projects.length
+  }, [projects])
   const [amirOptions, setAmirOptions] = useState<ComboboxOption[]>([])
 
   // Only fetch dropdown options in edit mode — read-only uses pre-resolved names from the query
@@ -211,7 +218,7 @@ export function YMProjectsSection({
                 searchPlaceholder="Search project types..."
                 allowCustom
               />
-              {showErrors && !projectValid(project) && (
+              {showErrors && !(project.projectType || project.projectTypeCustom) && (
                 <p className="text-sm text-destructive">Select a project type to continue.</p>
               )}
             </div>
@@ -238,7 +245,9 @@ export function YMProjectsSection({
             </div>
 
             <div className="space-y-1.5">
-              <Label>Date Range</Label>
+              <Label>
+                Date Range <span className="text-destructive">*</span>
+              </Label>
               <DateRangeInput
                 startMonth={project.startMonth}
                 startYear={project.startYear}
@@ -248,6 +257,9 @@ export function YMProjectsSection({
                 onChange={(values) => onUpdateProject(index, values)}
                 currentLabel="This project is ongoing"
               />
+              {showErrors && projectNeedsStart(project) && (
+                <p className="text-sm text-destructive">Add a start date to continue.</p>
+              )}
             </div>
 
             <div className="space-y-1.5">

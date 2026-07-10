@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { UserX, Loader2 } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { TagChipSelector } from '@/components/tag-chip-selector'
@@ -84,6 +84,13 @@ export function YMRolesSection({
     const firstInvalid = roles.find((r) => !roleValid(r))
     if (firstInvalid) setExpandedId(firstInvalid.id)
   }, [showErrors, roles])
+
+  // Expand a newly-added entry so it's ready to fill (not collapsed).
+  const prevCount = useRef(roles.length)
+  useEffect(() => {
+    if (roles.length > prevCount.current) setExpandedId(roles[roles.length - 1].id)
+    prevCount.current = roles.length
+  }, [roles])
   const [optionsLoaded, setOptionsLoaded] = useState(!isEditable)
   const [roleOptions, setRoleOptions] = useState<ComboboxOption[]>([])
   const [amirOptions, setAmirOptions] = useState<ComboboxOption[]>([])

@@ -14,7 +14,6 @@ export async function updateSession(request: NextRequest) {
     // onboarding prototype HTML (public/onboarding-prototype.html) for mobile testing.
     if (
         request.nextUrl.pathname.startsWith('/gating-preview') ||
-        request.nextUrl.pathname.startsWith('/onboarding-v2') ||
         request.nextUrl.pathname === '/onboarding-prototype.html'
     ) {
         return supabaseResponse
@@ -213,7 +212,6 @@ export async function updateSession(request: NextRequest) {
                 // Incomplete user on protected route → send to onboarding
                 const url = request.nextUrl.clone()
                 url.pathname = '/onboarding'
-                url.searchParams.set('step', '1')
                 return NextResponse.redirect(url)
             }
         }

@@ -558,6 +558,47 @@ export async function completeOnboarding(authId: string, userId?: string): Promi
   return { success: true }
 }
 
+/**
+ * Persist the new Part-1 typeform in one shot, reusing the proven step-saves:
+ * personal info + membership + one lightweight active role, then mark onboarded.
+ * Answers carry DB ids for neighbornet/role (the flow runs authenticated), the
+ * nationality string for ethnicity, and a Date for dob. Stops at the first
+ * failure so we never mark onboarding complete on a partial write.
+ */
+export async function completePart1Onboarding(answers: {
+  phone?: string
+  email?: string
+  ethnicity?: string
+  dob?: Date
+  neighbornet?: string
+  role?: string
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const { id: userId, error: idError } = await getUserId(user.id)
+  if (!userId) return { success: false, error: idError || 'User not found' }
+
+  const s1 = await saveStep1(
+    user.id,
+    { phoneNumber: answers.phone, personalEmail: answers.email, ethnicity: answers.ethnicity, dateOfBirth: answers.dob },
+    userId,
+  )
+  if (!s1.success) return s1
+
+  const s2 = await saveStep2(user.id, { neighborNetId: answers.neighbornet }, userId)
+  if (!s2.success) return s2
+
+  if (answers.role) {
+    const role: YMRoleEntry = { id: 'part1-current-role', roleTypeId: answers.role, isCurrent: true }
+    const s3 = await saveStep3(user.id, { ymRoles: [role] }, userId)
+    if (!s3.success) return s3
+  }
+
+  return completeOnboarding(user.id, userId)
+}
+
 // ============================================
 // ONBOARDING STATUS CHECK
 // ============================================

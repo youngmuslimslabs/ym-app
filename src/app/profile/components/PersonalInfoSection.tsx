@@ -5,15 +5,14 @@ import { InlineEditField } from './InlineEditField'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import { format } from 'date-fns'
 import { formatPhoneNumber, isValidPhone, isValidEmail } from '@/lib/validation'
+import { Label } from '@/components/ui/label'
+import { SearchableCombobox } from '@/components/searchable-combobox'
+import { NATIONALITY_OPTIONS } from '@/lib/constants/nationalities'
 
-// Common ethnicities - matching step1-personal-info.tsx
-const ETHNICITIES = [
-  'Afghan', 'Algerian', 'Bangladeshi', 'Egyptian', 'Emirati', 'Ethiopian',
-  'Indian', 'Indonesian', 'Iranian', 'Iraqi', 'Jordanian', 'Kuwaiti',
-  'Lebanese', 'Libyan', 'Malaysian', 'Moroccan', 'Nigerian', 'Pakistani',
-  'Palestinian', 'Saudi', 'Somali', 'Sudanese', 'Syrian', 'Tunisian',
-  'Turkish', 'Yemeni', 'Other',
-].map(eth => ({ value: eth.toLowerCase(), label: eth }))
+// Nationality uses the shared ~190-entry list (single source of truth) via a
+// searchable combobox with free entry — the same field the Part-1 onboarding
+// flow uses. Values are the demonyms themselves (e.g. 'Pakistani'), stored
+// verbatim in the users.ethnicity TEXT column (no DB rename; label only).
 
 // Read-only field display component
 function ReadOnlyField({
@@ -109,15 +108,28 @@ export function PersonalInfoSection({
               />
             )}
 
-            <InlineEditField
-              type="select"
-              label="Ethnicity"
-              value={ethnicity}
-              onChange={onEthnicityChange}
-              icon={<Globe className="h-4 w-4" />}
-              options={ETHNICITIES}
-              placeholder="Select ethnicity"
-            />
+            <div className="flex flex-col gap-1.5">
+              <Label className="flex items-center gap-2">
+                <span className="text-muted-foreground">
+                  <Globe className="h-4 w-4" />
+                </span>
+                Nationality
+              </Label>
+              <SearchableCombobox
+                options={NATIONALITY_OPTIONS}
+                value={
+                  ethnicity
+                    ? NATIONALITY_OPTIONS.some((o) => o.value === ethnicity)
+                      ? { type: 'existing', value: ethnicity, label: ethnicity }
+                      : { type: 'custom', value: ethnicity }
+                    : undefined
+                }
+                onChange={(v) => onEthnicityChange(v?.value ?? '')}
+                placeholder="Select your nationality"
+                searchPlaceholder="Search nationalities…"
+                allowCustom
+              />
+            </div>
 
             <InlineEditField
               type="date"
@@ -151,8 +163,8 @@ export function PersonalInfoSection({
             )}
 
             <ReadOnlyField
-              label="Ethnicity"
-              value={ETHNICITIES.find(e => e.value === ethnicity)?.label || ethnicity}
+              label="Nationality"
+              value={ethnicity}
               icon={<Globe className="h-4 w-4" />}
             />
 

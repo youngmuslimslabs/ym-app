@@ -24,19 +24,20 @@ import { fetchAllUsersForSelection } from '@/lib/supabase/queries/users'
 import { projectValid, projectNeedsStart } from '@/lib/profile-completion'
 
 // Project types (can be expanded)
+// Values MUST match the DB `valid_project_type` check constraint on
+// public.user_projects. Custom types go to project_type_custom via the
+// combobox's free-entry ("Add your own"), so no 'other' value here.
 const PROJECT_TYPES: ComboboxOption[] = [
-  { value: 'tarbiya', label: 'Tarbiya Program' },
-  { value: 'dawah', label: 'Dawah Project' },
-  { value: 'community', label: 'Community Service' },
-  { value: 'youth-camp', label: 'Youth Camp' },
+  { value: 'convention', label: 'Convention' },
   { value: 'retreat', label: 'Retreat' },
-  { value: 'conference', label: 'Conference/Convention' },
-  { value: 'fundraising', label: 'Fundraising Campaign' },
-  { value: 'education', label: 'Educational Program' },
-  { value: 'sports', label: 'Sports/Recreation' },
-  { value: 'tech', label: 'Technology Project' },
-  { value: 'media', label: 'Media/Content' },
-  { value: 'other', label: 'Other' },
+  { value: 'fundraiser', label: 'Fundraiser' },
+  { value: 'workshop', label: 'Workshop' },
+  { value: 'community-event', label: 'Community Event' },
+  { value: 'training', label: 'Training' },
+  { value: 'outreach', label: 'Outreach' },
+  { value: 'social', label: 'Social' },
+  { value: 'service', label: 'Service' },
+  { value: 'sports', label: 'Sports' },
 ]
 
 function getProjectTitle(project: YMProjectEntry): string {

@@ -6,6 +6,14 @@
   NODE_VERSION = "20"
   # Keep in lockstep with .github/workflows/ci.yml BUN_VERSION
   BUN_VERSION = "1.2.21"
+  # Exclude the Supabase source tree from Netlify secret scanning. These are DB
+  # SQL fixtures (migrations + seeds), not deployed artifacts — the publish dir
+  # is `.next`, so nothing here ships to the runtime. The seeds legitimately
+  # contain roster @youngmuslims.com emails, one of which equals the value of
+  # the GOOGLE_ADMIN_EMAIL env var (the admin is also a roster member), which
+  # the scanner flags as a "leaked secret" false positive. Scoped to supabase/**
+  # so real app code and the build output are still scanned.
+  SECRETS_SCAN_OMIT_PATHS = "supabase/**"
 
 # Deploy Preview settings (for PRs)
 [context.deploy-preview]

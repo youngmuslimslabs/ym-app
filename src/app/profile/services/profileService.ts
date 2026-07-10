@@ -1,6 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
+import { writableRoles } from '@/lib/profile-completion'
 import type { ProfileFormState } from '../hooks/useProfileForm'
 import type { Json } from '@/types/database.types'
 
@@ -75,11 +76,15 @@ export async function saveProfile(formData: ProfileFormState): Promise<SaveProfi
       return { success: false, error: `Failed to save profile: ${updateError.message}` }
     }
 
-    // Handle role assignments - use upsert to prevent data loss
-    // Fetch existing role IDs to determine what to delete
+    // Handle role assignments - use upsert to prevent data loss.
+    // System-category roles (e.g. Event Admin) are admin-granted and can never be
+    // self-managed (RLS WITH CHECK). Keep them out of the client write path entirely:
+    // never upsert them (would fail RLS) and never delete them (would strip a grant).
+    // Fetch existing roles WITH their category so system grants can be excluded from
+    // the delete scope.
     const { data: existingRoles, error: fetchRolesError } = await supabase
       .from('role_assignments')
-      .select('id')
+      .select('id, role_types(category)')
       .eq('user_id', userId)
 
     if (fetchRolesError) {
@@ -87,11 +92,19 @@ export async function saveProfile(formData: ProfileFormState): Promise<SaveProfi
       return { success: false, error: `Failed to fetch existing roles: ${fetchRolesError.message}` }
     }
 
-    const existingRoleIds = new Set(existingRoles?.map(r => r.id) || [])
+    // Only the user's manageable (non-system) assignments are eligible for deletion.
+    const manageableExistingIds = new Set(
+      (existingRoles ?? [])
+        .filter((r) => (r.role_types as { category: string } | null)?.category !== 'system')
+        .map((r) => r.id)
+    )
 
-    if (formData.ymRoles && formData.ymRoles.length > 0) {
+    // Only write the roles the user is allowed to manage (system roles held back).
+    const rolesToWrite = writableRoles(formData.ymRoles ?? [])
+
+    if (rolesToWrite.length > 0) {
       // Upsert role assignments (insert new or update existing)
-      const roleUpserts = formData.ymRoles.map((role) => ({
+      const roleUpserts = rolesToWrite.map((role) => ({
         id: role.id, // Preserve existing ID or use client-generated UUID
         user_id: userId,
         role_type_id: role.roleTypeId || null,
@@ -113,9 +126,10 @@ export async function saveProfile(formData: ProfileFormState): Promise<SaveProfi
         return { success: false, error: `Failed to save roles: ${upsertRolesError.message}` }
       }
 
-      // Delete roles that were removed (in DB but not in form)
-      const currentRoleIds = new Set(formData.ymRoles.map(r => r.id))
-      const rolesToDelete = [...existingRoleIds].filter(id => !currentRoleIds.has(id))
+      // Delete manageable roles that were removed (in DB but not in the form).
+      // System grants are never in manageableExistingIds, so they can't be deleted.
+      const keepIds = new Set(rolesToWrite.map((r) => r.id))
+      const rolesToDelete = [...manageableExistingIds].filter((id) => !keepIds.has(id))
 
       if (rolesToDelete.length > 0) {
         const { error: deleteRolesError } = await supabase
@@ -128,12 +142,13 @@ export async function saveProfile(formData: ProfileFormState): Promise<SaveProfi
           // Don't fail the whole operation if delete fails
         }
       }
-    } else {
-      // No roles - delete all existing
+    } else if (manageableExistingIds.size > 0) {
+      // No manageable roles in the form - delete only the manageable existing ones
+      // (never system grants).
       const { error: deleteAllRolesError } = await supabase
         .from('role_assignments')
         .delete()
-        .eq('user_id', userId)
+        .in('id', [...manageableExistingIds])
 
       if (deleteAllRolesError) {
         console.error('Error deleting all roles:', deleteAllRolesError)

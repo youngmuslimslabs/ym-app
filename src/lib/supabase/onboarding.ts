@@ -1,4 +1,5 @@
 import { createClient } from './client'
+import { writableRoles } from '@/lib/profile-completion'
 import type {
   OnboardingData,
   YMRoleEntry,
@@ -347,21 +348,29 @@ export async function saveStep3(authId: string, data: {
     userId = userResult.id
   }
 
-  // Get existing role IDs before modifying
+  // System-category roles (e.g. Event Admin) are admin-granted and can never be
+  // self-managed (RLS WITH CHECK). Keep them out of the client write path: never
+  // insert them (would fail RLS) and never delete them (would strip a grant).
+  // Fetch existing roles WITH category so system grants stay out of the delete scope.
   const { data: existingRoles } = await supabase
     .from('role_assignments')
-    .select('id')
+    .select('id, role_types(category)')
     .eq('user_id', userId)
 
-  const existingIds = (existingRoles || []).map(r => r.id)
+  const manageableExistingIds = (existingRoles || [])
+    .filter(r => (r.role_types as { category: string } | null)?.category !== 'system')
+    .map(r => r.id)
 
-  // If no new roles, just delete existing ones
-  if (!data.ymRoles || data.ymRoles.length === 0) {
-    if (existingIds.length > 0) {
+  // Only write the roles the user is allowed to manage (system roles held back).
+  const rolesToWrite = writableRoles(data.ymRoles ?? [])
+
+  // If no manageable roles, just delete the manageable existing ones
+  if (rolesToWrite.length === 0) {
+    if (manageableExistingIds.length > 0) {
       await supabase
         .from('role_assignments')
         .delete()
-        .in('id', existingIds)
+        .in('id', manageableExistingIds)
     }
     return { success: true }
   }
@@ -372,7 +381,7 @@ export async function saveStep3(authId: string, data: {
     return `${year}-${String(month).padStart(2, '0')}-01`
   }
 
-  const roleAssignments = data.ymRoles.map(role => ({
+  const roleAssignments = rolesToWrite.map(role => ({
     user_id: userId,
     role_type_id: role.roleTypeId || null,
     role_type_custom: role.roleTypeCustom || null,
@@ -394,12 +403,13 @@ export async function saveStep3(authId: string, data: {
     return { success: false, error: 'Failed to save roles' }
   }
 
-  // Only delete old records after successful insert
-  if (existingIds.length > 0) {
+  // Only delete old manageable records after successful insert (system grants
+  // are never in manageableExistingIds, so they can't be deleted here).
+  if (manageableExistingIds.length > 0) {
     await supabase
       .from('role_assignments')
       .delete()
-      .in('id', existingIds)
+      .in('id', manageableExistingIds)
   }
 
   return { success: true }

@@ -21,7 +21,7 @@ import { useProfileMode } from '@/contexts/ProfileModeContext'
 import type { YMRoleEntry } from '@/contexts/OnboardingContext'
 import { fetchAllUsersForSelection } from '@/lib/supabase/queries/users'
 import { fetchRoleTypes } from '@/lib/supabase/queries/roles'
-import { roleValid } from '@/lib/profile-completion'
+import { roleValid, isSystemRole } from '@/lib/profile-completion'
 
 function getRoleTitle(role: YMRoleEntry, roleOptions: ComboboxOption[]): string {
   if (role.roleTypeName) {
@@ -202,7 +202,14 @@ export function YMRolesSection({
       onAdd={isEditable ? onAddRole : undefined}
       emptyState={!isEditable ? emptyState : undefined}
     >
-      {roles.map((role, index) => (
+      {roles.map((role, index) => {
+        // System roles (e.g. Event Admin) are admin-granted and can never be
+        // self-managed (RLS forbids it). Render read-only even in edit mode so
+        // they're visible but not editable or deletable.
+        const isSystem = isSystemRole(role)
+        const canEdit = isEditable && !isSystem
+
+        return (
         <ExpandableCard
           key={role.id}
           id={role.id}
@@ -211,9 +218,9 @@ export function YMRolesSection({
           badge={role.isCurrent ? 'Current' : undefined}
           isExpanded={expandedId === role.id}
           onToggle={() => setExpandedId(expandedId === role.id ? null : role.id)}
-          onDelete={isEditable && roles.length > 1 ? () => onRemoveRole(index) : undefined}
+          onDelete={canEdit && roles.length > 1 ? () => onRemoveRole(index) : undefined}
         >
-          {isEditable ? (
+          {canEdit ? (
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label>
@@ -273,6 +280,11 @@ export function YMRolesSection({
             </div>
           ) : (
             <div className="space-y-3 text-sm">
+              {isSystem && isEditable && (
+                <p className="text-muted-foreground">
+                  Assigned by an administrator and can&apos;t be edited here.
+                </p>
+              )}
               <div>
                 <span className="font-medium text-muted-foreground">Amir / Manager:</span>
                 <span className="ml-2 text-foreground">{getAmirDisplay(role)}</span>
@@ -286,7 +298,8 @@ export function YMRolesSection({
             </div>
           )}
         </ExpandableCard>
-      ))}
+        )
+      })}
     </ExpandableCardList>
   )
 }

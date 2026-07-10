@@ -9,6 +9,8 @@ import {
   projectValid,
   isRoleEmpty,
   isProjectEmpty,
+  isSystemRole,
+  writableRoles,
 } from './profile-completion'
 
 const empty: ProfileFormState = {}
@@ -47,6 +49,31 @@ describe('entry validity (approximate dates OK — type is the only requirement)
     expect(isRoleEmpty({ id: 'r', isCurrent: true, startYear: 2022 })).toBe(false)
     expect(isProjectEmpty({ id: 'p', isCurrent: false })).toBe(true)
     expect(isProjectEmpty({ id: 'p', isCurrent: false, projectType: 'Ijtema' })).toBe(false)
+  })
+})
+
+describe('system roles are excluded from client writes (RLS guard)', () => {
+  const nsRole = { id: 'ns', isCurrent: true, roleTypeId: 'ns-member', roleTypeCategory: 'ns' }
+  const eventAdmin = { id: 'ea', isCurrent: true, roleTypeId: 'event-admin', roleTypeCategory: 'system' }
+  const userAdded = { id: 'new', isCurrent: true, roleTypeId: 'amir' } // no category (from picker)
+
+  it('isSystemRole: true only for system-category roles', () => {
+    expect(isSystemRole(eventAdmin)).toBe(true)
+    expect(isSystemRole(nsRole)).toBe(false)
+    expect(isSystemRole(userAdded)).toBe(false)
+  })
+
+  it('writableRoles: drops system roles, keeps everything else', () => {
+    expect(writableRoles([nsRole, eventAdmin, userAdded])).toEqual([nsRole, userAdded])
+  })
+
+  it('regression: an Event Admin holder still writes their other roles, and the grant is untouched', () => {
+    // Reproduces muneeb.syed@youngmuslims.com: the form loads an admin-granted
+    // Event Admin (system) role alongside a normal role. Only the normal role
+    // reaches the upsert, so the role_assignments RLS WITH CHECK is never violated.
+    const written = writableRoles([nsRole, eventAdmin])
+    expect(written.map((r) => r.id)).toEqual(['ns'])
+    expect(written.some((r) => r.roleTypeCategory === 'system')).toBe(false)
   })
 })
 

@@ -7,7 +7,7 @@ import type { YMRoleEntry, YMProjectEntry, EducationEntry, EducationLevel } from
 type RoleAssignment = Tables<'role_assignments'>
 type UserProject = Tables<'user_projects'>
 type AmirUser = { first_name: string | null; last_name: string | null }
-type RoleAssignmentJoined = RoleAssignment & { role_types: { name: string } | null; amir_user: AmirUser | null }
+type RoleAssignmentJoined = RoleAssignment & { role_types: { name: string; category: string } | null; amir_user: AmirUser | null }
 type UserProjectJoined = UserProject & { amir_user: AmirUser | null }
 
 // Education entry stored as JSONB in users table
@@ -55,7 +55,8 @@ function transformRoles(roles: RoleAssignmentJoined[]): YMRoleEntry[] {
     return {
       id: role.id,
       roleTypeId: role.role_type_id ?? undefined,
-      roleTypeName: (role.role_types as { name: string } | null)?.name ?? undefined,
+      roleTypeName: role.role_types?.name ?? undefined,
+      roleTypeCategory: role.role_types?.category ?? undefined,
       roleTypeCustom: role.role_type_custom ?? undefined,
       amirUserId: role.amir_user_id ?? undefined,
       amirUserName: formatAmirName(role.amir_user as AmirUser | null),
@@ -134,7 +135,7 @@ export async function fetchUserProfileById(userId: string): Promise<{
     const [rolesResult, projectsResult, membershipResult] = await Promise.all([
       supabase
         .from('role_assignments')
-        .select('*, role_types(name), amir_user:users!role_assignments_amir_user_id_fkey(first_name, last_name)')
+        .select('*, role_types(name, category), amir_user:users!role_assignments_amir_user_id_fkey(first_name, last_name)')
         .eq('user_id', user.id)
         .order('start_date', { ascending: false }),
       supabase

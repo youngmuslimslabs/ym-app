@@ -60,6 +60,23 @@ export function part2Progress(c: ProfileCompletion): {
 export function roleValid(r: YMRoleEntry): boolean {
   return Boolean(r.roleTypeId || r.roleTypeCustom)
 }
+
+/** A `system`-category role (e.g. Event Admin) is admin-granted and can never be
+ * self-managed: the `role_assignments` RLS WITH CHECK rejects a user inserting or
+ * updating one. Such a role loads into the form (so the user can see it) but must
+ * be shown read-only and excluded from client writes. */
+export function isSystemRole(r: YMRoleEntry): boolean {
+  return r.roleTypeCategory === 'system'
+}
+
+/** The subset of form roles the client is allowed to write. System roles are held
+ * back so a save never trips the RLS WITH CHECK (insert/update) — and, paired with
+ * a system-aware delete scope, so a save never strips an admin-granted role.
+ * User-added roles come from a picker that already excludes system roles, so their
+ * `roleTypeCategory` is unset and they pass through unchanged. */
+export function writableRoles(roles: YMRoleEntry[]): YMRoleEntry[] {
+  return roles.filter((r) => !isSystemRole(r))
+}
 /** A PROJECT needs a type AND a start (month + year): a project category with no
  * "when" isn't useful data. */
 export function projectValid(p: YMProjectEntry): boolean {

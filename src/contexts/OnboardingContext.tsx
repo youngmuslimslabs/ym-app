@@ -19,6 +19,10 @@ export interface YMRoleEntry {
   id: string
   roleTypeId?: string
   roleTypeName?: string
+  // Category of the resolved role type (e.g. 'system'). Read-only metadata: system
+  // roles (Event Admin) are admin-granted and can never be self-managed, so they're
+  // shown read-only and excluded from client role writes. Unset for user-added roles.
+  roleTypeCategory?: string
   roleTypeCustom?: string
   amirUserId?: string
   amirUserName?: string

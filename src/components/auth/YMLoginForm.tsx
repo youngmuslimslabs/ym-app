@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card } from "@/components/ui/card"
 
 interface YMLoginFormProps {
-  onSuccess: () => void
+  onSuccess: () => void | boolean | Promise<void | boolean>
   onError: (error: string) => void
   error: string | null
 }

@@ -207,6 +207,56 @@ export async function fetchUserProfileById(userId: string): Promise<{
 }
 
 /**
+ * Read the current user's `profile_completed_at` flag — the durable, skip-safe
+ * signal the feature gates use for "profile complete". Lightweight (one column),
+ * separate from the full profile fetch so it doesn't touch the save path.
+ *
+ * `errored` distinguishes a real failure (network/DB) from a genuine "not set".
+ * Callers MUST fail OPEN on `errored` — treating a transient error as "profile
+ * incomplete" would gate (and lock out) a user who has actually completed it.
+ * `completedAt` is null when not set / not authenticated.
+ */
+export async function fetchProfileCompletedAt(): Promise<{
+  completedAt: string | null
+  errored: boolean
+}> {
+  try {
+    const supabase = createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) return { completedAt: null, errored: false }
+    const { data, error } = await supabase
+      .from('users')
+      .select('profile_completed_at')
+      .eq('auth_id', authUser.id)
+      .maybeSingle()
+    if (error) return { completedAt: null, errored: true }
+    return { completedAt: data?.profile_completed_at ?? null, errored: false }
+  } catch {
+    return { completedAt: null, errored: true }
+  }
+}
+
+/**
+ * Set `profile_completed_at = now()` for the current user — flips the profile
+ * from gated to complete. Idempotent; call after the Part-2 sections are saved.
+ */
+export async function markProfileComplete(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) return { success: false, error: 'Not authenticated' }
+    const { error } = await supabase
+      .from('users')
+      .update({ profile_completed_at: new Date().toISOString() })
+      .eq('auth_id', authUser.id)
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to mark complete' }
+  }
+}
+
+/**
  * Fetch the current authenticated user's profile
  * @returns Profile data and error state
  */

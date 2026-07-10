@@ -37,55 +37,69 @@ export interface FilterCategories {
 }
 
 /**
+ * Page through a Supabase query with .range() so results aren't silently capped
+ * at ~1000 rows (PostgREST db-max-rows). Returns everything fetched plus the
+ * first error encountered (if any).
+ */
+async function fetchAllPaged<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<{ data: T[]; error: string | null }> {
+  const PAGE = 1000
+  const all: T[] = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await page(from, from + PAGE - 1)
+    if (error) return { data: all, error: error.message }
+    all.push(...(data ?? []))
+    if (!data || data.length < PAGE) break
+  }
+  return { data: all, error: null }
+}
+
+/**
  * Fetch all people for the directory with their roles and geographic info
  */
 export async function fetchPeopleForDirectory(): Promise<PersonListItem[]> {
   const supabase = await createClient()
 
-  // Fetch all users — claimed (onboarded) users first, then unclaimed
-  const { data: users, error: usersError } = await supabase
-    .from('users')
-    .select('*')
-    .order('claimed_at', { ascending: false, nullsFirst: false })
+  // Page through so the directory isn't silently truncated at 1000 members.
+  const { data: users, error: usersError } = await fetchAllPaged((from, to) =>
+    supabase
+      .from('users')
+      .select('*')
+      .order('claimed_at', { ascending: false, nullsFirst: false })
+      .range(from, to),
+  )
 
   if (usersError) {
     console.error('Error fetching users:', usersError)
     return []
   }
 
-  if (!users || users.length === 0) {
+  if (users.length === 0) {
     return []
   }
 
-  const userIds = users.map((u) => u.id)
-
-  // Fetch role assignments and memberships in parallel (independent queries)
+  // Fetch ALL active roles + memberships (paged), then join client-side. We drop
+  // the per-user .in() filter — with 1800+ ids it exceeds the request URL limit,
+  // and we want every user's rows for the directory anyway.
   const [
     { data: roleAssignments, error: rolesError },
     { data: memberships, error: membershipsError },
   ] = await Promise.all([
-    supabase
-      .from('role_assignments')
-      .select(`
-        *,
-        role_types (*)
-      `)
-      .in('user_id', userIds)
-      .eq('is_active', true),
-    supabase
-      .from('memberships')
-      .select(`
-        *,
-        neighbor_nets (
-          *,
-          subregions (
-            *,
-            regions (*)
-          )
-        )
-      `)
-      .in('user_id', userIds)
-      .eq('status', 'active'),
+    fetchAllPaged((from, to) =>
+      supabase
+        .from('role_assignments')
+        .select(`*, role_types (*)`)
+        .eq('is_active', true)
+        .range(from, to),
+    ),
+    fetchAllPaged((from, to) =>
+      supabase
+        .from('memberships')
+        .select(`*, neighbor_nets ( *, subregions ( *, regions (*) ) )`)
+        .eq('status', 'active')
+        .range(from, to),
+    ),
   ])
 
   if (rolesError) {
@@ -154,7 +168,10 @@ export async function fetchFilterCategories(): Promise<FilterCategories> {
     supabase.from('subregions').select('id, name').eq('is_active', true).order('name'),
     supabase.from('neighbor_nets').select('id, name').eq('is_active', true).order('name'),
     supabase.from('role_types').select('id, name').order('sort_order'),
-    supabase.from('users').select('skills').not('onboarding_completed_at', 'is', null),
+    // Paged so the skills facet reflects every member, not just the first 1000.
+    fetchAllPaged((from, to) =>
+      supabase.from('users').select('skills').not('onboarding_completed_at', 'is', null).range(from, to),
+    ),
   ])
 
   // Log any errors from filter queries

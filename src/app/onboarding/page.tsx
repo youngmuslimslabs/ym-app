@@ -1,66 +1,83 @@
-"use client"
+'use client'
 
-import { Suspense, useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import { OnboardingProvider } from "@/contexts/OnboardingContext"
-import { OnboardingReferenceProvider } from "@/contexts/OnboardingReferenceContext"
-import { PageLoader } from "@/components/ui/page-loader"
-import { ONBOARDING_TOTAL_STEPS } from "./constants"
-import Step1PersonalInfo from "./step1-personal-info"
-import Step2Location from "./step2-location"
-import Step3YmRoles from "./step3-ym-roles"
-import Step4YmProjects from "./step4-ym-projects"
-import Step5Education from "./step5-education"
-import Step6Skills from "./step6-skills"
-import Step7Complete from "./step7-complete"
+// Part-1 onboarding — the mandatory typeform. Middleware redirects users with
+// onboarding_completed_at = null here. Reference data (subregions / NeighborNets
+// / roles) comes from Supabase via OnboardingReferenceProvider (authenticated →
+// real data). On completion, completePart1Onboarding persists everything and
+// sets onboarding_completed_at, then routes into the app.
+
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import { OnboardingFlow } from '@/components/onboarding-flow/OnboardingFlow'
+import { completePart1Onboarding } from '@/lib/supabase/onboarding'
+import {
+  OnboardingReferenceProvider,
+  useOnboardingReference,
+} from '@/contexts/OnboardingReferenceContext'
 
 function OnboardingContent() {
-  const searchParams = useSearchParams()
-  const [currentStep, setCurrentStep] = useState(1)
+  const router = useRouter()
+  const { subregions, neighborNets, roleTypes, isLoading, error } = useOnboardingReference()
 
-  useEffect(() => {
-    const step = searchParams.get("step")
-    if (step) {
-      const parsed = parseInt(step, 10)
-      if (!isNaN(parsed) && parsed >= 1 && parsed <= ONBOARDING_TOTAL_STEPS) {
-        setCurrentStep(parsed)
-      }
-    }
-  }, [searchParams])
+  // The authenticated flow MUST render with real DB options, whose values are
+  // UUIDs. We never fall through to OnboardingFlow's hardcoded, name-valued
+  // preview lists here — a completed answer would then write a non-UUID string
+  // into a FK column and the save would fail, leaving onboarding uncompletable.
+  const hasReferenceData = subregions.length > 0 && roleTypes.length > 0
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return <Step1PersonalInfo />
-      case 2:
-        return <Step2Location />
-      case 3:
-        return <Step3YmRoles />
-      case 4:
-        return <Step4YmProjects />
-      case 5:
-        return <Step5Education />
-      case 6:
-        return <Step6Skills />
-      case 7:
-        return <Step7Complete />
-      default:
-        return <Step1PersonalInfo />
-    }
+  if (isLoading) {
+    return (
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg items-center justify-center px-5">
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      </div>
+    )
   }
 
-  return <>{renderStep()}</>
+  if (error || !hasReferenceData) {
+    return (
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center gap-4 px-5 text-center">
+        <p className="text-sm text-muted-foreground">
+          {error ?? 'We couldn’t load the setup options. Please try again.'}
+        </p>
+        <Button onClick={() => window.location.reload()}>Try again</Button>
+      </div>
+    )
+  }
+
+  return (
+    <OnboardingFlow
+      onComplete={async (answers) => {
+        const result = await completePart1Onboarding({
+          phone: answers.phone as string | undefined,
+          email: answers.email as string | undefined,
+          ethnicity: answers.ethnicity as string | undefined,
+          dob: answers.dob as Date | undefined,
+          neighbornet: answers.neighbornet as string | undefined,
+          role: answers.role as string | undefined,
+        })
+        if (!result.success) {
+          toast.error(result.error ?? 'Could not save your info. Please try again.')
+          return
+        }
+        router.push('/home')
+      }}
+      subregions={subregions.map((s) => ({ value: s.id, label: s.name }))}
+      neighborNetsFor={(subregionId: string) =>
+        neighborNets
+          .filter((nn) => nn.subregion_id === subregionId)
+          .map((nn) => ({ value: nn.id, label: nn.name }))
+      }
+      roles={roleTypes.map((rt) => ({ value: rt.id, label: rt.name }))}
+    />
+  )
 }
 
 export default function OnboardingPage() {
   return (
-    <OnboardingProvider>
-      <OnboardingReferenceProvider>
-        <Suspense fallback={<PageLoader />}>
-          <OnboardingContent />
-        </Suspense>
-      </OnboardingReferenceProvider>
-    </OnboardingProvider>
+    <OnboardingReferenceProvider>
+      <OnboardingContent />
+    </OnboardingReferenceProvider>
   )
 }
-

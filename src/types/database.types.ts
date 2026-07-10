@@ -792,6 +792,7 @@ export type Database = {
           onboarding_completed_at: string | null
           personal_email: string | null
           phone: string | null
+          profile_completed_at: string | null
           skills: string[] | null
           updated_at: string
         }
@@ -811,6 +812,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           personal_email?: string | null
           phone?: string | null
+          profile_completed_at?: string | null
           skills?: string[] | null
           updated_at?: string
         }
@@ -830,6 +832,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           personal_email?: string | null
           phone?: string | null
+          profile_completed_at?: string | null
           skills?: string[] | null
           updated_at?: string
         }

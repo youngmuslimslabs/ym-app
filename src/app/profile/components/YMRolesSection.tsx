@@ -1,9 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { UserX, Loader2 } from 'lucide-react'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { TagChipSelector } from '@/components/tag-chip-selector'
+import {
+  CONTRIBUTION_TAGS,
+  parseTags,
+  serializeTags,
+  toggleTag,
+} from './contribution-tags'
 import {
   SearchableCombobox,
   type ComboboxOption,
@@ -15,6 +21,7 @@ import { useProfileMode } from '@/contexts/ProfileModeContext'
 import type { YMRoleEntry } from '@/contexts/OnboardingContext'
 import { fetchAllUsersForSelection } from '@/lib/supabase/queries/users'
 import { fetchRoleTypes } from '@/lib/supabase/queries/roles'
+import { roleValid } from '@/lib/profile-completion'
 
 function getRoleTitle(role: YMRoleEntry, roleOptions: ComboboxOption[]): string {
   if (role.roleTypeName) {
@@ -56,6 +63,8 @@ interface YMRolesSectionProps {
   onUpdateRole: (index: number, updates: Partial<YMRoleEntry>) => void
   onAddRole: () => void
   onRemoveRole: (index: number) => void
+  /** When true, reveal the required-field error on any entry missing its role. */
+  showErrors?: boolean
 }
 
 export function YMRolesSection({
@@ -63,9 +72,25 @@ export function YMRolesSection({
   onUpdateRole,
   onAddRole,
   onRemoveRole,
+  showErrors = false,
 }: YMRolesSectionProps) {
   const { isEditable } = useProfileMode()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  // When errors are revealed, open the first incomplete entry so the error is
+  // visible (and, as entries get fixed, jump to the next one).
+  useEffect(() => {
+    if (!showErrors) return
+    const firstInvalid = roles.find((r) => !roleValid(r))
+    if (firstInvalid) setExpandedId(firstInvalid.id)
+  }, [showErrors, roles])
+
+  // Expand a newly-added entry so it's ready to fill (not collapsed).
+  const prevCount = useRef(roles.length)
+  useEffect(() => {
+    if (roles.length > prevCount.current) setExpandedId(roles[roles.length - 1].id)
+    prevCount.current = roles.length
+  }, [roles])
   const [optionsLoaded, setOptionsLoaded] = useState(!isEditable)
   const [roleOptions, setRoleOptions] = useState<ComboboxOption[]>([])
   const [amirOptions, setAmirOptions] = useState<ComboboxOption[]>([])
@@ -191,7 +216,9 @@ export function YMRolesSection({
           {isEditable ? (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Role</Label>
+                <Label>
+                  Role <span className="text-destructive">*</span>
+                </Label>
                 <SearchableCombobox
                   options={roleOptions}
                   value={getRoleComboboxValue(role)}
@@ -200,6 +227,9 @@ export function YMRolesSection({
                   searchPlaceholder="Search roles..."
                   allowCustom
                 />
+                {showErrors && !roleValid(role) && (
+                  <p className="text-sm text-destructive">Select a role to continue.</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -228,12 +258,16 @@ export function YMRolesSection({
               </div>
 
               <div className="space-y-1.5">
-                <Label>What did you do? (optional)</Label>
-                <Textarea
-                  value={role.description ?? ''}
-                  onChange={(e) => onUpdateRole(index, { description: e.target.value })}
-                  placeholder="Describe your responsibilities and achievements..."
-                  rows={3}
+                <Label>What did you focus on? (optional)</Label>
+                <TagChipSelector
+                  options={CONTRIBUTION_TAGS}
+                  selected={parseTags(role.description)}
+                  onToggle={(tag) =>
+                    onUpdateRole(index, {
+                      description: serializeTags(toggleTag(parseTags(role.description), tag)),
+                    })
+                  }
+                  allowCustom
                 />
               </div>
             </div>

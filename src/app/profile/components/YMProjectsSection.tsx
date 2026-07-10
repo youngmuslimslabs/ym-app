@@ -1,10 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Briefcase } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { TagChipSelector } from '@/components/tag-chip-selector'
+import {
+  CONTRIBUTION_TAGS,
+  parseTags,
+  serializeTags,
+  toggleTag,
+} from './contribution-tags'
 import {
   SearchableCombobox,
   type ComboboxOption,
@@ -15,21 +21,23 @@ import { ExpandableCard, ExpandableCardList } from './ExpandableCard'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import type { YMProjectEntry } from '@/contexts/OnboardingContext'
 import { fetchAllUsersForSelection } from '@/lib/supabase/queries/users'
+import { projectValid, projectNeedsStart } from '@/lib/profile-completion'
 
 // Project types (can be expanded)
+// Values MUST match the DB `valid_project_type` check constraint on
+// public.user_projects. Custom types go to project_type_custom via the
+// combobox's free-entry ("Add your own"), so no 'other' value here.
 const PROJECT_TYPES: ComboboxOption[] = [
-  { value: 'tarbiya', label: 'Tarbiya Program' },
-  { value: 'dawah', label: 'Dawah Project' },
-  { value: 'community', label: 'Community Service' },
-  { value: 'youth-camp', label: 'Youth Camp' },
+  { value: 'convention', label: 'Convention' },
   { value: 'retreat', label: 'Retreat' },
-  { value: 'conference', label: 'Conference/Convention' },
-  { value: 'fundraising', label: 'Fundraising Campaign' },
-  { value: 'education', label: 'Educational Program' },
-  { value: 'sports', label: 'Sports/Recreation' },
-  { value: 'tech', label: 'Technology Project' },
-  { value: 'media', label: 'Media/Content' },
-  { value: 'other', label: 'Other' },
+  { value: 'fundraiser', label: 'Fundraiser' },
+  { value: 'workshop', label: 'Workshop' },
+  { value: 'community-event', label: 'Community Event' },
+  { value: 'training', label: 'Training' },
+  { value: 'outreach', label: 'Outreach' },
+  { value: 'social', label: 'Social' },
+  { value: 'service', label: 'Service' },
+  { value: 'sports', label: 'Sports' },
 ]
 
 function getProjectTitle(project: YMProjectEntry): string {
@@ -73,6 +81,8 @@ interface YMProjectsSectionProps {
   onUpdateProject: (index: number, updates: Partial<YMProjectEntry>) => void
   onAddProject: () => void
   onRemoveProject: (index: number) => void
+  /** When true, reveal the required-field error on any entry missing its type. */
+  showErrors?: boolean
 }
 
 export function YMProjectsSection({
@@ -80,9 +90,24 @@ export function YMProjectsSection({
   onUpdateProject,
   onAddProject,
   onRemoveProject,
+  showErrors = false,
 }: YMProjectsSectionProps) {
   const { isEditable } = useProfileMode()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  // When errors are revealed, open the first incomplete entry so the error shows.
+  useEffect(() => {
+    if (!showErrors) return
+    const firstInvalid = projects.find((p) => !projectValid(p))
+    if (firstInvalid) setExpandedId(firstInvalid.id)
+  }, [showErrors, projects])
+
+  // Expand a newly-added entry so it's ready to fill (not collapsed).
+  const prevCount = useRef(projects.length)
+  useEffect(() => {
+    if (projects.length > prevCount.current) setExpandedId(projects[projects.length - 1].id)
+    prevCount.current = projects.length
+  }, [projects])
   const [amirOptions, setAmirOptions] = useState<ComboboxOption[]>([])
 
   // Only fetch dropdown options in edit mode — read-only uses pre-resolved names from the query
@@ -183,7 +208,9 @@ export function YMProjectsSection({
           {isEditable ? (
             <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Project Type</Label>
+              <Label>
+                Project Type <span className="text-destructive">*</span>
+              </Label>
               <SearchableCombobox
                 options={PROJECT_TYPES}
                 value={getProjectComboboxValue(project)}
@@ -192,6 +219,9 @@ export function YMProjectsSection({
                 searchPlaceholder="Search project types..."
                 allowCustom
               />
+              {showErrors && !(project.projectType || project.projectTypeCustom) && (
+                <p className="text-sm text-destructive">Select a project type to continue.</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -216,7 +246,9 @@ export function YMProjectsSection({
             </div>
 
             <div className="space-y-1.5">
-              <Label>Date Range</Label>
+              <Label>
+                Date Range <span className="text-destructive">*</span>
+              </Label>
               <DateRangeInput
                 startMonth={project.startMonth}
                 startYear={project.startYear}
@@ -226,15 +258,22 @@ export function YMProjectsSection({
                 onChange={(values) => onUpdateProject(index, values)}
                 currentLabel="This project is ongoing"
               />
+              {showErrors && projectNeedsStart(project) && (
+                <p className="text-sm text-destructive">Add a start date to continue.</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
-              <Label>Description (optional)</Label>
-              <Textarea
-                value={project.description ?? ''}
-                onChange={(e) => onUpdateProject(index, { description: e.target.value })}
-                placeholder="Describe the project and your contributions..."
-                rows={3}
+              <Label>What did you focus on? (optional)</Label>
+              <TagChipSelector
+                options={CONTRIBUTION_TAGS}
+                selected={parseTags(project.description)}
+                onToggle={(tag) =>
+                  onUpdateProject(index, {
+                    description: serializeTags(toggleTag(parseTags(project.description), tag)),
+                  })
+                }
+                allowCustom
               />
             </div>
           </div>

@@ -202,7 +202,6 @@ export async function updateSession(request: NextRequest) {
                 // Incomplete user on protected route → send to onboarding
                 const url = request.nextUrl.clone()
                 url.pathname = '/onboarding'
-                url.searchParams.set('step', '1')
                 return NextResponse.redirect(url)
             }
         }

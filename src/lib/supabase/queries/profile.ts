@@ -55,8 +55,8 @@ function transformRoles(roles: RoleAssignmentJoined[]): YMRoleEntry[] {
     return {
       id: role.id,
       roleTypeId: role.role_type_id ?? undefined,
-      roleTypeName: (role.role_types as { name: string } | null)?.name ?? undefined,
-      roleTypeCategory: (role.role_types as { category: string } | null)?.category ?? undefined,
+      roleTypeName: role.role_types?.name ?? undefined,
+      roleTypeCategory: role.role_types?.category ?? undefined,
       roleTypeCustom: role.role_type_custom ?? undefined,
       amirUserId: role.amir_user_id ?? undefined,
       amirUserName: formatAmirName(role.amir_user as AmirUser | null),

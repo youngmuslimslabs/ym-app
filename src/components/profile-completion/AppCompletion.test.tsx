@@ -54,6 +54,9 @@ describe('GatedContent (uniform action gate while incomplete)', () => {
     const onClick = vi.fn()
     const user = userEvent.setup()
     renderGated(
+      // A raw <a> is intentional here: this test asserts a plain navigation link
+      // is NOT intercepted by the gate. Swapping in next/link would defeat it.
+      // eslint-disable-next-line @next/next/no-html-link-for-pages
       <a href="/people" onClick={(e) => { e.preventDefault(); onClick() }}>
         People
       </a>,

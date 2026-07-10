@@ -6,6 +6,7 @@
 // which clears the strip + lifts the feature gates.
 
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 import { useProfileData } from '@/app/profile/hooks/useProfileData'
 import { markProfileComplete } from '@/lib/supabase/queries/profile'
@@ -37,8 +38,15 @@ export default function CompleteProfilePage() {
     <ProfileCompletion
       initialData={profileData}
       onComplete={async () => {
-        await markProfileComplete()
+        // Set the durable completion flag FIRST. If it fails, keep the user here
+        // with a real error instead of sending them home still gated.
+        const res = await markProfileComplete()
+        if (!res.success) {
+          toast.error(res.error ?? 'Could not finish setting up your profile. Please try again.')
+          return false
+        }
         router.push('/home')
+        return true
       }}
       onExit={() => router.push('/home')}
     />

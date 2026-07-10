@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import { useProfileData } from '@/app/profile/hooks/useProfileData'
 import { fetchProfileCompletedAt } from '@/lib/supabase/queries/profile'
-import { computeProfileCompletion } from '@/lib/profile-completion'
+import { computeProfileCompletion, part2Progress } from '@/lib/profile-completion'
 
 import { CompletionProvider, useCompletion } from './CompletionProvider'
 import { CompletionStrip } from './CompletionStrip'
@@ -56,7 +56,9 @@ export function GatedContent({ children }: { children: React.ReactNode }) {
 export function AppCompletion({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { profileData } = useProfileData()
-  const [flag, setFlag] = useState<string | null | undefined>(undefined) // undefined = still loading
+  const [flag, setFlag] = useState<{ completedAt: string | null; errored: boolean } | undefined>(
+    undefined,
+  ) // undefined = still loading
 
   useEffect(() => {
     let active = true
@@ -75,19 +77,28 @@ export function AppCompletion({ children }: { children: React.ReactNode }) {
     return <>{children}</>
   }
 
-  const isComplete = flag !== null
+  // Fail OPEN on a flag-fetch error: a transient network/DB hiccup must never
+  // gate a user who has actually completed their profile. The gate resumes on
+  // the next successful load.
+  const isComplete = flag.errored ? true : flag.completedAt !== null
   const goToComplete = () => router.push('/complete-profile')
 
   return (
     <CompletionProvider completion={{ ...completion, isComplete }} onGoToComplete={goToComplete}>
       {!isComplete && (
         <div className="px-4 pt-4 md:px-6" data-completion-allow>
-          <CompletionStrip
-            resolvedCount={completion.resolvedCount}
-            total={completion.total}
-            percent={completion.percent}
-            onClick={goToComplete}
-          />
+          {(() => {
+            // Count only the four Part-2 sections, matching the completion hub.
+            const p = part2Progress(completion)
+            return (
+              <CompletionStrip
+                resolvedCount={p.resolved}
+                total={p.total}
+                percent={p.percent}
+                onClick={goToComplete}
+              />
+            )
+          })()}
         </div>
       )}
       {isComplete ? children : <GatedContent>{children}</GatedContent>}

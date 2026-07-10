@@ -28,10 +28,10 @@ describe('ProfileCompletion hub', () => {
     expect(screen.getByText('Skills')).toBeInTheDocument()
   })
 
-  it('shows resolved count out of six from the data', () => {
-    // only skills filled -> 1 of 6
+  it('counts only the four Part-2 sections (basics come from sign-up)', () => {
+    // only skills filled -> 1 of 4 (roles/projects/education still to do)
     render(<ProfileCompletion initialData={{ skills: ['a', 'b', 'c'] }} />)
-    expect(screen.getByText('1 of 6')).toBeInTheDocument()
+    expect(screen.getByText('1 of 4')).toBeInTheDocument()
   })
 
   it('offers "Save & continue later" while incomplete', () => {
@@ -41,9 +41,27 @@ describe('ProfileCompletion hub', () => {
     ).toBeInTheDocument()
   })
 
-  it('offers "Finish" and shows 6 of 6 when everything is resolved', () => {
+  it('offers "Finish" and shows 4 of 4 when everything is resolved', () => {
     render(<ProfileCompletion initialData={completeData} />)
-    expect(screen.getByText('6 of 6')).toBeInTheDocument()
+    expect(screen.getByText('4 of 4')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^finish$/i })).toBeInTheDocument()
+  })
+
+  it('offers "Finish" once the four Part-2 sections are resolved, even with personal/location unset', () => {
+    // Regression for the 4-vs-6 lockout: completion is driven by the four
+    // on-screen Part-2 sections, not the full six-section model. Without personal
+    // (phone/email/ethnicity/dob) or location (neighborNetId), the button used to
+    // stay "Save & continue later" forever and never set profile_completed_at.
+    const part2Only: ProfileFormState = {
+      ymRoles: [{ id: 'r1', isCurrent: true, roleTypeId: 'amir' }],
+      ymProjects: [
+        { id: 'p1', isCurrent: false, projectType: 'convention', startMonth: 3, startYear: 2021 },
+      ],
+      educationLevel: 'high-school-graduate',
+      skills: ['a'],
+    }
+    render(<ProfileCompletion initialData={part2Only} />)
+    expect(screen.getByText('4 of 4')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^finish$/i })).toBeInTheDocument()
   })
 })

@@ -210,21 +210,29 @@ export async function fetchUserProfileById(userId: string): Promise<{
  * Read the current user's `profile_completed_at` flag — the durable, skip-safe
  * signal the feature gates use for "profile complete". Lightweight (one column),
  * separate from the full profile fetch so it doesn't touch the save path.
- * Returns null when not set / not authenticated / on error (fail-closed).
+ *
+ * `errored` distinguishes a real failure (network/DB) from a genuine "not set".
+ * Callers MUST fail OPEN on `errored` — treating a transient error as "profile
+ * incomplete" would gate (and lock out) a user who has actually completed it.
+ * `completedAt` is null when not set / not authenticated.
  */
-export async function fetchProfileCompletedAt(): Promise<string | null> {
+export async function fetchProfileCompletedAt(): Promise<{
+  completedAt: string | null
+  errored: boolean
+}> {
   try {
     const supabase = createClient()
     const { data: { user: authUser } } = await supabase.auth.getUser()
-    if (!authUser) return null
-    const { data } = await supabase
+    if (!authUser) return { completedAt: null, errored: false }
+    const { data, error } = await supabase
       .from('users')
       .select('profile_completed_at')
       .eq('auth_id', authUser.id)
       .maybeSingle()
-    return data?.profile_completed_at ?? null
+    if (error) return { completedAt: null, errored: true }
+    return { completedAt: data?.profile_completed_at ?? null, errored: false }
   } catch {
-    return null
+    return { completedAt: null, errored: true }
   }
 }
 

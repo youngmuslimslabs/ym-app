@@ -4,6 +4,7 @@ import type { ProfileFormState } from '@/app/profile/hooks/useProfileForm'
 
 import {
   computeProfileCompletion,
+  part2Progress,
   roleValid,
   projectValid,
   isRoleEmpty,
@@ -116,5 +117,30 @@ describe('computeProfileCompletion', () => {
     expect(c.isComplete).toBe(true)
     expect(c.percent).toBe(100)
     expect(c.resolvedCount).toBe(6)
+  })
+})
+
+describe('part2Progress — hub/strip count only the four Part-2 sections', () => {
+  it('ignores personal + location (basics come from Part-1 sign-up)', () => {
+    // Basics done, but no Part-2 work yet -> 0 of 4, not 2 of 6.
+    const c = computeProfileCompletion({ ...personal, neighborNetId: 'nn1' })
+    expect(part2Progress(c)).toEqual({ resolved: 0, total: 4, percent: 0 })
+  })
+
+  it('counts a resolved Part-2 section (skills) as 1 of 4', () => {
+    const c = computeProfileCompletion({ skills: ['a'] })
+    expect(part2Progress(c)).toEqual({ resolved: 1, total: 4, percent: 25 })
+  })
+
+  it('reaches 4 of 4 / 100% when every Part-2 section is resolved (filled or skipped)', () => {
+    const c = computeProfileCompletion(
+      {
+        ymRoles: [validRole],
+        educationLevel: 'high-school-graduate',
+        skills: ['a', 'b', 'c'],
+      },
+      new Set(['projects']),
+    )
+    expect(part2Progress(c)).toEqual({ resolved: 4, total: 4, percent: 100 })
   })
 })

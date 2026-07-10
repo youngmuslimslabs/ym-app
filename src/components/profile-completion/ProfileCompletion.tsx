@@ -21,6 +21,7 @@ import { EducationSection } from '@/app/profile/components/EducationSection'
 import { SkillsChipSelector } from '@/app/profile/components/SkillsChipSelector'
 import {
   computeProfileCompletion,
+  part2Progress,
   roleValid,
   projectValid,
   isRoleEmpty,
@@ -54,8 +55,13 @@ export function ProfileCompletion({
   onExit,
 }: {
   initialData: ProfileFormState
-  /** Called after a successful save when every section is resolved. */
-  onComplete?: () => void
+  /**
+   * Called after a successful save when every section is resolved. Owns setting
+   * the durable completion flag + navigation. Return `false` to signal that the
+   * flag could not be set (e.g. the write failed) so we DON'T declare success —
+   * otherwise the user is told "complete" but stays gated.
+   */
+  onComplete?: () => void | boolean | Promise<void | boolean>
   /** Called after a successful "Save & continue later" (still incomplete). */
   onExit?: () => void
 }) {
@@ -67,6 +73,13 @@ export function ProfileCompletion({
   const [showErrors, setShowErrors] = useState(false)
 
   const completion = computeProfileCompletion(form.formData, skipped)
+  // Hub/strip progress counts only the four Part-2 sections (basics come from
+  // Part-1 sign-up), so the number matches the cards on screen. Completion is
+  // driven by these four too — `personal` + `location` are captured by the
+  // mandatory Part-1 flow and have no card here, so gating on the full 6-section
+  // model would strand a user at a visible "4 of 4" that never finishes.
+  const progress = part2Progress(completion)
+  const part2Complete = progress.resolved === progress.total
 
   async function persist(): Promise<boolean> {
     const result = await form.saveForm()
@@ -114,9 +127,13 @@ export function ProfileCompletion({
   async function finish() {
     const ok = await persist()
     if (!ok) return
-    if (completion.isComplete) {
+    if (part2Complete) {
+      // onComplete sets the durable profile_completed_at flag + navigates. If it
+      // returns false the flag wasn't set (write failed) and it has surfaced its
+      // own error — stay put rather than stranding the user "complete" yet gated.
+      const done = await onComplete?.()
+      if (done === false) return
       toast.success('Profile complete')
-      onComplete?.()
     } else {
       toast.success('Progress saved')
       onExit?.()
@@ -136,11 +153,11 @@ export function ProfileCompletion({
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-primary/15">
             <div
               className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${completion.percent}%` }}
+              style={{ width: `${progress.percent}%` }}
             />
           </div>
           <span className="text-xs font-semibold text-muted-foreground">
-            {completion.resolvedCount} of {completion.total}
+            {progress.resolved} of {progress.total}
           </span>
         </div>
 
@@ -178,7 +195,7 @@ export function ProfileCompletion({
             disabled={form.isSaving}
             onClick={finish}
           >
-            {completion.isComplete ? 'Finish' : 'Save & continue later'}
+            {part2Complete ? 'Finish' : 'Save & continue later'}
           </Button>
         </div>
       </div>

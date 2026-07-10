@@ -35,6 +35,26 @@ export const SECTION_ORDER: SectionKey[] = [
 /** Part-2 sections that can be legitimately empty ("I have none") and thus skipped. */
 export const SKIPPABLE_SECTIONS: SectionKey[] = ['roles', 'projects']
 
+/**
+ * The sections the user actually works through in the Part-2 completion flow.
+ * `personal` and `location` are captured during Part-1 onboarding (and are always
+ * resolved by the time completion runs), so the hub + strip count ONLY these four.
+ * Counting all six would show "3 of 6" next to four visible cards. `isComplete`
+ * still keys off the full six-section model in `computeProfileCompletion`.
+ */
+export const PART2_SECTIONS: SectionKey[] = ['roles', 'projects', 'education', 'skills']
+
+/** User-facing progress over just the four Part-2 sections (see `PART2_SECTIONS`). */
+export function part2Progress(c: ProfileCompletion): {
+  resolved: number
+  total: number
+  percent: number
+} {
+  const total = PART2_SECTIONS.length
+  const resolved = PART2_SECTIONS.filter((k) => c.sections[k] !== 'todo').length
+  return { resolved, total, percent: Math.round((resolved / total) * 100) }
+}
+
 /** A ROLE is complete once its type is chosen — a position ("Amir") is meaningful
  * on its own, and requiring exact dates pushed users to guess or skip. */
 export function roleValid(r: YMRoleEntry): boolean {

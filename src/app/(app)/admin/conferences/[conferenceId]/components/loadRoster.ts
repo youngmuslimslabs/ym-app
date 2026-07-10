@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/client'
+import { resolveEmbeddedName, type EmbeddedUserName } from '@/lib/name'
 
 export interface RosterEntry {
   userId: string
   name: string
   checkedInAt: string | null
+  isWalkIn: boolean
 }
 
 // Data fetch — runs in the browser via the public Supabase client. RLS gates
@@ -17,48 +19,44 @@ export async function loadRoster(
   const [signupsRes, checkInsRes] = await Promise.all([
     supabase
       .from('session_signups')
-      .select('user_id, created_at, users(first_name, last_name)')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true }),
+      .select('user_id, users(first_name, last_name)')
+      .eq('session_id', sessionId),
     supabase
       .from('session_check_ins')
-      .select('user_id, checked_in_at')
+      .select('user_id, checked_in_at, users(first_name, last_name)')
       .eq('session_id', sessionId),
   ])
 
   if (signupsRes.error) return { entries: [], error: signupsRes.error.message }
   if (checkInsRes.error) return { entries: [], error: checkInsRes.error.message }
 
-  const checkInMap = new Map<string, string>()
-  for (const c of (checkInsRes.data ?? []) as {
-    user_id: string
-    checked_in_at: string
-  }[]) {
-    checkInMap.set(c.user_id, c.checked_in_at)
-  }
+  type Embedded = EmbeddedUserName | EmbeddedUserName[] | null
+  type SignupRow = { user_id: string; users: Embedded }
+  type CheckInRow = { user_id: string; checked_in_at: string; users: Embedded }
 
-  // Supabase returns the embedded users row as either an object (one FK) or
-  // an array depending on the relation; we narrow defensively.
-  type SignupRow = {
-    user_id: string
-    users:
-      | { first_name: string | null; last_name: string | null }
-      | { first_name: string | null; last_name: string | null }[]
-      | null
+  const entryMap = new Map<string, RosterEntry>()
+  for (const row of (signupsRes.data ?? []) as SignupRow[]) {
+    entryMap.set(row.user_id, {
+      userId: row.user_id,
+      name: resolveEmbeddedName(row.users),
+      checkedInAt: null,
+      isWalkIn: false,
+    })
   }
-  const entries: RosterEntry[] = ((signupsRes.data ?? []) as SignupRow[]).map(
-    (row) => {
-      const u = Array.isArray(row.users) ? row.users[0] : row.users
-      const first = u?.first_name ?? ''
-      const last = u?.last_name ?? ''
-      const name = `${first} ${last}`.trim() || 'Unknown attendee'
-      return {
+  for (const row of (checkInsRes.data ?? []) as CheckInRow[]) {
+    const existing = entryMap.get(row.user_id)
+    if (existing) {
+      existing.checkedInAt = row.checked_in_at
+    } else {
+      entryMap.set(row.user_id, {
         userId: row.user_id,
-        name,
-        checkedInAt: checkInMap.get(row.user_id) ?? null,
-      }
+        name: resolveEmbeddedName(row.users),
+        checkedInAt: row.checked_in_at,
+        isWalkIn: true,
+      })
     }
-  )
+  }
+  const entries: RosterEntry[] = Array.from(entryMap.values())
 
   // Stable order: checked-in first by time, then everyone else by name.
   entries.sort((a, b) => {

@@ -44,3 +44,23 @@ export function normalizeName(name: string | null): string | null {
     (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
   )
 }
+
+/**
+ * Resolve a display name from a Supabase-embedded users row. PostgREST returns
+ * a single-FK embed as either an object (one row) or a length-1 array; the
+ * narrowing handles both shapes. Falls back to a stable placeholder so callers
+ * can render a single string regardless of missing/hidden name data.
+ */
+export type EmbeddedUserName = {
+  first_name: string | null
+  last_name: string | null
+}
+
+export function resolveEmbeddedName(
+  embedded: EmbeddedUserName | EmbeddedUserName[] | null,
+): string {
+  const row = Array.isArray(embedded) ? embedded[0] : embedded
+  const first = row?.first_name ?? ''
+  const last = row?.last_name ?? ''
+  return `${first} ${last}`.trim() || 'Unknown attendee'
+}

@@ -1,3 +1,5 @@
+import { addDays, format, parseISO } from 'date-fns'
+
 // Compose an ISO TIMESTAMPTZ string from (date, time, timezone) where the
 // wall clock should be interpreted as if in the given timezone. Returns a UTC
 // ISO string (`...Z`) suitable for sending to Postgres TIMESTAMPTZ columns.
@@ -7,15 +9,9 @@
 // difference between an instant displayed in the target tz vs displayed in
 // UTC to derive the offset for that exact wall-clock moment (handles DST).
 //
-// KNOWN LIMITATION: the offset is sampled at the *input UTC instant*, not at
-// the target wall-clock instant. On DST spring-forward day, wall clocks in
-// the post-transition / pre-transition-UTC window get the wrong offset and
-// the result is off by one hour. Concrete: composeTzIso('2026-03-08','03:30',
-// 'America/New_York') returns '08:30Z' (EST offset) when 03:30 EDT is '07:30Z'.
-// Affected window: ~02:00–07:00 wall clock on the second Sunday of March,
-// US tz only. Fix sketch: iterate — compute O at W, then recompute O at W-O
-// and use that — or adopt date-fns-tz. See datetime.test.ts for a pinned
-// `it.skip` that lights up once this is fixed.
+// The offset is sampled twice — once at the input UTC instant and once at the
+// candidate corrected instant — so DST spring-forward wall clocks resolve to
+// the correct post-transition offset instead of the pre-transition one.
 export function composeTzIso(
   date: string, // "YYYY-MM-DD"
   time: string, // "HH:mm"
@@ -26,28 +22,34 @@ export function composeTzIso(
     throw new Error(`Invalid date/time: ${date} ${time}`)
   }
 
-  // What does asUtcMs display as in the target timezone?
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date(asUtcMs))
-  const get = (type: string) =>
-    parts.find((p) => p.type === type)?.value ?? '00'
-  // Some locales render "24" for midnight; normalize to "00".
-  const hour = get('hour') === '24' ? '00' : get('hour')
-  const tzClockMs = Date.parse(
-    `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}Z`
-  )
+  const tzOffsetMs = (atUtcMs: number): number => {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date(atUtcMs))
+    const get = (type: string) =>
+      parts.find((p) => p.type === type)?.value ?? '00'
+    // Some locales render "24" for midnight; normalize to "00".
+    const hour = get('hour') === '24' ? '00' : get('hour')
+    const tzClockMs = Date.parse(
+      `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}Z`
+    )
+    return tzClockMs - atUtcMs
+  }
 
-  // offset = tz - utc, in ms (e.g. -5h for EST). Subtract to find the UTC
-  // instant whose tz wall clock matches our input.
-  return new Date(2 * asUtcMs - tzClockMs).toISOString()
+  // Two-pass offset resolution: the first sample uses the input UTC instant
+  // (may hit the wrong side of a DST transition); the second samples at the
+  // candidate corrected instant so DST spring-forward resolves correctly.
+  const firstOffset = tzOffsetMs(asUtcMs)
+  const candidateMs = asUtcMs - firstOffset
+  const refinedOffset = tzOffsetMs(candidateMs)
+  return new Date(asUtcMs - refinedOffset).toISOString()
 }
 
 // Inverse: given a TIMESTAMPTZ ISO and a timezone, return { date, time } as
@@ -73,6 +75,28 @@ export function decomposeTzIso(
     date: `${get('year')}-${get('month')}-${get('day')}`,
     time: `${hour}:${get('minute')}`,
   }
+}
+
+// Compose a session's start + end TIMESTAMPTZ ISOs together. When
+// `endsNextDay` is true, the end wall clock is interpreted on `date + 1` so
+// callers can express midnight-crossing sessions (e.g. 23:00 → 01:00 next
+// day) explicitly instead of inferring intent from `endTime < startTime` —
+// the inferring form silently accepted reversed-time typos as valid.
+export function composeSessionIsos(
+  date: string,
+  startTime: string,
+  endTime: string,
+  timezone: string,
+  endsNextDay: boolean = false
+): { startIso: string; endIso: string } {
+  const startIso = composeTzIso(date, startTime, timezone)
+  const endDate = endsNextDay ? nextDay(date) : date
+  const endIso = composeTzIso(endDate, endTime, timezone)
+  return { startIso, endIso }
+}
+
+export function nextDay(date: string): string {
+  return format(addDays(parseISO(date), 1), 'yyyy-MM-dd')
 }
 
 // Range of YYYY-MM-DD strings between start and end inclusive. Used by the

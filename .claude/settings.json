@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=\"$(jq -r '.tool_input.command // empty')\"; case \"$cmd\" in *\"git commit\"*) dir=\"$(printf '%s\\n' \"$cmd\" | grep -oE '^[[:space:]]*cd[[:space:]]+[^&;|]+' | head -1 | sed -E 's/^[[:space:]]*cd[[:space:]]+//; s/[[:space:]]+$//')\"; [ -z \"$dir\" ] && dir=\".\"; if ! git -C \"$dir\" push 2>&1; then git -C \"$dir\" push -u origin HEAD 2>&1; fi ;; esac",
+            "timeout": 30,
+            "statusMessage": "Auto-pushing to remote\u2026"
+          }
+        ]
+      }
+    ]
+  }
+}

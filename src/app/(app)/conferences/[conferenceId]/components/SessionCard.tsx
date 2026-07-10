@@ -56,24 +56,26 @@ export function SessionCard({
       className={cn(cardClass, 'w-full text-left')}
       aria-label={`${session.title} — ${signedUp ? 'signed up' : full ? 'full' : 'available'}`}
     >
-      {/* Top-right badge */}
-      {signedUp && !ended && (
-        <span className="absolute top-4 right-4 inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold gap-1">
-          <Check className="w-3 h-3" />
-          Signed up
-        </span>
-      )}
-      {full && (
-        <span className="absolute top-4 right-4 inline-flex items-center rounded-md bg-destructive text-destructive-foreground px-2.5 py-0.5 text-xs font-semibold">
-          Full
-        </span>
-      )}
-      {inProgress && signedUp && (
-        <span className="absolute top-4 right-4 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-primary font-medium">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-          Happening now
-        </span>
-      )}
+      {/* Top-right badges — stacked column so Signed up + Happening now don't overlap */}
+      <div className="absolute top-4 right-4 flex flex-col items-end gap-1.5">
+        {signedUp && !ended && (
+          <span className="inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold gap-1">
+            <Check className="w-3 h-3" />
+            Signed up
+          </span>
+        )}
+        {full && (
+          <span className="inline-flex items-center rounded-md bg-destructive text-destructive-foreground px-2.5 py-0.5 text-xs font-semibold">
+            Full
+          </span>
+        )}
+        {inProgress && (
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-primary font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            Happening now
+          </span>
+        )}
+      </div>
 
       {/* Title + speaker: pr-24 clears the absolute badge in the top-right */}
       <div className="pr-24">

@@ -7,7 +7,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#3b5ba5",
+  "theme_color": "#254FA0",
   "categories": ["social", "lifestyle", "education"],
   "lang": "en-US",
   "dir": "ltr",
@@ -53,22 +53,6 @@
       "description": "View app documentation",
       "url": "/docs",
       "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/home-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Home Dashboard"
-    },
-    {
-      "src": "/screenshots/home-narrow.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Home Dashboard Mobile"
     }
   ],
   "handle_links": "preferred",

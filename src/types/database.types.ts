@@ -12,33 +12,70 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
+      cabinet_departments: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cabinet_teams: {
+        Row: {
+          created_at: string
+          department_id: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cabinet_teams_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "cabinet_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conference_attendees: {
         Row: {
           conference_id: string
@@ -83,9 +120,13 @@ export type Database = {
           id: string
           location: string | null
           name: string
+          point_of_contact_user_id: string | null
           published_at: string | null
+          region_id: string | null
+          scope_level: Database["public"]["Enums"]["conference_scope_level"]
           start_date: string
           status: Database["public"]["Enums"]["conference_status"]
+          subregion_id: string | null
           tagline: string | null
           timezone: string
           updated_at: string
@@ -97,9 +138,13 @@ export type Database = {
           id?: string
           location?: string | null
           name: string
+          point_of_contact_user_id?: string | null
           published_at?: string | null
+          region_id?: string | null
+          scope_level?: Database["public"]["Enums"]["conference_scope_level"]
           start_date: string
           status?: Database["public"]["Enums"]["conference_status"]
+          subregion_id?: string | null
           tagline?: string | null
           timezone?: string
           updated_at?: string
@@ -111,41 +156,40 @@ export type Database = {
           id?: string
           location?: string | null
           name?: string
+          point_of_contact_user_id?: string | null
           published_at?: string | null
+          region_id?: string | null
+          scope_level?: Database["public"]["Enums"]["conference_scope_level"]
           start_date?: string
           status?: Database["public"]["Enums"]["conference_status"]
+          subregion_id?: string | null
           tagline?: string | null
           timezone?: string
           updated_at?: string
         }
-        Relationships: []
-      }
-      departments: {
-        Row: {
-          code: string
-          created_at: string
-          id: string
-          is_active: boolean
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "conferences_point_of_contact_user_id_fkey"
+            columns: ["point_of_contact_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conferences_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conferences_subregion_id_fkey"
+            columns: ["subregion_id"]
+            isOneToOne: false
+            referencedRelation: "subregions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       memberships: {
         Row: {
@@ -156,6 +200,7 @@ export type Database = {
           neighbor_net_id: string | null
           region_id: string | null
           status: Database["public"]["Enums"]["membership_status"]
+          subregion_id: string | null
           updated_at: string
           user_id: string
         }
@@ -167,6 +212,7 @@ export type Database = {
           neighbor_net_id?: string | null
           region_id?: string | null
           status?: Database["public"]["Enums"]["membership_status"]
+          subregion_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -178,6 +224,7 @@ export type Database = {
           neighbor_net_id?: string | null
           region_id?: string | null
           status?: Database["public"]["Enums"]["membership_status"]
+          subregion_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -197,6 +244,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "memberships_subregion_id_fkey"
+            columns: ["subregion_id"]
+            isOneToOne: false
+            referencedRelation: "subregions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "memberships_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -207,25 +261,40 @@ export type Database = {
       }
       neighbor_nets: {
         Row: {
+          address: string | null
           created_at: string
+          fundraising_link: string | null
           id: string
           is_active: boolean
+          is_expansion: boolean
+          location: string | null
+          meeting_day: string | null
           name: string
           subregion_id: string
           updated_at: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
+          fundraising_link?: string | null
           id?: string
           is_active?: boolean
+          is_expansion?: boolean
+          location?: string | null
+          meeting_day?: string | null
           name: string
           subregion_id: string
           updated_at?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
+          fundraising_link?: string | null
           id?: string
           is_active?: boolean
+          is_expansion?: boolean
+          location?: string | null
+          meeting_day?: string | null
           name?: string
           subregion_id?: string
           updated_at?: string
@@ -246,6 +315,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_expansion: boolean
           name: string
           updated_at: string
         }
@@ -254,6 +324,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_expansion?: boolean
           name: string
           updated_at?: string
         }
@@ -262,6 +333,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_expansion?: boolean
           name?: string
           updated_at?: string
         }
@@ -552,8 +624,9 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_expansion: boolean
           name: string
-          region_id: string
+          region_id: string | null
           updated_at: string
         }
         Insert: {
@@ -561,8 +634,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_expansion?: boolean
           name: string
-          region_id: string
+          region_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -570,8 +644,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_expansion?: boolean
           name?: string
-          region_id?: string
+          region_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -627,41 +702,6 @@ export type Database = {
             columns: ["triggered_by"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      teams: {
-        Row: {
-          created_at: string
-          department_id: string
-          id: string
-          is_active: boolean
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          department_id: string
-          id?: string
-          is_active?: boolean
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          department_id?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "teams_department_id_fkey"
-            columns: ["department_id"]
-            isOneToOne: false
-            referencedRelation: "departments"
             referencedColumns: ["id"]
           },
         ]
@@ -819,6 +859,7 @@ export type Database = {
       signup_for_session: { Args: { p_session_id: string }; Returns: Json }
     }
     Enums: {
+      conference_scope_level: "national" | "regional" | "subregional"
       conference_status: "draft" | "published"
       membership_status: "active" | "alumni" | "inactive"
       role_category:
@@ -835,8 +876,8 @@ export type Database = {
         | "region"
         | "subregion"
         | "neighbor_net"
-        | "department"
-        | "team"
+        | "cabinet_department"
+        | "cabinet_team"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -962,11 +1003,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
+      conference_scope_level: ["national", "regional", "subregional"],
       conference_status: ["draft", "published"],
       membership_status: ["active", "alumni", "inactive"],
       role_category: [
@@ -984,8 +1023,8 @@ export const Constants = {
         "region",
         "subregion",
         "neighbor_net",
-        "department",
-        "team",
+        "cabinet_department",
+        "cabinet_team",
       ],
     },
   },

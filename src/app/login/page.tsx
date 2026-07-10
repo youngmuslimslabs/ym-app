@@ -41,8 +41,12 @@ export default function LoginPage() {
   const handleGoogleSuccess = async () => {
     if (isRedirecting.current) return
     isRedirecting.current = true
-    // Get the freshly authenticated user and check onboarding status
-    const { data: { user: authUser } } = await supabase.auth.getUser()
+    // We just signed in, so the session is already in local storage. Use
+    // getSession() (local read) instead of getUser() (a network round-trip
+    // that re-validates the token against the Auth server) — the extra hop
+    // was dead time between the Google prompt closing and navigating.
+    const { data: { session } } = await supabase.auth.getSession()
+    const authUser = session?.user
     if (!authUser) { isRedirecting.current = false; return }
     const isComplete = await checkOnboardingComplete(authUser.id)
     router.push(isComplete ? '/home' : '/onboarding?step=1')

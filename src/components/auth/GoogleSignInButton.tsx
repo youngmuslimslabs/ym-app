@@ -2,7 +2,7 @@
 
 import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 const supabase = createClient()
 
@@ -30,6 +30,7 @@ interface GoogleAccounts {
         text?: string
         shape?: string
         logo_alignment?: string
+        width?: number
       }
     ) => void
     cancel: () => void
@@ -46,7 +47,7 @@ declare global {
 }
 
 interface GoogleSignInButtonProps {
-  onSuccess?: () => void
+  onSuccess?: () => void | Promise<void>
   onError?: (error: string) => void
 }
 
@@ -55,6 +56,16 @@ export default function GoogleSignInButton({
   onError
 }: GoogleSignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
+  // Ref to the container Google renders its (fixed-width) button into.
+  const containerRef = useRef<HTMLDivElement>(null)
+  // Last pixel width we rendered at — lets the ResizeObserver skip no-op
+  // re-renders and avoid re-initializing GIS on every sub-pixel reflow.
+  const lastRenderedWidth = useRef(0)
+
+  // Google's max button width is 400px (per GsiButtonConfiguration). We render
+  // the button at the container's exact width so it fills the slot and there's
+  // no leftover space for the fixed-width iframe to sit off-center in.
+  const GSI_MAX_WIDTH = 400
 
   // Memoized sign-in handler - stable reference across renders
   const handleSignInWithGoogle = useCallback(async (response: GoogleCredentialResponse) => {
@@ -84,7 +95,10 @@ export default function GoogleSignInButton({
       if (process.env.NODE_ENV === 'development') {
         console.log('Successfully logged in with Google:', data.user?.email)
       }
-      onSuccess?.()
+      // Keep isLoading = true through the redirect: onSuccess navigates away
+      // (and unmounts us), so clearing it here would flash a bare, idle login
+      // page during the post-auth round-trips. We only reset loading on error.
+      await onSuccess?.()
     } catch (error: unknown) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Google sign in error:', error)
@@ -95,9 +109,8 @@ export default function GoogleSignInButton({
           posthog.capture('user_login_failed', { error_message: rawMessage })
         })
       } catch { /* observability */ }
-      onError?.(rawMessage)
-    } finally {
       setIsLoading(false)
+      onError?.(rawMessage)
     }
   }, [onSuccess, onError])
 
@@ -108,10 +121,22 @@ export default function GoogleSignInButton({
       return
     }
 
-    const buttonElement = document.getElementById('google-signin-button')
+    const buttonElement = containerRef.current
     if (!buttonElement) {
       return
     }
+
+    // Measure the container. Google bakes a fixed pixel width into the button
+    // at render time and never resizes it, so we must pass an explicit width
+    // that matches the slot. If the element hasn't been laid out yet (width 0),
+    // bail — the ResizeObserver will call us back once it has a real width,
+    // which is what eliminates the "rendered before layout settled" race.
+    const measured = Math.floor(buttonElement.getBoundingClientRect().width)
+    if (measured === 0) {
+      return
+    }
+    const width = Math.min(measured, GSI_MAX_WIDTH)
+    lastRenderedWidth.current = width
 
     // Clear any existing button content before re-rendering
     buttonElement.innerHTML = ''
@@ -127,7 +152,8 @@ export default function GoogleSignInButton({
     // This ensures only our custom button is shown, not Google's floating One Tap UI
     window.google.accounts.id.cancel()
 
-    // Render the sign-in button
+    // Render the sign-in button at the measured width so the iframe fills the
+    // slot exactly — no descendant-selector CSS hacks needed to center it.
     window.google.accounts.id.renderButton(buttonElement, {
       type: 'standard',
       theme: 'outline',
@@ -135,6 +161,7 @@ export default function GoogleSignInButton({
       text: 'continue_with',
       shape: 'rectangular',
       logo_alignment: 'left',
+      width,
     })
   }, [])
 
@@ -148,8 +175,31 @@ export default function GoogleSignInButton({
       renderGoogleButton()
     }
 
+    // Re-render when the container's width changes. This handles three cases:
+    // 1) the initial layout settling after mount (measured width goes 0 → real),
+    // 2) viewport resize / device rotation, and
+    // 3) the login card's entry animation completing.
+    // We only re-render when the integer width actually changes, so GIS isn't
+    // re-initialized on every sub-pixel reflow.
+    const container = containerRef.current
+    let observer: ResizeObserver | undefined
+    if (container && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => {
+        if (!window.google) return
+        const width = Math.min(
+          Math.floor(container.getBoundingClientRect().width),
+          GSI_MAX_WIDTH
+        )
+        if (width > 0 && width !== lastRenderedWidth.current) {
+          renderGoogleButton()
+        }
+      })
+      observer.observe(container)
+    }
+
     // Cleanup: remove global reference when component unmounts
     return () => {
+      observer?.disconnect()
       // Cast to any to allow deletion of global property
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (window as any).handleSignInWithGoogle
@@ -173,22 +223,16 @@ export default function GoogleSignInButton({
       />
 
       <div className="w-full">
-        {/* shadcn-styled wrapper around Google's button */}
+        {/* Google renders a fixed-width button here. We size it to this
+            container's width (see renderGoogleButton), so a simple centered
+            flex is enough — no descendant-selector overrides to fight GIS's
+            internal DOM, which is what made centering flaky before. */}
         <div
+          ref={containerRef}
           id="google-signin-button"
-          className={`
-            w-full
-            [&>div]:w-full
-            [&>div]:!flex
-            [&>div]:!justify-center
-            [&>div>div]:!w-full
-            ${isLoading ? 'opacity-50 pointer-events-none' : ''}
-          `}
-          style={{
-            // Override Google's default styles to match shadcn
-            display: 'flex',
-            justifyContent: 'center',
-          }}
+          className={`flex w-full justify-center ${
+            isLoading ? 'opacity-50 pointer-events-none' : ''
+          }`}
         />
 
         {/* Loading overlay */}

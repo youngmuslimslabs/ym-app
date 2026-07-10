@@ -28,6 +28,18 @@ describe('OnboardingFlow (Part 1 wiring)', () => {
     expect(screen.getByRole('textbox')).toHaveValue('(555) 111-2222')
   })
 
+  it('nationality combobox shows the whole list without typing (not capped at ~50)', async () => {
+    const user = userEvent.setup()
+    render(<OnboardingFlow />)
+    await user.type(screen.getByRole('textbox'), '5551112222{Enter}')
+    await user.type(screen.getByRole('textbox'), 'me@example.com{Enter}')
+    expect(screen.getByText("What's your nationality?")).toBeInTheDocument()
+    await user.click(screen.getByRole('combobox'))
+    // "Pakistani" sits well past the old 50-item cap (alphabetically far after "D").
+    // Before the fix it was hidden until you typed; it must now be visible directly.
+    expect(await screen.findByRole('option', { name: 'Pakistani' })).toBeInTheDocument()
+  })
+
   it('Back returns to the previous step with the value preserved', async () => {
     const user = userEvent.setup()
     render(<OnboardingFlow />)

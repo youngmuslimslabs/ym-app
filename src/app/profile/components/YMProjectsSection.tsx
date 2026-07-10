@@ -21,6 +21,7 @@ import { ExpandableCard, ExpandableCardList } from './ExpandableCard'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import type { YMProjectEntry } from '@/contexts/OnboardingContext'
 import { fetchAllUsersForSelection } from '@/lib/supabase/queries/users'
+import { projectValid } from '@/lib/profile-completion'
 
 // Project types (can be expanded)
 const PROJECT_TYPES: ComboboxOption[] = [
@@ -79,6 +80,8 @@ interface YMProjectsSectionProps {
   onUpdateProject: (index: number, updates: Partial<YMProjectEntry>) => void
   onAddProject: () => void
   onRemoveProject: (index: number) => void
+  /** When true, reveal the required-field error on any entry missing its type. */
+  showErrors?: boolean
 }
 
 export function YMProjectsSection({
@@ -86,9 +89,17 @@ export function YMProjectsSection({
   onUpdateProject,
   onAddProject,
   onRemoveProject,
+  showErrors = false,
 }: YMProjectsSectionProps) {
   const { isEditable } = useProfileMode()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  // When errors are revealed, open the first incomplete entry so the error shows.
+  useEffect(() => {
+    if (!showErrors) return
+    const firstInvalid = projects.find((p) => !projectValid(p))
+    if (firstInvalid) setExpandedId(firstInvalid.id)
+  }, [showErrors, projects])
   const [amirOptions, setAmirOptions] = useState<ComboboxOption[]>([])
 
   // Only fetch dropdown options in edit mode — read-only uses pre-resolved names from the query
@@ -189,7 +200,9 @@ export function YMProjectsSection({
           {isEditable ? (
             <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Project Type</Label>
+              <Label>
+                Project Type <span className="text-destructive">*</span>
+              </Label>
               <SearchableCombobox
                 options={PROJECT_TYPES}
                 value={getProjectComboboxValue(project)}
@@ -198,6 +211,9 @@ export function YMProjectsSection({
                 searchPlaceholder="Search project types..."
                 allowCustom
               />
+              {showErrors && !projectValid(project) && (
+                <p className="text-sm text-destructive">Select a project type to continue.</p>
+              )}
             </div>
 
             <div className="space-y-1.5">

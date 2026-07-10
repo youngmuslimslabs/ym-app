@@ -2,7 +2,13 @@ import { describe, it, expect } from 'vitest'
 
 import type { ProfileFormState } from '@/app/profile/hooks/useProfileForm'
 
-import { computeProfileCompletion } from './profile-completion'
+import {
+  computeProfileCompletion,
+  roleValid,
+  projectValid,
+  isRoleEmpty,
+  isProjectEmpty,
+} from './profile-completion'
 
 const empty: ProfileFormState = {}
 
@@ -15,6 +21,32 @@ const personal = {
 
 const validRole = { id: 'r1', isCurrent: true, roleTypeId: 'amir', startMonth: 1, startYear: 2022 }
 const validProject = { id: 'p1', isCurrent: false, projectType: 'Ijtema', startMonth: 3, startYear: 2021 }
+
+describe('entry validity (approximate dates OK — type is the only requirement)', () => {
+  it('roleValid: a role is valid with just a type, no dates needed', () => {
+    expect(roleValid({ id: 'r', isCurrent: true, roleTypeId: 'amir' })).toBe(true)
+    expect(roleValid({ id: 'r', isCurrent: true, roleTypeCustom: 'Helper' })).toBe(true)
+    expect(roleValid({ id: 'r', isCurrent: true, startMonth: 1, startYear: 2022 })).toBe(false)
+  })
+
+  it('projectValid: valid with just a type', () => {
+    expect(projectValid({ id: 'p', isCurrent: false, projectType: 'Ijtema' })).toBe(true)
+    expect(projectValid({ id: 'p', isCurrent: false, startYear: 2021 })).toBe(false)
+  })
+
+  it('a dateless role still marks the roles section done', () => {
+    const c = computeProfileCompletion({ ymRoles: [{ id: 'r', isCurrent: true, roleTypeId: 'amir' }] })
+    expect(c.sections.roles).toBe('done')
+  })
+
+  it('isRoleEmpty / isProjectEmpty flag added-then-abandoned rows, but not partial ones', () => {
+    expect(isRoleEmpty({ id: 'r', isCurrent: true })).toBe(true)
+    expect(isRoleEmpty({ id: 'r', isCurrent: true, roleTypeId: 'amir' })).toBe(false)
+    expect(isRoleEmpty({ id: 'r', isCurrent: true, startYear: 2022 })).toBe(false)
+    expect(isProjectEmpty({ id: 'p', isCurrent: false })).toBe(true)
+    expect(isProjectEmpty({ id: 'p', isCurrent: false, projectType: 'Ijtema' })).toBe(false)
+  })
+})
 
 describe('computeProfileCompletion', () => {
   it('reports everything as todo for empty data', () => {

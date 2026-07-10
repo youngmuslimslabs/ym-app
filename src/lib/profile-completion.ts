@@ -35,11 +35,25 @@ export const SECTION_ORDER: SectionKey[] = [
 /** Part-2 sections that can be legitimately empty ("I have none") and thus skipped. */
 export const SKIPPABLE_SECTIONS: SectionKey[] = ['roles', 'projects']
 
-function roleValid(r: YMRoleEntry): boolean {
-  return Boolean((r.roleTypeId || r.roleTypeCustom) && r.startMonth && r.startYear)
+/** A role/project is complete once its type is chosen. Dates are optional and
+ * approximate (owner decision) — requiring exact start month/year pushed users to
+ * guess or skip, degrading data. The type is the only hard requirement. */
+export function roleValid(r: YMRoleEntry): boolean {
+  return Boolean(r.roleTypeId || r.roleTypeCustom)
 }
-function projectValid(p: YMProjectEntry): boolean {
-  return Boolean((p.projectType || p.projectTypeCustom) && p.startMonth && p.startYear)
+export function projectValid(p: YMProjectEntry): boolean {
+  return Boolean(p.projectType || p.projectTypeCustom)
+}
+
+/** True when a repeatable entry was added but left with no meaningful data —
+ * safe to silently drop on save rather than nag about it. */
+export function isRoleEmpty(r: YMRoleEntry): boolean {
+  return !r.roleTypeId && !r.roleTypeCustom && !r.amirUserId && !r.amirCustomName &&
+    !r.startMonth && !r.startYear && !r.endMonth && !r.endYear && !r.description
+}
+export function isProjectEmpty(p: YMProjectEntry): boolean {
+  return !p.projectType && !p.projectTypeCustom && !p.role && !p.amirUserId && !p.amirCustomName &&
+    !p.startMonth && !p.startYear && !p.endMonth && !p.endYear && !p.description
 }
 function eduEntryValid(e: EducationEntry): boolean {
   return Boolean(

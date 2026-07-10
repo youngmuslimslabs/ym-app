@@ -21,6 +21,10 @@ import { EducationSection } from '@/app/profile/components/EducationSection'
 import { SkillsChipSelector } from '@/app/profile/components/SkillsChipSelector'
 import {
   computeProfileCompletion,
+  roleValid,
+  projectValid,
+  isRoleEmpty,
+  isProjectEmpty,
   type SectionKey,
   type SectionStatus,
 } from '@/lib/profile-completion'
@@ -58,6 +62,9 @@ export function ProfileCompletion({
   const form = useProfileForm(initialData)
   const [skipped, setSkipped] = useState<Set<SectionKey>>(new Set())
   const [view, setView] = useState<'hub' | SectionKey>('hub')
+  // Reveal per-entry required-field errors (set when the user tries to leave a
+  // section with an incomplete entry). Reset whenever we (re)enter a section.
+  const [showErrors, setShowErrors] = useState(false)
 
   const completion = computeProfileCompletion(form.formData, skipped)
 
@@ -70,10 +77,37 @@ export function ProfileCompletion({
     return true
   }
 
+  function openSection(key: SectionKey) {
+    setShowErrors(false)
+    setView(key)
+  }
+
+  /**
+   * Leave the open section (Back or Done). Repeatable sections first drop entries
+   * left completely empty, then — if any remaining entry is missing its one
+   * required field (the type) — reveal the error and stay put instead of bouncing
+   * the user back from the hub later. Delete + skip remain available, so they are
+   * never trapped.
+   */
+  function leaveSection() {
+    if (view === 'roles') {
+      const kept = (form.formData.ymRoles ?? []).filter((r) => !isRoleEmpty(r))
+      if (kept.length !== (form.formData.ymRoles ?? []).length) form.updateField('ymRoles', kept)
+      if (kept.some((r) => !roleValid(r))) return setShowErrors(true)
+    } else if (view === 'projects') {
+      const kept = (form.formData.ymProjects ?? []).filter((p) => !isProjectEmpty(p))
+      if (kept.length !== (form.formData.ymProjects ?? []).length) form.updateField('ymProjects', kept)
+      if (kept.some((p) => !projectValid(p))) return setShowErrors(true)
+    }
+    setShowErrors(false)
+    setView('hub')
+  }
+
   function skip(key: SectionKey) {
     if (key === 'roles') form.updateField('ymRoles', [])
     if (key === 'projects') form.updateField('ymProjects', [])
     setSkipped((prev) => new Set(prev).add(key))
+    setShowErrors(false)
     setView('hub')
   }
 
@@ -117,7 +151,7 @@ export function ProfileCompletion({
               <button
                 key={section.key}
                 type="button"
-                onClick={() => setView(section.key)}
+                onClick={() => openSection(section.key)}
                 className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3.5 text-left transition-colors hover:border-primary/20 focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <StatusIcon status={status} />
@@ -161,6 +195,7 @@ export function ProfileCompletion({
         onUpdateRole={form.updateRole}
         onAddRole={form.addRole}
         onRemoveRole={form.removeRole}
+        showErrors={showErrors}
       />
     )
   } else if (view === 'projects') {
@@ -170,6 +205,7 @@ export function ProfileCompletion({
         onUpdateProject={form.updateProject}
         onAddProject={form.addProject}
         onRemoveProject={form.removeProject}
+        showErrors={showErrors}
       />
     )
   } else if (view === 'education') {
@@ -216,7 +252,7 @@ export function ProfileCompletion({
     <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 py-6">
       <button
         type="button"
-        onClick={() => setView('hub')}
+        onClick={leaveSection}
         className="-ml-1 flex w-fit items-center gap-1 rounded-md px-1 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <ChevronLeft className="h-4 w-4" /> Back
@@ -227,7 +263,7 @@ export function ProfileCompletion({
       </div>
 
       <div className="flex flex-col gap-2 pt-4">
-        <Button size="lg" className="w-full" onClick={() => setView('hub')}>
+        <Button size="lg" className="w-full" onClick={leaveSection}>
           Done
         </Button>
         {section.skippable && (

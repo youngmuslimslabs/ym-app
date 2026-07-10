@@ -1,8 +1,9 @@
 /**
  * Shared nationality (demonym) list — single source of truth.
  *
- * Replaces the ethnicity lists previously duplicated verbatim in
- * `onboarding/step1-personal-info.tsx` and `profile/PersonalInfoSection.tsx`.
+ * Source of truth for nationality options, used by the Part-1 onboarding flow.
+ * TODO: migrate the /profile field (`profile/PersonalInfoSection.tsx`) — still
+ * labelled "Ethnicity" with its own short list — onto this constant.
  * Presented as a *soft suggestion*: the field is a searchable combobox with
  * free-text entry allowed (`allowCustom`), and the backing column stays TEXT.
  *

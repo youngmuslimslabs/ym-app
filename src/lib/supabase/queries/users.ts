@@ -8,6 +8,12 @@ export interface UserOption {
   email: string
 }
 
+// A single Supabase/PostgREST response is capped at ~1000 rows (db-max-rows),
+// which silently truncates larger sets — the org already exceeds 1000 members,
+// so anyone past ~#1000 alphabetically would be missing from pickers. Page
+// through with .range() (which caps page size, not total reachable rows).
+export const USER_PAGE_SIZE = 1000
+
 /**
  * Fetch all users who have completed onboarding (for Amir selection)
  */
@@ -18,18 +24,25 @@ export async function fetchCompletedUsers(): Promise<{
   try {
     const supabase = createClient()
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, first_name, last_name, email')
-      .not('onboarding_completed_at', 'is', null)
-      .order('first_name, last_name')
+    const rows: UserOption[] = []
+    for (let from = 0; ; from += USER_PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, email')
+        .not('onboarding_completed_at', 'is', null)
+        .order('first_name, last_name')
+        .range(from, from + USER_PAGE_SIZE - 1)
 
-    if (error) {
-      console.error('Error fetching users:', error)
-      return { data: null, error: error.message }
+      if (error) {
+        console.error('Error fetching users:', error)
+        return { data: null, error: error.message }
+      }
+
+      rows.push(...((data ?? []) as UserOption[]))
+      if (!data || data.length < USER_PAGE_SIZE) break
     }
 
-    return { data, error: null }
+    return { data: rows, error: null }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to fetch users'
     console.error('Users fetch error:', err)
@@ -48,18 +61,25 @@ export async function fetchAllUsersForSelection(): Promise<{
   try {
     const supabase = createClient()
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, first_name, last_name')
-      .order('first_name', { ascending: true })
-      .order('last_name', { ascending: true })
+    const rows: { id: string; first_name: string | null; last_name: string | null }[] = []
+    for (let from = 0; ; from += USER_PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, first_name, last_name')
+        .order('first_name', { ascending: true })
+        .order('last_name', { ascending: true })
+        .range(from, from + USER_PAGE_SIZE - 1)
 
-    if (error) {
-      console.error('Error fetching users for selection:', error)
-      return { data: null, error: error.message }
+      if (error) {
+        console.error('Error fetching users for selection:', error)
+        return { data: null, error: error.message }
+      }
+
+      rows.push(...(data ?? []))
+      if (!data || data.length < USER_PAGE_SIZE) break
     }
 
-    const options: ComboboxOption[] = data.map(user => ({
+    const options: ComboboxOption[] = rows.map(user => ({
       value: user.id,
       label: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User',
     }))

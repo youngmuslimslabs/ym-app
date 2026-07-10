@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { ChevronLeft, Check, MapPin, BadgeCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -64,6 +65,7 @@ export function OnboardingFlow({
   roles = ROLES,
 }: OnboardingFlowProps) {
   const flow = useOnboardingFlow(STEPS)
+  const [submitting, setSubmitting] = useState(false)
   const val = (id: string) => (flow.answers[id] as string) ?? ''
   const set = (id: string, v: string) => flow.setAnswer(id, v)
   const choose = (id: string, v: string) => {
@@ -216,8 +218,23 @@ export function OnboardingFlow({
             </dl>
           )}
 
-          <Button size="lg" className="w-full" onClick={() => onComplete?.(flow.answers)}>
-            Enter the app
+          <Button
+            size="lg"
+            className="w-full"
+            disabled={submitting}
+            onClick={async () => {
+              // Guard against a double-tap: onComplete writes the profile and
+              // stamps the (immutable-once-set) onboarding flag, so a second
+              // in-flight call would error on an otherwise-successful signup.
+              setSubmitting(true)
+              try {
+                await onComplete?.(flow.answers)
+              } finally {
+                setSubmitting(false)
+              }
+            }}
+          >
+            {submitting ? 'Entering…' : 'Enter the app'}
           </Button>
         </div>
       )

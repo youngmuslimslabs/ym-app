@@ -9,6 +9,7 @@
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
+import { Button } from '@/components/ui/button'
 import { OnboardingFlow } from '@/components/onboarding-flow/OnboardingFlow'
 import { completePart1Onboarding } from '@/lib/supabase/onboarding'
 import {
@@ -18,8 +19,32 @@ import {
 
 function OnboardingContent() {
   const router = useRouter()
-  const { subregions, neighborNets, roleTypes } = useOnboardingReference()
-  const hasGeography = subregions.length > 0
+  const { subregions, neighborNets, roleTypes, isLoading, error } = useOnboardingReference()
+
+  // The authenticated flow MUST render with real DB options, whose values are
+  // UUIDs. We never fall through to OnboardingFlow's hardcoded, name-valued
+  // preview lists here — a completed answer would then write a non-UUID string
+  // into a FK column and the save would fail, leaving onboarding uncompletable.
+  const hasReferenceData = subregions.length > 0 && roleTypes.length > 0
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg items-center justify-center px-5">
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      </div>
+    )
+  }
+
+  if (error || !hasReferenceData) {
+    return (
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center gap-4 px-5 text-center">
+        <p className="text-sm text-muted-foreground">
+          {error ?? 'We couldn’t load the setup options. Please try again.'}
+        </p>
+        <Button onClick={() => window.location.reload()}>Try again</Button>
+      </div>
+    )
+  }
 
   return (
     <OnboardingFlow
@@ -38,22 +63,13 @@ function OnboardingContent() {
         }
         router.push('/home')
       }}
-      subregions={
-        hasGeography ? subregions.map((s) => ({ value: s.id, label: s.name })) : undefined
+      subregions={subregions.map((s) => ({ value: s.id, label: s.name }))}
+      neighborNetsFor={(subregionId: string) =>
+        neighborNets
+          .filter((nn) => nn.subregion_id === subregionId)
+          .map((nn) => ({ value: nn.id, label: nn.name }))
       }
-      neighborNetsFor={
-        hasGeography
-          ? (subregionId: string) =>
-              neighborNets
-                .filter((nn) => nn.subregion_id === subregionId)
-                .map((nn) => ({ value: nn.id, label: nn.name }))
-          : undefined
-      }
-      roles={
-        roleTypes.length > 0
-          ? roleTypes.map((rt) => ({ value: rt.id, label: rt.name }))
-          : undefined
-      }
+      roles={roleTypes.map((rt) => ({ value: rt.id, label: rt.name }))}
     />
   )
 }

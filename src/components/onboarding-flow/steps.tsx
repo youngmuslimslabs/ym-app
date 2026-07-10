@@ -208,6 +208,11 @@ export function ComboboxStep({
         searchPlaceholder={searchPlaceholder}
         allowCustom={allowCustom}
         className="h-14 text-base"
+        // Onboarding pickers are bounded reference lists (nationalities ~191,
+        // NeighborNets ~118) that fit in the scrollable popover. Show them all —
+        // the default 50-item cap would truncate the un-searched list (e.g.
+        // nationalities cut off at "D") and force users to type to find the rest.
+        maxDisplayed={options.length}
       />
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={!value} className="min-w-32">

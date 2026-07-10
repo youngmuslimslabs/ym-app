@@ -128,6 +128,9 @@ export function PersonalInfoSection({
                 placeholder="Select your nationality"
                 searchPlaceholder="Search nationalities…"
                 allowCustom
+                // Show the full ~191-nationality list (scrollable) rather than the
+                // default 50-item cap, which truncated the un-searched list at "D".
+                maxDisplayed={NATIONALITY_OPTIONS.length}
               />
             </div>
 

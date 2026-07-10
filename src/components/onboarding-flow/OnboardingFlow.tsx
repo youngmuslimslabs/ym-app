@@ -74,7 +74,10 @@ export function OnboardingFlow({
   }
 
   const progress = Math.round((flow.index / (STEPS.length - 1)) * 100)
-  const showBack = !flow.isFirst && flow.stepId !== 'done'
+  // Show Back on every non-first step, including the final "done" screen — a user
+  // who realizes they picked the wrong role/nationality needs a way back to fix it
+  // before entering the app.
+  const showBack = !flow.isFirst
 
   let content: React.ReactNode = null
   switch (flow.stepId) {

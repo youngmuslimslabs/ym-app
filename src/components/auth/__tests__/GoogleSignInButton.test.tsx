@@ -38,6 +38,13 @@ describe('GoogleSignInButton', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubEnv('NEXT_PUBLIC_GOOGLE_CLIENT_ID', 'test-client-id')
+    // jsdom has no ResizeObserver; stub one so the component's defer-until-laid-out
+    // path (which relies on it) matches real-browser behavior.
+    vi.stubGlobal('ResizeObserver', class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    })
     // Pretend the GIS SDK is already loaded so the mount effect renders.
     ;(window as unknown as { google: unknown }).google = {
       accounts: { id: { initialize, cancel, renderButton } },
@@ -46,6 +53,7 @@ describe('GoogleSignInButton', () => {
 
   afterEach(() => {
     vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
     vi.restoreAllMocks()
     delete (window as unknown as { google?: unknown }).google
   })
@@ -74,7 +82,7 @@ describe('GoogleSignInButton', () => {
     expect(options.width).toBe(400)
   })
 
-  it('does not render the button when the container has no measured width yet', async () => {
+  it('defers rendering when the container has no measured width and a ResizeObserver can call back', async () => {
     stubContainerWidth(0)
     await act(async () => {
       render(<GoogleSignInButton />)
@@ -83,5 +91,18 @@ describe('GoogleSignInButton', () => {
     // With width 0 the component defers to the ResizeObserver rather than baking
     // in a wrong width — so renderButton must not be called on this pass.
     expect(renderButton).not.toHaveBeenCalled()
+  })
+
+  it('falls back to rendering without an explicit width when no ResizeObserver exists', async () => {
+    // No ResizeObserver to call back, so a functional (self-sized) button beats
+    // no button at all.
+    vi.stubGlobal('ResizeObserver', undefined)
+    stubContainerWidth(0)
+    await act(async () => {
+      render(<GoogleSignInButton />)
+    })
+
+    expect(renderButton).toHaveBeenCalled()
+    expect(renderButton.mock.calls[0][1].width).toBeUndefined()
   })
 })

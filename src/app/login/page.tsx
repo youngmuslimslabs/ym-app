@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { YMLoginForm } from '@/components/auth/YMLoginForm'
 import { PageLoader } from '@/components/ui/page-loader'
 import { createClient } from '@/lib/supabase/client'
@@ -38,24 +38,47 @@ export default function LoginPage() {
     return () => clearTimeout(timer)
   }, [loading])
 
-  const handleGoogleSuccess = async () => {
-    if (isRedirecting.current) return
+  // Memoized so GoogleSignInButton's render effect keeps a stable callback
+  // identity — otherwise every LoginPage re-render (e.g. setError) would hand
+  // the child new function props, re-run its effect, and re-init/flicker the
+  // Google button. Returns whether it navigated so the button knows whether to
+  // stay in its loading state.
+  const handleGoogleSuccess = useCallback(async (): Promise<boolean> => {
+    if (isRedirecting.current) return false
     isRedirecting.current = true
-    // We just signed in, so the session is already in local storage. Use
-    // getSession() (local read) instead of getUser() (a network round-trip
-    // that re-validates the token against the Auth server) — the extra hop
-    // was dead time between the Google prompt closing and navigating.
-    const { data: { session } } = await supabase.auth.getSession()
-    const authUser = session?.user
-    if (!authUser) { isRedirecting.current = false; return }
-    const isComplete = await checkOnboardingComplete(authUser.id)
-    router.push(isComplete ? '/home' : '/onboarding?step=1')
-  }
+    try {
+      // We just signed in, so the session is already in local storage. Use
+      // getSession() (local read) instead of getUser() (a network round-trip
+      // that re-validates the token against the Auth server) — the extra hop
+      // was dead time between the Google prompt closing and navigating. The
+      // /home and /onboarding routes are gated server-side by middleware
+      // (getUser), so an unverified local session can't slip past routing.
+      const { data: { session } } = await supabase.auth.getSession()
+      const authUser = session?.user
+      if (!authUser) {
+        // Signed in but no local session yet — reset so the user can retry and
+        // signal "did not navigate" so the button drops its loading state.
+        isRedirecting.current = false
+        return false
+      }
+      const isComplete = await checkOnboardingComplete(authUser.id)
+      router.push(isComplete ? '/home' : '/onboarding?step=1')
+      return true
+    } catch (err) {
+      // Post-auth routing failed even though sign-in succeeded. Surface it here
+      // (not as a login failure in the button) and reset the guard so a retry
+      // isn't permanently blocked by isRedirecting.
+      isRedirecting.current = false
+      const rawMessage = err instanceof Error ? err.message : String(err)
+      setError(toUserMessage(rawMessage, { action: 'load your account' }))
+      return false
+    }
+  }, [router])
 
-  const handleGoogleError = (rawMessage: string) => {
+  const handleGoogleError = useCallback((rawMessage: string) => {
     console.error('Login error:', rawMessage)
     setError(toUserMessage(rawMessage, { action: 'sign in with Google' }))
-  }
+  }, [])
 
   if (loading && showLoader) {
     return <PageLoader />

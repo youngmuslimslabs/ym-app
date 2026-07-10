@@ -46,8 +46,16 @@ declare global {
   }
 }
 
+// Google's max button width is 400px (per GsiButtonConfiguration). We render
+// the button at the container's exact width so it fills the slot and there's
+// no leftover space for the fixed-width iframe to sit off-center in.
+const GSI_MAX_WIDTH = 400
+
 interface GoogleSignInButtonProps {
-  onSuccess?: () => void | Promise<void>
+  // Returns whether it navigated away. When it returns true we keep the button
+  // in its loading state through the imminent unmount; otherwise we reset so
+  // the button is never stranded on a spinner without a redirect.
+  onSuccess?: () => void | boolean | Promise<void | boolean>
   onError?: (error: string) => void
 }
 
@@ -61,11 +69,6 @@ export default function GoogleSignInButton({
   // Last pixel width we rendered at — lets the ResizeObserver skip no-op
   // re-renders and avoid re-initializing GIS on every sub-pixel reflow.
   const lastRenderedWidth = useRef(0)
-
-  // Google's max button width is 400px (per GsiButtonConfiguration). We render
-  // the button at the container's exact width so it fills the slot and there's
-  // no leftover space for the fixed-width iframe to sit off-center in.
-  const GSI_MAX_WIDTH = 400
 
   // Memoized sign-in handler - stable reference across renders
   const handleSignInWithGoogle = useCallback(async (response: GoogleCredentialResponse) => {
@@ -95,10 +98,15 @@ export default function GoogleSignInButton({
       if (process.env.NODE_ENV === 'development') {
         console.log('Successfully logged in with Google:', data.user?.email)
       }
-      // Keep isLoading = true through the redirect: onSuccess navigates away
-      // (and unmounts us), so clearing it here would flash a bare, idle login
-      // page during the post-auth round-trips. We only reset loading on error.
-      await onSuccess?.()
+      // Keep isLoading = true through the redirect: when onSuccess navigates
+      // away (and unmounts us), clearing it here would flash a bare, idle login
+      // page during the post-auth round-trips. But if onSuccess returns without
+      // navigating (e.g. no session yet), reset so the button isn't stranded on
+      // a spinner. Only `true` means "navigation started — stay loading".
+      const navigated = await onSuccess?.()
+      if (navigated !== true) {
+        setIsLoading(false)
+      }
     } catch (error: unknown) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Google sign in error:', error)
@@ -127,16 +135,20 @@ export default function GoogleSignInButton({
     }
 
     // Measure the container. Google bakes a fixed pixel width into the button
-    // at render time and never resizes it, so we must pass an explicit width
-    // that matches the slot. If the element hasn't been laid out yet (width 0),
-    // bail — the ResizeObserver will call us back once it has a real width,
-    // which is what eliminates the "rendered before layout settled" race.
+    // at render time and never resizes it, so we pass an explicit width that
+    // matches the slot. If the element hasn't been laid out yet (width 0):
+    //   - with a ResizeObserver available, bail and let it call us back once
+    //     there's a real width (this eliminates the "rendered before layout
+    //     settled" race);
+    //   - without one, fall back to rendering with no explicit width so the
+    //     button still appears (a functional button beats no button).
     const measured = Math.floor(buttonElement.getBoundingClientRect().width)
-    if (measured === 0) {
+    const canObserve = typeof ResizeObserver !== 'undefined'
+    if (measured === 0 && canObserve) {
       return
     }
-    const width = Math.min(measured, GSI_MAX_WIDTH)
-    lastRenderedWidth.current = width
+    const width = measured > 0 ? Math.min(measured, GSI_MAX_WIDTH) : undefined
+    lastRenderedWidth.current = width ?? 0
 
     // Clear any existing button content before re-rendering
     buttonElement.innerHTML = ''
@@ -161,7 +173,8 @@ export default function GoogleSignInButton({
       text: 'continue_with',
       shape: 'rectangular',
       logo_alignment: 'left',
-      width,
+      // Omitted when unmeasurable — GIS then sizes itself as before.
+      ...(width !== undefined ? { width } : {}),
     })
   }, [])
 

@@ -72,3 +72,35 @@ describe('SessionCard grace period', () => {
     expect(screen.queryByText('Leave feedback')).not.toBeInTheDocument()
   })
 })
+
+describe('SessionCard chrome (bright while an action is wanted)', () => {
+  const card = () => screen.getByRole('button')
+
+  it('grace tail, not checked in → keeps "Signed up" badge, stays bright', () => {
+    renderCard({ now: new Date('2025-06-27T15:07:00Z') })
+    expect(screen.getByText('Signed up')).toBeInTheDocument()
+    expect(card().className).toContain('border-primary')
+    expect(card().className).not.toContain('opacity-70')
+  })
+
+  it('checked in + ended + feedback pending → not dimmed', () => {
+    renderCard({ checkedIn: true, now: new Date('2025-06-27T15:30:00Z') })
+    expect(screen.getByText('Leave feedback')).toBeInTheDocument()
+    expect(card().className).not.toContain('opacity-70')
+  })
+
+  it('feedback submitted → dims (nothing left to ask)', () => {
+    renderCard({
+      checkedIn: true,
+      feedback: { rating: 4, comment: null },
+      now: new Date('2025-06-27T15:30:00Z'),
+    })
+    expect(card().className).toContain('opacity-70')
+  })
+
+  it('missed check-in past grace → dims and badge is gone', () => {
+    renderCard({ now: new Date('2025-06-27T15:30:00Z') })
+    expect(card().className).toContain('opacity-70')
+    expect(screen.queryByText('Signed up')).not.toBeInTheDocument()
+  })
+})

@@ -7,7 +7,6 @@ import type { Session } from '../types'
 // useIsMobile reads window.matchMedia; jsdom lacks it. Minimal shim (desktop).
 beforeAll(() => {
   if (!window.matchMedia) {
-    // @ts-expect-error partial MediaQueryList is enough for useIsMobile
     window.matchMedia = (query: string) => ({
       matches: false,
       media: query,

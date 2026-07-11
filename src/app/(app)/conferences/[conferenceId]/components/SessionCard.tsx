@@ -42,22 +42,24 @@ export function SessionCard({
   })
   const { inProgress, ended } = w
   const upcoming = !inProgress && !ended
-  // Check-in is still solicited (in-session or grace tail) — the card must stay
-  // visually active even though it has technically ended, so the "Check in now"
-  // CTA doesn't sit on a greyed-out, closed-looking card.
+  // Chrome rule: a card stays visually ACTIVE while it still wants an action
+  // from the attendee — an open check-in (in-session or grace tail) or an
+  // unanswered feedback prompt. It only dims once it has nothing left to ask
+  // (feedback submitted, check-in missed, or a session they never joined).
   const pendingCheckIn = slot.kind === 'check-in'
+  const wantsAction = pendingCheckIn || (slot.kind === 'feedback' && !feedback)
 
   const capacity = session.capacity
   const full = capacity != null && seatCount >= capacity && !signedUp
 
   // Card chrome — active/signed-up gets a primary border; full is muted; a truly
-  // finished card (ended with no pending check-in) is dimmed.
+  // finished card (ended, nothing left to do) is dimmed.
   const cardClass = cn(
     'rounded-xl border bg-card p-5 md:p-6 shadow-sm relative transition-all duration-200',
-    ((signedUp && !ended) || pendingCheckIn) && 'border-2 border-primary bg-primary/5',
+    ((signedUp && !ended) || wantsAction) && 'border-2 border-primary bg-primary/5',
     !signedUp && !full && !ended && 'hover:border-foreground/20 hover:shadow-md cursor-pointer',
     full && 'opacity-60 cursor-not-allowed',
-    ended && !pendingCheckIn && 'opacity-70'
+    ended && !wantsAction && 'opacity-70'
   )
 
   return (
@@ -70,7 +72,7 @@ export function SessionCard({
     >
       {/* Top-right badges — stacked column so Signed up + Happening now don't overlap */}
       <div className="absolute top-4 right-4 flex flex-col items-end gap-1.5">
-        {signedUp && !ended && (
+        {signedUp && (!ended || pendingCheckIn) && (
           <span className="inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold gap-1">
             <Check className="w-3 h-3" />
             Signed up

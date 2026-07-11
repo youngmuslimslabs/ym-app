@@ -51,6 +51,14 @@ export function ResponsiveSelect({
 }: ResponsiveSelectProps) {
   const isMobile = useIsMobile()
   const [open, setOpen] = React.useState(false)
+  const selectedOptionRef = React.useRef<HTMLButtonElement>(null)
+
+  // Match native <Select>, which scrolls the current selection into view when
+  // the menu opens — otherwise a long list (e.g. ~190 nationalities) opens at the
+  // top with the checked item off-screen.
+  React.useEffect(() => {
+    if (open) selectedOptionRef.current?.scrollIntoView({ block: "center" })
+  }, [open])
 
   if (isMobile) {
     const selected = options.find((o) => o.value === value)
@@ -84,26 +92,36 @@ export function ResponsiveSelect({
           <DialogTitle className="px-4 pb-2 pt-4 text-base font-semibold">
             {placeholder}
           </DialogTitle>
-          <div className="max-h-[60dvh] overflow-y-auto p-1">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => handleSelect(option.value)}
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-sm px-3 py-3 text-left text-sm hover:bg-accent hover:text-accent-foreground",
-                  option.value === value && "bg-accent/50"
-                )}
-              >
-                <Check
+          <div
+            role="listbox"
+            aria-label={placeholder}
+            className="max-h-[60dvh] overflow-y-auto p-1"
+          >
+            {options.map((option) => {
+              const isSelected = option.value === value
+              return (
+                <button
+                  key={option.value}
+                  ref={isSelected ? selectedOptionRef : undefined}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => handleSelect(option.value)}
                   className={cn(
-                    "h-4 w-4 shrink-0",
-                    option.value === value ? "opacity-100" : "opacity-0"
+                    "flex w-full items-center gap-2 rounded-sm px-3 py-3 text-left text-sm hover:bg-accent hover:text-accent-foreground",
+                    isSelected && "bg-accent/50"
                   )}
-                />
-                {option.label}
-              </button>
-            ))}
+                >
+                  <Check
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      isSelected ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </button>
+              )
+            })}
           </div>
         </DialogContent>
       </Dialog>

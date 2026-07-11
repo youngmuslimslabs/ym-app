@@ -50,6 +50,30 @@ describe('ResponsiveSelect — mobile centered modal', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('exposes listbox/option semantics with the current selection marked', async () => {
+    const user = userEvent.setup()
+    render(
+      <ResponsiveSelect
+        options={OPTIONS}
+        value="naib"
+        onValueChange={vi.fn()}
+        placeholder="Select your current role"
+      />,
+    )
+    await user.click(screen.getByRole('combobox'))
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+    const options = screen.getAllByRole('option')
+    expect(options).toHaveLength(3)
+    expect(screen.getByRole('option', { name: 'Naib Amir' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByRole('option', { name: 'Amir' })).toHaveAttribute(
+      'aria-selected',
+      'false',
+    )
+  })
+
   it('shows the selected option label in the trigger', () => {
     render(
       <ResponsiveSelect

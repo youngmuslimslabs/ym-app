@@ -107,6 +107,14 @@ export function SearchableCombobox({
     setSearch("")
   }
 
+  // Reset the query whenever the overlay closes (select, Close button, backdrop,
+  // or Escape) so a dismissed-without-selecting search doesn't persist and hide
+  // the full option list on the next open.
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next)
+    if (!next) setSearch("")
+  }
+
   const trigger = (
     <Button
       variant="outline"
@@ -127,14 +135,14 @@ export function SearchableCombobox({
   // On mobile the CommandList grows to fill the sheet (search stays pinned on
   // top, list scrolls below and rides above the keyboard); on desktop it keeps
   // its default 300px cap inside the trigger-width popover.
-  const command = (listClassName?: string) => (
-    <Command shouldFilter={false}>
+  const command = (opts?: { listClassName?: string; className?: string }) => (
+    <Command shouldFilter={false} className={opts?.className}>
       <CommandInput
         placeholder={searchPlaceholder}
         value={search}
         onValueChange={setSearch}
       />
-      <CommandList className={listClassName}>
+      <CommandList className={opts?.listClassName}>
         {filteredOptions.length === 0 && !allowCustom && (
           <CommandEmpty>{emptyMessage}</CommandEmpty>
         )}
@@ -183,7 +191,7 @@ export function SearchableCombobox({
   // viewports, and the bottom anchor keeps the search input above the keyboard.
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
         <SheetContent
           side="bottom"
@@ -191,14 +199,19 @@ export function SearchableCombobox({
           className="flex max-h-[85dvh] flex-col gap-0 p-0"
         >
           <SheetTitle className="sr-only">{placeholder}</SheetTitle>
-          {command("max-h-none flex-1")}
+          {/* Pad the search row so its text/tap target clears the Sheet's
+              absolute top-right Close button. */}
+          {command({
+            listClassName: "max-h-none flex-1",
+            className: "[&_[cmdk-input-wrapper]]:pr-9",
+          })}
         </SheetContent>
       </Sheet>
     )
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         {command()}

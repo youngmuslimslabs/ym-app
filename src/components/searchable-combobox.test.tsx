@@ -46,6 +46,22 @@ describe('SearchableCombobox — mobile bottom sheet', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('resets the search query when dismissed without selecting', async () => {
+    const user = userEvent.setup()
+    render(
+      <SearchableCombobox options={OPTIONS} onChange={vi.fn()} placeholder="Pick fruit" />,
+    )
+    await user.click(screen.getByRole('combobox'))
+    await user.type(screen.getByPlaceholderText(/search/i), 'Ban')
+    // Dismiss without choosing (Close button), then reopen.
+    await user.click(screen.getByRole('button', { name: /close/i }))
+    await user.click(screen.getByRole('combobox'))
+    // The search must be cleared so the full option list is visible again.
+    expect(screen.getByPlaceholderText(/search/i)).toHaveValue('')
+    expect(screen.getByText('Apple')).toBeInTheDocument()
+    expect(screen.getByText('Cherry')).toBeInTheDocument()
+  })
+
   it('keeps the desktop popover non-modal (no Close button) when not mobile', async () => {
     mockUseIsMobile.mockReturnValue(false)
     const user = userEvent.setup()

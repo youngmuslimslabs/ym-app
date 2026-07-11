@@ -107,7 +107,7 @@ export function SessionSheet({
   const joinable = canSignUp(w, { isBreak, signedUp, full })
   const removable = canRemoveSignUp(w, { signedUp, checkedIn })
 
-  // Body slot (see lib/checkInWindow). Check-in stays open through the 15-min
+  // Body slot (see lib/checkInWindow). Check-in stays open through the 60-min
   // grace tail; the "missed check-in" notice only appears once it closes — and
   // never while the sticky latch is holding a mid-entry check-in open.
   const stickyCheckIn = checkInSticky && !checkedIn && slot.kind === 'missed'
@@ -184,7 +184,7 @@ export function SessionSheet({
               {inProgress && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
               {ended
                 ? w.inGrace
-                  ? 'Just ended'
+                  ? 'Ended · check-in open'
                   : 'Ended'
                 : inProgress
                   ? 'In progress'

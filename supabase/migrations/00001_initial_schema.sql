@@ -505,7 +505,7 @@ BEGIN
   -- cancel_signup's bound: without this, a signup landing after the grace
   -- tail (stale client clock, direct RPC call) would be accepted and then be
   -- permanently uncancellable under the removability invariant (see 00022).
-  IF now() >= v_target.end_at + interval '15 minutes' THEN
+  IF now() >= v_target.end_at + interval '60 minutes' THEN
     RETURN jsonb_build_object('success', false, 'error', 'Sign-ups for this session have closed');
   END IF;
 
@@ -526,7 +526,7 @@ BEGIN
       -- Removability invariant: only swap out signups the user could still
       -- cancel themselves — window open, not checked in. Everything else is
       -- attendance/no-show history and survives the swap.
-      AND now() < s.end_at + interval '15 minutes'
+      AND now() < s.end_at + interval '60 minutes'
       AND NOT EXISTS (
         SELECT 1 FROM session_check_ins ci
         WHERE ci.session_id = s.id AND ci.user_id = v_user_id
@@ -561,8 +561,8 @@ BEGIN
   END IF;
 
   -- Cancel window mirrors the sign-up window: open until end_at + grace.
-  -- 15 minutes = GRACE_MINUTES in lib/checkInWindow.ts; change together.
-  IF now() >= v_end_at + interval '15 minutes' THEN
+  -- 60 minutes = GRACE_MINUTES in lib/checkInWindow.ts; change together.
+  IF now() >= v_end_at + interval '60 minutes' THEN
     RETURN jsonb_build_object('success', false, 'error', 'Cannot cancel after the check-in window has closed');
   END IF;
 

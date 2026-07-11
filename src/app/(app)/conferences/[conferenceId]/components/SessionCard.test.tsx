@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { SessionCard } from './SessionCard'
 import type { Session } from '../types'
 
-// Session runs 14:00–15:00 UTC; grace tail closes at 15:15 UTC.
+// Session runs 14:00–15:00 UTC; grace tail closes at 16:00 UTC.
 const session: Session = {
   id: 's1',
   conference_id: 'c1',
@@ -41,7 +41,7 @@ describe('SessionCard grace period', () => {
   })
 
   it('once the grace window closes, shows "You didn\'t check in"', () => {
-    renderCard({ now: new Date('2025-06-27T15:30:00Z') })
+    renderCard({ now: new Date('2025-06-27T16:30:00Z') })
     expect(screen.getByText("You didn't check in")).toBeInTheDocument()
     expect(screen.queryByText('Check in now')).not.toBeInTheDocument()
   })
@@ -59,7 +59,7 @@ describe('SessionCard grace period', () => {
   })
 
   it('checked in + ended + no feedback yet → "Leave feedback"', () => {
-    renderCard({ checkedIn: true, now: new Date('2025-06-27T15:30:00Z') })
+    renderCard({ checkedIn: true, now: new Date('2025-06-27T16:30:00Z') })
     expect(screen.getByText('Leave feedback')).toBeInTheDocument()
   })
 
@@ -67,7 +67,7 @@ describe('SessionCard grace period', () => {
     renderCard({
       checkedIn: true,
       feedback: { rating: 4, comment: null },
-      now: new Date('2025-06-27T15:30:00Z'),
+      now: new Date('2025-06-27T16:30:00Z'),
     })
     expect(screen.getByText('4/5')).toBeInTheDocument()
     expect(screen.queryByText('Leave feedback')).not.toBeInTheDocument()
@@ -85,7 +85,7 @@ describe('SessionCard chrome (bright while an action is wanted)', () => {
   })
 
   it('checked in + ended + feedback pending → not dimmed', () => {
-    renderCard({ checkedIn: true, now: new Date('2025-06-27T15:30:00Z') })
+    renderCard({ checkedIn: true, now: new Date('2025-06-27T16:30:00Z') })
     expect(screen.getByText('Leave feedback')).toBeInTheDocument()
     expect(card().className).not.toContain('opacity-70')
   })
@@ -94,13 +94,13 @@ describe('SessionCard chrome (bright while an action is wanted)', () => {
     renderCard({
       checkedIn: true,
       feedback: { rating: 4, comment: null },
-      now: new Date('2025-06-27T15:30:00Z'),
+      now: new Date('2025-06-27T16:30:00Z'),
     })
     expect(card().className).toContain('opacity-70')
   })
 
   it('missed check-in past grace → dims and badge is gone', () => {
-    renderCard({ now: new Date('2025-06-27T15:30:00Z') })
+    renderCard({ now: new Date('2025-06-27T16:30:00Z') })
     expect(card().className).toContain('opacity-70')
     expect(screen.queryByText('Signed up')).not.toBeInTheDocument()
   })
@@ -114,7 +114,7 @@ describe('SessionCard chrome (bright while an action is wanted)', () => {
 
   it('not signed up, past grace → dimmed, loses the join affordance, announces "ended"', async () => {
     const onSelect = vi.fn()
-    renderCard({ signedUp: false, now: new Date('2025-06-27T15:30:00Z'), onSelect })
+    renderCard({ signedUp: false, now: new Date('2025-06-27T16:30:00Z'), onSelect })
     expect(card().className).toContain('opacity-70')
     expect(card().className).not.toContain('cursor-pointer')
     expect(card()).toHaveAccessibleName('Opening Keynote — ended')

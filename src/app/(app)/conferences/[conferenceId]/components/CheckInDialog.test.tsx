@@ -145,7 +145,7 @@ describe('CheckInDialog', () => {
       )
       expect(screen.getByText('Session ended — check in now')).toBeInTheDocument()
       expect(
-        screen.getByText('You have a few minutes left to check in before it closes.'),
+        screen.getByText('Check in now before the window closes.'),
       ).toBeInTheDocument()
       expect(screen.getByRole('textbox')).toBeInTheDocument()
     })

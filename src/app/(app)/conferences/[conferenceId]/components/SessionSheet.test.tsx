@@ -20,7 +20,7 @@ beforeAll(() => {
   }
 })
 
-// Session runs 14:00–15:00 UTC; grace tail closes at 15:15 UTC.
+// Session runs 14:00–15:00 UTC; grace tail closes at 16:00 UTC.
 const session: Session = {
   id: 's1',
   conference_id: 'c1',
@@ -63,8 +63,8 @@ describe('SessionSheet check-in sticky latch', () => {
     await user.type(input, 'ABCD')
     expect(input).toHaveValue('ABCD')
 
-    // A background `now` tick advances past end+15min while the user is mid-entry.
-    rerender(<SessionSheet {...baseProps} now={new Date('2025-06-27T15:20:00Z')} />)
+    // A background `now` tick advances past end+60min while the user is mid-entry.
+    rerender(<SessionSheet {...baseProps} now={new Date('2025-06-27T16:20:00Z')} />)
 
     // The form (and the typed code) survive; the "missed check-in" notice does
     // not preempt it.
@@ -73,7 +73,7 @@ describe('SessionSheet check-in sticky latch', () => {
   })
 
   it('shows the missed notice when the sheet is first opened after the window closed', () => {
-    render(<SessionSheet {...baseProps} now={new Date('2025-06-27T15:20:00Z')} />)
+    render(<SessionSheet {...baseProps} now={new Date('2025-06-27T16:20:00Z')} />)
     expect(screen.getByText(/didn't check in/i)).toBeInTheDocument()
     expect(screen.queryByPlaceholderText('Enter code')).not.toBeInTheDocument()
   })
@@ -97,7 +97,7 @@ describe('SessionSheet RSVP during the grace tail', () => {
       <SessionSheet
         {...baseProps}
         signedUp={false}
-        now={new Date('2025-06-27T15:20:00Z')}
+        now={new Date('2025-06-27T16:20:00Z')}
       />,
     )
     expect(screen.getByRole('button', { name: 'Session has ended' })).toBeDisabled()
@@ -124,7 +124,7 @@ describe('SessionSheet RSVP during the grace tail', () => {
     )
     expect(screen.getByText('Just ended')).toBeInTheDocument()
     rerender(
-      <SessionSheet {...baseProps} signedUp={false} now={new Date('2025-06-27T15:20:00Z')} />,
+      <SessionSheet {...baseProps} signedUp={false} now={new Date('2025-06-27T16:20:00Z')} />,
     )
     expect(screen.getByText('Ended')).toBeInTheDocument()
     expect(screen.queryByText('Just ended')).not.toBeInTheDocument()
@@ -150,7 +150,7 @@ describe('SessionSheet Remove RSVP window (mirrors sign-up)', () => {
   })
 
   it('signed up, past grace → no "Remove RSVP"', () => {
-    render(<SessionSheet {...baseProps} now={new Date('2025-06-27T15:20:00Z')} />)
+    render(<SessionSheet {...baseProps} now={new Date('2025-06-27T16:20:00Z')} />)
     expect(screen.queryByRole('button', { name: 'Remove RSVP' })).not.toBeInTheDocument()
   })
 })

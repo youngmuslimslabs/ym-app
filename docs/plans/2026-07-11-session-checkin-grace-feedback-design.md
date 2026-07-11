@@ -4,6 +4,12 @@
 **Date:** 2026-07-11
 **Branch:** `feature/session-checkin-grace-feedback`
 
+> **Update — grace widened to 60 minutes.** `GRACE_MINUTES` is now `60` (was `15`)
+> in `lib/checkInWindow.ts` and mirrored server-side in `signup_for_session` /
+> `cancel_signup` (`interval '60 minutes'`). All references to "15" / "end+15"
+> below describe the original ship; the mechanic is unchanged, only the tail
+> length. See migration `00023_grace_60_minutes.sql`.
+
 ## Problem
 
 Attendees enter a per-session check-in code to register attendance, then leave feedback

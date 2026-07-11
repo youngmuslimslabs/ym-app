@@ -8,10 +8,11 @@
 
 /**
  * Minutes check-in (and RSVP) stay open after a session's end_at. Mirrored
- * server-side as `interval '15 minutes'` in signup_for_session/cancel_signup
- * (supabase/migrations/00022_grace_tail_rsvp.sql) — change both together.
+ * server-side as `interval '60 minutes'` in signup_for_session/cancel_signup
+ * (supabase/migrations/00001_initial_schema.sql and 00023_grace_60_minutes.sql)
+ * — change all three together.
  */
-export const GRACE_MINUTES = 15
+export const GRACE_MINUTES = 60
 export const GRACE_MS = GRACE_MINUTES * 60_000
 
 export interface CheckInWindow {
@@ -35,7 +36,7 @@ export interface CheckInWindow {
 
 /**
  * Pure time math for one session. Durations are absolute (ms since epoch), so
- * this is timezone-agnostic — a 15-minute grace is 15 minutes regardless of the
+ * this is timezone-agnostic — a 60-minute grace is 60 minutes regardless of the
  * conference timezone.
  */
 export function getCheckInWindow(

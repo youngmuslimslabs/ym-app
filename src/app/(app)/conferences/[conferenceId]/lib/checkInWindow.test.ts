@@ -9,14 +9,14 @@ import {
   type SessionActionInput,
 } from './checkInWindow'
 
-// Session runs 14:00–15:00 UTC. Grace tail therefore ends at 15:15 UTC.
+// Session runs 14:00–15:00 UTC. Grace tail therefore ends at 16:00 UTC.
 const START = '2025-06-27T14:00:00Z'
 const END = '2025-06-27T15:00:00Z'
 const at = (iso: string) => new Date(iso)
 
 describe('GRACE_MINUTES', () => {
-  it('is 15', () => {
-    expect(GRACE_MINUTES).toBe(15)
+  it('is 60', () => {
+    expect(GRACE_MINUTES).toBe(60)
   })
 })
 
@@ -64,8 +64,8 @@ describe('getCheckInWindow', () => {
     })
   })
 
-  it('at exactly end + 15min: grace closed (upper bound is exclusive)', () => {
-    const w = getCheckInWindow(START, END, at('2025-06-27T15:15:00Z'))
+  it('at exactly end + 60min: grace closed (upper bound is exclusive)', () => {
+    const w = getCheckInWindow(START, END, at('2025-06-27T16:00:00Z'))
     expect(w).toMatchObject({
       ended: true,
       inGrace: false,
@@ -75,8 +75,8 @@ describe('getCheckInWindow', () => {
   })
 
   it('one minute into the tail is open; one minute past close is shut', () => {
-    expect(getCheckInWindow(START, END, at('2025-06-27T15:14:00Z')).checkInOpen).toBe(true)
-    expect(getCheckInWindow(START, END, at('2025-06-27T15:16:00Z')).checkInOpen).toBe(false)
+    expect(getCheckInWindow(START, END, at('2025-06-27T15:59:00Z')).checkInOpen).toBe(true)
+    expect(getCheckInWindow(START, END, at('2025-06-27T16:01:00Z')).checkInOpen).toBe(false)
   })
 
   // ---- signUpOpen: RSVP closes at the same instant as check-in ----
@@ -88,11 +88,11 @@ describe('getCheckInWindow', () => {
 
   it('signUpOpen through the grace tail', () => {
     expect(getCheckInWindow(START, END, at('2025-06-27T15:00:00Z')).signUpOpen).toBe(true)
-    expect(getCheckInWindow(START, END, at('2025-06-27T15:14:00Z')).signUpOpen).toBe(true)
+    expect(getCheckInWindow(START, END, at('2025-06-27T15:59:00Z')).signUpOpen).toBe(true)
   })
 
   it('signUpOpen closes exactly at end + grace, in lockstep with checkInOpen', () => {
-    const w = getCheckInWindow(START, END, at('2025-06-27T15:15:00Z'))
+    const w = getCheckInWindow(START, END, at('2025-06-27T16:00:00Z'))
     expect(w.signUpOpen).toBe(false)
     expect(w.signUpOpen).toBe(w.checkInOpen)
   })
@@ -132,11 +132,11 @@ describe('getSessionActionSlot', () => {
   })
 
   it('state 5 — past grace, never checked in → missed notice', () => {
-    expect(slot({ now: at('2025-06-27T15:30:00Z') })).toEqual({ kind: 'missed' })
+    expect(slot({ now: at('2025-06-27T16:30:00Z') })).toEqual({ kind: 'missed' })
   })
 
   it('state 6 — past grace, checked in → feedback form', () => {
-    expect(slot({ checkedIn: true, now: at('2025-06-27T15:30:00Z') })).toEqual({
+    expect(slot({ checkedIn: true, now: at('2025-06-27T16:30:00Z') })).toEqual({
       kind: 'feedback',
       edit: false,
     })
@@ -145,7 +145,7 @@ describe('getSessionActionSlot', () => {
   // ---- Feedback edit flag ----
 
   it('feedback slot reports edit=true when feedback already exists', () => {
-    expect(slot({ checkedIn: true, hasFeedback: true, now: at('2025-06-27T15:30:00Z') })).toEqual({
+    expect(slot({ checkedIn: true, hasFeedback: true, now: at('2025-06-27T16:30:00Z') })).toEqual({
       kind: 'feedback',
       edit: true,
     })
@@ -162,11 +162,11 @@ describe('getSessionActionSlot', () => {
   })
 
   it('not signed up + not checked in, past grace → none (no missed notice)', () => {
-    expect(slot({ signedUp: false, now: at('2025-06-27T15:30:00Z') })).toEqual({ kind: 'none' })
+    expect(slot({ signedUp: false, now: at('2025-06-27T16:30:00Z') })).toEqual({ kind: 'none' })
   })
 
   it('checked in without a signup still gets feedback after end', () => {
-    expect(slot({ signedUp: false, checkedIn: true, now: at('2025-06-27T15:30:00Z') })).toEqual({
+    expect(slot({ signedUp: false, checkedIn: true, now: at('2025-06-27T16:30:00Z') })).toEqual({
       kind: 'feedback',
       edit: false,
     })
@@ -178,19 +178,19 @@ describe('getSessionActionSlot', () => {
 
   it('break → always none', () => {
     expect(slot({ isBreak: true, now: at('2025-06-27T14:30:00Z') })).toEqual({ kind: 'none' })
-    expect(slot({ isBreak: true, checkedIn: true, now: at('2025-06-27T15:30:00Z') })).toEqual({
+    expect(slot({ isBreak: true, checkedIn: true, now: at('2025-06-27T16:30:00Z') })).toEqual({
       kind: 'none',
     })
   })
 
   // ---- Boundary: the exact grace edge flips missed vs check-in ----
 
-  it('at end+15 exactly, not checked in → missed (window is closed)', () => {
-    expect(slot({ now: at('2025-06-27T15:15:00Z') })).toEqual({ kind: 'missed' })
+  it('at end+60 exactly, not checked in → missed (window is closed)', () => {
+    expect(slot({ now: at('2025-06-27T16:00:00Z') })).toEqual({ kind: 'missed' })
   })
 
-  it('one minute before end+15, not checked in → still check-in (grace)', () => {
-    expect(slot({ now: at('2025-06-27T15:14:00Z') })).toEqual({ kind: 'check-in', grace: true })
+  it('one minute before end+60, not checked in → still check-in (grace)', () => {
+    expect(slot({ now: at('2025-06-27T15:59:00Z') })).toEqual({ kind: 'check-in', grace: true })
   })
 })
 
@@ -205,7 +205,7 @@ describe('canSignUp (shared by card chrome and sheet footer)', () => {
   })
 
   it('closed once the grace tail ends', () => {
-    expect(canSignUp(w('2025-06-27T15:15:00Z'), open)).toBe(false)
+    expect(canSignUp(w('2025-06-27T16:00:00Z'), open)).toBe(false)
   })
 
   it('never for breaks, full sessions, or already-signed-up attendees', () => {
@@ -234,7 +234,7 @@ describe('canRemoveSignUp (mirrors the sign-up window)', () => {
 
   it('blocked once checked in, and once the grace tail ends', () => {
     expect(canRemoveSignUp(w('2025-06-27T15:07:00Z'), { ...signed, checkedIn: true })).toBe(false)
-    expect(canRemoveSignUp(w('2025-06-27T15:15:00Z'), signed)).toBe(false)
+    expect(canRemoveSignUp(w('2025-06-27T16:00:00Z'), signed)).toBe(false)
   })
 
   it('never for a user who is not signed up', () => {

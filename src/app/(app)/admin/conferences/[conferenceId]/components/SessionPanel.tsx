@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import {
   AlertTriangle,
   Calendar,
+  Check,
   CheckCircle2,
   Clock,
   Coffee,
+  Copy,
   Edit,
   MapPin,
   Search,
@@ -188,12 +190,16 @@ function ViewMode({
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [descOpen, setDescOpen] = useState(false)
+  const [descClamped, setDescClamped] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const descRef = useRef<HTMLParagraphElement>(null)
 
   useEffect(() => {
     setEntries(null)
     setError(null)
     setFilter('all')
     setSearch('')
+    setDescOpen(false)
     if (session.is_break) return
     let cancelled = false
     void loadRoster(session.id).then((res) => {
@@ -205,6 +211,12 @@ function ViewMode({
       cancelled = true
     }
   }, [session.id, session.is_break])
+
+  useEffect(() => {
+    const el = descRef.current
+    if (!el) return
+    setDescClamped(el.scrollHeight > el.clientHeight)
+  }, [session.id, session.description])
 
   const filtered = useMemo(() => {
     if (!entries) return []
@@ -257,17 +269,48 @@ function ViewMode({
             {session.room}
           </p>
         )}
+        {!session.is_break && session.check_in_code && (
+          <div className="flex items-center gap-3 pt-2">
+            <span className="text-sm text-muted-foreground">Check-in code</span>
+            <span className="font-mono text-base font-bold tracking-widest bg-muted px-3 py-1 rounded">
+              {session.check_in_code}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-0.5"
+              onClick={() => {
+                void navigator.clipboard.writeText(session.check_in_code ?? '')
+                  .then(() => {
+                    setCopied(true)
+                    toast.success('Copied')
+                    setTimeout(() => setCopied(false), 2000)
+                  })
+                  .catch(() => toast.error('Could not copy'))
+              }}
+            >
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+        )}
       </header>
 
       {session.description && (
         <div className="px-6 py-4 text-sm leading-relaxed text-foreground/80 border-b shrink-0">
-          <p className="line-clamp-3">{session.description}</p>
-          <button
-            onClick={() => setDescOpen(true)}
-            className="mt-1 text-xs text-primary hover:underline"
-          >
-            See more
-          </button>
+          <p ref={descRef} className="line-clamp-3">{session.description}</p>
+          {descClamped && (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="mt-1 h-auto p-0 text-xs"
+              onClick={() => setDescOpen(true)}
+            >
+              See more
+            </Button>
+          )}
           <Dialog open={descOpen} onOpenChange={setDescOpen}>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>

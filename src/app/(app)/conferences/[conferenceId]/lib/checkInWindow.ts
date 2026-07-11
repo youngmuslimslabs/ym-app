@@ -6,7 +6,11 @@
 // pre-existing "feedback only after session ends" RLS gate still backstops the
 // timing half. See docs/plans/2026-07-11-session-checkin-grace-feedback-design.md.
 
-/** Minutes check-in stays open after a session's end_at. Fixed constant. */
+/**
+ * Minutes check-in (and RSVP) stay open after a session's end_at. Mirrored
+ * server-side as `interval '15 minutes'` in signup_for_session/cancel_signup
+ * (supabase/migrations/00022_grace_tail_rsvp.sql) — change both together.
+ */
 export const GRACE_MINUTES = 15
 export const GRACE_MS = GRACE_MINUTES * 60_000
 
@@ -73,7 +77,9 @@ export function canSignUp(
  * Whether Remove RSVP should be offered. Removal mirrors creation — allowed
  * before start and during the grace tail (the escape hatch for a mistapped
  * grace-tail signup) — but never mid-session and never after checking in.
- * cancel_signup (migration 00022) enforces the same window server-side.
+ * cancel_signup (migration 00022) enforces the outer bounds server-side
+ * (window close + checked-in); hiding the button mid-session is UI-only,
+ * per the app-layer-enforcement decision.
  */
 export function canRemoveSignUp(
   w: CheckInWindow,

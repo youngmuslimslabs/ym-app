@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ConferenceOnboardingBanner } from './components/ConferenceOnboardingBanner'
+import { getCheckInWindow } from './lib/checkInWindow'
 import { DaySchedule } from './components/DaySchedule'
 import { SessionSheet } from './components/SessionSheet'
 import {
@@ -69,15 +70,19 @@ export function ScheduleContent({ initialView }: Props) {
   async function handleSignup(sessionId: string) {
     const target = view.sessions.find((s) => s.id === sessionId)
     if (!target) return
-    // Ended sessions are attendance history: signup_for_session (00022) no
-    // longer swaps them out, so don't warn about them either — a grace-tail
-    // signup must never look like it costs a session already attended.
+    // Mirror the swap rule in signup_for_session (00022): only signups the
+    // user could still cancel — sign-up window open, not checked in — get
+    // swapped out; everything else is attendance/no-show history and
+    // survives, so don't warn about it. Uses a fresh clock, not the 60s-tick
+    // `now`, so the dialog can't promise a swap the server won't perform.
+    const fresh = new Date()
     const conflicts = view.sessions.filter(
       (s) =>
         s.id !== sessionId &&
         view.mySignupSessionIds.has(s.id) &&
+        !view.myCheckInSessionIds.has(s.id) &&
         rangesOverlap(s.start_at, s.end_at, target.start_at, target.end_at) &&
-        new Date(s.end_at).getTime() > now.getTime()
+        getCheckInWindow(s.start_at, s.end_at, fresh).signUpOpen
     )
     if (conflicts.length > 0) {
       setPendingSwap({ targetId: sessionId, conflicts })

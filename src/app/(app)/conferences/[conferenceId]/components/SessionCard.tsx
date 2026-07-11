@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import { Check, CheckCircle2, Clock, Coffee, MapPin, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsClamped } from '@/hooks/use-is-clamped'
-import { getSessionState } from '../lib/checkInWindow'
+import { canSignUp, getSessionState } from '../lib/checkInWindow'
 import type { Session } from '../types'
 
 interface Props {
@@ -52,15 +52,19 @@ export function SessionCard({
 
   const capacity = session.capacity
   const full = capacity != null && seatCount >= capacity && !signedUp
+  // RSVP stays open through the grace tail (same window as check-in), so a
+  // never-signed-up card remains joinable — clickable and undimmed — until
+  // sign-up closes at end + grace. Same rule the sheet footer uses.
+  const joinable = canSignUp(w, { isBreak: false, signedUp, full })
 
   // Card chrome — active/signed-up gets a primary border; full is muted; a truly
-  // finished card (ended, nothing left to do) is dimmed.
+  // finished card (ended, nothing left to do or join) is dimmed.
   const cardClass = cn(
     'rounded-xl border bg-card p-5 md:p-6 shadow-sm relative transition-all duration-200',
     ((signedUp && !ended) || wantsAction) && 'border-2 border-primary bg-primary/5',
-    !signedUp && !full && !ended && 'hover:border-foreground/20 hover:shadow-md cursor-pointer',
+    joinable && 'hover:border-foreground/20 hover:shadow-md cursor-pointer',
     full && 'opacity-60 cursor-not-allowed',
-    ended && !wantsAction && 'opacity-70'
+    ended && !wantsAction && !joinable && 'opacity-70'
   )
 
   return (
@@ -69,7 +73,7 @@ export function SessionCard({
       onClick={full ? undefined : onSelect}
       disabled={full}
       className={cn(cardClass, 'w-full text-left')}
-      aria-label={`${session.title} — ${signedUp ? 'signed up' : full ? 'full' : 'available'}`}
+      aria-label={`${session.title} — ${signedUp ? 'signed up' : full ? 'full' : joinable ? 'available' : 'ended'}`}
     >
       {/* Top-right badges — stacked column so Signed up + Happening now don't overlap */}
       <div className="absolute top-4 right-4 flex flex-col items-end gap-1.5">

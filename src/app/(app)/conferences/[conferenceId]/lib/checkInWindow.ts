@@ -6,7 +6,11 @@
 // pre-existing "feedback only after session ends" RLS gate still backstops the
 // timing half. See docs/plans/2026-07-11-session-checkin-grace-feedback-design.md.
 
-/** Minutes check-in stays open after a session's end_at. Fixed constant. */
+/**
+ * Minutes check-in (and RSVP) stay open after a session's end_at. Mirrored
+ * server-side as `interval '15 minutes'` in signup_for_session/cancel_signup
+ * (supabase/migrations/00022_grace_tail_rsvp.sql) — change both together.
+ */
 export const GRACE_MINUTES = 15
 export const GRACE_MS = GRACE_MINUTES * 60_000
 
@@ -21,6 +25,12 @@ export interface CheckInWindow {
   graceEnded: boolean
   /** now ∈ [start, end + grace) — the full window an attendee can check in */
   checkInOpen: boolean
+  /**
+   * now < end + grace — RSVP is still allowed. Derived from the same comparison
+   * as graceEnded/checkInOpen so a walk-in can always sign-up-then-check-in
+   * during the grace tail; changing GRACE_MINUTES moves both windows together.
+   */
+  signUpOpen: boolean
 }
 
 /**
@@ -37,14 +47,45 @@ export function getCheckInWindow(
   const endMs = new Date(endAt).getTime()
   const graceEndMs = endMs + GRACE_MS
   const nowMs = now.getTime()
+  // Single close-of-window comparison; every "still open" flag is derived from
+  // it so the check-in and RSVP windows can never drift apart.
+  const graceEnded = nowMs >= graceEndMs
 
   return {
     inProgress: nowMs >= startMs && nowMs < endMs,
     ended: nowMs >= endMs,
-    inGrace: nowMs >= endMs && nowMs < graceEndMs,
-    graceEnded: nowMs >= graceEndMs,
-    checkInOpen: nowMs >= startMs && nowMs < graceEndMs,
+    inGrace: nowMs >= endMs && !graceEnded,
+    graceEnded,
+    checkInOpen: nowMs >= startMs && !graceEnded,
+    signUpOpen: !graceEnded,
   }
+}
+
+/**
+ * Whether the Sign up action should be offered. Shared by SessionCard (joinable
+ * chrome) and SessionSheet (footer button) for the same reason getSessionState
+ * exists: the two must never disagree about the same session.
+ */
+export function canSignUp(
+  w: CheckInWindow,
+  i: { isBreak: boolean; signedUp: boolean; full: boolean }
+): boolean {
+  return !i.isBreak && !i.signedUp && !i.full && w.signUpOpen
+}
+
+/**
+ * Whether Remove RSVP should be offered. Removal mirrors creation — allowed
+ * before start and during the grace tail (the escape hatch for a mistapped
+ * grace-tail signup) — but never mid-session and never after checking in.
+ * cancel_signup (migration 00022) enforces the outer bounds server-side
+ * (window close + checked-in); hiding the button mid-session is UI-only,
+ * per the app-layer-enforcement decision.
+ */
+export function canRemoveSignUp(
+  w: CheckInWindow,
+  i: { signedUp: boolean; checkedIn: boolean }
+): boolean {
+  return i.signedUp && !i.checkedIn && !w.inProgress && w.signUpOpen
 }
 
 export interface SessionActionInput {

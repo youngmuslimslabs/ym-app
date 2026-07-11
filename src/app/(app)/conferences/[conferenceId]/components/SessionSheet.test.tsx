@@ -78,3 +78,79 @@ describe('SessionSheet check-in sticky latch', () => {
     expect(screen.queryByPlaceholderText('Enter code')).not.toBeInTheDocument()
   })
 })
+
+describe('SessionSheet RSVP during the grace tail', () => {
+  it('not signed up, grace tail → still offers "Sign up", not "Session has ended"', () => {
+    render(
+      <SessionSheet
+        {...baseProps}
+        signedUp={false}
+        now={new Date('2025-06-27T15:07:00Z')}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Sign up' })).toBeEnabled()
+    expect(screen.queryByText('Session has ended')).not.toBeInTheDocument()
+  })
+
+  it('not signed up, past grace → disabled "Session has ended"', () => {
+    render(
+      <SessionSheet
+        {...baseProps}
+        signedUp={false}
+        now={new Date('2025-06-27T15:20:00Z')}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Session has ended' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Sign up' })).not.toBeInTheDocument()
+  })
+
+  it('not signed up + full, grace tail → "Session full", never "Sign up"', () => {
+    render(
+      <SessionSheet
+        {...baseProps}
+        session={{ ...session, capacity: 1 }}
+        seatCount={1}
+        signedUp={false}
+        now={new Date('2025-06-27T15:07:00Z')}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Session full' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Sign up' })).not.toBeInTheDocument()
+  })
+
+  it('status pill reads "Just ended" during the grace tail, "Ended" after it', () => {
+    const { rerender } = render(
+      <SessionSheet {...baseProps} signedUp={false} now={new Date('2025-06-27T15:07:00Z')} />,
+    )
+    expect(screen.getByText('Just ended')).toBeInTheDocument()
+    rerender(
+      <SessionSheet {...baseProps} signedUp={false} now={new Date('2025-06-27T15:20:00Z')} />,
+    )
+    expect(screen.getByText('Ended')).toBeInTheDocument()
+    expect(screen.queryByText('Just ended')).not.toBeInTheDocument()
+  })
+})
+
+describe('SessionSheet Remove RSVP window (mirrors sign-up)', () => {
+  it('signed up, not checked in, grace tail → offers "Remove RSVP"', () => {
+    render(<SessionSheet {...baseProps} now={new Date('2025-06-27T15:07:00Z')} />)
+    expect(screen.getByRole('button', { name: 'Remove RSVP' })).toBeEnabled()
+  })
+
+  it('signed up, session in progress → no "Remove RSVP"', () => {
+    render(<SessionSheet {...baseProps} now={new Date('2025-06-27T14:30:00Z')} />)
+    expect(screen.queryByRole('button', { name: 'Remove RSVP' })).not.toBeInTheDocument()
+  })
+
+  it('checked in during the grace tail → no "Remove RSVP" (feedback owns the sheet)', () => {
+    render(
+      <SessionSheet {...baseProps} checkedIn now={new Date('2025-06-27T15:07:00Z')} />,
+    )
+    expect(screen.queryByRole('button', { name: 'Remove RSVP' })).not.toBeInTheDocument()
+  })
+
+  it('signed up, past grace → no "Remove RSVP"', () => {
+    render(<SessionSheet {...baseProps} now={new Date('2025-06-27T15:20:00Z')} />)
+    expect(screen.queryByRole('button', { name: 'Remove RSVP' })).not.toBeInTheDocument()
+  })
+})

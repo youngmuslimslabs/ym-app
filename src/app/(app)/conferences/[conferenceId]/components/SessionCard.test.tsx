@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { SessionCard } from './SessionCard'
 import type { Session } from '../types'
 
@@ -102,5 +103,39 @@ describe('SessionCard chrome (bright while an action is wanted)', () => {
     renderCard({ now: new Date('2025-06-27T15:30:00Z') })
     expect(card().className).toContain('opacity-70')
     expect(screen.queryByText('Signed up')).not.toBeInTheDocument()
+  })
+
+  it('not signed up, grace tail → stays joinable (clickable, not dimmed)', () => {
+    renderCard({ signedUp: false, now: new Date('2025-06-27T15:07:00Z') })
+    expect(card().className).toContain('cursor-pointer')
+    expect(card().className).not.toContain('opacity-70')
+    expect(card()).toHaveAccessibleName('Opening Keynote — available')
+  })
+
+  it('not signed up, past grace → dimmed, loses the join affordance, announces "ended"', async () => {
+    const onSelect = vi.fn()
+    renderCard({ signedUp: false, now: new Date('2025-06-27T15:30:00Z'), onSelect })
+    expect(card().className).toContain('opacity-70')
+    expect(card().className).not.toContain('cursor-pointer')
+    expect(card()).toHaveAccessibleName('Opening Keynote — ended')
+    // Still opens the sheet for details — the dead end is communicated there.
+    const user = userEvent.setup()
+    await user.click(card())
+    expect(onSelect).toHaveBeenCalled()
+  })
+
+  it('not signed up + full, grace tail → dimmed and never joinable', () => {
+    renderCard({
+      session: { ...session, capacity: 1 },
+      seatCount: 1,
+      signedUp: false,
+      now: new Date('2025-06-27T15:07:00Z'),
+    })
+    // tailwind-merge keeps the later opacity-70 (ended dim) over full's
+    // opacity-60 — either way the card must read as dimmed, not joinable.
+    expect(card().className).toContain('opacity-70')
+    expect(card().className).toContain('cursor-not-allowed')
+    expect(card().className).not.toContain('cursor-pointer')
+    expect(card()).toHaveAccessibleName('Opening Keynote — full')
   })
 })

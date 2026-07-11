@@ -30,6 +30,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { createSession, deleteSession, updateSession } from '../../client-actions'
 import {
@@ -181,6 +187,7 @@ function ViewMode({
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
+  const [descOpen, setDescOpen] = useState(false)
 
   useEffect(() => {
     setEntries(null)
@@ -253,8 +260,24 @@ function ViewMode({
       </header>
 
       {session.description && (
-        <div className="px-6 py-4 text-sm leading-relaxed text-foreground/80 border-b">
-          {session.description}
+        <div className="px-6 py-4 text-sm leading-relaxed text-foreground/80 border-b shrink-0">
+          <p className="line-clamp-3">{session.description}</p>
+          <button
+            onClick={() => setDescOpen(true)}
+            className="mt-1 text-xs text-primary hover:underline"
+          >
+            See more
+          </button>
+          <Dialog open={descOpen} onOpenChange={setDescOpen}>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{session.title}</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                {session.description}
+              </p>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 

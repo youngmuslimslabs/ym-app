@@ -39,6 +39,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { useIsClamped } from '@/hooks/use-is-clamped'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { createSession, deleteSession, updateSession } from '../../client-actions'
 import {
   composeSessionIsos,
@@ -190,9 +192,12 @@ function ViewMode({
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [descOpen, setDescOpen] = useState(false)
-  const [descClamped, setDescClamped] = useState(false)
-  const [copied, setCopied] = useState(false)
   const descRef = useRef<HTMLParagraphElement>(null)
+  const descClamped = useIsClamped(descRef, [session.id, session.description])
+  const { copied, copy, reset: resetCopied } = useCopyToClipboard({
+    onSuccess: () => toast.success('Copied'),
+    onError: () => toast.error('Could not copy'),
+  })
 
   useEffect(() => {
     setEntries(null)
@@ -200,6 +205,7 @@ function ViewMode({
     setFilter('all')
     setSearch('')
     setDescOpen(false)
+    resetCopied()
     if (session.is_break) return
     let cancelled = false
     void loadRoster(session.id).then((res) => {
@@ -210,13 +216,7 @@ function ViewMode({
     return () => {
       cancelled = true
     }
-  }, [session.id, session.is_break])
-
-  useEffect(() => {
-    const el = descRef.current
-    if (!el) return
-    setDescClamped(el.scrollHeight > el.clientHeight)
-  }, [session.id, session.description])
+  }, [session.id, session.is_break, resetCopied])
 
   const filtered = useMemo(() => {
     if (!entries) return []
@@ -280,15 +280,7 @@ function ViewMode({
               variant="ghost"
               size="sm"
               className="h-auto px-2 py-0.5"
-              onClick={() => {
-                void navigator.clipboard.writeText(session.check_in_code ?? '')
-                  .then(() => {
-                    setCopied(true)
-                    toast.success('Copied')
-                    setTimeout(() => setCopied(false), 2000)
-                  })
-                  .catch(() => toast.error('Could not copy'))
-              }}
+              onClick={() => void copy(session.check_in_code ?? '')}
             >
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copied' : 'Copy'}
@@ -299,7 +291,9 @@ function ViewMode({
 
       {session.description && (
         <div className="px-6 py-4 text-sm leading-relaxed text-foreground/80 border-b shrink-0">
-          <p ref={descRef} className="line-clamp-3">{session.description}</p>
+          <p ref={descRef} className="line-clamp-3 whitespace-pre-wrap">
+            {session.description}
+          </p>
           {descClamped && (
             <Button
               type="button"

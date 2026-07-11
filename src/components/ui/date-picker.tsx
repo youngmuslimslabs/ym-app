@@ -2,7 +2,9 @@
 
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
+import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -10,6 +12,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 
 // Round-trip DATE columns (YYYY-MM-DD) through Date objects without timezone
 // drift. Native `new Date('2026-04-26')` parses as UTC midnight, which then
@@ -56,41 +64,76 @@ export function DatePicker({
   toDate,
   className,
 }: Props) {
+  const isMobile = useIsMobile()
+  const [open, setOpen] = React.useState(false)
+
+  // Closing on select is a no-op for the uncontrolled desktop Popover (it ignores
+  // `open`) but dismisses the controlled mobile Dialog — so desktop behavior is
+  // unchanged while mobile closes the modal once a day is picked.
+  const handleSelect = (date: Date | undefined) => {
+    onChange(date)
+    setOpen(false)
+  }
+
+  const trigger = (
+    <Button
+      id={id}
+      type="button"
+      variant="outline"
+      disabled={disabled}
+      className={cn(
+        'w-full justify-start text-left font-normal',
+        !value && 'text-muted-foreground',
+        className
+      )}
+    >
+      <CalendarIcon className="mr-2 h-4 w-4" />
+      {value ? format(value, 'PPP') : placeholder}
+    </Button>
+  )
+
+  const calendar = (
+    <Calendar
+      mode="single"
+      selected={value}
+      onSelect={handleSelect}
+      initialFocus
+      captionLayout="dropdown"
+      fromYear={fromYear}
+      toYear={toYear}
+      disabled={
+        fromDate || toDate
+          ? (date) =>
+              (fromDate ? date < fromDate : false) ||
+              (toDate ? date > toDate : false)
+          : undefined
+      }
+    />
+  )
+
+  // Mobile: a centered modal. Decoupling from the trigger avoids the Radix
+  // collision math that clips anchored calendars off the bottom/side of small
+  // viewports (issue #51); max-width keeps it inside a 329px screen.
+  if (isMobile) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent
+          aria-describedby={undefined}
+          className="w-auto max-w-[calc(100vw-2rem)] justify-items-center p-4"
+        >
+          <DialogTitle className="sr-only">{placeholder}</DialogTitle>
+          {calendar}
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          className={cn(
-            'w-full justify-start text-left font-normal',
-            !value && 'text-muted-foreground',
-            className
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, 'PPP') : placeholder}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={value}
-          onSelect={onChange}
-          initialFocus
-          captionLayout="dropdown"
-          fromYear={fromYear}
-          toYear={toYear}
-          disabled={
-            fromDate || toDate
-              ? (date) =>
-                  (fromDate ? date < fromDate : false) ||
-                  (toDate ? date > toDate : false)
-              : undefined
-          }
-        />
+        {calendar}
       </PopoverContent>
     </Popover>
   )

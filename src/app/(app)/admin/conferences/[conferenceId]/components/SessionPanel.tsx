@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import {
   AlertTriangle,
   Calendar,
+  Check,
   CheckCircle2,
   Clock,
   Coffee,
+  Copy,
   Edit,
   MapPin,
   Search,
@@ -30,7 +32,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { useIsClamped } from '@/hooks/use-is-clamped'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { createSession, deleteSession, updateSession } from '../../client-actions'
 import {
   composeSessionIsos,
@@ -181,12 +191,21 @@ function ViewMode({
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
+  const [descOpen, setDescOpen] = useState(false)
+  const descRef = useRef<HTMLParagraphElement>(null)
+  const descClamped = useIsClamped(descRef, [session.id, session.description])
+  const { copied, copy, reset: resetCopied } = useCopyToClipboard({
+    onSuccess: () => toast.success('Copied'),
+    onError: () => toast.error('Could not copy'),
+  })
 
   useEffect(() => {
     setEntries(null)
     setError(null)
     setFilter('all')
     setSearch('')
+    setDescOpen(false)
+    resetCopied()
     if (session.is_break) return
     let cancelled = false
     void loadRoster(session.id).then((res) => {
@@ -197,7 +216,7 @@ function ViewMode({
     return () => {
       cancelled = true
     }
-  }, [session.id, session.is_break])
+  }, [session.id, session.is_break, resetCopied])
 
   const filtered = useMemo(() => {
     if (!entries) return []
@@ -250,11 +269,52 @@ function ViewMode({
             {session.room}
           </p>
         )}
+        {!session.is_break && session.check_in_code && (
+          <div className="flex items-center gap-3 pt-2">
+            <span className="text-sm text-muted-foreground">Check-in code</span>
+            <span className="font-mono text-base font-bold tracking-widest bg-muted px-3 py-1 rounded">
+              {session.check_in_code}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-0.5"
+              onClick={() => void copy(session.check_in_code ?? '')}
+            >
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+        )}
       </header>
 
       {session.description && (
-        <div className="px-6 py-4 text-sm leading-relaxed text-foreground/80 border-b">
-          {session.description}
+        <div className="px-6 py-4 text-sm leading-relaxed text-foreground/80 border-b shrink-0">
+          <p ref={descRef} className="line-clamp-3 whitespace-pre-wrap">
+            {session.description}
+          </p>
+          {descClamped && (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="mt-1 h-auto p-0 text-xs"
+              onClick={() => setDescOpen(true)}
+            >
+              See more
+            </Button>
+          )}
+          <Dialog open={descOpen} onOpenChange={setDescOpen}>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{session.title}</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                {session.description}
+              </p>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 

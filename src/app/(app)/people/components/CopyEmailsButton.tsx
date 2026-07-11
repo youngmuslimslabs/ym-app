@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import type { PersonListItem } from '../types'
 
 interface CopyEmailsButtonProps {
@@ -11,17 +11,12 @@ interface CopyEmailsButtonProps {
 }
 
 export function CopyEmailsButton({ people }: CopyEmailsButtonProps) {
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useCopyToClipboard({
+    onError: (err) => console.error('Failed to copy emails:', err),
+  })
 
-  const handleCopy = async () => {
-    const emails = people.map((p) => p.email).join(', ')
-    try {
-      await navigator.clipboard.writeText(emails)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy emails:', err)
-    }
+  const handleCopy = () => {
+    void copy(people.map((p) => p.email).join(', '))
   }
 
   if (people.length === 0) {

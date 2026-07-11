@@ -244,7 +244,7 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
             </section>
           ))}
         </div>
-        <div className="bg-background flex flex-col">{panel}</div>
+        <div className="bg-background flex flex-col overflow-hidden">{panel}</div>
         {discardDialog}
       </div>
     )

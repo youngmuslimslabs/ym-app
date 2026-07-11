@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import { Check, CheckCircle2, Clock, Coffee, MapPin, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useIsClamped } from '@/hooks/use-is-clamped'
 import { getSessionState } from '../lib/checkInWindow'
 import type { Session } from '../types'
 
@@ -150,13 +151,7 @@ export function SessionCard({
 // sessions without descriptions (breaks, ended sessions).
 function ClampedDescription({ description }: { description: string }) {
   const ref = useRef<HTMLParagraphElement>(null)
-  const [clamped, setClamped] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    setClamped(el.scrollHeight > el.clientHeight)
-  }, [description])
+  const clamped = useIsClamped(ref, [description])
 
   return (
     <div className="relative mt-2 mb-1">

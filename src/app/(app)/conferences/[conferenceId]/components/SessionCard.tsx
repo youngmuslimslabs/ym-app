@@ -1,9 +1,10 @@
 'use client'
 
 import { useRef } from 'react'
-import { Check, CheckCircle2, Coffee, MapPin, Star } from 'lucide-react'
+import { Check, CheckCircle2, Clock, Coffee, MapPin, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsClamped } from '@/hooks/use-is-clamped'
+import { getSessionState } from '../lib/checkInWindow'
 import type { Session } from '../types'
 
 interface Props {
@@ -29,24 +30,37 @@ export function SessionCard({
     return <BreakCard session={session} />
   }
 
-  const startMs = new Date(session.start_at).getTime()
-  const endMs = new Date(session.end_at).getTime()
-  const nowMs = now.getTime()
-
-  const inProgress = nowMs >= startMs && nowMs < endMs
-  const ended = nowMs >= endMs
+  // Share the exact state machine the detail sheet uses, so a card badge and the
+  // sheet body can never disagree about the same session.
+  const { slot, window: w } = getSessionState({
+    startAt: session.start_at,
+    endAt: session.end_at,
+    isBreak: false,
+    signedUp,
+    checkedIn,
+    hasFeedback: feedback != null,
+    now,
+  })
+  const { inProgress, ended } = w
   const upcoming = !inProgress && !ended
+  // Chrome rule: a card stays visually ACTIVE while it still wants an action
+  // from the attendee — an open check-in (in-session or grace tail) or an
+  // unanswered feedback prompt. It only dims once it has nothing left to ask
+  // (feedback submitted, check-in missed, or a session they never joined).
+  const pendingCheckIn = slot.kind === 'check-in'
+  const wantsAction = pendingCheckIn || (slot.kind === 'feedback' && !feedback)
 
   const capacity = session.capacity
   const full = capacity != null && seatCount >= capacity && !signedUp
 
-  // Card chrome — selected gets a primary border, full is muted, ended is dimmed.
+  // Card chrome — active/signed-up gets a primary border; full is muted; a truly
+  // finished card (ended, nothing left to do) is dimmed.
   const cardClass = cn(
     'rounded-xl border bg-card p-5 md:p-6 shadow-sm relative transition-all duration-200',
-    signedUp && !ended && 'border-2 border-primary bg-primary/5',
+    ((signedUp && !ended) || wantsAction) && 'border-2 border-primary bg-primary/5',
     !signedUp && !full && !ended && 'hover:border-foreground/20 hover:shadow-md cursor-pointer',
     full && 'opacity-60 cursor-not-allowed',
-    ended && 'opacity-70'
+    ended && !wantsAction && 'opacity-70'
   )
 
   return (
@@ -59,7 +73,7 @@ export function SessionCard({
     >
       {/* Top-right badges — stacked column so Signed up + Happening now don't overlap */}
       <div className="absolute top-4 right-4 flex flex-col items-end gap-1.5">
-        {signedUp && !ended && (
+        {signedUp && (!ended || pendingCheckIn) && (
           <span className="inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold gap-1">
             <Check className="w-3 h-3" />
             Signed up
@@ -104,10 +118,16 @@ export function SessionCard({
             Checked in
           </span>
         )}
-        {ended && signedUp && !checkedIn && (
+        {slot.kind === 'check-in' && slot.grace && (
+          <span className="inline-flex items-center gap-1.5 text-primary font-medium">
+            <Clock className="w-3.5 h-3.5" />
+            Check in now
+          </span>
+        )}
+        {slot.kind === 'missed' && (
           <span className="text-muted-foreground">You didn&apos;t check in</span>
         )}
-        {ended && checkedIn && !feedback && (
+        {slot.kind === 'feedback' && !feedback && (
           <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2 py-0.5 font-medium text-foreground">
             <Star className="w-3 h-3" />
             Leave feedback

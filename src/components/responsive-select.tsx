@@ -87,7 +87,7 @@ export function ResponsiveSelect({
         </DialogTrigger>
         <DialogContent
           aria-describedby={undefined}
-          className="max-w-[calc(100vw-2rem)] gap-0 p-0 sm:max-w-sm"
+          className="max-w-[calc(100vw-2rem)] gap-0 rounded-lg p-0 sm:max-w-sm"
         >
           <DialogTitle className="px-4 pb-2 pt-4 text-base font-semibold">
             {placeholder}

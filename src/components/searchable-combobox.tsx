@@ -20,11 +20,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export interface ComboboxOption {
   value: string
@@ -186,27 +186,28 @@ export function SearchableCombobox({
     </Command>
   )
 
-  // Mobile: a bottom sheet (modal). Decoupling the overlay from the trigger
-  // sidesteps the Radix collision math that clips anchored popovers on small
-  // viewports, and the bottom anchor keeps the search input above the keyboard.
+  // Mobile: a centered modal (same pattern as ResponsiveSelect). Decoupling the
+  // overlay from the trigger sidesteps the Radix collision math that clips
+  // anchored popovers on small viewports. Fixed height (not max-h) so the frame
+  // stays put as the filtered list shrinks — only the list scrolls inside.
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent
-          side="bottom"
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent
           aria-describedby={undefined}
-          className="flex max-h-[85dvh] flex-col gap-0 p-0"
+          className="flex h-[70dvh] max-w-[calc(100vw-2rem)] flex-col gap-0 rounded-lg p-0 sm:max-w-md"
         >
-          <SheetTitle className="sr-only">{placeholder}</SheetTitle>
-          {/* Pad the search row so its text/tap target clears the Sheet's
-              absolute top-right Close button. */}
+          <DialogTitle className="sr-only">{placeholder}</DialogTitle>
+          {/* rounded-none lets the Dialog's overflow-hidden own the corner
+              radius (no inner rounded-md sliver); pr-9 keeps the search row's
+              text/tap target clear of the Dialog's absolute Close button. */}
           {command({
-            listClassName: "max-h-none flex-1",
-            className: "[&_[cmdk-input-wrapper]]:pr-9",
+            listClassName: "max-h-none min-h-0 flex-1",
+            className: "min-h-0 flex-1 rounded-none [&_[cmdk-input-wrapper]]:pr-9",
           })}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     )
   }
 

@@ -19,6 +19,24 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   }
 }
 
+// jsdom lacks matchMedia, which useIsMobile() (now used by form primitives like
+// SearchableCombobox / DatePicker / ResponsiveSelect) calls in an effect. Stub it
+// as a non-matching query so those components default to the desktop branch;
+// mobile-specific tests override by mocking '@/hooks/use-mobile'. Test-only.
+if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as unknown as MediaQueryList
+}
+
 afterEach(() => {
   cleanup()
 })

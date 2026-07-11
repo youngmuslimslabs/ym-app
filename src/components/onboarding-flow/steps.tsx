@@ -4,13 +4,7 @@ import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { ResponsiveSelect } from '@/components/responsive-select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { SearchableCombobox, type ComboboxValue } from '@/components/searchable-combobox'
 import { cn } from '@/lib/utils'
@@ -140,18 +134,13 @@ export function SelectStep({
   return (
     <div className="flex flex-col gap-6">
       <StepHeader label={label} help={help} />
-      <Select value={value || undefined} onValueChange={onSelect}>
-        <SelectTrigger className="h-14 text-base">
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <ResponsiveSelect
+        options={options}
+        value={value || undefined}
+        onValueChange={onSelect}
+        placeholder={placeholder}
+        triggerClassName="h-14 text-base"
+      />
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={!value} className="min-w-32">
           Continue

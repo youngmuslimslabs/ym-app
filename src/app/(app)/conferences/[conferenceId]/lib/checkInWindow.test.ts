@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   GRACE_MINUTES,
+  canRemoveSignUp,
+  canSignUp,
   getCheckInWindow,
   getSessionActionSlot,
   getSessionState,
@@ -189,6 +191,54 @@ describe('getSessionActionSlot', () => {
 
   it('one minute before end+15, not checked in → still check-in (grace)', () => {
     expect(slot({ now: at('2025-06-27T15:14:00Z') })).toEqual({ kind: 'check-in', grace: true })
+  })
+})
+
+describe('canSignUp (shared by card chrome and sheet footer)', () => {
+  const w = (iso: string) => getCheckInWindow(START, END, at(iso))
+  const open = { isBreak: false, signedUp: false, full: false }
+
+  it('open before start, during the session, and through the grace tail', () => {
+    expect(canSignUp(w('2025-06-27T13:00:00Z'), open)).toBe(true)
+    expect(canSignUp(w('2025-06-27T14:30:00Z'), open)).toBe(true)
+    expect(canSignUp(w('2025-06-27T15:07:00Z'), open)).toBe(true)
+  })
+
+  it('closed once the grace tail ends', () => {
+    expect(canSignUp(w('2025-06-27T15:15:00Z'), open)).toBe(false)
+  })
+
+  it('never for breaks, full sessions, or already-signed-up attendees', () => {
+    const g = w('2025-06-27T15:07:00Z')
+    expect(canSignUp(g, { ...open, isBreak: true })).toBe(false)
+    expect(canSignUp(g, { ...open, full: true })).toBe(false)
+    expect(canSignUp(g, { ...open, signedUp: true })).toBe(false)
+  })
+})
+
+describe('canRemoveSignUp (mirrors the sign-up window)', () => {
+  const w = (iso: string) => getCheckInWindow(START, END, at(iso))
+  const signed = { signedUp: true, checkedIn: false }
+
+  it('allowed before start', () => {
+    expect(canRemoveSignUp(w('2025-06-27T13:00:00Z'), signed)).toBe(true)
+  })
+
+  it('blocked while the session is running', () => {
+    expect(canRemoveSignUp(w('2025-06-27T14:30:00Z'), signed)).toBe(false)
+  })
+
+  it('allowed during the grace tail (escape hatch for a mistapped signup)', () => {
+    expect(canRemoveSignUp(w('2025-06-27T15:07:00Z'), signed)).toBe(true)
+  })
+
+  it('blocked once checked in, and once the grace tail ends', () => {
+    expect(canRemoveSignUp(w('2025-06-27T15:07:00Z'), { ...signed, checkedIn: true })).toBe(false)
+    expect(canRemoveSignUp(w('2025-06-27T15:15:00Z'), signed)).toBe(false)
+  })
+
+  it('never for a user who is not signed up', () => {
+    expect(canRemoveSignUp(w('2025-06-27T13:00:00Z'), { ...signed, signedUp: false })).toBe(false)
   })
 })
 

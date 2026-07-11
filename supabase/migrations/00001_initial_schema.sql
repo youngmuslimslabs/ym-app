@@ -515,6 +515,9 @@ BEGIN
       AND ss.session_id = s.id
       AND s.conference_id = v_target.conference_id
       AND s.id <> p_session_id
+      -- Never swap out an already-ended session: that signup is attendance
+      -- history, and a grace-tail signup would otherwise silently erase it.
+      AND s.end_at > now()
       AND tstzrange(s.start_at, s.end_at) && tstzrange(v_target.start_at, v_target.end_at)
     RETURNING s.id
   )
@@ -530,16 +533,26 @@ CREATE OR REPLACE FUNCTION public.cancel_signup(p_session_id uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $$
 DECLARE
   v_user_id UUID;
-  v_start_at TIMESTAMPTZ;
+  v_end_at TIMESTAMPTZ;
 BEGIN
   v_user_id := get_current_user_id();
   IF v_user_id IS NULL THEN
     RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
   END IF;
 
-  SELECT start_at INTO v_start_at FROM sessions WHERE id = p_session_id;
-  IF v_start_at IS NOT NULL AND v_start_at <= now() THEN
-    RETURN jsonb_build_object('success', false, 'error', 'Cannot cancel after a session has started');
+  -- Cancel window mirrors the sign-up window: open until end_at + grace.
+  -- 15 minutes = GRACE_MINUTES in lib/checkInWindow.ts; keep in sync.
+  SELECT end_at INTO v_end_at FROM sessions WHERE id = p_session_id;
+  IF v_end_at IS NOT NULL AND now() >= v_end_at + interval '15 minutes' THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Cannot cancel after the check-in window has closed');
+  END IF;
+
+  -- A checked-in attendee's signup is attendance history — never removable.
+  IF EXISTS (
+    SELECT 1 FROM session_check_ins
+    WHERE session_id = p_session_id AND user_id = v_user_id
+  ) THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Cannot cancel after checking in');
   END IF;
 
   DELETE FROM session_signups WHERE session_id = p_session_id AND user_id = v_user_id;

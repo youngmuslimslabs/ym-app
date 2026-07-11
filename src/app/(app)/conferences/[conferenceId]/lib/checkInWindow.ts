@@ -22,9 +22,9 @@ export interface CheckInWindow {
   /** now ∈ [start, end + grace) — the full window an attendee can check in */
   checkInOpen: boolean
   /**
-   * now < end + grace — RSVP is still allowed. Deliberately closes at the same
-   * instant as check-in so a walk-in can still sign-up-then-check-in during the
-   * grace tail; changing GRACE_MINUTES moves both windows together.
+   * now < end + grace — RSVP is still allowed. Derived from the same comparison
+   * as graceEnded/checkInOpen so a walk-in can always sign-up-then-check-in
+   * during the grace tail; changing GRACE_MINUTES moves both windows together.
    */
   signUpOpen: boolean
 }
@@ -43,15 +43,43 @@ export function getCheckInWindow(
   const endMs = new Date(endAt).getTime()
   const graceEndMs = endMs + GRACE_MS
   const nowMs = now.getTime()
+  // Single close-of-window comparison; every "still open" flag is derived from
+  // it so the check-in and RSVP windows can never drift apart.
+  const graceEnded = nowMs >= graceEndMs
 
   return {
     inProgress: nowMs >= startMs && nowMs < endMs,
     ended: nowMs >= endMs,
-    inGrace: nowMs >= endMs && nowMs < graceEndMs,
-    graceEnded: nowMs >= graceEndMs,
-    checkInOpen: nowMs >= startMs && nowMs < graceEndMs,
-    signUpOpen: nowMs < graceEndMs,
+    inGrace: nowMs >= endMs && !graceEnded,
+    graceEnded,
+    checkInOpen: nowMs >= startMs && !graceEnded,
+    signUpOpen: !graceEnded,
   }
+}
+
+/**
+ * Whether the Sign up action should be offered. Shared by SessionCard (joinable
+ * chrome) and SessionSheet (footer button) for the same reason getSessionState
+ * exists: the two must never disagree about the same session.
+ */
+export function canSignUp(
+  w: CheckInWindow,
+  i: { isBreak: boolean; signedUp: boolean; full: boolean }
+): boolean {
+  return !i.isBreak && !i.signedUp && !i.full && w.signUpOpen
+}
+
+/**
+ * Whether Remove RSVP should be offered. Removal mirrors creation — allowed
+ * before start and during the grace tail (the escape hatch for a mistapped
+ * grace-tail signup) — but never mid-session and never after checking in.
+ * cancel_signup (migration 00022) enforces the same window server-side.
+ */
+export function canRemoveSignUp(
+  w: CheckInWindow,
+  i: { signedUp: boolean; checkedIn: boolean }
+): boolean {
+  return i.signedUp && !i.checkedIn && !w.inProgress && w.signUpOpen
 }
 
 export interface SessionActionInput {

@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { CheckInDialog } from './CheckInDialog'
 import { FeedbackForm } from './FeedbackForm'
-import { getSessionState } from '../lib/checkInWindow'
+import { canRemoveSignUp, canSignUp, getSessionState } from '../lib/checkInWindow'
 import type { Session } from '../types'
 
 interface Props {
@@ -101,9 +101,11 @@ export function SessionSheet({
 
   const isBreak = session.is_break
   const { slot, window: w } = state
-  const { inProgress, ended, signUpOpen } = w
+  const { inProgress, ended } = w
   const capacity = session.capacity
   const full = capacity != null && seatCount >= capacity && !signedUp
+  const joinable = canSignUp(w, { isBreak, signedUp, full })
+  const removable = canRemoveSignUp(w, { signedUp, checkedIn })
 
   // Body slot (see lib/checkInWindow). Check-in stays open through the 15-min
   // grace tail; the "missed check-in" notice only appears once it closes — and
@@ -180,7 +182,13 @@ export function SessionSheet({
               inProgress ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
             )}>
               {inProgress && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
-              {ended ? 'Ended' : inProgress ? 'In progress' : 'Upcoming'}
+              {ended
+                ? w.inGrace
+                  ? 'Just ended'
+                  : 'Ended'
+                : inProgress
+                  ? 'In progress'
+                  : 'Upcoming'}
             </span>
             {showFeedback && (
               <>
@@ -247,7 +255,7 @@ export function SessionSheet({
             <Button variant="outline" className="flex-1" onClick={onClose}>
               Close
             </Button>
-          ) : signedUp && !ended && !inProgress ? (
+          ) : removable ? (
             <Button
               variant="link-destructive"
               size="sm"
@@ -256,21 +264,21 @@ export function SessionSheet({
             >
               Remove RSVP
             </Button>
-          ) : signedUp ? null : !signUpOpen ? (
-            <Button variant="outline" className="flex-1" disabled>
-              Session has ended
-            </Button>
-          ) : full ? (
-            <Button variant="outline" className="flex-1" disabled>
-              Session full
-            </Button>
-          ) : (
+          ) : signedUp ? null : joinable ? (
             <Button
               className="flex-1"
               disabled={pending}
               onClick={() => onSignup(session.id)}
             >
               {pending ? 'Signing up…' : 'Sign up'}
+            </Button>
+          ) : !w.signUpOpen ? (
+            <Button variant="outline" className="flex-1" disabled>
+              Session has ended
+            </Button>
+          ) : (
+            <Button variant="outline" className="flex-1" disabled>
+              Session full
             </Button>
           )}
         </div>

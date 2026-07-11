@@ -69,11 +69,15 @@ export function ScheduleContent({ initialView }: Props) {
   async function handleSignup(sessionId: string) {
     const target = view.sessions.find((s) => s.id === sessionId)
     if (!target) return
+    // Ended sessions are attendance history: signup_for_session (00022) no
+    // longer swaps them out, so don't warn about them either — a grace-tail
+    // signup must never look like it costs a session already attended.
     const conflicts = view.sessions.filter(
       (s) =>
         s.id !== sessionId &&
         view.mySignupSessionIds.has(s.id) &&
-        rangesOverlap(s.start_at, s.end_at, target.start_at, target.end_at)
+        rangesOverlap(s.start_at, s.end_at, target.start_at, target.end_at) &&
+        new Date(s.end_at).getTime() > now.getTime()
     )
     if (conflicts.length > 0) {
       setPendingSwap({ targetId: sessionId, conflicts })

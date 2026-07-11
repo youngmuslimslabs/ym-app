@@ -131,4 +131,37 @@ describe('CheckInDialog', () => {
       expect(screen.getByRole('button', { name: /checking in/i })).toBeInTheDocument()
     })
   })
+
+  describe('grace period', () => {
+    it('shows urgency copy and still renders the input when inGracePeriod', () => {
+      render(
+        <CheckInDialog
+          alreadyCheckedIn={false}
+          pending={false}
+          error={null}
+          inGracePeriod
+          onSubmit={noop}
+        />,
+      )
+      expect(screen.getByText('Session ended — check in now')).toBeInTheDocument()
+      expect(
+        screen.getByText('You have a few minutes left to check in before it closes.'),
+      ).toBeInTheDocument()
+      expect(screen.getByRole('textbox')).toBeInTheDocument()
+    })
+
+    it('error copy takes precedence over grace copy', () => {
+      render(
+        <CheckInDialog
+          alreadyCheckedIn={false}
+          pending={false}
+          error="Invalid code"
+          inGracePeriod
+          onSubmit={noop}
+        />,
+      )
+      expect(screen.getByText("That code didn't match")).toBeInTheDocument()
+      expect(screen.queryByText('Session ended — check in now')).not.toBeInTheDocument()
+    })
+  })
 })

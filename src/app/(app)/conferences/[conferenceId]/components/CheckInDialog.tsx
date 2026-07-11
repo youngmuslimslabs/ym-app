@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertTriangle, CheckCircle2, Lock } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +12,9 @@ interface Props {
   // Parent-supplied error from the last RPC attempt. When non-null, the form
   // renders destructive chrome and the input remains so the user can edit.
   error: string | null
+  // The session has ended but check-in is still open in its grace tail. Shifts
+  // the copy to convey urgency ("check in now, before it closes").
+  inGracePeriod?: boolean
   onSubmit: (code: string) => Promise<void>
 }
 
@@ -19,6 +22,7 @@ export function CheckInDialog({
   alreadyCheckedIn,
   pending,
   error,
+  inGracePeriod = false,
   onSubmit,
 }: Props) {
   const [code, setCode] = useState('')
@@ -57,18 +61,26 @@ export function CheckInDialog({
         >
           {error ? (
             <AlertTriangle className="w-4 h-4 text-destructive" />
+          ) : inGracePeriod ? (
+            <Clock className="w-4 h-4 text-primary" />
           ) : (
             <Lock className="w-4 h-4 text-primary" />
           )}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-medium">
-            {error ? "That code didn't match" : 'Check in to this session'}
+            {error
+              ? "That code didn't match"
+              : inGracePeriod
+                ? 'Session ended — check in now'
+                : 'Check in to this session'}
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             {error
               ? 'Double-check the code with the speaker.'
-              : 'Enter the check-in code from the speaker.'}
+              : inGracePeriod
+                ? 'You have a few minutes left to check in before it closes.'
+                : 'Enter the check-in code from the speaker.'}
           </p>
         </div>
       </div>

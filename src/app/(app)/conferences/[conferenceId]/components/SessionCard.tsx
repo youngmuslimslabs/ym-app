@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Check, CheckCircle2, Coffee, MapPin, Star } from 'lucide-react'
+import { Check, CheckCircle2, Clock, Coffee, MapPin, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getCheckInWindow } from '../lib/checkInWindow'
 import type { Session } from '../types'
 
 interface Props {
@@ -28,12 +29,11 @@ export function SessionCard({
     return <BreakCard session={session} />
   }
 
-  const startMs = new Date(session.start_at).getTime()
-  const endMs = new Date(session.end_at).getTime()
-  const nowMs = now.getTime()
-
-  const inProgress = nowMs >= startMs && nowMs < endMs
-  const ended = nowMs >= endMs
+  const { inProgress, ended, inGrace, graceEnded } = getCheckInWindow(
+    session.start_at,
+    session.end_at,
+    now
+  )
   const upcoming = !inProgress && !ended
 
   const capacity = session.capacity
@@ -103,7 +103,13 @@ export function SessionCard({
             Checked in
           </span>
         )}
-        {ended && signedUp && !checkedIn && (
+        {inGrace && signedUp && !checkedIn && (
+          <span className="inline-flex items-center gap-1.5 text-primary font-medium">
+            <Clock className="w-3.5 h-3.5" />
+            Check in now
+          </span>
+        )}
+        {graceEnded && signedUp && !checkedIn && (
           <span className="text-muted-foreground">You didn&apos;t check in</span>
         )}
         {ended && checkedIn && !feedback && (

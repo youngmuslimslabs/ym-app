@@ -25,51 +25,28 @@ Attendees enter a per-session check-in code to register attendance, then leave f
 ## Decisions (confirmed with product owner)
 
 1. **Check-in window = `[start_at, end_at + 15min]`.** Check-in is open for the *entire
-   session* plus a 15-minute tail. Enforcement is **upper-bound only** (`now() <= end_at + 15min`) —
+   session* plus a 15-minute tail. Gating is **upper-bound only** (`now() <= end_at + 15min`) —
    the practical lower bound is session start; no strict lower-bound check, to avoid clock-skew
    and early-code-reveal rejections.
-2. **No check-in → no feedback, ever.** For a session that has a check-in code, an attendee who
-   never checks in within the window can never submit feedback. Feedback is a verified-attendance
-   signal. (Uncoded sessions are exempt — see predicate below.)
+2. **No check-in → no feedback.** For a session that has a check-in code, an attendee who never
+   checks in within the window can't submit feedback. Feedback is a verified-attendance signal.
+   (Uncoded sessions are exempt.)
 3. **Grace period is a fixed 15-minute constant** (`GRACE_MINUTES = 15`), not per-conference
-   configurable. One SQL interval + one mirrored TS constant, cross-referenced by comment.
+   configurable.
+4. **Enforcement is app-layer, not database.** This is an internal @youngmuslims.com convention
+   app; the only actor app-layer gating fails against is someone hand-crafting authenticated API
+   calls to fake their *own* attendance/feedback — a nonexistent threat with zero payoff. A DB
+   migration (RPC window gate + feedback RLS dependency) was drafted and deliberately dropped as
+   cost-without-benefit here. **Note:** the pre-existing "feedback only after session ends" *is*
+   already enforced in RLS and stays — so feedback-before-end remains hard-blocked regardless.
+   If real external users / attendance incentives ever appear, re-add the DB gates then.
 
-## The pattern: two DB predicates + one UI composition
+## The pattern: derive state on the client, gate the affordances
 
-The three rules live at the layer they belong to. Two are database predicates (single choke
-point, un-bypassable); the third is pure UI.
-
-### DB change 1 — time-gate check-in
-
-In `check_in_to_session`, **after** looking up any existing check-in but **before** inserting a
-new one:
-
-```sql
--- If already checked in, treat as success (don't lock them out of feedback at end+16min).
--- Only apply the window gate to NEW check-ins.
-if now() > (select end_at from sessions where id = p_session_id) + interval '15 minutes' then
-  return json_build_object('success', false, 'error', 'checkInWindowClosed');
-end if;
-```
-
-Mirror the same window as an RLS INSERT check on `session_check_ins` so a direct API call
-can't bypass the RPC.
-
-### DB change 2 — dependency-gate feedback
-
-Extend the existing *"after session ends"* feedback RLS INSERT policy:
-
-```sql
-end_at < now()
-AND (
-  check_in_code IS NULL                              -- uncoded session: no check-in to require
-  OR EXISTS (SELECT 1 FROM session_check_ins ci
-             WHERE ci.session_id = session_feedback.session_id
-               AND ci.user_id   = session_feedback.user_id)
-)
-```
-
-The `check_in_code IS NULL` branch keeps feedback working for breaks / uncoded sessions.
+All three rules become client-side checks over data the attendee page already loads
+(`end_at`, whether a `session_check_ins` row exists, whether a `session_feedback` row exists).
+A shared `lib/checkInWindow.ts` computes the per-attendee session state; the components render
+the matching affordance.
 
 ### UI composition
 
@@ -96,11 +73,10 @@ Per-attendee state machine for a **coded** session:
 - Upper time bound on feedback (stays open indefinitely once earned).
 - Any change to uncoded-session or break behavior beyond the `IS NULL` exemption.
 
-## Build sequence
+## Build sequence (app-layer only — no remote change)
 
-1. DB changes (RPC + two RLS policies) via the `ym-db-changes` skill — apply to remote, back up,
-   regen types. **Pause for confirmation before touching remote.**
-2. Shared `GRACE_MINUTES` constant (SQL side in the migration; TS side for the UI countdown).
-3. UI: `CheckInDialog` (window-closed state + same-motion feedback swap), `SessionCard` /
-   `SessionSheet` state derivation, "checked in, waiting for end" state.
-4. Tests: RPC window boundary, feedback dependency gate, and the six UI states.
+1. `lib/checkInWindow.ts` — `GRACE_MINUTES = 15` + a pure `deriveSessionActionState(...)`
+   returning the per-attendee state (the six-cell table above), with unit tests.
+2. UI: `CheckInDialog` (window-closed state + same-motion feedback swap), `SessionCard` /
+   `SessionSheet` affordance derivation, the "checked in, waiting for end" state.
+3. Component tests for the six states.

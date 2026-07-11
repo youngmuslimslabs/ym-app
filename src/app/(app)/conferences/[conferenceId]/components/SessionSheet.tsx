@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { CheckInDialog } from './CheckInDialog'
 import { FeedbackForm } from './FeedbackForm'
+import { getCheckInWindow, getSessionActionSlot } from '../lib/checkInWindow'
 import type { Session } from '../types'
 
 interface Props {
@@ -70,21 +71,29 @@ export function SessionSheet({
     )
   }
 
-  const startMs = new Date(session.start_at).getTime()
-  const endMs = new Date(session.end_at).getTime()
-  const ended = now.getTime() >= endMs
-  const inProgress = now.getTime() >= startMs && now.getTime() < endMs
+  const isBreak = session.is_break
+  const { inProgress, ended } = getCheckInWindow(session.start_at, session.end_at, now)
   const capacity = session.capacity
   const full = capacity != null && seatCount >= capacity && !signedUp
-  const isBreak = session.is_break
 
-  // What slot of the body do we render?
-  //  - in-progress + signed up → check-in dialog (or success card if already in)
-  //  - ended + checked in       → feedback form (insert OR edit)
-  //  - everything else          → description only
-  const showCheckIn = !isBreak && inProgress && signedUp
-  const showFeedback = !isBreak && ended && checkedIn
-  const showMissedNotice = !isBreak && ended && signedUp && !checkedIn
+  // The single interactive slot for the body (see lib/checkInWindow). Check-in
+  // stays open through the 15-min grace tail after the session ends; the "missed
+  // check-in" notice only appears once that window has closed.
+  const slot = getSessionActionSlot({
+    startAt: session.start_at,
+    endAt: session.end_at,
+    isBreak,
+    signedUp,
+    checkedIn,
+    hasFeedback: feedback != null,
+    now,
+  })
+  const showCheckInForm = slot.kind === 'check-in'
+  const showCheckedInWaiting = slot.kind === 'checked-in'
+  const showFeedback = slot.kind === 'feedback'
+  const showMissedNotice = slot.kind === 'missed'
+  const inGracePeriod = slot.kind === 'check-in' && slot.grace
+  const hasBodySlot = slot.kind !== 'none'
 
   const dateLabel = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
@@ -169,9 +178,7 @@ export function SessionSheet({
               {session.description}
             </p>
           ) : (
-            !showCheckIn &&
-            !showFeedback &&
-            !showMissedNotice && (
+            !hasBodySlot && (
               <p className="text-sm text-muted-foreground italic">
                 No description.
               </p>
@@ -192,9 +199,10 @@ export function SessionSheet({
             </div>
           )}
 
-          {showCheckIn && (
+          {(showCheckInForm || showCheckedInWaiting) && (
             <CheckInDialog
-              alreadyCheckedIn={checkedIn}
+              alreadyCheckedIn={showCheckedInWaiting}
+              inGracePeriod={inGracePeriod}
               pending={pending}
               error={checkInError}
               onSubmit={(code) => onCheckIn(session.id, code)}

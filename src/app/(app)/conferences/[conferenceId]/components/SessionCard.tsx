@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, CheckCircle2, Clock, Coffee, MapPin, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getCheckInWindow } from '../lib/checkInWindow'
+import { getSessionState } from '../lib/checkInWindow'
 import type { Session } from '../types'
 
 interface Props {
@@ -29,23 +29,35 @@ export function SessionCard({
     return <BreakCard session={session} />
   }
 
-  const { inProgress, ended, inGrace, graceEnded } = getCheckInWindow(
-    session.start_at,
-    session.end_at,
-    now
-  )
+  // Share the exact state machine the detail sheet uses, so a card badge and the
+  // sheet body can never disagree about the same session.
+  const { slot, window: w } = getSessionState({
+    startAt: session.start_at,
+    endAt: session.end_at,
+    isBreak: false,
+    signedUp,
+    checkedIn,
+    hasFeedback: feedback != null,
+    now,
+  })
+  const { inProgress, ended } = w
   const upcoming = !inProgress && !ended
+  // Check-in is still solicited (in-session or grace tail) — the card must stay
+  // visually active even though it has technically ended, so the "Check in now"
+  // CTA doesn't sit on a greyed-out, closed-looking card.
+  const pendingCheckIn = slot.kind === 'check-in'
 
   const capacity = session.capacity
   const full = capacity != null && seatCount >= capacity && !signedUp
 
-  // Card chrome — selected gets a primary border, full is muted, ended is dimmed.
+  // Card chrome — active/signed-up gets a primary border; full is muted; a truly
+  // finished card (ended with no pending check-in) is dimmed.
   const cardClass = cn(
     'rounded-xl border bg-card p-5 md:p-6 shadow-sm relative transition-all duration-200',
-    signedUp && !ended && 'border-2 border-primary bg-primary/5',
+    ((signedUp && !ended) || pendingCheckIn) && 'border-2 border-primary bg-primary/5',
     !signedUp && !full && !ended && 'hover:border-foreground/20 hover:shadow-md cursor-pointer',
     full && 'opacity-60 cursor-not-allowed',
-    ended && 'opacity-70'
+    ended && !pendingCheckIn && 'opacity-70'
   )
 
   return (
@@ -103,16 +115,16 @@ export function SessionCard({
             Checked in
           </span>
         )}
-        {inGrace && signedUp && !checkedIn && (
+        {slot.kind === 'check-in' && slot.grace && (
           <span className="inline-flex items-center gap-1.5 text-primary font-medium">
             <Clock className="w-3.5 h-3.5" />
             Check in now
           </span>
         )}
-        {graceEnded && signedUp && !checkedIn && (
+        {slot.kind === 'missed' && (
           <span className="text-muted-foreground">You didn&apos;t check in</span>
         )}
-        {ended && checkedIn && !feedback && (
+        {slot.kind === 'feedback' && !feedback && (
           <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2 py-0.5 font-medium text-foreground">
             <Star className="w-3 h-3" />
             Leave feedback

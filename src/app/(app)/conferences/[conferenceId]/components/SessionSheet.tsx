@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle2, CircleSlash, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { CheckInDialog } from './CheckInDialog'
 import { FeedbackForm } from './FeedbackForm'
-import { getCheckInWindow, getSessionActionSlot } from '../lib/checkInWindow'
+import { getSessionState } from '../lib/checkInWindow'
 import type { Session } from '../types'
 
 interface Props {
@@ -58,12 +58,40 @@ export function SessionSheet({
   onSubmitFeedback,
 }: Props) {
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
+  // Once the check-in form is shown for an open session, keep it mounted even if
+  // a background `now` tick pushes past the grace window mid-entry — otherwise
+  // the slot would flip to 'missed', unmounting CheckInDialog and discarding a
+  // code the attendee is actively typing. Reset when the open session changes.
+  const [checkInSticky, setCheckInSticky] = useState(false)
   const isMobile = useIsMobile()
   const { sheetRef, dragHandleProps } = useBottomSheetDragToDismiss({
     onDismiss: onClose,
   })
 
-  if (!session) {
+  // Compute state before the early return so the latch effects have a stable
+  // slot kind to depend on (hooks must run unconditionally).
+  const sessionId = session?.id ?? null
+  const state = session
+    ? getSessionState({
+        startAt: session.start_at,
+        endAt: session.end_at,
+        isBreak: session.is_break,
+        signedUp,
+        checkedIn,
+        hasFeedback: feedback != null,
+        now,
+      })
+    : null
+  const slotKind = state?.slot.kind ?? 'none'
+
+  useEffect(() => {
+    setCheckInSticky(false)
+  }, [sessionId])
+  useEffect(() => {
+    if (slotKind === 'check-in') setCheckInSticky(true)
+  }, [slotKind])
+
+  if (!session || !state) {
     return (
       <Sheet open={false} onOpenChange={(open) => !open && onClose()}>
         <SheetContent />
@@ -72,28 +100,22 @@ export function SessionSheet({
   }
 
   const isBreak = session.is_break
-  const { inProgress, ended } = getCheckInWindow(session.start_at, session.end_at, now)
+  const { slot, window: w } = state
+  const { inProgress, ended } = w
   const capacity = session.capacity
   const full = capacity != null && seatCount >= capacity && !signedUp
 
-  // The single interactive slot for the body (see lib/checkInWindow). Check-in
-  // stays open through the 15-min grace tail after the session ends; the "missed
-  // check-in" notice only appears once that window has closed.
-  const slot = getSessionActionSlot({
-    startAt: session.start_at,
-    endAt: session.end_at,
-    isBreak,
-    signedUp,
-    checkedIn,
-    hasFeedback: feedback != null,
-    now,
-  })
-  const showCheckInForm = slot.kind === 'check-in'
+  // Body slot (see lib/checkInWindow). Check-in stays open through the 15-min
+  // grace tail; the "missed check-in" notice only appears once it closes — and
+  // never while the sticky latch is holding a mid-entry check-in open.
+  const stickyCheckIn = checkInSticky && !checkedIn && slot.kind === 'missed'
+  const showCheckInForm = slot.kind === 'check-in' || stickyCheckIn
   const showCheckedInWaiting = slot.kind === 'checked-in'
   const showFeedback = slot.kind === 'feedback'
-  const showMissedNotice = slot.kind === 'missed'
-  const inGracePeriod = slot.kind === 'check-in' && slot.grace
-  const hasBodySlot = slot.kind !== 'none'
+  const showMissedNotice = slot.kind === 'missed' && !stickyCheckIn
+  const inGracePeriod = (slot.kind === 'check-in' && slot.grace) || stickyCheckIn
+  const hasBodySlot =
+    showCheckInForm || showCheckedInWaiting || showFeedback || showMissedNotice
 
   const dateLabel = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,

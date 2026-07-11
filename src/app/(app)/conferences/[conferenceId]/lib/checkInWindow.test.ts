@@ -3,6 +3,7 @@ import {
   GRACE_MINUTES,
   getCheckInWindow,
   getSessionActionSlot,
+  getSessionState,
   type SessionActionInput,
 } from './checkInWindow'
 
@@ -151,6 +152,10 @@ describe('getSessionActionSlot', () => {
     })
   })
 
+  it('checked in but session has not started → none (no premature waiting card)', () => {
+    expect(slot({ checkedIn: true, now: at('2025-06-27T13:00:00Z') })).toEqual({ kind: 'none' })
+  })
+
   it('break → always none', () => {
     expect(slot({ isBreak: true, now: at('2025-06-27T14:30:00Z') })).toEqual({ kind: 'none' })
     expect(slot({ isBreak: true, checkedIn: true, now: at('2025-06-27T15:30:00Z') })).toEqual({
@@ -166,5 +171,22 @@ describe('getSessionActionSlot', () => {
 
   it('one minute before end+15, not checked in → still check-in (grace)', () => {
     expect(slot({ now: at('2025-06-27T15:14:00Z') })).toEqual({ kind: 'check-in', grace: true })
+  })
+})
+
+describe('getSessionState', () => {
+  it('returns the window and slot from a single computation', () => {
+    const state = getSessionState({
+      startAt: START,
+      endAt: END,
+      isBreak: false,
+      signedUp: true,
+      checkedIn: false,
+      hasFeedback: false,
+      now: at('2025-06-27T15:07:00Z'),
+    })
+    expect(state.window.inGrace).toBe(true)
+    expect(state.window.checkInOpen).toBe(true)
+    expect(state.slot).toEqual({ kind: 'check-in', grace: true })
   })
 })

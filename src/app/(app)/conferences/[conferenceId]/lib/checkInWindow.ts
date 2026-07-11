@@ -78,14 +78,37 @@ export type SessionActionSlot =
   | { kind: 'feedback'; edit: boolean }
   | { kind: 'missed' }
 
+export interface SessionState {
+  window: CheckInWindow
+  slot: SessionActionSlot
+}
+
+/**
+ * The window and the action slot from a SINGLE window computation. Both the
+ * detail sheet (chrome + body) and the card (chrome + badges) consume this, so
+ * they can never disagree about a session's state and the window is parsed once.
+ */
+export function getSessionState(input: SessionActionInput): SessionState {
+  const window = getCheckInWindow(input.startAt, input.endAt, input.now)
+  return { window, slot: computeSlot(input, window) }
+}
+
+/** Convenience for callers that only need the slot (e.g. unit tests). */
 export function getSessionActionSlot(input: SessionActionInput): SessionActionSlot {
+  return getSessionState(input).slot
+}
+
+function computeSlot(input: SessionActionInput, w: CheckInWindow): SessionActionSlot {
   const { isBreak, signedUp, checkedIn, hasFeedback } = input
   if (isBreak) return { kind: 'none' }
 
-  const w = getCheckInWindow(input.startAt, input.endAt, input.now)
-
   if (checkedIn) {
-    return w.ended ? { kind: 'feedback', edit: hasFeedback } : { kind: 'checked-in' }
+    if (w.ended) return { kind: 'feedback', edit: hasFeedback }
+    // 'checked-in' waiting card only once the session is actually running.
+    // (Check-in can't precede start in practice, but don't surface the card for
+    // a not-yet-started session if it somehow does.)
+    if (w.inProgress) return { kind: 'checked-in' }
+    return { kind: 'none' }
   }
 
   // Not checked in.

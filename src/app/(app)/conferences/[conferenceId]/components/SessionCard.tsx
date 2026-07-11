@@ -52,15 +52,19 @@ export function SessionCard({
 
   const capacity = session.capacity
   const full = capacity != null && seatCount >= capacity && !signedUp
+  // RSVP stays open through the grace tail (same window as check-in), so a
+  // never-signed-up card remains joinable — clickable and undimmed — until
+  // sign-up closes at end + grace.
+  const joinable = !signedUp && !full && w.signUpOpen
 
   // Card chrome — active/signed-up gets a primary border; full is muted; a truly
-  // finished card (ended, nothing left to do) is dimmed.
+  // finished card (ended, nothing left to do or join) is dimmed.
   const cardClass = cn(
     'rounded-xl border bg-card p-5 md:p-6 shadow-sm relative transition-all duration-200',
     ((signedUp && !ended) || wantsAction) && 'border-2 border-primary bg-primary/5',
-    !signedUp && !full && !ended && 'hover:border-foreground/20 hover:shadow-md cursor-pointer',
+    joinable && 'hover:border-foreground/20 hover:shadow-md cursor-pointer',
     full && 'opacity-60 cursor-not-allowed',
-    ended && !wantsAction && 'opacity-70'
+    ended && !wantsAction && !joinable && 'opacity-70'
   )
 
   return (

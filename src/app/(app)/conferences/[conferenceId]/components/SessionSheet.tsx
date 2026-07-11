@@ -101,7 +101,7 @@ export function SessionSheet({
 
   const isBreak = session.is_break
   const { slot, window: w } = state
-  const { inProgress, ended } = w
+  const { inProgress, ended, signUpOpen } = w
   const capacity = session.capacity
   const full = capacity != null && seatCount >= capacity && !signedUp
 
@@ -256,7 +256,7 @@ export function SessionSheet({
             >
               Remove RSVP
             </Button>
-          ) : signedUp ? null : ended ? (
+          ) : signedUp ? null : !signUpOpen ? (
             <Button variant="outline" className="flex-1" disabled>
               Session has ended
             </Button>

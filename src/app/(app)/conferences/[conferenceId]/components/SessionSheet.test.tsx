@@ -78,3 +78,29 @@ describe('SessionSheet check-in sticky latch', () => {
     expect(screen.queryByPlaceholderText('Enter code')).not.toBeInTheDocument()
   })
 })
+
+describe('SessionSheet RSVP during the grace tail', () => {
+  it('not signed up, grace tail → still offers "Sign up", not "Session has ended"', () => {
+    render(
+      <SessionSheet
+        {...baseProps}
+        signedUp={false}
+        now={new Date('2025-06-27T15:07:00Z')}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Sign up' })).toBeEnabled()
+    expect(screen.queryByText('Session has ended')).not.toBeInTheDocument()
+  })
+
+  it('not signed up, past grace → disabled "Session has ended"', () => {
+    render(
+      <SessionSheet
+        {...baseProps}
+        signedUp={false}
+        now={new Date('2025-06-27T15:20:00Z')}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Session has ended' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Sign up' })).not.toBeInTheDocument()
+  })
+})

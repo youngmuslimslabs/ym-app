@@ -103,4 +103,16 @@ describe('SessionCard chrome (bright while an action is wanted)', () => {
     expect(card().className).toContain('opacity-70')
     expect(screen.queryByText('Signed up')).not.toBeInTheDocument()
   })
+
+  it('not signed up, grace tail → stays joinable (clickable, not dimmed)', () => {
+    renderCard({ signedUp: false, now: new Date('2025-06-27T15:07:00Z') })
+    expect(card().className).toContain('cursor-pointer')
+    expect(card().className).not.toContain('opacity-70')
+  })
+
+  it('not signed up, past grace → dimmed and no longer clickable', () => {
+    renderCard({ signedUp: false, now: new Date('2025-06-27T15:30:00Z') })
+    expect(card().className).toContain('opacity-70')
+    expect(card().className).not.toContain('cursor-pointer')
+  })
 })

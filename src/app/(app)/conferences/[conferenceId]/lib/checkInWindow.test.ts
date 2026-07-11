@@ -76,6 +76,24 @@ describe('getCheckInWindow', () => {
     expect(getCheckInWindow(START, END, at('2025-06-27T15:14:00Z')).checkInOpen).toBe(true)
     expect(getCheckInWindow(START, END, at('2025-06-27T15:16:00Z')).checkInOpen).toBe(false)
   })
+
+  // ---- signUpOpen: RSVP closes at the same instant as check-in ----
+
+  it('signUpOpen before start and during the session', () => {
+    expect(getCheckInWindow(START, END, at('2025-06-27T13:30:00Z')).signUpOpen).toBe(true)
+    expect(getCheckInWindow(START, END, at('2025-06-27T14:30:00Z')).signUpOpen).toBe(true)
+  })
+
+  it('signUpOpen through the grace tail', () => {
+    expect(getCheckInWindow(START, END, at('2025-06-27T15:00:00Z')).signUpOpen).toBe(true)
+    expect(getCheckInWindow(START, END, at('2025-06-27T15:14:00Z')).signUpOpen).toBe(true)
+  })
+
+  it('signUpOpen closes exactly at end + grace, in lockstep with checkInOpen', () => {
+    const w = getCheckInWindow(START, END, at('2025-06-27T15:15:00Z'))
+    expect(w.signUpOpen).toBe(false)
+    expect(w.signUpOpen).toBe(w.checkInOpen)
+  })
 })
 
 describe('getSessionActionSlot', () => {

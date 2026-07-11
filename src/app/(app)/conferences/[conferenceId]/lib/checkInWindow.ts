@@ -21,6 +21,12 @@ export interface CheckInWindow {
   graceEnded: boolean
   /** now ∈ [start, end + grace) — the full window an attendee can check in */
   checkInOpen: boolean
+  /**
+   * now < end + grace — RSVP is still allowed. Deliberately closes at the same
+   * instant as check-in so a walk-in can still sign-up-then-check-in during the
+   * grace tail; changing GRACE_MINUTES moves both windows together.
+   */
+  signUpOpen: boolean
 }
 
 /**
@@ -44,6 +50,7 @@ export function getCheckInWindow(
     inGrace: nowMs >= endMs && nowMs < graceEndMs,
     graceEnded: nowMs >= graceEndMs,
     checkInOpen: nowMs >= startMs && nowMs < graceEndMs,
+    signUpOpen: nowMs < graceEndMs,
   }
 }
 

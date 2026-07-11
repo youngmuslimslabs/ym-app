@@ -51,6 +51,10 @@ BEGIN
     RETURN jsonb_build_object('success', true, 'replaced_session_ids', ARRAY[]::UUID[]);
   END IF;
 
+  -- Server-side sign-up window, mirroring the UI's canSignUp and
+  -- cancel_signup's bound: without this, a signup landing after the grace
+  -- tail (stale client clock, direct RPC call) would be accepted and then be
+  -- permanently uncancellable under the removability invariant (see 00022).
   IF now() >= v_target.end_at + interval '60 minutes' THEN
     RETURN jsonb_build_object('success', false, 'error', 'Sign-ups for this session have closed');
   END IF;
@@ -69,6 +73,9 @@ BEGIN
       AND ss.session_id = s.id
       AND s.conference_id = v_target.conference_id
       AND s.id <> p_session_id
+      -- Removability invariant: only swap out signups the user could still
+      -- cancel themselves — window open, not checked in. Everything else is
+      -- attendance/no-show history and survives the swap.
       AND now() < s.end_at + interval '60 minutes'
       AND NOT EXISTS (
         SELECT 1 FROM session_check_ins ci
@@ -97,15 +104,21 @@ BEGIN
     RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
   END IF;
 
+  -- sessions.end_at is NOT NULL, so a NULL read means the row is gone.
   SELECT end_at INTO v_end_at FROM sessions WHERE id = p_session_id;
   IF v_end_at IS NULL THEN
     RETURN jsonb_build_object('success', false, 'error', 'Session not found');
   END IF;
 
+  -- Cancel window mirrors the sign-up window: open until end_at + grace.
+  -- 60 minutes = GRACE_MINUTES in lib/checkInWindow.ts; change together.
   IF now() >= v_end_at + interval '60 minutes' THEN
     RETURN jsonb_build_object('success', false, 'error', 'Cannot cancel after the check-in window has closed');
   END IF;
 
+  -- Atomic removability guard: the NOT EXISTS rides inside the DELETE so a
+  -- check-in committing concurrently can't slip between a separate check and
+  -- the delete. A checked-in signup is attendance history — never removable.
   DELETE FROM session_signups ss
   WHERE ss.session_id = p_session_id
     AND ss.user_id = v_user_id
@@ -122,6 +135,8 @@ BEGIN
     RETURN jsonb_build_object('success', false, 'error', 'Cannot cancel after checking in');
   END IF;
 
+  -- v_deleted = 0 without a check-in just means there was no signup row —
+  -- cancelling twice is idempotent, not an error.
   RETURN jsonb_build_object('success', true);
 END;
 $$;

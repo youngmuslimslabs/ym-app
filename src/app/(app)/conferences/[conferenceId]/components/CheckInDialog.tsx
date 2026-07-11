@@ -79,7 +79,7 @@ export function CheckInDialog({
             {error
               ? 'Double-check the code with the speaker.'
               : inGracePeriod
-                ? 'You have a few minutes left to check in before it closes.'
+                ? 'Check in now before the window closes.'
                 : 'Enter the check-in code from the speaker.'}
           </p>
         </div>

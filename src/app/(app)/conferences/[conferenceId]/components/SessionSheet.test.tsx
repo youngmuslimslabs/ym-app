@@ -118,16 +118,16 @@ describe('SessionSheet RSVP during the grace tail', () => {
     expect(screen.queryByRole('button', { name: 'Sign up' })).not.toBeInTheDocument()
   })
 
-  it('status pill reads "Just ended" during the grace tail, "Ended" after it', () => {
+  it('status pill reads "Ended · check-in open" during the grace tail, "Ended" after it', () => {
     const { rerender } = render(
       <SessionSheet {...baseProps} signedUp={false} now={new Date('2025-06-27T15:07:00Z')} />,
     )
-    expect(screen.getByText('Just ended')).toBeInTheDocument()
+    expect(screen.getByText('Ended · check-in open')).toBeInTheDocument()
     rerender(
       <SessionSheet {...baseProps} signedUp={false} now={new Date('2025-06-27T16:20:00Z')} />,
     )
     expect(screen.getByText('Ended')).toBeInTheDocument()
-    expect(screen.queryByText('Just ended')).not.toBeInTheDocument()
+    expect(screen.queryByText('Ended · check-in open')).not.toBeInTheDocument()
   })
 })
 

@@ -746,7 +746,11 @@ CREATE POLICY "Users can update own role_assignments" ON role_assignments FOR UP
     user_id = get_current_user_id()
     AND NOT EXISTS (SELECT 1 FROM role_types rt WHERE rt.id = role_assignments.role_type_id AND rt.category = 'system')
   );
-CREATE POLICY "Users can delete own role_assignments" ON role_assignments FOR DELETE USING (user_id = get_current_user_id());
+CREATE POLICY "Users can delete own role_assignments" ON role_assignments FOR DELETE
+  USING (
+    user_id = get_current_user_id()
+    AND NOT EXISTS (SELECT 1 FROM role_types rt WHERE rt.id = role_assignments.role_type_id AND rt.category = 'system')
+  );
 
 -- user_projects --------------------------------------------------------------
 CREATE POLICY "Users can view own projects" ON user_projects FOR SELECT USING (user_id = get_current_user_id());

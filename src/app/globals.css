@@ -3,36 +3,46 @@
 @tailwind utilities;
 
 @layer base {
+  /**
+   * Semantic tokens, built from the Young Muslims brand palette
+   * (Brandbook pp.30–32). Values are OKLCH channels only — Tailwind wraps them
+   * as `oklch(var(--token) / <alpha-value>)`. The literal hex each one comes
+   * from is noted inline; exact brand colors also live in tailwind.config.ts
+   * under `brand.*`.
+   */
   :root {
     --radius: 0.625rem;
-    --background: 1 0 0;
-    --foreground: 0.145 0 0;
-    --card: 0.99 0 0;
-    --card-foreground: 0.145 0 0;
+    --background: 0.9861 0.0034 67.784;      /* #FCFAF8 Warm Snow */
+    --foreground: 0.2118 0.0275 283.806;     /* #171725 Deep Obsidian */
+    --card: 1 0 0;                           /* #FFFFFF — lifts off Warm Snow */
+    --card-foreground: 0.2118 0.0275 283.806;
     --popover: 1 0 0;
-    --popover-foreground: 0.145 0 0;
-    --primary: 0.445 0.14 261.872;
-    --primary-foreground: 0.985 0 0;
-    --secondary: 0.97 0 0;
-    --secondary-foreground: 0.205 0 0;
-    --muted: 0.97 0 0;
-    --muted-foreground: 0.556 0 0;
-    --accent: 0.97 0 0;
-    --accent-foreground: 0.205 0 0;
-    --destructive: 0.577 0.245 27.325;
-    --destructive-foreground: 0.985 0 0;
-    --success: 0.628 0.18 142;
-    --success-foreground: 0.985 0 0;
-    --warning: 0.60 0.17 68;
-    --warning-foreground: 0.985 0 0;
-    --border: 0.922 0 0;
-    --input: 0.922 0 0;
-    --ring: 0.445 0.14 261.872;
-    --chart-1: 0.631 0.184 23.041;
-    --chart-2: 0.704 0.191 142.096;
-    --chart-3: 0.632 0.15 254.604;
-    --chart-4: 0.808 0.162 73.389;
-    --chart-5: 0.734 0.16 24.659;
+    --popover-foreground: 0.2118 0.0275 283.806;
+    --primary: 0.3865 0.1137 263.626;        /* #234080 Royal Blue */
+    --primary-foreground: 0.9861 0.0034 67.784;
+    --secondary: 0.955 0.004 67.784;         /* Warm Snow, stepped down */
+    --secondary-foreground: 0.2118 0.0275 283.806;
+    --muted: 0.955 0.004 67.784;
+    --muted-foreground: 0.556 0.018 283.806; /* Obsidian hue, mid lightness */
+    --accent: 0.955 0.004 67.784;
+    --accent-foreground: 0.2118 0.0275 283.806;
+    --destructive: 0.577 0.245 27.325;       /* no brand error color — kept */
+    --destructive-foreground: 0.9861 0.0034 67.784;
+    --success: 0.5089 0.0839 155.775;        /* #397451 Jade Foliage */
+    --success-foreground: 0.9861 0.0034 67.784;
+    /* Warm Brass hue, darkened for legibility: the Brandbook (p.32) says Brass
+       is "for fills and large elements, never small type on white", and this
+       token is used as small badge text. True #D8AA45 is `brand-brass`. */
+    --warning: 0.60 0.128 83.979;
+    --warning-foreground: 0.9861 0.0034 67.784;
+    --border: 0.91 0.004 67.784;
+    --input: 0.91 0.004 67.784;
+    --ring: 0.3865 0.1137 263.626;
+    --chart-1: 0.3865 0.1137 263.626;        /* Royal Blue */
+    --chart-2: 0.5089 0.0839 155.775;        /* Jade Foliage */
+    --chart-3: 0.641 0.1309 251.419;         /* Sky Blue */
+    --chart-4: 0.7617 0.1283 83.979;         /* Warm Brass */
+    --chart-5: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 217 62% 39%;
@@ -43,35 +53,39 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  /* Dark mode is not yet reachable — nothing adds `.dark` to <html> (see the
+     "Wire up dark mode toggle" item in docs/project-todos.md). Tokens are kept
+     brand-correct here so the toggle is a one-line change when it lands.
+     Foundation is Deep Obsidian; blues are lightened for contrast on dark. */
   .dark {
-    --background: 0.145 0 0;
-    --foreground: 0.985 0 0;
-    --card: 0.205 0 0;
-    --card-foreground: 0.985 0 0;
-    --popover: 0.269 0 0;
-    --popover-foreground: 0.985 0 0;
-    --primary: 0.65 0.14 261.872;
-    --primary-foreground: 0.145 0 0;
-    --secondary: 0.269 0 0;
-    --secondary-foreground: 0.922 0 0;
-    --muted: 0.269 0 0;
-    --muted-foreground: 0.708 0 0;
-    --accent: 0.269 0 0;
-    --accent-foreground: 0.922 0 0;
+    --background: 0.2118 0.0275 283.806;     /* #171725 Deep Obsidian */
+    --foreground: 0.9861 0.0034 67.784;      /* #FCFAF8 Warm Snow */
+    --card: 0.26 0.026 283.806;              /* Obsidian, stepped up */
+    --card-foreground: 0.9861 0.0034 67.784;
+    --popover: 0.26 0.026 283.806;
+    --popover-foreground: 0.9861 0.0034 67.784;
+    --primary: 0.65 0.1137 263.626;          /* Royal Blue, lightened */
+    --primary-foreground: 0.2118 0.0275 283.806;
+    --secondary: 0.30 0.02 283.806;
+    --secondary-foreground: 0.9861 0.0034 67.784;
+    --muted: 0.30 0.02 283.806;
+    --muted-foreground: 0.72 0.015 283.806;
+    --accent: 0.30 0.02 283.806;
+    --accent-foreground: 0.9861 0.0034 67.784;
     --destructive: 0.705 0.205 29.234;
-    --destructive-foreground: 0.985 0 0;
-    --success: 0.75 0.16 142;
-    --success-foreground: 0.145 0 0;
-    --warning: 0.72 0.17 68;
-    --warning-foreground: 0.145 0 0;
-    --border: 0.269 0 0;
-    --input: 0.269 0 0;
-    --ring: 0.65 0.14 261.872;
-    --chart-1: 0.807 0.134 66.452;
-    --chart-2: 0.704 0.191 142.096;
-    --chart-3: 0.711 0.152 251.37;
-    --chart-4: 0.808 0.162 73.389;
-    --chart-5: 0.837 0.121 67.516;
+    --destructive-foreground: 0.9861 0.0034 67.784;
+    --success: 0.68 0.0839 155.775;          /* Jade, lightened */
+    --success-foreground: 0.2118 0.0275 283.806;
+    --warning: 0.7617 0.1283 83.979;         /* #D8AA45 Warm Brass */
+    --warning-foreground: 0.2118 0.0275 283.806;
+    --border: 0.30 0.02 283.806;
+    --input: 0.30 0.02 283.806;
+    --ring: 0.65 0.1137 263.626;
+    --chart-1: 0.641 0.1309 251.419;         /* Sky Blue */
+    --chart-2: 0.68 0.0839 155.775;          /* Jade, lightened */
+    --chart-3: 0.7413 0.0451 255.956;        /* Cool Slate */
+    --chart-4: 0.7617 0.1283 83.979;         /* Warm Brass */
+    --chart-5: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -88,7 +102,8 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    /* -2% tracking is specified for both brand faces (Brandbook p.34). */
+    @apply bg-background text-foreground font-sans tracking-brand;
   }
 
 }

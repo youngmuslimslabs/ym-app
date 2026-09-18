@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Boldonse, Figtree } from "next/font/google";
 import { Suspense } from "react";
 import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper";
 import { ServiceWorkerRegistration } from "@/components/providers/ServiceWorkerRegistration";
@@ -9,10 +10,20 @@ import { PostHogPageView } from "@/components/PostHogPageView";
 import { PHProvider } from "./providers";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "../fonts/GeistVF.woff2",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+// Brand display face (Brandbook p.34). Single weight by design — headlines only.
+const boldonse = Boldonse({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-boldonse",
+  display: "swap",
+});
+
+// Brand body face (Brandbook p.34). Variable; the book uses 400–900.
+const figtree = Figtree({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-figtree",
+  display: "swap",
 });
 
 const geistMono = localFont({
@@ -56,7 +67,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${figtree.variable} ${boldonse.variable} ${geistMono.variable} antialiased`}
       >
         <PHProvider>
           <Suspense>

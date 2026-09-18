@@ -75,15 +75,21 @@ const config = {
           '4': 'oklch(var(--chart-4) / <alpha-value>)',
           '5': 'oklch(var(--chart-5) / <alpha-value>)',
         },
+        /**
+         * Sidebar tokens moved from their own HSL system onto OKLCH, matching
+         * every other token. Side effect worth knowing: these now support
+         * Tailwind opacity modifiers — `text-sidebar-foreground/70` was
+         * silently a no-op under plain `hsl(var(--x))` and now actually works.
+         */
         sidebar: {
-          DEFAULT: 'hsl(var(--sidebar-background))',
-          foreground: 'hsl(var(--sidebar-foreground))',
-          primary: 'hsl(var(--sidebar-primary))',
-          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-          accent: 'hsl(var(--sidebar-accent))',
-          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-          border: 'hsl(var(--sidebar-border))',
-          ring: 'hsl(var(--sidebar-ring))',
+          DEFAULT: 'oklch(var(--sidebar-background) / <alpha-value>)',
+          foreground: 'oklch(var(--sidebar-foreground) / <alpha-value>)',
+          primary: 'oklch(var(--sidebar-primary) / <alpha-value>)',
+          'primary-foreground': 'oklch(var(--sidebar-primary-foreground) / <alpha-value>)',
+          accent: 'oklch(var(--sidebar-accent) / <alpha-value>)',
+          'accent-foreground': 'oklch(var(--sidebar-accent-foreground) / <alpha-value>)',
+          border: 'oklch(var(--sidebar-border) / <alpha-value>)',
+          ring: 'oklch(var(--sidebar-ring) / <alpha-value>)',
         },
 
         /**

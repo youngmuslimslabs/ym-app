@@ -140,6 +140,13 @@ const SEMANTIC: Swatch[] = [
   { name: 'border', hex: 'Warm Snow −−', className: 'bg-border', onClassName: 'text-foreground' },
 ]
 
+const SIDEBAR: Swatch[] = [
+  { name: 'sidebar', hex: 'Deep Obsidian', className: 'bg-sidebar', onClassName: 'text-sidebar-foreground' },
+  { name: 'sidebar-primary', hex: 'Royal Blue, lifted', className: 'bg-sidebar-primary', onClassName: 'text-sidebar-primary-foreground' },
+  { name: 'sidebar-accent', hex: 'hover state', className: 'bg-sidebar-accent', onClassName: 'text-sidebar-accent-foreground' },
+  { name: 'sidebar-border', hex: 'divider', className: 'bg-sidebar-border', onClassName: 'text-sidebar-foreground' },
+]
+
 function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -156,6 +163,53 @@ function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+/**
+ * Renders the same small UI under one of the three themes. The General theme
+ * lives on `:root`, so it is the variant with no `data-side` attribute.
+ */
+function ThemePreview({
+  name,
+  anchor,
+  side,
+}: {
+  name: string
+  anchor: string
+  side?: 'brothers' | 'sisters'
+}) {
+  return (
+    <div
+      data-side={side}
+      className="overflow-hidden rounded-lg border bg-background"
+    >
+      {/* Stand-in for the sidebar, which is this theme's anchor color */}
+      <div className="flex items-center gap-2 bg-sidebar px-4 py-3">
+        <div className="size-2 rounded-full bg-sidebar-primary" />
+        <span className="text-sm font-semibold text-sidebar-foreground">
+          {name}
+        </span>
+      </div>
+      <div className="space-y-3 p-4">
+        <p className="text-sm text-foreground">
+          Anchor: <span className="font-mono text-xs">{anchor}</span>
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Muted supporting copy sits here.
+        </p>
+        <div className="rounded-md bg-card p-3 text-sm shadow-sm">
+          A card on the page background.
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm">Primary</Button>
+          <Button size="sm" variant="outline">
+            Outline
+          </Button>
+          <Badge variant="success">Success</Badge>
+        </div>
+      </div>
     </div>
   )
 }
@@ -218,6 +272,25 @@ export default function DesignSystemPage() {
       </header>
 
       <Section
+        title="Themes"
+        description="Three complete themes, each anchored on its palette's darkest base. Set data-side='brothers' or 'sisters' on any element to theme it and everything inside. Nothing sets this automatically yet — the users table has no side field."
+      >
+        <div className="grid gap-4 lg:grid-cols-3">
+          <ThemePreview name="General" anchor="Deep Obsidian #171725" />
+          <ThemePreview
+            name="Brothers"
+            anchor="Midnight Blue #16294F"
+            side="brothers"
+          />
+          <ThemePreview
+            name="Sisters"
+            anchor="Deep Forest Green #043222"
+            side="sisters"
+          />
+        </div>
+      </Section>
+
+      <Section
         title="General palette"
         description="For anything representing Young Muslims as a whole. Obsidian and Warm Snow are the base; blue and green signal the two sides united. (Brandbook p.30)"
       >
@@ -240,9 +313,16 @@ export default function DesignSystemPage() {
 
       <Section
         title="Semantic tokens"
-        description="What the UI actually uses. These are built from the brand palette — prefer them over brand-* so light and dark both work."
+        description="What the UI actually uses. These are built from the brand palette — prefer them over brand-* so every theme works."
       >
         <SwatchGrid swatches={SEMANTIC} />
+      </Section>
+
+      <Section
+        title="Sidebar tokens"
+        description="The sidebar is the app's branded dark surface and re-colors with the active theme. These moved off a separate HSL system onto OKLCH, so opacity modifiers now work on them."
+      >
+        <SwatchGrid swatches={SIDEBAR} />
       </Section>
 
       <Separator />

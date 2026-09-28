@@ -222,7 +222,7 @@ export function AttendeePicker({
 
         {filteredPeople.length === 0 ? (
           !adding && attendees.length === 0 ? (
-            <NoAttendeesYet onAdd={() => switchMode('add')} />
+            <NoAttendeesYet />
           ) : (
             <EmptyState />
           )
@@ -502,7 +502,7 @@ function ActionBar({
   )
 }
 
-function NoAttendeesYet({ onAdd }: { onAdd: () => void }) {
+function NoAttendeesYet() {
   return (
     <div className="rounded-xl border bg-card p-10 text-center">
       <div className="mx-auto rounded-full bg-muted/50 p-4 w-fit mb-4">
@@ -511,14 +511,10 @@ function NoAttendeesYet({ onAdd }: { onAdd: () => void }) {
       <h3 className="text-base font-semibold tracking-tight mb-1.5">
         No attendees yet
       </h3>
-      <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed mb-4">
-        Add the members who are coming. You can add more at any time, even
-        once the conference has started.
+      <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+        Use Add people above to add the members who are coming. You can add
+        more at any time, even once the conference has started.
       </p>
-      <Button onClick={onAdd}>
-        <UserPlus className="w-4 h-4 mr-1.5" />
-        Add people
-      </Button>
     </div>
   )
 }

@@ -20,8 +20,11 @@
 - **Reuse is a component, not a copy-paste** — add a variant to an existing CVA primitive when it fits, otherwise extract a new component before the second caller appears.
 - **Notifications: use Sonner via `import { toast } from 'sonner'`** — never inline status strips inside Sheets/Dialogs. Toaster is mounted globally in `src/app/layout.tsx` at `top-center`. Inline error chrome (e.g., destructive border around a wrong-input field) is the right pattern for validation correction; toasts are for transient confirmations and unexpected errors.
 - OKLCH color tokens in CSS variables, Tailwind wraps with `oklch(var(...) / <alpha-value>)`
-- Sidebar tokens use HSL (separate system from main OKLCH tokens)
-- Brand color: `#254FA0` → `oklch(0.445 0.14 261.872)` light, `oklch(0.65 0.14 261.872)` dark
+- Sidebar tokens are OKLCH like everything else (they support opacity modifiers)
+- Brand palette comes from the 2026 Brandbook; see `/design-system` for every token. Three themes (General, Brothers, Sisters) switch via `data-theme-side` on `<html>`. Prefer semantic tokens (`primary`, `highlight`, …) over `brand-*`
+- **Redesign direction B ("Obsidian") rules:** Boldonse once per screen (`ym-display` / `ym-h1`: the Login headline, the member's name on Home, the page title elsewhere; section and card titles, figures and conference names are Figtree). At most one dark block per screen, in Deep Obsidian (`bg-brand-obsidian`), not the side colour. The sidebar is white. The side colour is for accents only: buttons, the active nav item, avatars, links
+- **Type: use the `.ym-*` classes** (`ym-display`, `ym-h1` Boldonse caps; `ym-h2`, `ym-h3` Figtree; `ym-eyebrow` caps label). Page titles go through `PageHeader` (`components/layout/page-header.tsx`), not a hand-built `<h1>`
+- Brand pieces live in `components/brand/`: `Logo`, `BrandBlob`/`BrandWave` (organic shapes, `currentColor`), `LocalLockup`, `MemberAvatar` (use it for every member avatar)
 - Animations: `duration-200` standardized across custom components (shadcn primitives keep their own timing)
 - Card padding: `p-6`. Empty states: Lucide icon in `rounded-full bg-muted/50 p-4`, no emojis, no CTAs
 - Responsive: test at 375px, 393px, 430px, 1280px+

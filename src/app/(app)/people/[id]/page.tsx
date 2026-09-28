@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,6 +12,7 @@ import { EducationSection } from '@/app/profile/components/EducationSection'
 import { SkillsChipSelector } from '@/app/profile/components/SkillsChipSelector'
 import { ProfileSkeleton } from './components/ProfileSkeleton'
 import { ProfileNotFound } from './components/ProfileNotFound'
+import { MemberAvatar } from '@/components/brand/member-avatar'
 
 export default function PersonProfilePage() {
   const params = useParams()
@@ -53,23 +53,14 @@ export default function PersonProfilePage() {
             </Button>
 
             <div className="flex items-center gap-3">
-              {personData.avatarUrl ? (
-                <Image
-                  src={personData.avatarUrl}
-                  alt={`${personData.firstName ?? ''} ${personData.lastName ?? ''}`}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 rounded-full object-cover ring-2 ring-background shadow-sm"
-                  referrerPolicy="no-referrer"
-                  unoptimized
-                />
-              ) : (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-background shadow-sm">
-                  <span className="text-sm font-semibold text-primary/70">
-                    {(personData.firstName?.charAt(0) ?? '')}{(personData.lastName?.charAt(0) ?? '')}
-                  </span>
-                </div>
-              )}
+              <MemberAvatar
+                name={`${personData.firstName ?? ''} ${personData.lastName ?? ''}`.trim() || (personData.googleEmail ?? '')}
+                src={personData.avatarUrl}
+                side={personData.side ?? 'general'}
+                size="sm"
+                decorative
+                className="size-10 ring-2 ring-background shadow-sm"
+              />
               <div>
                 <h1 className="text-lg font-semibold tracking-tight">
                   {personData.firstName && personData.lastName

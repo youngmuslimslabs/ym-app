@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 
+import { BrandBlob, BrandWave, type BlobShape } from '@/components/brand/blob'
+import { LocalLockup } from '@/components/brand/local-lockup'
 import { Logo, type LogoVariant } from '@/components/brand/logo'
+import { MemberAvatar } from '@/components/brand/member-avatar'
+import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -262,9 +266,7 @@ export default function DesignSystemPage() {
     <div className="mx-auto max-w-5xl space-y-12 p-4 pb-20 sm:p-6">
       <header className="space-y-2">
         <Badge variant="info">Brandbook 2026</Badge>
-        <h1 className="font-display text-3xl leading-tight sm:text-4xl">
-          Design System
-        </h1>
+        <h1 className="ym-h1">Design System</h1>
         <p className="max-w-2xl text-muted-foreground">
           Every color, typeface, and component the app is built from. Tokens
           come from the Young Muslims Brandbook — change one in{' '}
@@ -364,24 +366,27 @@ export default function DesignSystemPage() {
         description="Boldonse carries headlines; Figtree handles everything beneath, shifting weight to signal each level. Both set at -2% tracking. (Brandbook pp.34–35)"
       >
         <div className="rounded-lg border bg-card p-4 sm:p-6">
-          <TypeRow label="H1 — Headlines" classes="font-display text-4xl">
-            <p className="font-display text-4xl leading-tight">For the youth.</p>
+          <TypeRow label="Display — hero moments" classes="ym-display">
+            <p className="ym-display">For the youth.</p>
           </TypeRow>
-          <TypeRow label="H2 — Sub-headlines" classes="text-2xl font-bold">
-            <p className="text-2xl font-bold">About us</p>
+          <TypeRow label="H1 — Page titles" classes="ym-h1">
+            <p className="ym-h1">Conferences</p>
           </TypeRow>
-          <TypeRow label="H3 — In-text headlines" classes="text-lg font-medium">
-            <p className="text-lg font-medium">Mission</p>
+          <TypeRow label="H2 — Sub-headlines" classes="ym-h2">
+            <p className="ym-h2">About us</p>
           </TypeRow>
-          <TypeRow label="Body copy" classes="text-base (font-normal)">
-            <p className="text-base">
+          <TypeRow label="H3 — In-text headlines" classes="ym-h3">
+            <p className="ym-h3">Mission</p>
+          </TypeRow>
+          <TypeRow label="Body copy" classes="(none — the default)">
+            <p>
               Young Muslims isn&apos;t a program you attend. It&apos;s a friend
               group you belong to. Across the country, YM is thousands of young
               adults who hang out every week.
             </p>
           </TypeRow>
-          <TypeRow label="Navigation / all caps" classes="text-sm font-semibold uppercase">
-            <p className="text-sm font-semibold uppercase">Navigation items</p>
+          <TypeRow label="Eyebrow / navigation" classes="ym-eyebrow">
+            <p className="ym-eyebrow">Navigation items</p>
           </TypeRow>
           <TypeRow label="Small / meta" classes="text-sm text-muted-foreground">
             <p className="text-sm text-muted-foreground">
@@ -389,6 +394,92 @@ export default function DesignSystemPage() {
             </p>
           </TypeRow>
         </div>
+      </Section>
+
+      <Section
+        title="Page header"
+        description="components/layout/page-header.tsx. The one page title block: optional back link, eyebrow, Boldonse title, description and actions. Use it instead of writing an <h1> in a page."
+      >
+        <div className="rounded-lg border bg-background p-4 sm:p-6">
+          <PageHeader
+            back={{ href: '/design-system', label: 'All conferences' }}
+            eyebrow="October 8 – 10"
+            title="Fall Retreat 2026"
+            description="Camp Tall Timbers. Pull up with your Neighbor Net."
+            actions={
+              <>
+                <Button variant="outline">Share</Button>
+                <Button>View schedule</Button>
+              </>
+            }
+          />
+        </div>
+      </Section>
+
+      <Separator />
+
+      <Section
+        title="Shapes"
+        description="components/brand/blob.tsx (Brandbook p.2, 6, 41–42). Organic shapes that fill with currentColor, so a text class sets colour and opacity: text-white/[0.07] for a tint on a colour block, text-highlight for a solid accent. Let them bleed off the edge of the block. BrandWave ends a colour block in a curve."
+      >
+        <div className="relative isolate overflow-hidden rounded-lg bg-primary text-primary-foreground">
+          <div className="grid grid-cols-2 gap-6 p-6 sm:grid-cols-4">
+            {(['pebble', 'ripple', 'cloud', 'bloom'] as BlobShape[]).map((shape) => (
+              <div key={shape} className="flex flex-col items-center gap-2">
+                <BrandBlob shape={shape} className="size-24 text-highlight" />
+                <code className="font-mono text-xs opacity-80">{shape}</code>
+              </div>
+            ))}
+          </div>
+          <BrandWave className="-mb-px h-8 text-background" />
+        </div>
+      </Section>
+
+      <Section
+        title="Highlight"
+        description="The palette's bright accent: Buttercup for General and Sisters, Sky Blue for Brothers. For fills, blobs and accent words on dark blocks, never small type on white."
+      >
+        <div className="grid gap-4 lg:grid-cols-3">
+          {(['general', 'brothers', 'sisters'] as const).map((side) => (
+            <div
+              key={side}
+              data-theme-side={side}
+              className="relative isolate overflow-hidden rounded-lg bg-foreground p-5 text-background"
+            >
+              <BrandBlob shape="cloud" className="absolute -bottom-10 -right-8 -z-10 size-28 text-highlight" />
+              <p className="ym-eyebrow text-highlight">{side}</p>
+              <p className="ym-h1 mt-1">Pull up.</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        title="Local lockup"
+        description="components/brand/local-lockup.tsx (Brandbook p.49–50). The stacked logo with a subregion or Neighbor Net beneath it. Posters exist for four cities only, so the app builds the rest in code."
+      >
+        <div className="grid gap-4 sm:grid-cols-3">
+          {(['general', 'brothers', 'sisters'] as const).map((side) => (
+            <div key={side} data-theme-side={side} className="rounded-lg bg-primary p-6 text-primary-foreground">
+              <LocalLockup place="Houston" placeClassName="text-highlight" />
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        title="Member avatar"
+        description="components/brand/member-avatar.tsx (Brandbook p.45–46). Initials on a solid side colour, with the photo on top when it loads. Pass the member's side so their colour stays fixed for every viewer; omit it for your own avatar to follow the theme."
+      >
+        <Card>
+          <CardContent className="flex flex-wrap items-end gap-6 p-6">
+            <MemberAvatar name="Yusuf Abdullah" side="brothers" size="xl" />
+            <MemberAvatar name="Maryam Khan" side="sisters" size="lg" />
+            <MemberAvatar name="Young Muslims" side="general" size="md" />
+            <MemberAvatar name="Omar Anees" size="sm" />
+            <MemberAvatar name="Aisha Mohamed" side="sisters" size="xs" />
+          </CardContent>
+        </Card>
       </Section>
 
       <Separator />

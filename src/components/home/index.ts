@@ -1,5 +1,6 @@
 export { HomePageSkeleton } from './HomePageSkeleton'
 export { Greeting } from './Greeting'
+export { HomeHero } from './HomeHero'
 export { StatsStrip } from './StatsStrip'
 export { QuickActionList } from './QuickActionList'
 export { QuickActionRow } from './QuickActionRow'

@@ -42,6 +42,11 @@
        token is used as small badge text. True #D8AA45 is `brand-brass`. */
     --warning: 0.60 0.128 83.979;
     --warning-foreground: 0.9861 0.0034 67.784;
+    /* The palette's bright accent, for fills, blobs and accent words on
+       dark blocks, never small type on white. Buttercup for General
+       (Brandbook p.49 sets place names in it). */
+    --highlight: 0.8618 0.1448 97.929;       /* #EBD255 Buttercup Yellow */
+    --highlight-foreground: 0.2118 0.0275 283.806;
     --border: 0.91 0.004 67.784;
     --input: 0.91 0.004 67.784;
     --ring: 0.3865 0.1137 263.626;
@@ -53,14 +58,17 @@
     /* Sidebar — the app's branded dark surface. Anchored on Deep Obsidian.
        Moved off the old standalone HSL system onto OKLCH so it themes with
        everything else and supports Tailwind opacity modifiers. */
-    --sidebar-background: 0.2118 0.0275 283.806;   /* Deep Obsidian */
-    --sidebar-foreground: 0.9861 0.0034 67.784;    /* Warm Snow */
-    --sidebar-primary: 0.50 0.12 263.626;          /* Royal Blue, lifted */
+    /* Sidebar: white, one neutral chrome for every side (redesign direction B,
+       "Obsidian": the page has a single dark block, the Home hero). The side
+       colour shows only on the active item. */
+    --sidebar-background: 1 0 0;                   /* Pure White */
+    --sidebar-foreground: 0.2118 0.0275 283.806;   /* Deep Obsidian */
+    --sidebar-primary: 0.3865 0.1137 263.626;     /* Royal Blue */
     --sidebar-primary-foreground: 0.9861 0.0034 67.784;
-    --sidebar-accent: 0.27 0.028 283.806;          /* hover — Obsidian +1 step */
-    --sidebar-accent-foreground: 0.9861 0.0034 67.784;
-    --sidebar-border: 0.30 0.03 283.806;
-    --sidebar-ring: 0.641 0.1309 251.419;          /* Sky Blue */
+    --sidebar-accent: 0.955 0.004 67.784;          /* hover — Warm Snow, stepped down */
+    --sidebar-accent-foreground: 0.2118 0.0275 283.806;
+    --sidebar-border: 0.91 0.004 67.784;
+    --sidebar-ring: 0.3865 0.1137 263.626;
   }
 
   /**
@@ -99,6 +107,8 @@
     --success-foreground: 1 0 0;
     --warning: 0.60 0.128 83.979;
     --warning-foreground: 1 0 0;
+    --highlight: 0.641 0.1309 251.419;       /* #4A90D9 Sky Blue */
+    --highlight-foreground: 0.2875 0.074 262.653;
     --border: 0.90 0.018 255.956;            /* Cool Slate, light */
     --input: 0.90 0.018 255.956;
     --ring: 0.3865 0.1137 263.626;
@@ -107,13 +117,13 @@
     --chart-3: 0.641 0.1309 251.419;         /* Sky Blue */
     --chart-4: 0.7413 0.0451 255.956;        /* Cool Slate */
     --chart-5: 0.5089 0.0839 155.775;        /* Jade Foliage */
-    --sidebar-background: 0.2875 0.074 262.653;  /* Midnight Blue */
-    --sidebar-foreground: 1 0 0;
-    --sidebar-primary: 0.641 0.1309 251.419;     /* Sky Blue */
-    --sidebar-primary-foreground: 0.2875 0.074 262.653;
-    --sidebar-accent: 0.35 0.078 262.653;
-    --sidebar-accent-foreground: 1 0 0;
-    --sidebar-border: 0.38 0.08 262.653;
+    --sidebar-background: 1 0 0;                   /* Pure White */
+    --sidebar-foreground: 0.2118 0.0275 283.806;   /* Deep Obsidian */
+    --sidebar-primary: 0.3865 0.1137 263.626;     /* Royal Blue */
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.955 0.004 67.784;          /* hover — Warm Snow, stepped down */
+    --sidebar-accent-foreground: 0.2118 0.0275 283.806;
+    --sidebar-border: 0.91 0.004 67.784;
     --sidebar-ring: 0.641 0.1309 251.419;
   }
 
@@ -149,6 +159,8 @@
     --success-foreground: 1 0 0;
     --warning: 0.60 0.128 83.979;            /* Brass hue, darkened for type */
     --warning-foreground: 1 0 0;
+    --highlight: 0.8618 0.1448 97.929;       /* #EBD255 Buttercup Yellow */
+    --highlight-foreground: 0.2824 0.0565 164.37;
     --border: 0.90 0.015 164.37;
     --input: 0.90 0.015 164.37;
     --ring: 0.5089 0.0839 155.775;
@@ -157,14 +169,14 @@
     --chart-3: 0.7617 0.1283 83.979;         /* Warm Brass */
     --chart-4: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
     --chart-5: 0.641 0.1309 251.419;         /* Sky Blue */
-    --sidebar-background: 0.2824 0.0565 164.37;  /* Deep Forest Green */
-    --sidebar-foreground: 1 0 0;
-    --sidebar-primary: 0.5089 0.0839 155.775;    /* Jade Foliage */
+    --sidebar-background: 1 0 0;                   /* Pure White */
+    --sidebar-foreground: 0.2118 0.0275 283.806;   /* Deep Obsidian */
+    --sidebar-primary: 0.5089 0.0839 155.775;     /* Jade Foliage */
     --sidebar-primary-foreground: 1 0 0;
-    --sidebar-accent: 0.34 0.058 164.37;
-    --sidebar-accent-foreground: 1 0 0;
-    --sidebar-border: 0.37 0.06 164.37;
-    --sidebar-ring: 0.8618 0.1448 97.929;        /* Buttercup Yellow */
+    --sidebar-accent: 0.955 0.004 67.784;          /* hover — Warm Snow, stepped down */
+    --sidebar-accent-foreground: 0.2118 0.0275 283.806;
+    --sidebar-border: 0.91 0.004 67.784;
+    --sidebar-ring: 0.5089 0.0839 155.775;
   }
 
   /* Dark mode is not yet reachable — nothing adds `.dark` to <html> (see the
@@ -192,6 +204,8 @@
     --success-foreground: 0.2118 0.0275 283.806;
     --warning: 0.7617 0.1283 83.979;         /* #D8AA45 Warm Brass */
     --warning-foreground: 0.2118 0.0275 283.806;
+    --highlight: 0.8618 0.1448 97.929;
+    --highlight-foreground: 0.2118 0.0275 283.806;
     --border: 0.30 0.02 283.806;
     --input: 0.30 0.02 283.806;
     --ring: 0.65 0.1137 263.626;
@@ -228,10 +242,45 @@
 
 }
 
+/**
+ * Type scale (Brandbook p.35). One class per level, so a heading is one
+ * decision instead of five utilities:
+ *   .ym-display  Boldonse, caps — hero moments (login, home greeting)
+ *   .ym-h1       Boldonse, caps — page titles
+ *   .ym-h2       Figtree Bold — sub-headlines, section titles
+ *   .ym-h3       Figtree SemiBold — in-text headlines, card titles
+ *   .ym-eyebrow  Figtree SemiBold, caps — labels above a title, nav
+ * Body copy is the default (Figtree Regular) and needs no class.
+ */
+@layer base {
+  /* A white sidebar needs an edge against the Warm Snow page. */
+  [data-sidebar='sidebar'] {
+    border-right: 1px solid oklch(var(--sidebar-border));
+  }
+}
+
+@layer components {
+  .ym-display {
+    @apply font-display text-display uppercase;
+  }
+  .ym-h1 {
+    @apply font-display text-h1 uppercase;
+  }
+  .ym-h2 {
+    @apply text-h2 font-bold;
+  }
+  .ym-h3 {
+    @apply text-h3 font-semibold;
+  }
+  .ym-eyebrow {
+    @apply text-eyebrow font-semibold uppercase;
+  }
+}
+
 @keyframes ym-status-pulse {
-  0%   { box-shadow: 0 0 0 0 oklch(var(--success) / 0.45); }
-  70%  { box-shadow: 0 0 0 8px oklch(var(--success) / 0); }
-  100% { box-shadow: 0 0 0 0 oklch(var(--success) / 0); }
+  0%   { box-shadow: 0 0 0 0 oklch(var(--highlight) / 0.5); }
+  70%  { box-shadow: 0 0 0 8px oklch(var(--highlight) / 0); }
+  100% { box-shadow: 0 0 0 0 oklch(var(--highlight) / 0); }
 }
 
 @layer utilities {
@@ -261,88 +310,8 @@
   }
 }
 
-/* Login Page — Geometric Pattern + Frosted Glass */
-.login-bg {
-  background:
-    radial-gradient(ellipse at 30% 20%, oklch(var(--primary) / 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, oklch(var(--primary) / 0.06) 0%, transparent 50%),
-    oklch(var(--background));
-}
-
-.login-bg::before {
-  content: '';
-  position: fixed;
-  inset: -500px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='200'%3E%3Cg fill='none' stroke='%23254FA0' stroke-width='0.6' opacity='0.15'%3E%3Cpath d='M0,4 Q125,5,250,4 T500,4'/%3E%3Cpath d='M0,12 Q125,16,250,12 T500,12'/%3E%3Cpath d='M0,20 Q125,26,250,20 T500,20'/%3E%3Cpath d='M0,28 Q125,36,250,28 T500,28'/%3E%3Cpath d='M0,36 Q125,45,250,36 T500,36'/%3E%3Cpath d='M0,44 Q125,54,250,44 T500,44'/%3E%3Cpath d='M0,52 Q125,62,250,52 T500,52'/%3E%3Cpath d='M0,60 Q125,70,250,60 T500,60'/%3E%3Cpath d='M0,68 Q125,76,250,68 T500,68'/%3E%3Cpath d='M0,76 Q125,83,250,76 T500,76'/%3E%3Cpath d='M0,84 Q125,89,250,84 T500,84'/%3E%3Cpath d='M0,92 Q125,95,250,92 T500,92'/%3E%3Cpath d='M0,100 Q125,100,250,100 T500,100'/%3E%3Cpath d='M0,108 Q125,105,250,108 T500,108'/%3E%3Cpath d='M0,116 Q125,111,250,116 T500,116'/%3E%3Cpath d='M0,124 Q125,117,250,124 T500,124'/%3E%3Cpath d='M0,132 Q125,124,250,132 T500,132'/%3E%3Cpath d='M0,140 Q125,130,250,140 T500,140'/%3E%3Cpath d='M0,148 Q125,138,250,148 T500,148'/%3E%3Cpath d='M0,156 Q125,146,250,156 T500,156'/%3E%3Cpath d='M0,164 Q125,155,250,164 T500,164'/%3E%3Cpath d='M0,172 Q125,164,250,172 T500,172'/%3E%3Cpath d='M0,180 Q125,174,250,180 T500,180'/%3E%3Cpath d='M0,188 Q125,184,250,188 T500,188'/%3E%3Cpath d='M0,196 Q125,195,250,196 T500,196'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 500px 200px;
-  animation: patternDrift 120s linear infinite;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.login-bg::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(ellipse at center, transparent 40%, oklch(var(--background) / 0.6) 100%);
-  z-index: 0;
-  pointer-events: none;
-}
-
-.login-orb {
-  position: fixed;
-  border-radius: 9999px;
-  filter: blur(80px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.login-orb-1 {
-  width: 300px;
-  height: 300px;
-  top: -60px;
-  right: -60px;
-  background: oklch(var(--primary) / 0.08);
-  animation: loginFloat1 20s ease-in-out infinite;
-}
-
-.login-orb-2 {
-  width: 250px;
-  height: 250px;
-  bottom: -40px;
-  left: -40px;
-  background: oklch(var(--primary) / 0.08);
-  animation: loginFloat2 25s ease-in-out infinite;
-}
-
-@keyframes patternDrift {
-  from { transform: translate(0, 0); }
-  to { transform: translate(500px, 200px); }
-}
-
-@keyframes loginFloat1 {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-20px, 20px); }
-}
-
-@keyframes loginFloat2 {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(20px, -20px); }
-}
-
-@keyframes loginCardEntry {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* Login entrance (components/auth/YMLoginForm.tsx) */
 @keyframes loginFadeUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .login-bg::before,
-  .login-orb {
-    animation: none;
-  }
 }

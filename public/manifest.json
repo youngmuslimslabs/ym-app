@@ -2,7 +2,7 @@
   "name": "Young Muslims App",
   "short_name": "YM App",
   "description": "Young Muslims Official App - Connect with your community, manage your profile, and stay engaged",
-  "start_url": "/",
+  "start_url": "/home/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -37,21 +37,21 @@
       "name": "My Profile",
       "short_name": "Profile",
       "description": "View and edit your profile",
-      "url": "/profile",
+      "url": "/profile/",
       "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "People Directory",
       "short_name": "People",
       "description": "Browse the community directory",
-      "url": "/people",
+      "url": "/people/",
       "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Documentation",
       "short_name": "Docs",
       "description": "View app documentation",
-      "url": "/docs",
+      "url": "/docs/",
       "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     }
   ],

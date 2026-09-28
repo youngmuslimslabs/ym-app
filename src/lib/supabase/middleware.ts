@@ -48,13 +48,15 @@ export async function updateSession(request: NextRequest) {
         )
 
         // IMPORTANT: Avoid writing any logic between createServerClient and
-        // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+        // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
         // issues with users being randomly logged out.
 
-        const {
-            data: { user },
-            error: getUserError,
-        } = await supabase.auth.getUser()
+        // getClaims() refreshes the session like getUser() but, with asymmetric
+        // JWT signing keys, verifies the token locally instead of a round-trip to
+        // Supabase Auth on every request (it falls back to getUser() otherwise).
+        const { data: claimsData, error: getUserError } = await supabase.auth.getClaims()
+        const claims = claimsData?.claims
+        const user = claims ? { id: claims.sub, email: claims.email } : null
 
         // Handle auth errors (network failures, invalid tokens, etc.)
         if (getUserError) {
@@ -84,7 +86,7 @@ export async function updateSession(request: NextRequest) {
             if (!isPublicPath(request.nextUrl.pathname)) {
                 // Redirect to login on auth errors
                 const url = request.nextUrl.clone()
-                url.pathname = '/login'
+                url.pathname = '/login/'
                 url.searchParams.set('error', 'session_expired')
                 return NextResponse.redirect(url)
             }
@@ -93,8 +95,9 @@ export async function updateSession(request: NextRequest) {
 
         if (!user && !isPublicPath(request.nextUrl.pathname)) {
             // no user, potentially respond by redirecting the user to the login page
+            // (trailing slash matches `trailingSlash: true` — saves a 308 hop)
             const url = request.nextUrl.clone()
-            url.pathname = '/login'
+            url.pathname = '/login/'
             return NextResponse.redirect(url)
         }
 
@@ -121,7 +124,7 @@ export async function updateSession(request: NextRequest) {
             }
 
             const url = request.nextUrl.clone()
-            url.pathname = '/login'
+            url.pathname = '/login/'
             url.searchParams.set('error', 'invalid_domain')
             return NextResponse.redirect(url)
         }
@@ -132,8 +135,14 @@ export async function updateSession(request: NextRequest) {
         const isOnboardingRoute = request.nextUrl.pathname.startsWith('/onboarding')
         const isPublicRoute = isPublicPath(request.nextUrl.pathname)
         const isProtectedRoute = !isPublicRoute && !isOnboardingRoute
+        // The onboarding lookup is a DB round-trip. Skip it for background link
+        // prefetches (the real navigation re-runs middleware and redirects) and
+        // for API routes, which authorize themselves and shouldn't be redirected
+        // to a page anyway.
+        const isPrefetch = request.headers.get('next-router-prefetch') === '1'
+        const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
 
-        if (user && (isProtectedRoute || isOnboardingRoute)) {
+        if (user && !isPrefetch && !isApiRoute && (isProtectedRoute || isOnboardingRoute)) {
             let { data: userData, error: queryError } = await supabase
                 .from('users')
                 .select('onboarding_completed_at')
@@ -191,14 +200,14 @@ export async function updateSession(request: NextRequest) {
             if (isOnboardingRoute && userData?.onboarding_completed_at) {
                 // Completed user on onboarding → send to home
                 const url = request.nextUrl.clone()
-                url.pathname = '/home'
+                url.pathname = '/home/'
                 return NextResponse.redirect(url)
             }
 
             if (isProtectedRoute && !userData?.onboarding_completed_at) {
                 // Incomplete user on protected route → send to onboarding
                 const url = request.nextUrl.clone()
-                url.pathname = '/onboarding'
+                url.pathname = '/onboarding/'
                 return NextResponse.redirect(url)
             }
         }

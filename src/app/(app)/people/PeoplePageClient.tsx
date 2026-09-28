@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { usePostHog } from 'posthog-js/react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { replaceSearchParams } from '@/lib/replace-search-params'
 import {
   PeopleSearch,
   PeopleFilters,
@@ -27,7 +28,6 @@ function readViewFromParams(params: URLSearchParams): ViewMode {
 }
 
 export function PeoplePageClient({ initialPeople, filterCategories }: PeoplePageClientProps) {
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const isMobile = useIsMobile()
@@ -44,7 +44,8 @@ export function PeoplePageClient({ initialPeople, filterCategories }: PeoplePage
     [posthog],
   )
 
-  // viewMode → URL (immediate; toggle is a single discrete action)
+  // viewMode → URL (immediate; toggle is a single discrete action). History-only
+  // so toggling doesn't re-run the server page and re-send the whole directory.
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString())
     if (viewMode === 'cards') {
@@ -52,14 +53,8 @@ export function PeoplePageClient({ initialPeople, filterCategories }: PeoplePage
     } else {
       params.set('view', viewMode)
     }
-    const queryString = params.toString()
-    const next = queryString ? `${pathname}?${queryString}` : pathname
-    const current =
-      pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
-    if (next !== current) {
-      router.replace(next, { scroll: false })
-    }
-  }, [viewMode, pathname, router, searchParams])
+    replaceSearchParams(pathname, params)
+  }, [viewMode, pathname, searchParams])
 
   // URL → viewMode (browser back/forward, paste-in URL)
   useEffect(() => {

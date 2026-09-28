@@ -12,9 +12,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
-     * Feel free to modify this pattern to include more paths.
+     * - public folder images, the PWA manifest and service worker
+     * (matcher regexes can't take an `i` flag, hence the uppercase variants).
+     * The spending-policy PDF under /public stays behind the login check.
      */
-    '/((?!_next/static|_next/image|favicon.ico|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|SVG|PNG|JPG|JPEG|GIF|WEBP)$).*)',
   ],
 }

@@ -36,6 +36,9 @@ export function ScheduleContent({ initialView }: Props) {
   // Wrong-code state lives inline in the CheckInDialog (it owns the destructive
   // chrome around the pin input). Everything else surfaces via Sonner toasts.
   const [checkInError, setCheckInError] = useState<string | null>(null)
+  // Epoch ms until which the server is refusing this member's check-in
+  // attempts for a session, after too many wrong codes (#73).
+  const [checkInLockedUntil, setCheckInLockedUntil] = useState<number | null>(null)
   const [now, setNow] = useState<Date>(() => new Date())
   // Pending swap when the user tries to sign up for a session that overlaps
   // existing signups. The DB function does an atomic swap, but we surface the
@@ -60,10 +63,12 @@ export function ScheduleContent({ initialView }: Props) {
   function closeSheet() {
     setOpenSessionId(null)
     setCheckInError(null)
+    setCheckInLockedUntil(null)
   }
 
   function selectSession(id: string) {
     setCheckInError(null)
+    setCheckInLockedUntil(null)
     setOpenSessionId(id)
   }
 
@@ -151,6 +156,9 @@ export function ScheduleContent({ initialView }: Props) {
       if (!result.success) {
         // Inline error stays in the dialog — it's a validation correction, not a notification.
         setCheckInError(result.error ?? 'Invalid code')
+        if (result.retryAfterSeconds) {
+          setCheckInLockedUntil(Date.now() + result.retryAfterSeconds * 1000)
+        }
         return
       }
       setView((prev) => {
@@ -236,6 +244,7 @@ export function ScheduleContent({ initialView }: Props) {
         feedback={openSession ? view.myFeedback[openSession.id] ?? null : null}
         seatCount={openSession ? view.signupCounts[openSession.id] ?? 0 : 0}
         checkInError={checkInError}
+        checkInLockedUntil={checkInLockedUntil}
         pending={pending}
         now={now}
         onClose={closeSheet}

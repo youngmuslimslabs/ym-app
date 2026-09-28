@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { ResponsiveSelect } from '@/components/responsive-select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { SearchableCombobox, type ComboboxValue } from '@/components/searchable-combobox'
+import { SIDE_LABELS, SIDES, type Side } from '@/lib/side'
 import { cn } from '@/lib/utils'
 
 function StepHeader({ label, help }: { label: string; help?: string }) {
@@ -251,6 +252,66 @@ export function DateStep({
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={!value} className="min-w-32">
           Continue
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+interface SideStepProps {
+  value?: Side
+  onSelect: (side: Side) => void
+  onNext: () => void
+  ctaLabel?: string
+  disabled?: boolean
+}
+
+/**
+ * Brothers / Sisters — two large tiles (a radio group) rather than a dropdown
+ * for a two-option, permanent answer. Selecting only marks the choice; the
+ * Continue button commits, so a mis-tap is never auto-advanced past.
+ */
+export function SideStep({
+  value,
+  onSelect,
+  onNext,
+  ctaLabel = 'Continue',
+  disabled = false,
+}: SideStepProps) {
+  return (
+    <div className="flex flex-col gap-6">
+      <StepHeader
+        label="Which side are you part of?"
+        help="This sets up your part of the app and can’t be changed later."
+      />
+      <div role="radiogroup" aria-label="Side" className="grid grid-cols-2 gap-3">
+        {SIDES.map((side) => {
+          const selected = value === side
+          return (
+            <button
+              key={side}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              disabled={disabled}
+              onClick={() => onSelect(side)}
+              className={cn(
+                'h-24 rounded-xl border-2 bg-card text-lg font-semibold transition-colors duration-200',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                'disabled:pointer-events-none disabled:opacity-50',
+                selected
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-border hover:border-primary/40',
+              )}
+            >
+              {SIDE_LABELS[side]}
+            </button>
+          )
+        })}
+      </div>
+      <div className="flex justify-end">
+        <Button onClick={onNext} disabled={!value || disabled} className="min-w-32">
+          {ctaLabel}
         </Button>
       </div>
     </div>

@@ -88,7 +88,7 @@ describe('AppCompletion (mount stability + lazy profile fetch)', () => {
   }
 
   it('does not remount the page when the completion flag arrives', async () => {
-    let resolveFlag: (v: { completedAt: string | null; errored: boolean }) => void = () => {}
+    let resolveFlag: (v: { completedAt: string | null; errored: boolean; signedIn: boolean }) => void = () => {}
     mockFetchProfileCompletedAt.mockReturnValue(new Promise((r) => { resolveFlag = r }))
     const onMount = vi.fn()
 
@@ -98,13 +98,13 @@ describe('AppCompletion (mount stability + lazy profile fetch)', () => {
     render(<AppCompletion><MountCounter onMount={onMount} /></AppCompletion>)
     expect(onMount).toHaveBeenCalledTimes(1)
 
-    resolveFlag({ completedAt: null, errored: false })
+    resolveFlag({ completedAt: null, errored: false, signedIn: true })
     await waitFor(() => expect(screen.getByText(/finish setting up/i)).toBeInTheDocument())
     expect(onMount).toHaveBeenCalledTimes(1)
   })
 
   it('skips the full profile fetch for a completed profile', async () => {
-    mockFetchProfileCompletedAt.mockResolvedValue({ completedAt: '2026-07-01T00:00:00Z', errored: false })
+    mockFetchProfileCompletedAt.mockResolvedValue({ completedAt: '2026-07-01T00:00:00Z', errored: false, signedIn: true })
     const onClick = vi.fn()
     const user = userEvent.setup()
 
@@ -117,7 +117,7 @@ describe('AppCompletion (mount stability + lazy profile fetch)', () => {
   })
 
   it('fails open when the flag fetch errors', async () => {
-    mockFetchProfileCompletedAt.mockResolvedValue({ completedAt: null, errored: true })
+    mockFetchProfileCompletedAt.mockResolvedValue({ completedAt: null, errored: true, signedIn: true })
     const onClick = vi.fn()
     const user = userEvent.setup()
 
@@ -127,5 +127,19 @@ describe('AppCompletion (mount stability + lazy profile fetch)', () => {
 
     expect(onClick).toHaveBeenCalledOnce()
     expect(mockFetchCurrentUserProfile).not.toHaveBeenCalled()
+  })
+
+  it('never gates or loads a profile for a signed-out visitor', async () => {
+    mockFetchProfileCompletedAt.mockResolvedValue({ completedAt: null, errored: false, signedIn: false })
+    const onClick = vi.fn()
+    const user = userEvent.setup()
+
+    render(<AppCompletion><button onClick={onClick}>Check in</button></AppCompletion>)
+    await waitFor(() => expect(mockFetchProfileCompletedAt).toHaveBeenCalled())
+    await user.click(screen.getByRole('button', { name: 'Check in' }))
+
+    expect(onClick).toHaveBeenCalledOnce()
+    expect(mockFetchCurrentUserProfile).not.toHaveBeenCalled()
+    expect(screen.queryByText(/finish setting up/i)).not.toBeInTheDocument()
   })
 })

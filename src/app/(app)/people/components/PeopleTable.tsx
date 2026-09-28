@@ -2,7 +2,6 @@
 
 import type { KeyboardEvent } from 'react'
 import { useMemo, useState } from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
   useReactTable,
@@ -27,6 +26,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { PersonListItem } from '../types'
 import { ROLE_CATEGORY_ICONS, ROLE_CATEGORY_VARIANTS } from '../constants'
+import { MemberAvatar } from '@/components/brand/member-avatar'
 
 // Column ids managed by this component. `hiddenColumns` accepts any of these.
 type DefaultColumnId = 'name' | 'roles' | 'region' | 'subregion' | 'skills'
@@ -94,24 +94,15 @@ export function PeopleTable({
         },
         cell: ({ row }) => {
           const person = row.original
-          const initials = `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`
           return (
             <div className="flex items-center gap-3">
-              {person.avatarUrl ? (
-                <Image
-                  src={person.avatarUrl}
-                  alt=""
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 rounded-full object-cover"
-                  referrerPolicy="no-referrer"
-                  unoptimized
-                />
-              ) : (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary/70">
-                  {initials}
-                </div>
-              )}
+              <MemberAvatar
+                name={`${person.firstName} ${person.lastName}`}
+                src={person.avatarUrl}
+                side={person.side ?? 'general'}
+                size="sm"
+                decorative
+              />
               <div>
                 <span className="font-medium">
                   {person.firstName} {person.lastName}

@@ -33,6 +33,12 @@ describe('MemberAvatar', () => {
     expect(screen.getByRole('img', { name: 'Fatima Ali' })).toHaveClass('bg-primary')
   })
 
+  it('stays out of the accessibility tree when decorative', () => {
+    const { container } = render(<MemberAvatar name="Fatima Ali" decorative />)
+    expect(screen.queryByRole('img', { name: 'Fatima Ali' })).not.toBeInTheDocument()
+    expect(container.firstChild).toHaveAttribute('aria-hidden', 'true')
+  })
+
   it('drops a photo that fails to load, leaving the initials', () => {
     const { container } = render(
       <MemberAvatar name="Fatima Ali" src="https://example.com/expired.jpg" />,

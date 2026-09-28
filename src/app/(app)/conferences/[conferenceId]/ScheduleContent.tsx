@@ -201,7 +201,10 @@ export function ScheduleContent({ initialView }: Props) {
   const dateRangeLabel = formatDateRange(conference.start_date, conference.end_date)
 
   return (
-    <div className="overflow-hidden">
+    // overflow-x-clip, not overflow-hidden: a hidden-overflow ancestor becomes
+    // the (non-scrolling) scroll container and silently disables the sticky
+    // day headers below (#68).
+    <div className="overflow-x-clip">
       <header className="px-6 md:px-8 pt-10 md:pt-12 pb-6 border-b">
         <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
           {conference.name}

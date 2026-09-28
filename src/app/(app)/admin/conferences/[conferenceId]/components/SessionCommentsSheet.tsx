@@ -5,6 +5,7 @@ import { MessageSquare, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useBottomSheetDragToDismiss } from '@/hooks/use-bottom-sheet-drag'
+import { useLastNonNull } from '@/hooks/use-last-non-null'
 import { createClient } from '@/lib/supabase/client'
 import { resolveEmbeddedName, type EmbeddedUserName } from '@/lib/name'
 import {
@@ -58,19 +59,16 @@ export function SessionCommentsSheet({ session, timezone, onClose }: Props) {
     }
   }, [session])
 
-  if (!session) {
-    return (
-      <Sheet open={false} onOpenChange={(open) => !open && onClose()}>
-        <SheetContent />
-      </Sheet>
-    )
-  }
+  // Keep rendering the last session through the close animation instead of
+  // swapping to an empty right-side placeholder mid-close (#57).
+  const shown = useLastNonNull(session)
+  if (!shown) return null
 
-  const startWall = decomposeTzIso(session.start_at, timezone)
+  const startWall = decomposeTzIso(shown.start_at, timezone)
   const side = isMobile ? 'bottom' : 'right'
 
   return (
-    <Sheet open onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={session !== null} onOpenChange={(next) => !next && onClose()}>
       <SheetContent
         ref={isMobile ? sheetRef : undefined}
         side={side}
@@ -96,11 +94,11 @@ export function SessionCommentsSheet({ session, timezone, onClose }: Props) {
             Feedback
           </div>
           <SheetTitle className="text-xl font-semibold tracking-tight pr-8">
-            {session.title}
+            {shown.title}
           </SheetTitle>
           <p className="text-sm text-muted-foreground">
             {formatDateLabel(startWall.date)} · {formatTime(startWall.time)}
-            {session.speaker ? ` · ${session.speaker}` : ''}
+            {shown.speaker ? ` · ${shown.speaker}` : ''}
           </p>
         </SheetHeader>
 

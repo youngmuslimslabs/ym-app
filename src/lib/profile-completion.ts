@@ -1,3 +1,4 @@
+import { SYSTEM_ROLE_CATEGORY } from '@/lib/role-categories'
 import type { ProfileFormState } from '@/app/profile/hooks/useProfileForm'
 import type {
   YMRoleEntry,
@@ -66,7 +67,7 @@ export function roleValid(r: YMRoleEntry): boolean {
  * updating one. Such a role loads into the form (so the user can see it) but must
  * be shown read-only and excluded from client writes. */
 export function isSystemRole(r: YMRoleEntry): boolean {
-  return r.roleTypeCategory === 'system'
+  return r.roleTypeCategory === SYSTEM_ROLE_CATEGORY
 }
 
 /** The subset of form roles the client is allowed to write. System roles are held

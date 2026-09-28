@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { SYSTEM_ROLE_CATEGORY } from '@/lib/role-categories'
 import { getCurrentUserRow } from '@/lib/supabase/current-user'
 import type { Database } from '@/types/database.types'
 
@@ -50,11 +51,14 @@ export async function fetchUserContext(): Promise<UserContext | null> {
     console.error('Error fetching membership:', membershipError)
   }
 
-  // Build role names
-  const roles = roleAssignments?.map((ra) => {
-    const roleType = ra.role_types as RoleTypeRow | null
-    return roleType?.name || ra.role_type_custom || 'Member'
-  }) || []
+  // Build role names, leaving out system roles (Event Admin), which are
+  // permissions rather than YM positions (#74)
+  const roles = (roleAssignments ?? [])
+    .filter((ra) => (ra.role_types as RoleTypeRow | null)?.category !== SYSTEM_ROLE_CATEGORY)
+    .map((ra) => {
+      const roleType = ra.role_types as RoleTypeRow | null
+      return roleType?.name || ra.role_type_custom || 'Member'
+    })
 
   // Extract geographic info
   const nn = membership?.neighbor_nets as { name: string; subregions: { name: string } } | null

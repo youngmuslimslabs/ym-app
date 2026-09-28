@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { SYSTEM_ROLE_CATEGORY } from '@/lib/role-categories'
 
 export interface RoleType {
   id: string
@@ -35,7 +36,7 @@ export async function fetchRoleTypes(): Promise<{
     // to self-assign Event Admin. The hard security boundary is the
     // role_assignments RLS WITH CHECK in migration 00016; this keeps the role
     // out of the picker so it isn't offered in the first place.
-    const filtered = data?.filter((rt) => rt.category !== 'system') ?? null
+    const filtered = data?.filter((rt) => rt.category !== SYSTEM_ROLE_CATEGORY) ?? null
 
     return { data: filtered, error: null }
   } catch (err) {

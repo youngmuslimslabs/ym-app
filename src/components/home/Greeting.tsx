@@ -9,8 +9,8 @@ export function Greeting({ fullName }: GreetingProps) {
   const firstName = getFirstName(fullName)
   return (
     <h1>
-      <span className="ym-eyebrow block text-sm text-primary-foreground/75">Assalamu alaykum,</span>
-      <span className="ym-display mt-2 block break-words">{firstName}.</span>
+      <span className="ym-eyebrow block text-sm text-brand-snow/65">Assalamu alaykum,</span>
+      <span className="ym-display mt-1 block break-words">{firstName}.</span>
     </h1>
   )
 }

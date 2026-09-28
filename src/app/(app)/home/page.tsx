@@ -39,7 +39,7 @@ export default async function HomePage() {
         subregion={userContext?.subregionName || null}
       />
 
-      <div className="mx-auto flex max-w-5xl flex-col gap-12 px-6 pt-8 sm:px-10 sm:pt-10">
+      <div className="mx-auto flex max-w-5xl flex-col gap-12 px-6 pt-10 sm:px-10">
         {/* Streams in after the rest of the page instead of blocking it. */}
         <Suspense fallback={null}>
           <ConferenceAttendanceSection />

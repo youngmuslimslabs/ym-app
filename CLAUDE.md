@@ -22,6 +22,7 @@
 - OKLCH color tokens in CSS variables, Tailwind wraps with `oklch(var(...) / <alpha-value>)`
 - Sidebar tokens are OKLCH like everything else (they support opacity modifiers)
 - Brand palette comes from the 2026 Brandbook; see `/design-system` for every token. Three themes (General, Brothers, Sisters) switch via `data-theme-side` on `<html>`. Prefer semantic tokens (`primary`, `highlight`, …) over `brand-*`
+- **Redesign direction B ("Obsidian") rules:** Boldonse once per screen (`ym-display` / `ym-h1`: the Login headline, the member's name on Home, the page title elsewhere; section and card titles, figures and conference names are Figtree). At most one dark block per screen, in Deep Obsidian (`bg-brand-obsidian`), not the side colour. The sidebar is white. The side colour is for accents only: buttons, the active nav item, avatars, links
 - **Type: use the `.ym-*` classes** (`ym-display`, `ym-h1` Boldonse caps; `ym-h2`, `ym-h3` Figtree; `ym-eyebrow` caps label). Page titles go through `PageHeader` (`components/layout/page-header.tsx`), not a hand-built `<h1>`
 - Brand pieces live in `components/brand/`: `Logo`, `BrandBlob`/`BrandWave` (organic shapes, `currentColor`), `LocalLockup`, `MemberAvatar` (use it for every member avatar)
 - Animations: `duration-200` standardized across custom components (shadcn primitives keep their own timing)

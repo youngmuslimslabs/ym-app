@@ -6,6 +6,7 @@ export interface UpcomingAttendance {
   name: string
   startDate: string
   endDate: string
+  location: string | null
   isLive: boolean
 }
 
@@ -46,7 +47,7 @@ export async function fetchUpcomingAttendance(): Promise<UpcomingAttendance | nu
 
   const { data, error } = await supabase
     .from('conferences')
-    .select('id, name, start_date, end_date')
+    .select('id, name, start_date, end_date, location')
     .in(
       'id',
       attendeeRows.map((r) => r.conference_id),
@@ -71,6 +72,7 @@ export async function fetchUpcomingAttendance(): Promise<UpcomingAttendance | nu
     name: data.name,
     startDate: data.start_date,
     endDate: data.end_date,
+    location: data.location,
     isLive,
   }
 }

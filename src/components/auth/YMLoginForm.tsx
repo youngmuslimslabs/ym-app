@@ -12,30 +12,32 @@ interface YMLoginFormProps {
 const ENTER = "animate-[loginFadeUp_0.6s_cubic-bezier(0.16,1,0.3,1)_both] motion-reduce:animate-none"
 
 /**
- * Login screen. A big brand colour block carries the headline (Brandbook
- * p.14, 35); the sign-in panel sits beside it on wide screens and below it on
- * phones. Colours come from the theme tokens, so it is General for a signed-out
- * visitor and picks up a side if a returning member's cookie is still set.
+ * Login screen (redesign direction B, "Obsidian"). One dark neutral block
+ * carries the headline, the only Boldonse on the page; the sign-in panel sits
+ * beside it on wide screens and below it on phones. The block is Deep Obsidian
+ * rather than the side colour, with small shapes from both sides of the
+ * palette, so it reads the same for a signed-out visitor and either side. The
+ * side colour stays on the accents (the eyebrow and link hover).
  */
 export function YMLoginForm({ onSuccess, onError, error }: YMLoginFormProps) {
   return (
     <div className="flex min-h-dvh flex-col bg-background lg:flex-row">
       {/* Brand block */}
-      <section className="relative isolate flex flex-col overflow-hidden bg-primary text-primary-foreground lg:min-h-dvh lg:flex-1">
+      <section className="relative isolate flex flex-col overflow-hidden bg-brand-obsidian text-brand-snow lg:min-h-dvh lg:flex-1">
         <BrandBlob
           shape="ripple"
           rotate={-18}
-          className="absolute -bottom-40 -left-32 -z-10 size-[26rem] text-white/[0.07] lg:-bottom-56 lg:-left-40 lg:size-[44rem]"
-        />
-        <BrandBlob
-          shape="cloud"
-          rotate={30}
-          className="absolute -right-24 -top-28 -z-10 size-72 text-white/[0.06] lg:size-[32rem]"
+          className="absolute -bottom-40 -left-28 -z-10 size-64 text-brand-jade lg:-bottom-24 lg:-left-20 lg:size-[26rem]"
         />
         <BrandBlob
           shape="pebble"
-          rotate={12}
-          className="absolute -bottom-4 right-8 -z-10 size-24 text-highlight lg:bottom-24 lg:right-16 lg:size-40"
+          rotate={20}
+          className="absolute -right-14 -top-16 -z-10 size-32 text-brand-buttercup lg:-right-12 lg:top-10 lg:size-56"
+        />
+        <BrandBlob
+          shape="bloom"
+          rotate={8}
+          className="absolute bottom-24 right-[22%] -z-10 hidden size-24 text-brand-sky lg:block"
         />
 
         <div className="flex flex-1 flex-col gap-10 px-6 pb-16 pt-safe sm:px-10 lg:justify-between lg:p-14 xl:p-20">
@@ -47,12 +49,12 @@ export function YMLoginForm({ onSuccess, onError, error }: YMLoginFormProps) {
               <br />
               By the youth.
             </h1>
-            <p className="max-w-md text-pretty text-lg text-primary-foreground/80">
+            <p className="max-w-md text-pretty text-lg text-brand-snow/75">
               Your Neighbor Net, your people and your next event, all in one place.
             </p>
           </div>
 
-          <p className="ym-eyebrow hidden text-primary-foreground/60 lg:block">
+          <p className="ym-eyebrow hidden text-brand-snow/55 lg:block">
             Brotherhood · Sisterhood · Deen
           </p>
         </div>
@@ -66,7 +68,7 @@ export function YMLoginForm({ onSuccess, onError, error }: YMLoginFormProps) {
         <div className={`flex w-full max-w-sm flex-col gap-8 [animation-delay:120ms] ${ENTER}`}>
           <div className="space-y-2">
             <p className="ym-eyebrow text-primary">Young Muslims App</p>
-            <h2 className="ym-h1">Welcome back</h2>
+            <h2 className="text-3xl font-bold leading-tight">Welcome back</h2>
             <p className="text-muted-foreground">
               Sign in with your youngmuslims.com Google account.
             </p>

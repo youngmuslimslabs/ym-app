@@ -58,14 +58,17 @@
     /* Sidebar — the app's branded dark surface. Anchored on Deep Obsidian.
        Moved off the old standalone HSL system onto OKLCH so it themes with
        everything else and supports Tailwind opacity modifiers. */
-    --sidebar-background: 0.2118 0.0275 283.806;   /* Deep Obsidian */
-    --sidebar-foreground: 0.9861 0.0034 67.784;    /* Warm Snow */
-    --sidebar-primary: 0.50 0.12 263.626;          /* Royal Blue, lifted */
+    /* Sidebar: white, one neutral chrome for every side (redesign direction B,
+       "Obsidian": the page has a single dark block, the Home hero). The side
+       colour shows only on the active item. */
+    --sidebar-background: 1 0 0;                   /* Pure White */
+    --sidebar-foreground: 0.2118 0.0275 283.806;   /* Deep Obsidian */
+    --sidebar-primary: 0.3865 0.1137 263.626;     /* Royal Blue */
     --sidebar-primary-foreground: 0.9861 0.0034 67.784;
-    --sidebar-accent: 0.27 0.028 283.806;          /* hover — Obsidian +1 step */
-    --sidebar-accent-foreground: 0.9861 0.0034 67.784;
-    --sidebar-border: 0.30 0.03 283.806;
-    --sidebar-ring: 0.641 0.1309 251.419;          /* Sky Blue */
+    --sidebar-accent: 0.955 0.004 67.784;          /* hover — Warm Snow, stepped down */
+    --sidebar-accent-foreground: 0.2118 0.0275 283.806;
+    --sidebar-border: 0.91 0.004 67.784;
+    --sidebar-ring: 0.3865 0.1137 263.626;
   }
 
   /**
@@ -114,13 +117,13 @@
     --chart-3: 0.641 0.1309 251.419;         /* Sky Blue */
     --chart-4: 0.7413 0.0451 255.956;        /* Cool Slate */
     --chart-5: 0.5089 0.0839 155.775;        /* Jade Foliage */
-    --sidebar-background: 0.2875 0.074 262.653;  /* Midnight Blue */
-    --sidebar-foreground: 1 0 0;
-    --sidebar-primary: 0.641 0.1309 251.419;     /* Sky Blue */
-    --sidebar-primary-foreground: 0.2875 0.074 262.653;
-    --sidebar-accent: 0.35 0.078 262.653;
-    --sidebar-accent-foreground: 1 0 0;
-    --sidebar-border: 0.38 0.08 262.653;
+    --sidebar-background: 1 0 0;                   /* Pure White */
+    --sidebar-foreground: 0.2118 0.0275 283.806;   /* Deep Obsidian */
+    --sidebar-primary: 0.3865 0.1137 263.626;     /* Royal Blue */
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.955 0.004 67.784;          /* hover — Warm Snow, stepped down */
+    --sidebar-accent-foreground: 0.2118 0.0275 283.806;
+    --sidebar-border: 0.91 0.004 67.784;
     --sidebar-ring: 0.641 0.1309 251.419;
   }
 
@@ -166,14 +169,14 @@
     --chart-3: 0.7617 0.1283 83.979;         /* Warm Brass */
     --chart-4: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
     --chart-5: 0.641 0.1309 251.419;         /* Sky Blue */
-    --sidebar-background: 0.2824 0.0565 164.37;  /* Deep Forest Green */
-    --sidebar-foreground: 1 0 0;
-    --sidebar-primary: 0.5089 0.0839 155.775;    /* Jade Foliage */
+    --sidebar-background: 1 0 0;                   /* Pure White */
+    --sidebar-foreground: 0.2118 0.0275 283.806;   /* Deep Obsidian */
+    --sidebar-primary: 0.5089 0.0839 155.775;     /* Jade Foliage */
     --sidebar-primary-foreground: 1 0 0;
-    --sidebar-accent: 0.34 0.058 164.37;
-    --sidebar-accent-foreground: 1 0 0;
-    --sidebar-border: 0.37 0.06 164.37;
-    --sidebar-ring: 0.8618 0.1448 97.929;        /* Buttercup Yellow */
+    --sidebar-accent: 0.955 0.004 67.784;          /* hover — Warm Snow, stepped down */
+    --sidebar-accent-foreground: 0.2118 0.0275 283.806;
+    --sidebar-border: 0.91 0.004 67.784;
+    --sidebar-ring: 0.5089 0.0839 155.775;
   }
 
   /* Dark mode is not yet reachable — nothing adds `.dark` to <html> (see the
@@ -249,6 +252,13 @@
  *   .ym-eyebrow  Figtree SemiBold, caps — labels above a title, nav
  * Body copy is the default (Figtree Regular) and needs no class.
  */
+@layer base {
+  /* A white sidebar needs an edge against the Warm Snow page. */
+  [data-sidebar='sidebar'] {
+    border-right: 1px solid oklch(var(--sidebar-border));
+  }
+}
+
 @layer components {
   .ym-display {
     @apply font-display text-display uppercase;

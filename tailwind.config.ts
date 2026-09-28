@@ -20,6 +20,22 @@ const config = {
         // Brandbook p.34 specifies -2% tracking on both faces.
         brand: '-0.02em',
       },
+      /**
+       * Type scale (Brandbook p.35). Use it through the `.ym-*` classes in
+       * globals.css, which also set the face, weight and case; a size on its
+       * own is only half of a level.
+       *
+       * Boldonse's caps are taller than its em (64px set is about 75px of cap),
+       * so its levels need a line-height near 1.3 just to keep lines from
+       * touching, and are sized smaller than a Figtree scale would be.
+       */
+      fontSize: {
+        display: ['clamp(2.25rem, 1.4rem + 3vw, 3.75rem)', { lineHeight: '1.3' }],
+        h1: ['clamp(1.5rem, 1.25rem + 1.1vw, 2rem)', { lineHeight: '1.32' }],
+        h2: ['1.375rem', { lineHeight: '1.3' }],
+        h3: ['1.0625rem', { lineHeight: '1.4' }],
+        eyebrow: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.08em' }],
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
@@ -63,6 +79,10 @@ const config = {
         warning: {
           DEFAULT: 'oklch(var(--warning) / <alpha-value>)',
           foreground: 'oklch(var(--warning-foreground) / <alpha-value>)',
+        },
+        highlight: {
+          DEFAULT: 'oklch(var(--highlight) / <alpha-value>)',
+          foreground: 'oklch(var(--highlight-foreground) / <alpha-value>)',
         },
 
         border: 'oklch(var(--border) / <alpha-value>)',

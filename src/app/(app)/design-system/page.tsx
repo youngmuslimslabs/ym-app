@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { Logo, type LogoVariant } from '@/components/brand/logo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -288,6 +289,36 @@ export default function DesignSystemPage() {
             anchor="Deep Forest Green #043222"
             side="sisters"
           />
+        </div>
+      </Section>
+
+      <Section
+        title="Logos"
+        description="Brandbook p.15–28. Single-colour SVGs rendered with currentColor, so a logo takes the surrounding text colour. <Logo /> with no side prop follows the theme: both marks for General, the YM monogram for Brothers, the ym mark for Sisters."
+      >
+        <div className="grid gap-4 lg:grid-cols-3">
+          {(['general', 'brothers', 'sisters'] as const).map((side) => (
+            <div
+              key={side}
+              data-theme-side={side}
+              className="overflow-hidden rounded-lg border bg-background"
+            >
+              <div className="flex items-center justify-between gap-3 bg-sidebar px-4 py-3 text-sidebar-foreground">
+                <Logo variant="full" className="h-4 min-w-0 max-w-40" />
+                <span className="shrink-0 text-xs capitalize opacity-70">{side}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 p-4 text-primary">
+                {(['mark', 'stacked', 'wordmark', 'full'] as LogoVariant[]).map((variant) => (
+                  <div key={variant} className="flex flex-col gap-2">
+                    <div className="flex h-16 items-center">
+                      <Logo variant={variant} className="h-full max-w-full" />
+                    </div>
+                    <code className="font-mono text-xs text-muted-foreground">{variant}</code>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </Section>
 

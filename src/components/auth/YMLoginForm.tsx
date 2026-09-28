@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { Logo } from "@/components/brand/logo"
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card } from "@/components/ui/card"
@@ -19,14 +19,7 @@ export function YMLoginForm({ onSuccess, onError, error }: YMLoginFormProps) {
             <div className="flex flex-col items-center gap-2 font-medium">
               <div className="relative">
                 <div className="absolute inset-[-6px] rounded-[calc(var(--radius)+4px)] bg-primary/10 blur-[10px] -z-10" />
-                <Image
-                  src="/favicon.ico"
-                  alt="Young Muslims"
-                  width={48}
-                  height={48}
-                  className="rounded"
-                  priority
-                />
+                <Logo className="h-12 text-primary" />
               </div>
             </div>
             <h1 className="text-xl font-bold text-center">Welcome to <br className="sm:hidden" />Young Muslims App</h1>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database.types'
+import { isSide, type Side } from '@/lib/side'
 
 // Type aliases for cleaner code
 type Tables = Database['public']['Tables']
@@ -21,6 +22,7 @@ export interface PersonListItem {
   skills: string[]
   yearsInYM?: number
   isClaimed: boolean
+  side: Side | null
 }
 
 export interface FilterOption {
@@ -153,6 +155,7 @@ export async function fetchPeopleForDirectory(): Promise<PersonListItem[]> {
       skills: user.skills || [],
       yearsInYM,
       isClaimed: user.claimed_at !== null,
+      side: isSide(user.side) ? user.side : null,
     }
   })
 }

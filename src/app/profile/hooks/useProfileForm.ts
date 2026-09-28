@@ -9,10 +9,13 @@ import type {
 } from '@/contexts/OnboardingContext'
 import { saveProfile } from '../services/profileService'
 import { toUserMessage } from '@/lib/errors/userMessage'
+import type { Side } from '@/lib/side'
 
 export interface ProfileFormState extends OnboardingData {
   // Google auth email (read-only)
   googleEmail?: string
+  // Brothers/Sisters (read-only; set once in onboarding)
+  side?: Side
   // Display name fields (read-only for viewing profiles)
   firstName?: string
   lastName?: string

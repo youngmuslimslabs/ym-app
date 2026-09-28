@@ -213,6 +213,7 @@ export default function ProfilePage() {
                   phoneNumber={formData.phoneNumber}
                   personalEmail={formData.personalEmail}
                   googleEmail={formData.googleEmail}
+                  side={formData.side}
                   ethnicity={formData.ethnicity}
                   dateOfBirth={formData.dateOfBirth}
                   onPhoneChange={(v) => updateField('phoneNumber', v)}

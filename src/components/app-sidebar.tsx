@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/brand/logo'
 import { useAuth } from '@/contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -193,26 +194,13 @@ export function AppSidebar() {
                 {isHoveringCollapsed ? (
                   <PanelLeft className="!size-4" />
                 ) : (
-                  <Image
-                    src="/favicon.ico"
-                    alt="Young Muslims"
-                    width={24}
-                    height={24}
-                    className="rounded shrink-0"
-                  />
+                  <Logo className="h-6 max-w-8" />
                 )}
               </SidebarMenuButton>
             ) : (
               /* When expanded: show logo with app name */
               <SidebarMenuButton size="lg" className="pointer-events-none select-none" tabIndex={-1}>
-                <Image
-                  src="/favicon.ico"
-                  alt="Young Muslims"
-                  width={24}
-                  height={24}
-                  className="rounded shrink-0"
-                />
-                <span className="truncate font-semibold">Young Muslims</span>
+                <Logo variant="full" className="h-4 max-w-44" />
               </SidebarMenuButton>
             )}
           </SidebarMenuItem>

@@ -166,7 +166,8 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 ## UI / UX Polish
 
 - **Wire up dark mode toggle** — `darkMode: ['class']` + dark OKLCH tokens exist, but nothing adds the `dark` class to `<html>`. Needs `next-themes` or a hand-rolled toggle.
-- **Home "Who you are" — many-role overflow** `[LOW]` — `home/page.tsx:50` renders all active roles as a single `join(' · ')` line with no truncation/wrap strategy. Works as designed today; only a concern if a member holds many roles (long run-on line on narrow screens). Decide truncation vs wrap-to-chips if it ever looks bad. *(Noted from Ali Ilyas feedback re: multiple roles, 2026-07-08.)*
+- **Brand redesign rollout** — pass 1 (2026-09-28, branch `feature/redesign-pass-1`) redesigned Login and Home and added the type scale (`.ym-*`), `PageHeader`, `BrandBlob`/`BrandWave`, `LocalLockup`, `MemberAvatar` and the `highlight` token. **Awaiting owner review of Login + Home** before rolling out to People (swap card avatars to `MemberAvatar`), Profile, Conferences and Admin (swap title blocks to `PageHeader`). Later: 44px tap targets, dialog margin on mobile, badge status variants, shared `EmptyState` + `ResponsiveSheet`, mobile bottom nav, copy in the brand voice. Photos from the Brandbook are **not** used yet; Omar asked that something in the book not be shown, so get sign-off first.
+- ~~**Home "Who you are" — many-role overflow**~~ — resolved by the redesign: roles now render as wrapping chips in the Home hero.
 - Finalize loading/error state patterns across the app
 - Onboarding motion & transitions (use the `frontend-design` skill): page transitions, step 7 celebration, segmented step indicator, step 1 welcome reveal, micro-interactions
 - PWA: test standalone mode on iOS Safari; consider splash screen config; revisit `IOSInstallPrompt` (animations, timing, analytics)

@@ -14,7 +14,7 @@ interface QuickActionListProps {
 
 export function QuickActionList({ actions }: QuickActionListProps) {
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="grid gap-3 sm:grid-cols-3">
       {actions.map((action) => (
         <QuickActionRow key={action.href} {...action} />
       ))}

@@ -11,15 +11,10 @@ describe('Greeting', () => {
     expect(heading).toHaveTextContent('Omar.')
   })
 
-  it('puts the name on its own visual line via <br>', () => {
-    const { container } = render(<Greeting fullName="Omar Anees" />)
-    expect(container.querySelector('br')).toBeInTheDocument()
-  })
-
-  it('renders the name in the primary accent color', () => {
+  it('sets the salam as an eyebrow and the name as the display headline', () => {
     render(<Greeting fullName="Omar Anees" />)
-    const nameSpan = screen.getByText('Omar.')
-    expect(nameSpan).toHaveClass('text-primary')
+    expect(screen.getByText('Assalamu alaykum,')).toHaveClass('ym-eyebrow')
+    expect(screen.getByText('Omar.')).toHaveClass('ym-display')
   })
 
   it('falls back to "Member" when fullName is empty', () => {

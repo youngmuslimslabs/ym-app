@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 
+import { BrandBlob } from '@/components/brand/blob'
 import { fetchUpcomingAttendance } from '@/lib/supabase/queries'
 import { cn } from '@/lib/utils'
 
@@ -30,8 +31,8 @@ export function formatConferenceDateRange(
 }
 
 /**
- * Renders the user's most-imminent conference attendance, between the
- * home page greeting and the hairline rule. Returns null when there is
+ * Renders the user's most-imminent conference attendance as a dark card
+ * under the Home hero. Returns null when there is
  * no upcoming attendance within the next 30 days. The dot animates
  * (`animate-status-pulse`) only while the conference is live (today
  * inside the inclusive date range).
@@ -46,28 +47,33 @@ export async function ConferenceAttendanceSection() {
   )
 
   return (
-    <section className="mt-12">
-      <div className="mb-3.5 inline-flex items-center gap-2 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-primary">
-        <span
-          aria-hidden="true"
-          data-testid="conference-status-dot"
-          className={cn(
-            'inline-block size-[7px] shrink-0 rounded-full bg-success',
-            attendance.isLive && 'animate-status-pulse',
-          )}
-        />
-        Attending
+    <section className="relative isolate flex flex-col gap-5 overflow-hidden rounded-3xl bg-foreground p-6 text-background sm:flex-row sm:items-end sm:justify-between sm:p-8">
+      <BrandBlob
+        shape="cloud"
+        rotate={-20}
+        className="absolute -bottom-20 -right-16 -z-10 size-44 text-highlight/90 sm:-bottom-24 sm:size-64"
+      />
+      <div className="min-w-0">
+        <div className="ym-eyebrow mb-3 inline-flex items-center gap-2 text-highlight">
+          <span
+            aria-hidden="true"
+            data-testid="conference-status-dot"
+            className={cn(
+              'inline-block size-2 shrink-0 rounded-full bg-highlight',
+              attendance.isLive && 'animate-status-pulse',
+            )}
+          />
+          Attending
+        </div>
+        <h2 className="ym-h1">{attendance.name}</h2>
+        <p className="mt-1 text-background/75">{dateRange}</p>
       </div>
-      <h2 className="text-[1.375rem] font-medium leading-[1.25] tracking-tight">
-        {attendance.name}
-      </h2>
-      <p className="mt-1.5 text-sm text-muted-foreground">{dateRange}</p>
       <Link
         href={`/conferences/${attendance.conferenceId}`}
-        className="mt-4 inline-flex items-center gap-1 rounded-sm text-sm font-medium text-primary transition-[gap] duration-200 hover:gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className="inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-full bg-background px-5 text-sm font-semibold text-foreground transition-[gap] duration-200 hover:gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight focus-visible:ring-offset-2 focus-visible:ring-offset-foreground"
       >
         View schedule
-        <ChevronRight className="size-3.5" />
+        <ChevronRight className="size-4" aria-hidden="true" />
       </Link>
     </section>
   )

@@ -7,6 +7,7 @@ import { ServiceWorkerRegistration } from "@/components/providers/ServiceWorkerR
 import { IOSInstallPrompt } from "@/components/pwa/IOSInstallPrompt";
 import { Toaster } from "@/components/ui/sonner";
 import { PostHogPageView } from "@/components/PostHogPageView";
+import { SIDE_THEME_SCRIPT } from "@/lib/side";
 import { PHProvider } from "./providers";
 import "./globals.css";
 
@@ -65,7 +66,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: the <head> script sets data-theme-side on <html>
+    // before hydration, which React would otherwise flag as a mismatch.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Applies the member's Brothers/Sisters theme from the ym_side cookie
+            before first paint — no flash, and the layout stays static (reading
+            cookies() here would make every route dynamic). */}
+        <script dangerouslySetInnerHTML={{ __html: SIDE_THEME_SCRIPT }} />
+      </head>
       <body
         className={`${figtree.variable} ${boldonse.variable} ${geistMono.variable} antialiased`}
       >

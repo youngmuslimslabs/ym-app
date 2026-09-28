@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { usePostHog } from 'posthog-js/react'
 import { createClient } from '@/lib/supabase/client'
+import { clearSideTheme } from '@/lib/side'
 
 const supabase = createClient()
 
@@ -79,6 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     posthog?.reset()
+    // The server action clears the cookie; the redirect is a client-side
+    // navigation, so the <head> script won't re-run — reset <html> here.
+    clearSideTheme()
     await serverSignOut()
   }
 

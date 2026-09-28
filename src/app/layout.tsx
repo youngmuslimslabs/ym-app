@@ -21,10 +21,13 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+// No maximumScale: locking zoom stops people pinch-zooming to read (WCAG
+// 1.4.4). iOS's zoom-on-focus is avoided instead by keeping every text field
+// at 16px or more on phones (Input, Textarea and CommandInput are text-base
+// below md).
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   viewportFit: "cover",
 };
 

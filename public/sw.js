@@ -3,8 +3,8 @@
 
 const CACHE_NAME = 'ym-app-v1';
 
-// Install event - cache minimal assets
-self.addEventListener('install', (event) => {
+// Install event - activate the new worker right away
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -22,7 +22,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - network first, no caching (keeps app always fresh)
-self.addEventListener('fetch', (event) => {
-  event.respondWith(fetch(event.request));
-});
+// No fetch handler on purpose. A pass-through `respondWith(fetch(...))` cached
+// nothing but still routed every request through the worker (startup + proxy
+// cost on each navigation and asset). Without one, the browser goes straight
+// to the network — same "always fresh" behavior, minus the overhead.

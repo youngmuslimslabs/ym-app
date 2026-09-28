@@ -28,6 +28,7 @@ interface Props {
   feedback: { rating: number; comment: string | null } | null
   seatCount: number
   checkInError: string | null
+  checkInLockedUntil?: number | null
   pending: boolean
   now: Date
   onClose: () => void
@@ -49,6 +50,7 @@ export function SessionSheet({
   feedback,
   seatCount,
   checkInError,
+  checkInLockedUntil = null,
   pending,
   now,
   onClose,
@@ -235,6 +237,7 @@ export function SessionSheet({
               inGracePeriod={inGracePeriod}
               pending={pending}
               error={checkInError}
+              lockedUntil={checkInLockedUntil}
               onSubmit={(code) => onCheckIn(session.id, code)}
             />
           )}

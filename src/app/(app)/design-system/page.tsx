@@ -168,8 +168,9 @@ function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
 }
 
 /**
- * Renders the same small UI under one of the three themes. The General theme
- * lives on `:root`, so it is the variant with no `data-side` attribute.
+ * Renders the same small UI under one of the three themes. General is set
+ * explicitly so the preview stays General even when the viewer's own side
+ * theme is on <html>.
  */
 function ThemePreview({
   name,
@@ -182,7 +183,7 @@ function ThemePreview({
 }) {
   return (
     <div
-      data-side={side}
+      data-theme-side={side ?? 'general'}
       className="overflow-hidden rounded-lg border bg-background"
     >
       {/* Stand-in for the sidebar, which is this theme's anchor color */}
@@ -273,7 +274,7 @@ export default function DesignSystemPage() {
 
       <Section
         title="Themes"
-        description="Three complete themes, each anchored on its palette's darkest base. Set data-side='brothers' or 'sisters' on any element to theme it and everything inside. Nothing sets this automatically yet — the users table has no side field."
+        description="Three complete themes, each anchored on its palette's darkest base. Set data-theme-side='brothers', 'sisters' or 'general' on any element to theme it and everything inside. The app sets it on <html> from each member's side (chosen in onboarding)."
       >
         <div className="grid gap-4 lg:grid-cols-3">
           <ThemePreview name="General" anchor="Deep Obsidian #171725" />

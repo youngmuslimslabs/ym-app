@@ -69,27 +69,28 @@ export function AppSidebar() {
   // is_event_admin() function the DB policies use, so the sidebar visibility
   // matches what they're actually allowed to do.
   //
-  // Re-fetched on every pathname change (so a newly granted admin sees the
-  // Admin group as soon as they navigate anywhere) and on window focus
-  // (catches the long-idle-tab case). Real-time push for instant deltas
-  // would need a Supabase realtime subscription on conference_attendees +
-  // role_assignments; we'll add that in the realtime stage.
+  // Fetched once per signed-in user, then refreshed on window focus (catches
+  // the long-idle-tab case, e.g. a newly granted admin). It used to re-run on
+  // every pathname change — three queries per click for data that rarely
+  // changes. Real-time push for instant deltas would need a Supabase realtime
+  // subscription on conference_attendees + role_assignments; we'll add that in
+  // the realtime stage.
+  const authId = user?.id
   useEffect(() => {
-    if (!user) return
+    if (!authId) return
     let cancelled = false
     // Coalesce focus-triggered refetches: tab-thrash should not fire
-    // back-to-back queries. Pathname-change refetches always go through
-    // because the effect itself re-runs and resets this closure.
+    // back-to-back queries.
     let lastFetchStartedAt = 0
     const supabase = createClient()
 
     async function fetchSidebarData() {
-      if (Date.now() - lastFetchStartedAt < 2000) return
+      if (Date.now() - lastFetchStartedAt < 30_000) return
       lastFetchStartedAt = Date.now()
       const { data: userRow } = await supabase
         .from('users')
         .select('id')
-        .eq('auth_id', user!.id)
+        .eq('auth_id', authId!)
         .maybeSingle()
       if (!userRow || cancelled) return
       const [confRes, adminRes] = await Promise.all([
@@ -117,7 +118,7 @@ export function AppSidebar() {
       cancelled = true
       window.removeEventListener('focus', onFocus)
     }
-  }, [user, pathname])
+  }, [authId])
 
   // Custom state for hover effect on entire collapsed sidebar
   const [isHoveringCollapsed, setIsHoveringCollapsed] = useState(false)

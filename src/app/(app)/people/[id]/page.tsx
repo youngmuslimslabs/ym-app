@@ -95,6 +95,7 @@ export default function PersonProfilePage() {
                 phoneNumber={personData.phoneNumber}
                 personalEmail={personData.personalEmail}
                 googleEmail={personData.googleEmail}
+                side={personData.side}
                 ethnicity={personData.ethnicity}
                 dateOfBirth={personData.dateOfBirth}
                 onPhoneChange={noop}

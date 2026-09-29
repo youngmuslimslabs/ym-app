@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentUserRow } from '@/lib/supabase/current-user'
 
 export interface UpcomingAttendance {
   conferenceId: string
@@ -24,18 +25,7 @@ export interface UpcomingAttendance {
  * isn't actionable from the home slot yet, so it doesn't earn it.
  */
 export async function fetchUpcomingAttendance(): Promise<UpcomingAttendance | null> {
-  const supabase = await createClient()
-
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
-  if (!authUser) return null
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('id')
-    .eq('auth_id', authUser.id)
-    .maybeSingle()
+  const [supabase, userRow] = await Promise.all([createClient(), getCurrentUserRow()])
   if (!userRow) return null
 
   const { data: attendeeRows, error: attendeeErr } = await supabase

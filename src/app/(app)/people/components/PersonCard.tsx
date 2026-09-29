@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tag } from 'lucide-react'
 import type { PersonListItem } from '../types'
 import { ROLE_CATEGORY_ICONS, ROLE_CATEGORY_VARIANTS } from '../constants'
+import { SIDE_LABELS } from '@/lib/side'
 
 interface PersonCardProps {
   person: PersonListItem
@@ -18,7 +19,8 @@ export function PersonCard({ person }: PersonCardProps) {
   const searchParams = useSearchParams()
 
   // Get location display (prefer subregion, fallback to region)
-  const location = person.subregion?.name ?? person.region?.name ?? 'No location'
+  const place = person.subregion?.name ?? person.region?.name ?? 'No location'
+  const location = person.side ? `${place} · ${SIDE_LABELS[person.side]}` : place
 
   // Get initials for avatar fallback
   const initials = `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`

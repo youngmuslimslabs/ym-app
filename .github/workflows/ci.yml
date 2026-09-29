@@ -55,6 +55,11 @@ jobs:
       - name: Security audit (high — non-blocking)
         run: bun audit --audit-level=high
         continue-on-error: true
+        # Non-blocking, so it must never hold the job either. As of 2026-09-29
+        # `bun audit --audit-level=high` hangs indefinitely (on main too) while
+        # the critical-level audit above returns in seconds; without a cap the
+        # job sat on this step until GitHub's 6-hour default.
+        timeout-minutes: 2
 
       - name: Run tests with coverage
         run: bun run test:coverage

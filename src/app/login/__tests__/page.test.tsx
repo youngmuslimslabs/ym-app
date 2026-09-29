@@ -1,5 +1,5 @@
 import { render, screen, act, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const { mockPush, mockGetSession, mockGetUser, mockCheckOnboarding } = vi.hoisted(() => ({
   mockPush: vi.fn(),
@@ -64,5 +64,37 @@ describe('LoginPage redirect after Google sign-in', () => {
     })
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/onboarding?step=1'))
+  })
+
+  describe('with ?next= from a middleware redirect', () => {
+    afterEach(() => window.history.replaceState(null, '', '/'))
+
+    it('returns an onboarded member to the page they were headed to', async () => {
+      window.history.replaceState(null, '', '/login/?next=%2Fpeople%2F%3Fq%3Dzaid')
+      render(<LoginPage />)
+      await act(async () => {
+        fireEvent.click(screen.getByText('trigger-success'))
+      })
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/people/?q=zaid'))
+    })
+
+    it('ignores an off-site next and goes Home', async () => {
+      window.history.replaceState(null, '', '/login/?next=https%3A%2F%2Fevil.example')
+      render(<LoginPage />)
+      await act(async () => {
+        fireEvent.click(screen.getByText('trigger-success'))
+      })
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/home'))
+    })
+
+    it('still sends an unonboarded member to onboarding first', async () => {
+      mockCheckOnboarding.mockResolvedValue(false)
+      window.history.replaceState(null, '', '/login/?next=%2Fpeople%2F')
+      render(<LoginPage />)
+      await act(async () => {
+        fireEvent.click(screen.getByText('trigger-success'))
+      })
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/onboarding?step=1'))
+    })
   })
 })

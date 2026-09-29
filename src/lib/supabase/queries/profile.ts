@@ -215,25 +215,28 @@ export async function fetchUserProfileById(userId: string): Promise<{
  * `errored` distinguishes a real failure (network/DB) from a genuine "not set".
  * Callers MUST fail OPEN on `errored` — treating a transient error as "profile
  * incomplete" would gate (and lock out) a user who has actually completed it.
+ * `signedIn` is false for a signed-out visitor (e.g. on /design-system), who
+ * has no profile at all — callers must not read that as "incomplete".
  * `completedAt` is null when not set / not authenticated.
  */
 export async function fetchProfileCompletedAt(): Promise<{
   completedAt: string | null
   errored: boolean
+  signedIn: boolean
 }> {
   try {
     const supabase = createClient()
     const { data: { user: authUser } } = await supabase.auth.getUser()
-    if (!authUser) return { completedAt: null, errored: false }
+    if (!authUser) return { completedAt: null, errored: false, signedIn: false }
     const { data, error } = await supabase
       .from('users')
       .select('profile_completed_at')
       .eq('auth_id', authUser.id)
       .maybeSingle()
-    if (error) return { completedAt: null, errored: true }
-    return { completedAt: data?.profile_completed_at ?? null, errored: false }
+    if (error) return { completedAt: null, errored: true, signedIn: true }
+    return { completedAt: data?.profile_completed_at ?? null, errored: false, signedIn: true }
   } catch {
-    return { completedAt: null, errored: true }
+    return { completedAt: null, errored: true, signedIn: false }
   }
 }
 

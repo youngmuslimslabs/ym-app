@@ -7,9 +7,19 @@ import { YMLoginForm } from '@/components/auth/YMLoginForm'
 import { PageLoader } from '@/components/ui/page-loader'
 import { createClient } from '@/lib/supabase/client'
 import { checkOnboardingComplete } from '@/lib/supabase/onboarding'
+import { NEXT_PARAM, safeNextPath } from '@/lib/auth/next-path'
 
 const supabase = createClient()
 import { toUserMessage } from '@/lib/errors/userMessage'
+
+// Where a signed-in, onboarded member goes next: the page middleware bounced
+// them from (?next=), or Home. Read at call time rather than via
+// useSearchParams, which would need a Suspense boundary around the page.
+function destinationAfterSignIn(isOnboarded: boolean): string {
+  if (!isOnboarded) return '/onboarding?step=1'
+  const next = safeNextPath(new URLSearchParams(window.location.search).get(NEXT_PARAM))
+  return next ?? '/home'
+}
 
 export default function LoginPage() {
   const { user, loading } = useAuth()
@@ -23,7 +33,7 @@ export default function LoginPage() {
     if (user && !loading && !isRedirecting.current) {
       isRedirecting.current = true
       checkOnboardingComplete(user.id).then(isComplete => {
-        router.push(isComplete ? '/home' : '/onboarding?step=1')
+        router.push(destinationAfterSignIn(isComplete))
       })
     }
   }, [user, loading, router])
@@ -62,7 +72,7 @@ export default function LoginPage() {
         return false
       }
       const isComplete = await checkOnboardingComplete(authUser.id)
-      router.push(isComplete ? '/home' : '/onboarding?step=1')
+      router.push(destinationAfterSignIn(isComplete))
       return true
     } catch (err) {
       // Post-auth routing failed even though sign-in succeeded. Surface it here

@@ -15,7 +15,7 @@ export default async function AdminToolsPage() {
         </div>
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Admin Tools</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Utilities for managing the app. Not linked anywhere.
+          Utilities for managing the app. Only admins see this page.
         </p>
       </div>
 

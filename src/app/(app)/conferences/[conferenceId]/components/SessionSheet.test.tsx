@@ -37,6 +37,7 @@ const session: Session = {
 }
 
 const baseProps = {
+  open: true,
   session,
   timezone: 'UTC',
   signedUp: true,
@@ -76,6 +77,27 @@ describe('SessionSheet check-in sticky latch', () => {
     render(<SessionSheet {...baseProps} now={new Date('2025-06-27T16:20:00Z')} />)
     expect(screen.getByText(/didn't check in/i)).toBeInTheDocument()
     expect(screen.queryByPlaceholderText('Enter code')).not.toBeInTheDocument()
+  })
+
+  it('resets the latch when the same session is closed and reopened later', () => {
+    const { rerender } = render(
+      <SessionSheet {...baseProps} now={new Date('2025-06-27T15:07:00Z')} />,
+    )
+    expect(screen.getByPlaceholderText('Enter code')).toBeInTheDocument()
+
+    // The parent keeps passing the session while the sheet animates closed.
+    rerender(<SessionSheet {...baseProps} open={false} now={new Date('2025-06-27T15:07:00Z')} />)
+    rerender(<SessionSheet {...baseProps} open now={new Date('2025-06-27T16:20:00Z')} />)
+
+    expect(screen.getByText(/didn't check in/i)).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Enter code')).not.toBeInTheDocument()
+  })
+
+  it('renders nothing before any session has been opened', () => {
+    const { container } = render(
+      <SessionSheet {...baseProps} open={false} session={null} now={new Date('2025-06-27T15:07:00Z')} />,
+    )
+    expect(container).toBeEmptyDOMElement()
   })
 })
 

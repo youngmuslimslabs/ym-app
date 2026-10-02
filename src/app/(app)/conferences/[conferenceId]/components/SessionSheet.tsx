@@ -21,6 +21,8 @@ import { canRemoveSignUp, canSignUp, getSessionState } from '../lib/checkInWindo
 import type { Session } from '../types'
 
 interface Props {
+  open: boolean
+  // Stays set to the last-opened session while the sheet animates closed.
   session: Session | null
   timezone: string
   signedUp: boolean
@@ -42,6 +44,7 @@ interface Props {
 }
 
 export function SessionSheet({
+  open,
   session,
   timezone,
   signedUp,
@@ -61,7 +64,7 @@ export function SessionSheet({
   // Once the check-in form is shown for an open session, keep it mounted even if
   // a background `now` tick pushes past the grace window mid-entry — otherwise
   // the slot would flip to 'missed', unmounting CheckInDialog and discarding a
-  // code the attendee is actively typing. Reset when the open session changes.
+  // code the attendee is actively typing. Reset each time a session is opened.
   const [checkInSticky, setCheckInSticky] = useState(false)
   const isMobile = useIsMobile()
   const { sheetRef, dragHandleProps } = useBottomSheetDragToDismiss({
@@ -84,20 +87,16 @@ export function SessionSheet({
     : null
   const slotKind = state?.slot.kind ?? 'none'
 
+  // `session` survives the close animation, so key the reset on (re)opening
+  // rather than on the id going null. Both effects run on open, in order.
   useEffect(() => {
-    setCheckInSticky(false)
-  }, [sessionId])
+    if (open) setCheckInSticky(false)
+  }, [sessionId, open])
   useEffect(() => {
-    if (slotKind === 'check-in') setCheckInSticky(true)
-  }, [slotKind])
+    if (open && slotKind === 'check-in') setCheckInSticky(true)
+  }, [sessionId, open, slotKind])
 
-  if (!session || !state) {
-    return (
-      <Sheet open={false} onOpenChange={(open) => !open && onClose()}>
-        <SheetContent />
-      </Sheet>
-    )
-  }
+  if (!session || !state) return null
 
   const isBreak = session.is_break
   const { slot, window: w } = state
@@ -132,7 +131,7 @@ export function SessionSheet({
   const side = isMobile ? 'bottom' : 'right'
 
   return (
-    <Sheet open onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
       <SheetContent
         ref={isMobile ? sheetRef : undefined}
         side={side}

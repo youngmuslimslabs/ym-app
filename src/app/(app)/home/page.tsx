@@ -1,6 +1,7 @@
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { Users, DollarSign, FileText } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/current-user'
 import { fetchUserContext, fetchHomeStats } from '@/lib/supabase/queries'
 import {
   Greeting,
@@ -16,17 +17,16 @@ const QUICK_ACTIONS = [
 ]
 
 export default async function HomePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  const [userContext, stats] = await Promise.all([
-    fetchUserContext(user.id),
+  // All three share one cached auth check + users-row read (current-user.ts).
+  const [user, userContext, stats] = await Promise.all([
+    getAuthUser(),
+    fetchUserContext(),
     fetchHomeStats(),
   ])
+
+  if (!user) {
+    redirect('/login/')
+  }
 
   const displayName = userContext?.name || user.email?.split('@')[0] || 'Member'
   const displayRoles = userContext?.roles ?? []
@@ -38,7 +38,10 @@ export default async function HomePage() {
       <div className="mx-auto flex max-w-[600px] flex-col">
         <Greeting fullName={displayName} />
 
-        <ConferenceAttendanceSection />
+        {/* Streams in after the rest of the page instead of blocking it. */}
+        <Suspense fallback={null}>
+          <ConferenceAttendanceSection />
+        </Suspense>
 
         <hr className="mt-12 mb-14 border-t border-border" />
 

@@ -6,6 +6,11 @@
   NODE_VERSION = "20"
   # Keep in lockstep with .github/workflows/ci.yml BUN_VERSION
   BUN_VERSION = "1.2.21"
+  # Raise the V8 heap ceiling above the ~2GB default. `next build` OOMs during
+  # "Linting and checking validity of types" on Netlify's builder (the worker
+  # aborts with SIGABRT after compilation has already succeeded). Local builds
+  # don't hit this because the dev machine's default heap is larger.
+  NODE_OPTIONS = "--max-old-space-size=4096"
   # Exclude the Supabase source tree from Netlify secret scanning. These are DB
   # SQL fixtures (migrations + seeds), not deployed artifacts — the publish dir
   # is `.next`, so nothing here ships to the runtime. The seeds legitimately

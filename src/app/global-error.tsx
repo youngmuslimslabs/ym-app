@@ -13,12 +13,15 @@
 
 import { useEffect } from 'react'
 import posthog from 'posthog-js'
-import localFont from 'next/font/local'
+import { Figtree } from 'next/font/google'
 
-const geistSans = localFont({
-  src: '../fonts/GeistVF.woff2',
-  variable: '--font-geist-sans',
-  weight: '100 900',
+// global-error.tsx renders its own <html>/<body>, so it does not inherit the
+// root layout's font variables and must declare the brand body face itself.
+const figtree = Figtree({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-figtree',
+  display: 'swap',
 })
 
 interface GlobalErrorProps {
@@ -37,7 +40,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
 
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} font-sans antialiased`}>
+      <body className={`${figtree.variable} font-sans antialiased`}>
         <div className="flex min-h-screen items-center justify-center bg-white p-4">
           <div className="max-w-md rounded-xl border border-red-200 bg-white p-6 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">

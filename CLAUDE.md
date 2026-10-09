@@ -1,7 +1,7 @@
 # YM App - Claude Code Rules
 
 ## Stack
-- Next.js 15.5.7 (App Router), React 19, TypeScript (strict), Tailwind CSS 3, shadcn/ui (new-york style)
+- Next.js 15.5.24 (App Router), React 19, TypeScript (strict), Tailwind CSS 3, shadcn/ui (new-york style)
 - Supabase (Auth + Database), Google OAuth
 - **Package manager: Bun** (`bun install`, `bun run dev`, `bun run build`)
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SessionCard } from './SessionCard'
+import { GRACE_MS } from '../lib/checkInWindow'
 import type { Session } from '../types'
 
 interface Props {
@@ -44,9 +45,11 @@ export function DaySchedule(props: Props) {
 
   // The schedule follows the clock (#68). A day whose sessions have all ended
   // starts collapsed so today is what you see; tapping its header opens it.
-  // Explicit toggles win over the default.
+  // A day only counts as over once check-in has closed too (end + grace), so the
+  // card people are checking in to doesn't fold away. Explicit toggles win over
+  // the default.
   const [expandedOverride, setExpandedOverride] = useState<Record<string, boolean>>({})
-  const dayEnded = (day: DayGroup) => day.blocks.every((b) => b.endMs <= nowMs)
+  const dayEnded = (day: DayGroup) => day.blocks.every((b) => b.endMs + GRACE_MS <= nowMs)
   const isExpanded = (day: DayGroup) => expandedOverride[day.dayKey] ?? !dayEnded(day)
 
   // Once, on arrival: if the conference is under way, jump to the block that's

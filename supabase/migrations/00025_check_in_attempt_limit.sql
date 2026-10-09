@@ -18,6 +18,9 @@
 --      evaluated to NULL, the IF was skipped, and the call checked the member
 --      in with no code at all.
 --   5. Trims both sides before the (already) case-insensitive comparison.
+--   6. Takes a per-member, per-session advisory lock before counting, so
+--      concurrent calls can't all read the count before any failure is written
+--      and slip past the cap.
 --
 -- Successful and repeat check-ins are not recorded. Attempts are only written
 -- by this SECURITY DEFINER function; RLS is on with no policies, so members
@@ -54,6 +57,11 @@ BEGIN
   IF v_user_id IS NULL THEN
     RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
   END IF;
+
+  -- Serialize attempts per member per session so a parallel burst can't all
+  -- read the count before any failure is recorded. Released automatically at
+  -- the end of the transaction.
+  PERFORM pg_advisory_xact_lock(hashtext(v_user_id::text || ':' || p_session_id::text));
 
   SELECT count(*), min(attempted_at) INTO v_failures, v_oldest_failure
   FROM session_check_in_attempts

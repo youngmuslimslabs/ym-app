@@ -64,6 +64,21 @@ describe('DaySchedule moves with time (#68)', () => {
     expect(screen.getByText('Friday Opening')).toBeInTheDocument()
   })
 
+  it("keeps a day open while its last session's check-in grace window is still open", () => {
+    // Saturday's last session ends 20:00Z; 30 minutes later check-in is still open.
+    renderSchedule(new Date('2025-06-28T20:30:00Z'))
+    expect(screen.getByText('Saturday Afternoon')).toBeInTheDocument()
+    // An open day has no collapse toggle (that only appears once it's ended).
+    expect(screen.queryByRole('button', { name: /Saturday, June 28/ })).not.toBeInTheDocument()
+  })
+
+  it('collapses the day once the grace window has closed', () => {
+    // 61 minutes after the last session ends.
+    renderSchedule(new Date('2025-06-28T21:01:00Z'))
+    expect(screen.queryByText('Saturday Afternoon')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Saturday, June 28/ })).toHaveAttribute('aria-expanded', 'false')
+  })
+
   it('labels the current day "Today"', () => {
     renderSchedule(SAT_MIDDAY)
     expect(screen.getByRole('heading', { name: /Today · Saturday, June 28/ })).toBeInTheDocument()

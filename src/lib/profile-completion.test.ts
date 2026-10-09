@@ -103,6 +103,14 @@ describe('computeProfileCompletion', () => {
     ).toBe('todo')
   })
 
+  it('does not count a system role (Event Admin) toward the roles section', () => {
+    const eventAdmin = { id: 'ea', isCurrent: true, roleTypeId: 'event-admin', roleTypeCategory: 'system' }
+    expect(computeProfileCompletion({ ymRoles: [eventAdmin] }).sections.roles).toBe('todo')
+    expect(computeProfileCompletion({ ymRoles: [eventAdmin] }, new Set(['roles'])).sections.roles).toBe('skipped')
+    // A real role alongside it still completes the section.
+    expect(computeProfileCompletion({ ymRoles: [eventAdmin, validRole] }).sections.roles).toBe('done')
+  })
+
   it('treats a skipped roles/projects section as resolved (skipped)', () => {
     const c = computeProfileCompletion(empty, new Set(['roles', 'projects']))
     expect(c.sections.roles).toBe('skipped')

@@ -117,12 +117,15 @@ export function computeProfileCompletion(
   data: ProfileFormState,
   skipped: Set<SectionKey> = new Set(),
 ): ProfileCompletion {
+  // System roles (e.g. Event Admin) render read-only and aren't the member's to
+  // fill in, so they must not make the Roles section look done.
+  const memberRoles = data.ymRoles?.filter((r) => !isSystemRole(r))
   const raw: Record<SectionKey, boolean> = {
     personal: Boolean(
       data.phoneNumber && data.personalEmail && data.ethnicity && data.dateOfBirth,
     ),
     location: Boolean(data.neighborNetId),
-    roles: Boolean(data.ymRoles?.length && data.ymRoles.every(roleValid)),
+    roles: Boolean(memberRoles?.length && memberRoles.every(roleValid)),
     projects: Boolean(data.ymProjects?.length && data.ymProjects.every(projectValid)),
     education: Boolean(
       data.educationLevel &&

@@ -171,6 +171,13 @@ export function YMRolesSection({
     return '—'
   }
 
+  // System roles (e.g. Event Admin) are admin-granted permissions, not YM
+  // positions, so they are never shown (#74). They stay in `roles` so saves keep
+  // them, and each visible role keeps its index into `roles` for removal.
+  const visibleRoles = roles
+    .map((role, index) => ({ role, index }))
+    .filter(({ role }) => !isSystemRole(role))
+
   const emptyState = (
     <div className="flex flex-col items-center justify-center py-8 text-center rounded-lg border border-dashed">
       <UserX className="h-10 w-10 text-muted-foreground/50 mb-3" />
@@ -202,12 +209,8 @@ export function YMRolesSection({
       onAdd={isEditable ? onAddRole : undefined}
       emptyState={!isEditable ? emptyState : undefined}
     >
-      {roles.map((role, index) => {
-        // System roles (e.g. Event Admin) are admin-granted and can never be
-        // self-managed (RLS forbids it). Render read-only even in edit mode so
-        // they're visible but not editable or deletable.
-        const isSystem = isSystemRole(role)
-        const canEdit = isEditable && !isSystem
+      {visibleRoles.map(({ role, index }) => {
+        const canEdit = isEditable
 
         return (
         <ExpandableCard
@@ -218,7 +221,7 @@ export function YMRolesSection({
           badge={role.isCurrent ? 'Current' : undefined}
           isExpanded={expandedId === role.id}
           onToggle={() => setExpandedId(expandedId === role.id ? null : role.id)}
-          onDelete={canEdit && roles.length > 1 ? () => onRemoveRole(index) : undefined}
+          onDelete={canEdit && visibleRoles.length > 1 ? () => onRemoveRole(index) : undefined}
         >
           {canEdit ? (
             <div className="space-y-4">
@@ -280,11 +283,6 @@ export function YMRolesSection({
             </div>
           ) : (
             <div className="space-y-3 text-sm">
-              {isSystem && isEditable && (
-                <p className="text-muted-foreground">
-                  Assigned by an administrator and can&apos;t be edited here.
-                </p>
-              )}
               <div>
                 <span className="font-medium text-muted-foreground">Amir / Manager:</span>
                 <span className="ml-2 text-foreground">{getAmirDisplay(role)}</span>

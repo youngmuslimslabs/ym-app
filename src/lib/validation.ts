@@ -3,12 +3,22 @@
  */
 
 /**
+ * Digits of a US phone number, without a leading +1 country code. Browser
+ * autofill and pasted numbers often arrive as "+1 (555) 123-4567"; keeping the
+ * 1 shifted every digit and cut off the last one. US area codes never start
+ * with 1, so a leading 1 on an 11+ digit number is always the country code.
+ */
+function nationalDigits(value: string): string {
+  const digits = value.replace(/\D/g, '')
+  return digits.length > 10 && digits.startsWith('1') ? digits.slice(1) : digits
+}
+
+/**
  * Format phone number as user types: (555) 123-4567
- * Strips non-digits, limits to 10 digits, formats progressively
+ * Strips non-digits and a +1 country code, limits to 10 digits, formats progressively
  */
 export function formatPhoneNumber(value: string): string {
-  // Strip all non-digits
-  const digits = value.replace(/\D/g, '')
+  const digits = nationalDigits(value)
 
   // Limit to 10 digits
   const limited = digits.slice(0, 10)
@@ -24,8 +34,7 @@ export function formatPhoneNumber(value: string): string {
  * Check if phone has exactly 10 digits (US format)
  */
 export function isValidPhone(phone: string): boolean {
-  const digits = phone.replace(/\D/g, '')
-  return digits.length === 10
+  return nationalDigits(phone).length === 10
 }
 
 /**

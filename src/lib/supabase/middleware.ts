@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { getPostHogServer } from '@/lib/posthog/server'
 import { logger } from '@/lib/posthog/logger'
 import { claimUserByEmail } from '@/lib/supabase/claim-user'
+import { loginUrlFor } from '@/lib/auth/next-path'
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
@@ -76,11 +77,8 @@ export async function updateSession(request: NextRequest) {
                 !request.nextUrl.pathname.startsWith('/api/legal-lol') &&
                 request.nextUrl.pathname !== '/'
             ) {
-                // Redirect to login on auth errors
-                const url = request.nextUrl.clone()
-                url.pathname = '/login/'
-                url.searchParams.set('error', 'session_expired')
-                return NextResponse.redirect(url)
+                // Redirect to login on auth errors, remembering where they were headed
+                return NextResponse.redirect(loginUrlFor(request.nextUrl, 'session_expired'))
             }
             // Allow access to login/auth pages even without session
         }
@@ -94,10 +92,9 @@ export async function updateSession(request: NextRequest) {
             request.nextUrl.pathname !== '/'
         ) {
             // no user, potentially respond by redirecting the user to the login page
-            // (trailing slash matches `trailingSlash: true` — saves a 308 hop)
-            const url = request.nextUrl.clone()
-            url.pathname = '/login/'
-            return NextResponse.redirect(url)
+            // (trailing slash matches `trailingSlash: true` — saves a 308 hop), with
+            // ?next= so they land back on this page after signing in
+            return NextResponse.redirect(loginUrlFor(request.nextUrl))
         }
 
         // Domain Validation

@@ -39,6 +39,17 @@ describe('formatPhoneNumber', () => {
     expect(formatPhoneNumber('55512345678901')).toBe('(555) 123-4567')
   })
 
+  it('drops a +1 country code from autofilled or pasted numbers', () => {
+    expect(formatPhoneNumber('+1 (555) 123-4567')).toBe('(555) 123-4567')
+    expect(formatPhoneNumber('+15551234567')).toBe('(555) 123-4567')
+    expect(formatPhoneNumber('1-555-123-4567')).toBe('(555) 123-4567')
+  })
+
+  it('keeps a leading 1 while the number is still being typed', () => {
+    expect(formatPhoneNumber('1')).toBe('(1')
+    expect(formatPhoneNumber('1555123456')).toBe('(155) 512-3456')
+  })
+
   it('handles mixed input with letters and numbers', () => {
     expect(formatPhoneNumber('5a5b5c1d2e3f4g5h6i7')).toBe('(555) 123-4567')
   })
@@ -66,6 +77,10 @@ describe('isValidPhone', () => {
 
   it('returns false for more than 10 digits', () => {
     expect(isValidPhone('55512345678')).toBe(false)
+  })
+
+  it('accepts a number with a +1 country code', () => {
+    expect(isValidPhone('+1 (555) 123-4567')).toBe(true)
   })
 
   it('returns false for non-digit input', () => {

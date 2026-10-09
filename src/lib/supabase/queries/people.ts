@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { SYSTEM_ROLE_CATEGORY } from '@/lib/role-categories'
 import type { Database } from '@/types/database.types'
 
 // Type aliases for cleaner code
@@ -130,15 +131,18 @@ export async function fetchPeopleForDirectory(): Promise<PersonListItem[]> {
       yearsInYM = new Date().getFullYear() - joinedYear
     }
 
-    // Map roles
-    const roles = userRoles.map((ra) => {
-      const roleType = ra.role_types as RoleTypeRow | null
-      return {
-        id: roleType?.id || ra.id,
-        name: roleType?.name || ra.role_type_custom || 'Unknown Role',
-        category: roleType?.category || 'other',
-      }
-    })
+    // Map roles. System roles (Event Admin) are permissions, not positions,
+    // so they never show on cards, in the table or in search (#74).
+    const roles = userRoles
+      .map((ra) => {
+        const roleType = ra.role_types as RoleTypeRow | null
+        return {
+          id: roleType?.id || ra.id,
+          name: roleType?.name || ra.role_type_custom || 'Unknown Role',
+          category: roleType?.category || 'other',
+        }
+      })
+      .filter((r) => r.category !== SYSTEM_ROLE_CATEGORY)
 
     return {
       id: user.id,
@@ -167,7 +171,7 @@ export async function fetchFilterCategories(): Promise<FilterCategories> {
     supabase.from('regions').select('id, name').eq('is_active', true).order('name'),
     supabase.from('subregions').select('id, name').eq('is_active', true).order('name'),
     supabase.from('neighbor_nets').select('id, name').eq('is_active', true).order('name'),
-    supabase.from('role_types').select('id, name').order('sort_order'),
+    supabase.from('role_types').select('id, name').neq('category', SYSTEM_ROLE_CATEGORY).order('sort_order'),
     // Paged so the skills facet reflects every member, not just the first 1000.
     fetchAllPaged((from, to) =>
       supabase.from('users').select('skills').not('onboarding_completed_at', 'is', null).range(from, to),

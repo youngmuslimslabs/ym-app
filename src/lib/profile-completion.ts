@@ -1,3 +1,4 @@
+import { SYSTEM_ROLE_CATEGORY } from '@/lib/role-categories'
 import type { ProfileFormState } from '@/app/profile/hooks/useProfileForm'
 import type {
   YMRoleEntry,
@@ -66,7 +67,7 @@ export function roleValid(r: YMRoleEntry): boolean {
  * updating one. Such a role loads into the form (so the user can see it) but must
  * be shown read-only and excluded from client writes. */
 export function isSystemRole(r: YMRoleEntry): boolean {
-  return r.roleTypeCategory === 'system'
+  return r.roleTypeCategory === SYSTEM_ROLE_CATEGORY
 }
 
 /** The subset of form roles the client is allowed to write. System roles are held
@@ -116,12 +117,15 @@ export function computeProfileCompletion(
   data: ProfileFormState,
   skipped: Set<SectionKey> = new Set(),
 ): ProfileCompletion {
+  // System roles (e.g. Event Admin) render read-only and aren't the member's to
+  // fill in, so they must not make the Roles section look done.
+  const memberRoles = data.ymRoles?.filter((r) => !isSystemRole(r))
   const raw: Record<SectionKey, boolean> = {
     personal: Boolean(
       data.phoneNumber && data.personalEmail && data.ethnicity && data.dateOfBirth,
     ),
     location: Boolean(data.neighborNetId),
-    roles: Boolean(data.ymRoles?.length && data.ymRoles.every(roleValid)),
+    roles: Boolean(memberRoles?.length && memberRoles.every(roleValid)),
     projects: Boolean(data.ymProjects?.length && data.ymProjects.every(projectValid)),
     education: Boolean(
       data.educationLevel &&

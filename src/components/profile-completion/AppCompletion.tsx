@@ -72,7 +72,7 @@ export function GatedContent({
  */
 export function AppCompletion({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const [flag, setFlag] = useState<{ completedAt: string | null; errored: boolean } | undefined>(
+  const [flag, setFlag] = useState<Awaited<ReturnType<typeof fetchProfileCompletedAt>> | undefined>(
     undefined,
   ) // undefined = still loading
 
@@ -88,8 +88,10 @@ export function AppCompletion({ children }: { children: React.ReactNode }) {
 
   // Fail OPEN on a flag-fetch error: a transient network/DB hiccup must never
   // gate a user who has actually completed their profile. The gate resumes on
-  // the next successful load.
-  const isIncomplete = flag !== undefined && !flag.errored && flag.completedAt === null
+  // the next successful load. A signed-out visitor on a public page has no
+  // profile to finish, so they are never gated either.
+  const isIncomplete =
+    flag !== undefined && flag.signedIn && !flag.errored && flag.completedAt === null
   const { profileData } = useProfileData({ enabled: isIncomplete })
   const counts = isIncomplete && profileData ? computeProfileCompletion(profileData, new Set()) : null
   const gating = counts !== null

@@ -18,6 +18,7 @@ import {
   Calendar,
   CalendarDays,
   Shield,
+  Wrench,
   X,
 } from 'lucide-react'
 import {
@@ -315,6 +316,20 @@ export function AppSidebar() {
                     <Link href="/admin/conferences">
                       <Calendar />
                       <span>Conferences</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    // Exact match: /admin/conferences highlights its own item.
+                    isActive={pathname.replace(/\/$/, '') === '/admin'}
+                    tooltip="Admin Tools"
+                    onClick={handleNavClick}
+                  >
+                    <Link href="/admin">
+                      <Wrench />
+                      <span>Admin Tools</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { MoreHorizontal, Search, Trash2, X } from 'lucide-react'
+import { MoreHorizontal, Search, Trash2, UserPlus, Users, X } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -44,8 +44,20 @@ export function AttendeePicker({
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [pending, setPending] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<PersonListItem | null>(null)
+  // Two views instead of one mixed list (#54): who is attending, and a
+  // separate picker of everyone else to add. The old single list showed every
+  // member with an "Invited" tag, which read as if they were all attendees.
+  const [mode, setMode] = useState<'attendees' | 'add'>('attendees')
 
   const invitedSet = useMemo(() => new Set(invitedUserIds), [invitedUserIds])
+  const attendees = useMemo(
+    () => people.filter((p) => invitedSet.has(p.id)),
+    [people, invitedSet]
+  )
+  const candidates = useMemo(
+    () => people.filter((p) => !invitedSet.has(p.id)),
+    [people, invitedSet]
+  )
 
   const {
     filters,
@@ -57,7 +69,14 @@ export function AttendeePicker({
     visiblePeople,
     hasMore,
     loadMore,
-  } = usePeopleFilters(people)
+  } = usePeopleFilters(mode === 'attendees' ? attendees : candidates)
+
+  function switchMode(next: 'attendees' | 'add') {
+    if (next === mode) return
+    setSelected(new Set())
+    clearAllFilters()
+    setMode(next)
+  }
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -79,9 +98,8 @@ export function AttendeePicker({
     })
   }
 
-  // The selected rows that aren't already invited — these are what the bulk
-  // invite acts on. Selected-but-already-invited rows are no-ops at the DB
-  // (ON CONFLICT DO NOTHING) but we count accurately for the toast.
+  // Only the add view selects, and it only lists people not yet attending.
+  // The filter still guards a refresh landing mid-selection.
   const selectedNotInvited = useMemo(
     () => Array.from(selected).filter((id) => !invitedSet.has(id)),
     [selected, invitedSet]
@@ -98,10 +116,12 @@ export function AttendeePicker({
       }
       toast.success(
         result.invited === 1
-          ? '1 attendee invited'
-          : `${result.invited.toLocaleString()} attendees invited`
+          ? '1 attendee added'
+          : `${result.invited.toLocaleString()} attendees added`
       )
       setSelected(new Set())
+      clearAllFilters()
+      setMode('attendees')
       router.refresh()
     } finally {
       setPending(false)
@@ -133,38 +153,60 @@ export function AttendeePicker({
   const someFilteredSelected =
     !allFilteredSelected && filteredPeople.some((p) => selected.has(p.id))
 
-  // Trailing "Invited" column for PeopleTable. Defined here (not in
-  // PeopleTable) because the pill click needs invitedSet + setRemoveTarget
-  // from this component's state.
-  const invitedColumn = useMemo<ColumnDef<PersonListItem>>(
+  // Trailing row-actions column for the attendee list. Defined here (not in
+  // PeopleTable) because it needs setRemoveTarget from this component's state.
+  const actionsColumn = useMemo<ColumnDef<PersonListItem>>(
     () => ({
-      id: 'invited',
-      header: () => <div className="text-right">Status</div>,
-      cell: ({ row }) => {
-        if (!invitedSet.has(row.original.id)) return null
-        return (
-          <div className="flex items-center justify-end gap-1">
-            <InvitedBadge />
-            <RowActionsMenu
-              onRemove={() => setRemoveTarget(row.original)}
-            />
-          </div>
-        )
-      },
+      id: 'actions',
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <RowActionsMenu onRemove={() => setRemoveTarget(row.original)} />
+        </div>
+      ),
       enableSorting: false,
     }),
-    [invitedSet]
+    []
   )
+
+  const adding = mode === 'add'
 
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-4 pb-24">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div
+            role="tablist"
+            aria-label="Attendee views"
+            className="inline-flex rounded-lg border bg-muted/40 p-1"
+          >
+            <ModeButton
+              active={!adding}
+              onClick={() => switchMode('attendees')}
+              icon={<Users className="w-4 h-4" />}
+              label="Attendees"
+              count={attendees.length}
+            />
+            <ModeButton
+              active={adding}
+              onClick={() => switchMode('add')}
+              icon={<UserPlus className="w-4 h-4" />}
+              label="Add people"
+            />
+          </div>
+          {adding && (
+            <p className="text-sm text-muted-foreground">
+              Members not attending yet. Select people, then add them.
+            </p>
+          )}
+        </div>
+
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex-1 min-w-[240px]">
             <PeopleSearch
               value={filters.search}
               onChange={setSearch}
-              placeholder="Search people..."
+              placeholder={adding ? 'Search members to add...' : 'Search attendees...'}
             />
           </div>
           {!isMobile && (
@@ -179,16 +221,20 @@ export function AttendeePicker({
         </div>
 
         {filteredPeople.length === 0 ? (
-          <EmptyState />
+          !adding && attendees.length === 0 ? (
+            <NoAttendeesYet />
+          ) : (
+            <EmptyState />
+          )
         ) : isMobile ? (
           <CardList
             people={visiblePeople}
-            invitedSet={invitedSet}
+            selectable={adding}
             selected={selected}
             onToggle={toggle}
             onRemoveInvite={setRemoveTarget}
           />
-        ) : (
+        ) : adding ? (
           <PeopleTable
             people={filteredPeople}
             selection={{
@@ -199,7 +245,12 @@ export function AttendeePicker({
               onToggleAll: toggleAllFiltered,
             }}
             hiddenColumns={['roles', 'skills']}
-            trailingColumn={invitedColumn}
+          />
+        ) : (
+          <PeopleTable
+            people={filteredPeople}
+            hiddenColumns={['roles', 'skills']}
+            trailingColumn={actionsColumn}
           />
         )}
 
@@ -214,7 +265,7 @@ export function AttendeePicker({
         )}
       </div>
 
-      {selected.size > 0 && (
+      {adding && selected.size > 0 && (
         <ActionBar
           selectedCount={selected.size}
           inviteCount={selectedNotInvited.length}
@@ -259,7 +310,8 @@ export function AttendeePicker({
 
 interface CardListProps {
   people: PersonListItem[]
-  invitedSet: Set<string>
+  // Add view: rows toggle selection. Attendee view: rows carry a remove menu.
+  selectable: boolean
   selected: Set<string>
   onToggle: (id: string) => void
   onRemoveInvite: (person: PersonListItem) => void
@@ -267,7 +319,7 @@ interface CardListProps {
 
 function CardList({
   people,
-  invitedSet,
+  selectable,
   selected,
   onToggle,
   onRemoveInvite,
@@ -275,22 +327,23 @@ function CardList({
   return (
     <ul className="rounded-xl border overflow-hidden divide-y">
       {people.map((person) => {
-        const isInvited = invitedSet.has(person.id)
-        const isSelected = selected.has(person.id)
+        const isSelected = selectable && selected.has(person.id)
         return (
           <li
             key={person.id}
-            className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
-              isSelected ? 'bg-primary/5' : 'active:bg-muted/30'
-            }`}
-            onClick={() => onToggle(person.id)}
+            className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+              selectable ? 'cursor-pointer' : ''
+            } ${isSelected ? 'bg-primary/5' : selectable ? 'active:bg-muted/30' : ''}`}
+            onClick={selectable ? () => onToggle(person.id) : undefined}
           >
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={() => onToggle(person.id)}
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`Select ${person.firstName} ${person.lastName}`}
-            />
+            {selectable && (
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => onToggle(person.id)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Select ${person.firstName} ${person.lastName}`}
+              />
+            )}
             <div className="flex-1 min-w-0">
               <PersonNameCell person={person} />
               <div className="text-xs text-muted-foreground truncate">
@@ -298,9 +351,8 @@ function CardList({
                 {person.subregion ? ` · ${person.subregion.name}` : ''}
               </div>
             </div>
-            {isInvited && (
-              <div className="flex items-center gap-1 shrink-0">
-                <InvitedBadge />
+            {!selectable && (
+              <div className="shrink-0">
                 <RowActionsMenu onRemove={() => onRemoveInvite(person)} />
               </div>
             )}
@@ -341,11 +393,37 @@ function PersonNameCell({ person }: { person: PersonListItem }) {
   )
 }
 
-function InvitedBadge() {
+function ModeButton({
+  active,
+  onClick,
+  icon,
+  label,
+  count,
+}: {
+  active: boolean
+  onClick: () => void
+  icon: React.ReactNode
+  label: string
+  count?: number
+}) {
   return (
-    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-      Invited
-    </span>
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        active
+          ? 'bg-background text-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground'
+      }`}
+    >
+      {icon}
+      {label}
+      {count !== undefined && (
+        <span className="text-muted-foreground tabular-nums">{count.toLocaleString()}</span>
+      )}
+    </button>
   )
 }
 
@@ -412,14 +490,31 @@ function ActionBar({
           size="sm"
         >
           {pending
-            ? 'Inviting…'
+            ? 'Adding…'
             : inviteCount === 0
-              ? 'All selected already invited'
+              ? 'All selected already attending'
               : inviteCount === 1
-                ? 'Invite 1 attendee'
-                : `Invite ${inviteCount.toLocaleString()} attendees`}
+                ? 'Add 1 attendee'
+                : `Add ${inviteCount.toLocaleString()} attendees`}
         </Button>
       </div>
+    </div>
+  )
+}
+
+function NoAttendeesYet() {
+  return (
+    <div className="rounded-xl border bg-card p-10 text-center">
+      <div className="mx-auto rounded-full bg-muted/50 p-4 w-fit mb-4">
+        <Users className="w-6 h-6 text-muted-foreground" />
+      </div>
+      <h3 className="text-base font-semibold tracking-tight mb-1.5">
+        No attendees yet
+      </h3>
+      <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+        Use Add people above to add the members who are coming. You can add
+        more at any time, even once the conference has started.
+      </p>
     </div>
   )
 }

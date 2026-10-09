@@ -73,3 +73,39 @@ describe('SearchableCombobox — mobile bottom sheet', () => {
     expect(screen.queryByRole('button', { name: /close/i })).not.toBeInTheDocument()
   })
 })
+
+describe('SearchableCombobox — namesakes (#64)', () => {
+  beforeEach(() => mockUseIsMobile.mockReturnValue(true))
+
+  const ZAIDS = [
+    { value: 'z1', label: 'Zaid Khan', description: 'Houston' },
+    { value: 'z2', label: 'Zaid Khan', description: 'Dallas' },
+    { value: 'o', label: 'Omar Ali' },
+  ]
+
+  it('shows each namesake with where they are from, and search matches it', async () => {
+    const user = userEvent.setup()
+    render(
+      <SearchableCombobox options={ZAIDS} onChange={vi.fn()} placeholder="Pick" searchPlaceholder="Search people" />,
+    )
+    await user.click(screen.getByRole('combobox'))
+    expect(screen.getByText('Houston')).toBeInTheDocument()
+    expect(screen.getByText('Dallas')).toBeInTheDocument()
+
+    await user.type(screen.getByPlaceholderText('Search people'), 'zaid dal')
+    expect(screen.queryByText('Houston')).not.toBeInTheDocument()
+    expect(screen.getByText('Dallas')).toBeInTheDocument()
+  })
+
+  it('keeps the description on the trigger once a namesake is chosen', () => {
+    render(
+      <SearchableCombobox
+        options={ZAIDS}
+        value={{ type: 'existing', value: 'z2' }}
+        onChange={vi.fn()}
+        placeholder="Pick"
+      />,
+    )
+    expect(screen.getByRole('combobox')).toHaveTextContent('Zaid Khan · Dallas')
+  })
+})

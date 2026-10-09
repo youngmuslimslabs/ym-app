@@ -164,4 +164,57 @@ describe('CheckInDialog', () => {
       expect(screen.queryByText('Session ended — check in now')).not.toBeInTheDocument()
     })
   })
+
+  describe('code limits (#73)', () => {
+    it('shows what is typed in capitals and submits it trimmed', async () => {
+      const user = userEvent.setup()
+      render(
+        <CheckInDialog alreadyCheckedIn={false} pending={false} error={null} onSubmit={noop} />,
+      )
+      await user.type(screen.getByRole('textbox'), ' ab12 ')
+      expect(screen.getByRole('textbox')).toHaveValue(' AB12 ')
+      await user.click(screen.getByRole('button', { name: 'Check in' }))
+      expect(noop).toHaveBeenCalledWith('AB12')
+    })
+
+    it('stops input at 15 characters', async () => {
+      const user = userEvent.setup()
+      render(
+        <CheckInDialog alreadyCheckedIn={false} pending={false} error={null} onSubmit={noop} />,
+      )
+      await user.type(screen.getByRole('textbox'), 'x'.repeat(30))
+      expect((screen.getByRole('textbox') as HTMLInputElement).value).toHaveLength(15)
+    })
+
+    it('locks the form with a countdown after too many wrong codes', () => {
+      render(
+        <CheckInDialog
+          alreadyCheckedIn={false}
+          pending={false}
+          error="Too many attempts"
+          lockedUntil={Date.now() + 9.5 * 60_000}
+          onSubmit={noop}
+        />,
+      )
+      expect(screen.getByText('Too many tries')).toBeInTheDocument()
+      expect(screen.getByText(/paused for this session\. Try again in 10 min/)).toBeInTheDocument()
+      expect(screen.getByRole('textbox')).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Try again in 10 min' })).toBeDisabled()
+    })
+
+    it('unlocks once the lockout has passed', () => {
+      render(
+        <CheckInDialog
+          alreadyCheckedIn={false}
+          pending={false}
+          error="Too many attempts"
+          lockedUntil={Date.now() - 1_000}
+          onSubmit={noop}
+        />,
+      )
+      expect(screen.queryByText('Too many tries')).not.toBeInTheDocument()
+      expect(screen.queryByText("That code didn't match")).not.toBeInTheDocument()
+      expect(screen.getByRole('textbox')).toBeEnabled()
+    })
+  })
 })

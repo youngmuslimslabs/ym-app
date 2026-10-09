@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useLastNonNull } from '@/hooks/use-last-non-null'
 import { ConferenceOnboardingBanner } from './components/ConferenceOnboardingBanner'
 import { getCheckInWindow } from './lib/checkInWindow'
 import { DaySchedule } from './components/DaySchedule'
@@ -55,6 +56,13 @@ export function ScheduleContent({ initialView }: Props) {
   const openSession: Session | null = useMemo(
     () => view.sessions.find((s) => s.id === openSessionId) ?? null,
     [view.sessions, openSessionId]
+  )
+  // The sheet keeps rendering the last session while it animates closed —
+  // otherwise it swaps to an empty right-side placeholder mid-close (#57).
+  const sheetSessionId = useLastNonNull(openSessionId)
+  const sheetSession: Session | null = useMemo(
+    () => view.sessions.find((s) => s.id === sheetSessionId) ?? null,
+    [view.sessions, sheetSessionId]
   )
 
   function closeSheet() {
@@ -229,12 +237,13 @@ export function ScheduleContent({ initialView }: Props) {
       />
 
       <SessionSheet
-        session={openSession}
+        open={openSession !== null}
+        session={sheetSession}
         timezone={conference.timezone}
-        signedUp={openSession ? view.mySignupSessionIds.has(openSession.id) : false}
-        checkedIn={openSession ? view.myCheckInSessionIds.has(openSession.id) : false}
-        feedback={openSession ? view.myFeedback[openSession.id] ?? null : null}
-        seatCount={openSession ? view.signupCounts[openSession.id] ?? 0 : 0}
+        signedUp={sheetSession ? view.mySignupSessionIds.has(sheetSession.id) : false}
+        checkedIn={sheetSession ? view.myCheckInSessionIds.has(sheetSession.id) : false}
+        feedback={sheetSession ? view.myFeedback[sheetSession.id] ?? null : null}
+        seatCount={sheetSession ? view.signupCounts[sheetSession.id] ?? 0 : 0}
         checkInError={checkInError}
         pending={pending}
         now={now}

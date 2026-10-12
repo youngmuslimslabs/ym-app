@@ -43,7 +43,7 @@ export function FeedbackForm({ existing, pending, onSubmit }: Props) {
   return (
     <div className="space-y-5">
       <div>
-        <label className="text-sm font-medium mb-3 block">How was it?</label>
+        <label className="ym-h3 mb-3 block text-sm">How was it?</label>
         <div
           className="flex gap-2"
           onMouseLeave={() => previewActive && setHover(0)}
@@ -60,14 +60,15 @@ export function FeedbackForm({ existing, pending, onSubmit }: Props) {
                 aria-label={`${n} star${n > 1 ? 's' : ''}`}
                 aria-pressed={rating === n}
                 className={cn(
-                  'h-11 w-11 rounded-md flex items-center justify-center transition-colors disabled:opacity-50',
+                  'flex size-11 items-center justify-center rounded-full transition-colors duration-200 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   filled
                     ? 'border border-primary bg-primary text-primary-foreground'
                     : 'border border-input bg-background text-muted-foreground hover:bg-accent'
                 )}
               >
                 <Star
-                  className="w-5 h-5"
+                  className="size-5"
+                  aria-hidden="true"
                   fill={filled ? 'currentColor' : 'none'}
                 />
               </button>
@@ -78,10 +79,10 @@ export function FeedbackForm({ existing, pending, onSubmit }: Props) {
       <div>
         <label
           htmlFor="feedback-comment"
-          className="text-sm font-medium mb-2 block"
+          className="ym-h3 mb-2 block text-sm"
         >
           Comment{' '}
-          <span className="text-muted-foreground font-normal">(optional)</span>
+          <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
         <Textarea
           id="feedback-comment"
@@ -94,7 +95,7 @@ export function FeedbackForm({ existing, pending, onSubmit }: Props) {
         />
       </div>
       <Button
-        className="w-full"
+        className="h-11 w-full"
         disabled={!canSubmit}
         onClick={() => onSubmit(rating, comment)}
       >

@@ -10,9 +10,10 @@ interface Props {
   showPulse?: boolean
 }
 
-// Renders Live / Draft / Past in the design-system colors. Lives in one
-// component so the dashboard, editor header, and any future surfaces all
-// agree on the visual treatment.
+// Renders Live / Draft / Past as pills in the brand tokens (Live is the same
+// success green as Home's "Happening now"). Lives in one component so the
+// dashboard, editor header, and any future surfaces all agree on the visual
+// treatment. Spans, not divs, so it can sit inside a paragraph.
 export function ConferenceStatusBadge({
   status,
   start_date,
@@ -22,26 +23,27 @@ export function ConferenceStatusBadge({
   const lifecycle = getConferenceLifecycleStatus({ status, start_date, end_date })
   if (lifecycle === 'live') {
     return (
-      <div className="inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold gap-1.5">
-        {showPulse && (
-          <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground animate-pulse" />
-        )}
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
+        <span
+          aria-hidden="true"
+          className={`size-1.5 rounded-full bg-success ${showPulse ? 'animate-status-pulse' : ''}`}
+        />
         Live
-      </div>
+      </span>
     )
   }
   if (lifecycle === 'past') {
     return (
-      <div className="inline-flex items-center rounded-md bg-muted text-muted-foreground px-2.5 py-0.5 text-xs font-semibold">
+      <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
         Past
-      </div>
+      </span>
     )
   }
   return (
-    <div className="inline-flex items-center rounded-md border bg-background text-foreground px-2.5 py-0.5 text-xs font-semibold gap-1.5">
-      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+    <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-0.5 text-xs font-semibold text-foreground">
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-muted-foreground" />
       Draft
-    </div>
+    </span>
   )
 }
 

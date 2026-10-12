@@ -2,6 +2,7 @@
 
 import { Phone, Mail, Globe, Calendar, Users } from 'lucide-react'
 import { InlineEditField } from './InlineEditField'
+import { SectionHeader } from './SectionHeader'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import { format } from 'date-fns'
 import { formatPhoneNumber, isValidPhone, isValidEmail } from '@/lib/validation'
@@ -68,14 +69,13 @@ export function PersonalInfoSection({
 
   return (
     <section className="space-y-5">
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight text-foreground">Personal Information</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {isEditable ? 'Your contact details and personal info' : 'Contact details and personal info'}
-        </p>
-      </div>
+      <SectionHeader
+        title="Personal Information"
+        description={isEditable ? 'Your contact details and personal info' : 'Contact details and personal info'}
+      />
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      {/* Inside the brand scope the fields sit on a white card, like the other sections. */}
+      <div className="grid gap-5 sm:grid-cols-2 [[data-theme=ym]_&]:rounded-2xl [[data-theme=ym]_&]:border [[data-theme=ym]_&]:bg-card [[data-theme=ym]_&]:p-6">
         {isEditable ? (
           <>
             <InlineEditField

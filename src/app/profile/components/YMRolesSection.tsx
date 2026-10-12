@@ -17,6 +17,7 @@ import {
 } from '@/components/searchable-combobox'
 import { DateRangeInput } from '@/components/date-range-input'
 import { ExpandableCard, ExpandableCardList } from './ExpandableCard'
+import { SectionHeader } from './SectionHeader'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import type { YMRoleEntry } from '@/contexts/OnboardingContext'
 import { fetchAllUsersForSelection } from '@/lib/supabase/queries/users'
@@ -181,12 +182,10 @@ export function YMRolesSection({
   if (!optionsLoaded) {
     return (
       <section className="space-y-5">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">YM Roles</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Your positions and responsibilities in the organization
-          </p>
-        </div>
+        <SectionHeader
+          title="YM Roles"
+          description="Your positions and responsibilities in the organization"
+        />
         <div className="flex justify-center py-8">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>

@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentUserRow } from '@/lib/supabase/current-user'
 
 export interface UpcomingAttendance {
   conferenceId: string
   name: string
   startDate: string
   endDate: string
+  location: string | null
   isLive: boolean
 }
 
@@ -24,18 +26,7 @@ export interface UpcomingAttendance {
  * isn't actionable from the home slot yet, so it doesn't earn it.
  */
 export async function fetchUpcomingAttendance(): Promise<UpcomingAttendance | null> {
-  const supabase = await createClient()
-
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
-  if (!authUser) return null
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('id')
-    .eq('auth_id', authUser.id)
-    .maybeSingle()
+  const [supabase, userRow] = await Promise.all([createClient(), getCurrentUserRow()])
   if (!userRow) return null
 
   const { data: attendeeRows, error: attendeeErr } = await supabase
@@ -56,7 +47,7 @@ export async function fetchUpcomingAttendance(): Promise<UpcomingAttendance | nu
 
   const { data, error } = await supabase
     .from('conferences')
-    .select('id, name, start_date, end_date')
+    .select('id, name, start_date, end_date, location')
     .in(
       'id',
       attendeeRows.map((r) => r.conference_id),
@@ -81,6 +72,7 @@ export async function fetchUpcomingAttendance(): Promise<UpcomingAttendance | nu
     name: data.name,
     startDate: data.start_date,
     endDate: data.end_date,
+    location: data.location,
     isLive,
   }
 }

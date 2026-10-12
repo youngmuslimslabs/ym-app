@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { getPostHogServer } from '@/lib/posthog/server'
 import { logger } from '@/lib/posthog/logger'
 import { claimUserByEmail } from '@/lib/supabase/claim-user'
+import { isSide, SIDE_COOKIE, SIDE_COOKIE_MAX_AGE, type Side } from '@/lib/side'
 
 /**
  * Routes reachable without a session. `/design-system` is here because it is
@@ -16,6 +17,55 @@ const PUBLIC_PREFIXES = ['/login', '/auth', '/legal-lol', '/api/legal-lol', '/de
 
 function isPublicPath(pathname: string) {
     return pathname === '/' || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
+}
+
+// One-question page for members who finished onboarding before the
+// Brothers/Sisters question existed (users.side is NULL).
+const SIDE_ROUTE = '/onboarding/side'
+
+type ServerClient = ReturnType<typeof createServerClient>
+
+// The row the redirect logic needs. If users.side doesn't exist yet (this code
+// deployed before migration 00024), fall back to onboarding_completed_at alone
+// rather than erroring — the error path lets every request through, which would
+// silently switch off the onboarding redirect for everyone.
+async function readOnboardingRow(supabase: ServerClient, authId: string) {
+    const withSide = await supabase
+        .from('users')
+        .select('onboarding_completed_at, side')
+        .eq('auth_id', authId)
+        .maybeSingle()
+    if (withSide.error?.code !== '42703') return withSide // 42703 = undefined_column
+
+    const withoutSide = await supabase
+        .from('users')
+        .select('onboarding_completed_at')
+        .eq('auth_id', authId)
+        .maybeSingle()
+    return {
+        data: withoutSide.data ? { ...withoutSide.data, side: SIDE_UNAVAILABLE } : null,
+        error: withoutSide.error,
+    }
+}
+
+// Marks "column not migrated yet" — distinct from NULL ("not chosen"), so the
+// side prompt only fires once the column actually exists.
+const SIDE_UNAVAILABLE = 'unavailable' as const
+
+// Keep the theme cookie (read by the <head> script in layout.tsx) in step with
+// users.side, or clear it when there's no signed-in user.
+function syncSideCookie(request: NextRequest, response: NextResponse, side: Side | null) {
+    const current = request.cookies.get(SIDE_COOKIE)?.value
+    if (side && current !== side) {
+        response.cookies.set(SIDE_COOKIE, side, {
+            path: '/',
+            maxAge: SIDE_COOKIE_MAX_AGE,
+            sameSite: 'lax',
+        })
+    } else if (!side && current) {
+        response.cookies.delete(SIDE_COOKIE)
+    }
+    return response
 }
 
 export async function updateSession(request: NextRequest) {
@@ -48,13 +98,15 @@ export async function updateSession(request: NextRequest) {
         )
 
         // IMPORTANT: Avoid writing any logic between createServerClient and
-        // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+        // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
         // issues with users being randomly logged out.
 
-        const {
-            data: { user },
-            error: getUserError,
-        } = await supabase.auth.getUser()
+        // getClaims() refreshes the session like getUser() but, with asymmetric
+        // JWT signing keys, verifies the token locally instead of a round-trip to
+        // Supabase Auth on every request (it falls back to getUser() otherwise).
+        const { data: claimsData, error: getUserError } = await supabase.auth.getClaims()
+        const claims = claimsData?.claims
+        const user = claims ? { id: claims.sub, email: claims.email } : null
 
         // Handle auth errors (network failures, invalid tokens, etc.)
         if (getUserError) {
@@ -84,17 +136,20 @@ export async function updateSession(request: NextRequest) {
             if (!isPublicPath(request.nextUrl.pathname)) {
                 // Redirect to login on auth errors
                 const url = request.nextUrl.clone()
-                url.pathname = '/login'
+                url.pathname = '/login/'
                 url.searchParams.set('error', 'session_expired')
                 return NextResponse.redirect(url)
             }
             // Allow access to login/auth pages even without session
         }
 
+        if (!user) syncSideCookie(request, supabaseResponse, null)
+
         if (!user && !isPublicPath(request.nextUrl.pathname)) {
             // no user, potentially respond by redirecting the user to the login page
+            // (trailing slash matches `trailingSlash: true` — saves a 308 hop)
             const url = request.nextUrl.clone()
-            url.pathname = '/login'
+            url.pathname = '/login/'
             return NextResponse.redirect(url)
         }
 
@@ -121,7 +176,7 @@ export async function updateSession(request: NextRequest) {
             }
 
             const url = request.nextUrl.clone()
-            url.pathname = '/login'
+            url.pathname = '/login/'
             url.searchParams.set('error', 'invalid_domain')
             return NextResponse.redirect(url)
         }
@@ -132,13 +187,16 @@ export async function updateSession(request: NextRequest) {
         const isOnboardingRoute = request.nextUrl.pathname.startsWith('/onboarding')
         const isPublicRoute = isPublicPath(request.nextUrl.pathname)
         const isProtectedRoute = !isPublicRoute && !isOnboardingRoute
+        // The onboarding lookup is a DB round-trip. Skip it for background link
+        // prefetches (the real navigation re-runs middleware and redirects) and
+        // for API routes, which authorize themselves and shouldn't be redirected
+        // to a page anyway.
+        const isPrefetch = request.headers.get('next-router-prefetch') === '1'
+        const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
 
-        if (user && (isProtectedRoute || isOnboardingRoute)) {
-            let { data: userData, error: queryError } = await supabase
-                .from('users')
-                .select('onboarding_completed_at')
-                .eq('auth_id', user.id)
-                .maybeSingle()
+        if (user && !isPrefetch && !isApiRoute && (isProtectedRoute || isOnboardingRoute)) {
+            const fetchOnboardingRow = () => readOnboardingRow(supabase, user.id)
+            let { data: userData, error: queryError } = await fetchOnboardingRow()
 
             // Self-heal: an authenticated (domain-validated) user with no linked
             // row means their pre-provisioned users row was never claimed by the
@@ -153,11 +211,7 @@ export async function updateSession(request: NextRequest) {
                 try {
                     const { claimed } = await claimUserByEmail(user.id, user.email)
                     if (claimed) {
-                        const reread = await supabase
-                            .from('users')
-                            .select('onboarding_completed_at')
-                            .eq('auth_id', user.id)
-                            .maybeSingle()
+                        const reread = await fetchOnboardingRow()
                         userData = reread.data
                         queryError = reread.error
                     }
@@ -188,19 +242,38 @@ export async function updateSession(request: NextRequest) {
                 return supabaseResponse
             }
 
-            if (isOnboardingRoute && userData?.onboarding_completed_at) {
-                // Completed user on onboarding → send to home
+            const sideUnavailable = userData?.side === SIDE_UNAVAILABLE
+            const side = isSide(userData?.side) ? userData.side : null
+            const onboarded = Boolean(userData?.onboarding_completed_at)
+            const isSideRoute = request.nextUrl.pathname.startsWith(SIDE_ROUTE)
+            const redirectTo = (pathname: string) => {
                 const url = request.nextUrl.clone()
-                url.pathname = '/home'
-                return NextResponse.redirect(url)
+                url.pathname = pathname
+                return syncSideCookie(request, NextResponse.redirect(url), side)
             }
 
-            if (isProtectedRoute && !userData?.onboarding_completed_at) {
-                // Incomplete user on protected route → send to onboarding
-                const url = request.nextUrl.clone()
-                url.pathname = '/onboarding'
-                return NextResponse.redirect(url)
+            if (isOnboardingRoute && onboarded) {
+                // Onboarded but never picked a side → the one-question page is
+                // the only onboarding route they may use.
+                if (!side && !sideUnavailable && isSideRoute) {
+                    return syncSideCookie(request, supabaseResponse, side)
+                }
+                // Completed user on onboarding → send to home
+                return redirectTo('/home/')
             }
+
+            if ((isProtectedRoute || isSideRoute) && !onboarded) {
+                // Incomplete user on protected route → send to onboarding (the
+                // full flow asks the side question itself)
+                return redirectTo('/onboarding/')
+            }
+
+            if (isProtectedRoute && !side && !sideUnavailable) {
+                // Onboarded before the Brothers/Sisters question existed.
+                return redirectTo(`${SIDE_ROUTE}/`)
+            }
+
+            syncSideCookie(request, supabaseResponse, side)
         }
     } catch (error) {
         // Catch any unexpected errors in middleware

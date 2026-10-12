@@ -1,5 +1,6 @@
 import { createClient } from './client'
 import { writableRoles } from '@/lib/profile-completion'
+import { isSide, type Side } from '@/lib/side'
 import type {
   OnboardingData,
   YMRoleEntry,
@@ -569,13 +570,58 @@ export async function completeOnboarding(authId: string, userId?: string): Promi
 }
 
 /**
+ * Set the member's Brothers/Sisters side. Write-once: the update only matches a
+ * row whose side is still NULL (the DB trigger in 00024 rejects any change once
+ * set), so a retry after a successful write is a no-op success rather than an
+ * error — and a different value never silently overwrites the first.
+ */
+export async function saveSide(userId: string, side: Side): Promise<{ success: boolean; error?: string }> {
+  if (!isSide(side)) return { success: false, error: 'Please choose Brothers or Sisters' }
+  const supabase = createClient()
+
+  const { data: updated, error } = await supabase
+    .from('users')
+    .update({ side })
+    .eq('id', userId)
+    .is('side', null)
+    .select('id')
+
+  // 42703 = undefined_column: deployed ahead of migration 00024. Don't block
+  // onboarding on it; the member is asked again once the column exists
+  // (middleware routes NULL-side members to /onboarding/side).
+  if (error?.code === '42703') return { success: true }
+  if (error) {
+    console.error('Error saving side:', error)
+    return { success: false, error: 'Failed to save your side' }
+  }
+  if (updated && updated.length > 0) return { success: true }
+
+  // Nothing updated: either it was already set, or the row isn't ours.
+  const { data: row } = await supabase.from('users').select('side').eq('id', userId).maybeSingle()
+  if (row?.side === side) return { success: true }
+  if (row?.side) return { success: false, error: 'Your side is already set. Contact an admin to change it.' }
+  return { success: false, error: 'Failed to save your side' }
+}
+
+/** saveSide for the signed-in user (the one-question page for existing members). */
+export async function saveCurrentUserSide(side: Side): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+  const { id: userId, error: idError } = await getUserId(user.id)
+  if (!userId) return { success: false, error: idError || 'User not found' }
+  return saveSide(userId, side)
+}
+
+/**
  * Persist the new Part-1 typeform in one shot, reusing the proven step-saves:
- * personal info + membership + one lightweight active role, then mark onboarded.
+ * side + personal info + membership + one lightweight active role, then mark onboarded.
  * Answers carry DB ids for neighbornet/role (the flow runs authenticated), the
  * nationality string for ethnicity, and a Date for dob. Stops at the first
  * failure so we never mark onboarding complete on a partial write.
  */
 export async function completePart1Onboarding(answers: {
+  side?: Side
   phone?: string
   email?: string
   ethnicity?: string
@@ -589,6 +635,9 @@ export async function completePart1Onboarding(answers: {
 
   const { id: userId, error: idError } = await getUserId(user.id)
   if (!userId) return { success: false, error: idError || 'User not found' }
+
+  // Required — onboarding can't complete without it.
+  if (!answers.side) return { success: false, error: 'Please choose Brothers or Sisters' }
 
   const s1 = await saveStep1(
     user.id,
@@ -605,6 +654,11 @@ export async function completePart1Onboarding(answers: {
     const s3 = await saveStep3(user.id, { ymRoles: [role] }, userId)
     if (!s3.success) return s3
   }
+
+  // Side is write-once, so it's saved last: a failure in an earlier step can be
+  // retried (even with a different pick) without the side already being locked.
+  const sideResult = await saveSide(userId, answers.side)
+  if (!sideResult.success) return sideResult
 
   return completeOnboarding(user.id, userId)
 }

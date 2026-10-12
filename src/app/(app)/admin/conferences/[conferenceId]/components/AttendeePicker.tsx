@@ -25,6 +25,7 @@ import { TypeToConfirmDialog } from '../../components/TypeToConfirmDialog'
 import { inviteAttendees, removeAttendee } from '../../client-actions'
 import type { PersonListItem } from '@/lib/supabase/queries/people'
 import type { FilterCategory } from '@/app/(app)/people/types'
+import { MemberAvatar } from '@/components/brand/member-avatar'
 
 interface Props {
   conferenceId: string
@@ -312,21 +313,15 @@ function CardList({
 }
 
 function PersonNameCell({ person }: { person: PersonListItem }) {
-  const initials = `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`
   return (
     <div className="flex items-center gap-3 min-w-0">
-      {person.avatarUrl ? (
-        <img
-          src={person.avatarUrl}
-          alt=""
-          className="h-8 w-8 rounded-full object-cover shrink-0"
-          referrerPolicy="no-referrer"
-        />
-      ) : (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary/70">
-          {initials}
-        </div>
-      )}
+      <MemberAvatar
+        name={`${person.firstName} ${person.lastName}`}
+        src={person.avatarUrl}
+        side={person.side ?? 'general'}
+        size="sm"
+        decorative
+      />
       <div className="min-w-0">
         <div className="font-medium truncate">
           {person.firstName} {person.lastName}

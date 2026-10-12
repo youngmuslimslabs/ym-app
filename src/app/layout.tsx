@@ -6,6 +6,7 @@ import { ServiceWorkerRegistration } from "@/components/providers/ServiceWorkerR
 import { IOSInstallPrompt } from "@/components/pwa/IOSInstallPrompt";
 import { Toaster } from "@/components/ui/sonner";
 import { PostHogPageView } from "@/components/PostHogPageView";
+import { boldonse, figtree } from "@/lib/brand-fonts";
 import { PHProvider } from "./providers";
 import "./globals.css";
 
@@ -54,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${figtree.variable} ${boldonse.variable}`}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

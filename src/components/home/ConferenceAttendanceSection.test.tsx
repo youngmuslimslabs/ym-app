@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 
 import {
   ConferenceAttendanceSection,
+  conferenceDateTile,
   formatConferenceDateRange,
 } from './ConferenceAttendanceSection'
 import type { UpcomingAttendance } from '@/lib/supabase/queries'
@@ -44,6 +45,17 @@ describe('formatConferenceDateRange', () => {
   })
 })
 
+describe('conferenceDateTile', () => {
+  it('shows the month and the day range', () => {
+    expect(conferenceDateTile('2026-10-08', '2026-10-10')).toEqual({ month: 'Oct', days: '8–10' })
+  })
+
+  it('shows one day for a one-day or month-crossing conference', () => {
+    expect(conferenceDateTile('2026-05-02', '2026-05-02')).toEqual({ month: 'May', days: '2' })
+    expect(conferenceDateTile('2026-04-30', '2026-05-02')).toEqual({ month: 'Apr', days: '30' })
+  })
+})
+
 describe('ConferenceAttendanceSection', () => {
   beforeEach(() => {
     mockFetchUpcomingAttendance.mockReset()
@@ -61,11 +73,13 @@ describe('ConferenceAttendanceSection', () => {
       name: 'YM Annual Conference 2026',
       startDate: '2026-04-30',
       endDate: '2026-05-02',
+      location: 'Houston, TX',
       isLive: false,
     })
     await renderAsync(ConferenceAttendanceSection())
 
-    expect(screen.getByText('Attending')).toBeInTheDocument()
+    expect(screen.getByText('You’re going')).toBeInTheDocument()
+    expect(screen.getByText('· Houston, TX')).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { level: 2, name: 'YM Annual Conference 2026' }),
     ).toBeInTheDocument()
@@ -81,9 +95,11 @@ describe('ConferenceAttendanceSection', () => {
       name: 'Live Conference',
       startDate: '2026-04-30',
       endDate: '2026-05-02',
+      location: null,
       isLive: true,
     })
     const live = await renderAsync(ConferenceAttendanceSection())
+    expect(live.getByText('Happening now')).toBeInTheDocument()
     expect(
       live.getByTestId('conference-status-dot'),
     ).toHaveClass('animate-status-pulse')
@@ -94,6 +110,7 @@ describe('ConferenceAttendanceSection', () => {
       name: 'Upcoming Conference',
       startDate: '2026-05-14',
       endDate: '2026-05-16',
+      location: null,
       isLive: false,
     })
     const upcoming = await renderAsync(ConferenceAttendanceSection())

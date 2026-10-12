@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentUserRow } from '@/lib/supabase/current-user'
 import type { Database } from '@/types/database.types'
 
 type Tables = Database['public']['Tables']
@@ -14,20 +15,9 @@ export interface UserContext {
 /**
  * Fetch the current user's context for the home page
  */
-export async function fetchUserContext(userId: string): Promise<UserContext | null> {
-  const supabase = await createClient()
-
-  // Fetch user by auth_id
-  const { data: user, error: userError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('auth_id', userId)
-    .single()
-
-  if (userError || !user) {
-    console.error('Error fetching user:', userError)
-    return null
-  }
+export async function fetchUserContext(): Promise<UserContext | null> {
+  const [supabase, user] = await Promise.all([createClient(), getCurrentUserRow()])
+  if (!user) return null
 
   // Fetch role assignments and membership in parallel (independent queries)
   const [{ data: roleAssignments }, { data: membership, error: membershipError }] = await Promise.all([

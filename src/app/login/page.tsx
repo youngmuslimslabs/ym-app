@@ -90,16 +90,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-bg min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
-      <div className="login-orb login-orb-1" />
-      <div className="login-orb login-orb-2" />
-      <div className="relative z-10 flex flex-col gap-4 w-full max-w-sm">
-        <YMLoginForm
-          onSuccess={handleGoogleSuccess}
-          onError={handleGoogleError}
-          error={error}
-        />
-      </div>
-    </div>
+    <YMLoginForm
+      onSuccess={handleGoogleSuccess}
+      onError={handleGoogleError}
+      error={error}
+    />
   )
 }

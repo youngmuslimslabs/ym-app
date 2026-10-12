@@ -34,7 +34,7 @@ describe('QuickActionRow', () => {
     expect(link).toHaveClass('group')
   })
 
-  it('renders both the lucide icon and a chevron (the chevron is hidden by default and revealed on hover)', () => {
+  it('renders the lucide icon and an arrow, both hidden from assistive tech', () => {
     const { container } = render(
       <QuickActionRow
         href="/docs"
@@ -43,10 +43,9 @@ describe('QuickActionRow', () => {
         description="Halaqa & SOPs"
       />,
     )
-    // Two SVGs: provided icon + ChevronRight
+    // Two SVGs: provided icon + ArrowRight. The link's name is its text.
     const svgs = container.querySelectorAll('svg')
     expect(svgs.length).toBe(2)
-    // The second SVG (chevron) starts at opacity-0
-    expect(svgs[1]).toHaveClass('opacity-0')
+    svgs.forEach((svg) => expect(svg).toHaveAttribute('aria-hidden', 'true'))
   })
 })

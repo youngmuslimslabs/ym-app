@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import Image from 'next/image'
 import {
   Home,
   Users,
@@ -20,6 +19,7 @@ import {
   Shield,
   X,
 } from 'lucide-react'
+import { MemberAvatar } from '@/components/brand/member-avatar'
 import {
   Sidebar,
   SidebarContent,
@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/brand/logo'
 import { useAuth } from '@/contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -128,7 +129,6 @@ export function AppSidebar() {
   // Extract display name from email (e.g., "omar.khan@..." -> "Omar")
   const displayName = user?.email?.split('@')[0]?.split('.')[0] ?? 'User'
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1)
-  const initials = capitalizedName.charAt(0).toUpperCase()
 
   const handleNavClick = () => {
     // Close mobile sidebar when navigating
@@ -193,26 +193,13 @@ export function AppSidebar() {
                 {isHoveringCollapsed ? (
                   <PanelLeft className="!size-4" />
                 ) : (
-                  <Image
-                    src="/favicon.ico"
-                    alt="Young Muslims"
-                    width={24}
-                    height={24}
-                    className="rounded shrink-0"
-                  />
+                  <Logo className="h-6 max-w-8" />
                 )}
               </SidebarMenuButton>
             ) : (
               /* When expanded: show logo with app name */
               <SidebarMenuButton size="lg" className="pointer-events-none select-none" tabIndex={-1}>
-                <Image
-                  src="/favicon.ico"
-                  alt="Young Muslims"
-                  width={24}
-                  height={24}
-                  className="rounded shrink-0"
-                />
-                <span className="truncate font-semibold">Young Muslims</span>
+                <Logo variant="full" className="h-4 max-w-44" />
               </SidebarMenuButton>
             )}
           </SidebarMenuItem>
@@ -337,22 +324,12 @@ export function AppSidebar() {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   {/* Avatar - 24px to match logo size in lg variant buttons */}
-                  {user?.user_metadata?.avatar_url ? (
-                    <Image
-                      src={user.user_metadata.avatar_url}
-                      alt={capitalizedName}
-                      width={24}
-                      height={24}
-                      className="size-6 shrink-0 rounded-full object-cover"
-                      referrerPolicy="no-referrer"
-                      unoptimized
-                      priority
-                    />
-                  ) : (
-                    <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                      {initials}
-                    </div>
-                  )}
+                  <MemberAvatar
+                    name={user?.user_metadata?.full_name || capitalizedName}
+                    src={user?.user_metadata?.avatar_url}
+                    size="xs"
+                    className="bg-sidebar-primary text-sidebar-primary-foreground"
+                  />
                   {/* Name with inline chevron */}
                   <span className="truncate font-semibold max-w-[100px]">{capitalizedName}</span>
                   <ChevronUp className="ml-auto h-4 w-4 shrink-0" />

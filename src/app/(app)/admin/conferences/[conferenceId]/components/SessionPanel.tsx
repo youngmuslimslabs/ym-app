@@ -161,14 +161,12 @@ export function SessionPanel(props: Props) {
 
 function EmptyState() {
   return (
-    <div className="h-full flex flex-col items-center justify-center text-center px-6 py-16">
-      <div className="rounded-full bg-muted/50 p-4 mb-4">
-        <Calendar className="w-6 h-6 text-muted-foreground" />
+    <div className="flex h-full flex-col items-center justify-center px-6 py-16 text-center">
+      <div className="mb-4 rounded-full bg-muted/50 p-4">
+        <Calendar className="size-6 text-muted-foreground" aria-hidden="true" />
       </div>
-      <h3 className="text-sm font-semibold tracking-tight mb-1">
-        Select a session
-      </h3>
-      <p className="text-xs text-muted-foreground max-w-[220px] leading-relaxed">
+      <h3 className="ym-h3 mb-1">Select a session</h3>
+      <p className="max-w-[240px] text-sm leading-relaxed text-muted-foreground">
         Click a row on the left to view details, roster, and check-ins.
       </p>
     </div>
@@ -246,181 +244,185 @@ function ViewMode({
   }, [entries])
 
   return (
-    <div className="flex flex-col h-full">
-      <header className="p-6 pb-4 border-b space-y-2">
-        <div className="text-xs uppercase tracking-widest text-primary font-medium">
-          {session.is_break ? (
-            <span className="inline-flex items-center gap-1">
-              <Coffee className="w-3 h-3" />
-              Break
-            </span>
-          ) : (
-            'Session'
-          )}
-        </div>
-        <h2 className="text-xl font-semibold tracking-tight">{session.title}</h2>
-        <p className="text-sm text-muted-foreground">
-          {format(parseISO(startWall.date), 'EEEE, MMMM d')} ·{' '}
-          {formatTime(startWall.time)} – {formatTime(endWall.time)}
-        </p>
-        {session.room && (
-          <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
-            {session.room}
-          </p>
-        )}
-        {!session.is_break && session.check_in_code && (
-          <div className="flex items-center gap-3 pt-2">
-            <span className="text-sm text-muted-foreground">Check-in code</span>
-            <span className="font-mono text-base font-bold tracking-widest bg-muted px-3 py-1 rounded">
-              {session.check_in_code}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-auto px-2 py-0.5"
-              onClick={() => void copy(session.check_in_code ?? '')}
-            >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Copied' : 'Copy'}
-            </Button>
-          </div>
-        )}
-      </header>
-
-      {session.description && (
-        <div className="px-6 py-4 text-sm leading-relaxed text-foreground/80 border-b shrink-0">
-          <p ref={descRef} className="line-clamp-3 whitespace-pre-wrap">
-            {session.description}
-          </p>
-          {descClamped && (
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="mt-1 h-auto p-0 text-xs"
-              onClick={() => setDescOpen(true)}
-            >
-              See more
-            </Button>
-          )}
-          <Dialog open={descOpen} onOpenChange={setDescOpen}>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>{session.title}</DialogTitle>
-              </DialogHeader>
-              <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
-                {session.description}
-              </p>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
-
-      {!session.is_break && (
-        <div className="px-6 py-4 grid grid-cols-2 gap-4 border-b">
-          <Stat
-            label="Signed up"
-            value={
-              session.capacity != null
-                ? `${signups} / ${session.capacity}`
-                : String(signups)
-            }
-            hint={
-              counts.walkIns > 0
-                ? `+${counts.walkIns} walk-in${counts.walkIns === 1 ? '' : 's'}`
-                : undefined
-            }
-          />
-          <Stat label="Checked in" value={checkIns === 0 ? '—' : String(checkIns)} />
-        </div>
-      )}
-
-      {!session.is_break ? (
-        <>
-          <div className="px-6 pt-4 pb-3 border-b space-y-3 shrink-0">
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-              <TabsList className="w-full">
-                <TabsTrigger value="all" className="flex-1">
-                  All
-                  <span className="ml-1.5 text-muted-foreground tabular-nums">
-                    {counts.all}
-                  </span>
-                </TabsTrigger>
-                <TabsTrigger value="in" className="flex-1">
-                  Checked in
-                  <span className="ml-1.5 text-muted-foreground tabular-nums">
-                    {counts.in}
-                  </span>
-                </TabsTrigger>
-                <TabsTrigger value="out" className="flex-1">
-                  Not checked in
-                  <span className="ml-1.5 text-muted-foreground tabular-nums">
-                    {counts.out}
-                  </span>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search attendees..."
-                aria-label="Search attendees"
-                className="pl-9 pr-9 h-9 bg-background"
-              />
-              {search && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSearch('')}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  <span className="sr-only">Clear search</span>
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            {error ? (
-              <ErrorState message={error} />
-            ) : entries === null ? (
-              <LoadingState />
-            ) : entries.length === 0 ? (
-              <EmptyAll />
-            ) : filtered.length === 0 ? (
-              <EmptyFiltered hasSearch={search.length > 0} filter={filter} />
+    <div className="flex h-full flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <header className="space-y-2 border-b p-6 pb-5">
+          <div className="ym-eyebrow text-primary">
+            {session.is_break ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Coffee className="size-3.5" aria-hidden="true" />
+                Break
+              </span>
             ) : (
-              <ul className="divide-y">
-                {filtered.map((e) => (
-                  <RosterRow key={e.userId} entry={e} timezone={conference.timezone} />
-                ))}
-              </ul>
+              'Session'
             )}
           </div>
-        </>
-      ) : (
-        <div className="flex-1" />
-      )}
+          <h2 className="ym-h2">{session.title}</h2>
+          <p className="text-sm text-muted-foreground">
+            {format(parseISO(startWall.date), 'EEEE, MMMM d')} ·{' '}
+            {formatTime(startWall.time)} – {formatTime(endWall.time)}
+          </p>
+          {session.room && (
+            <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="size-3.5" aria-hidden="true" />
+              {session.room}
+            </p>
+          )}
+          {!session.is_break && session.check_in_code && (
+            // The screen's one dark block: the code is what staff read out or
+            // put on a screen at the door.
+            <div className="pt-2">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl bg-brand-obsidian p-3 pl-4 text-brand-snow">
+                <div>
+                  <div className="ym-eyebrow text-brand-snow/70">Check-in code</div>
+                  <div className="mt-1 text-2xl font-bold leading-none tracking-[0.2em] tabular-nums">
+                    {session.check_in_code}
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-11 bg-white/10 text-brand-snow hover:bg-white/20 hover:text-brand-snow md:h-9"
+                  onClick={() => void copy(session.check_in_code ?? '')}
+                >
+                  {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                  {copied ? 'Copied' : 'Copy'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </header>
 
-      <footer className="px-6 py-3 border-t bg-muted/30 flex justify-end gap-2">
+        {session.description && (
+          <div className="px-6 py-4 text-sm leading-relaxed text-foreground/80 border-b shrink-0">
+            <p ref={descRef} className="line-clamp-3 whitespace-pre-wrap">
+              {session.description}
+            </p>
+            {descClamped && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="mt-1 h-auto p-0 text-sm"
+                onClick={() => setDescOpen(true)}
+              >
+                See more
+              </Button>
+            )}
+            <Dialog open={descOpen} onOpenChange={setDescOpen}>
+              <DialogContent className="sm:max-w-lg sm:rounded-2xl">
+                <DialogHeader>
+                  <DialogTitle className="ym-h2">{session.title}</DialogTitle>
+                </DialogHeader>
+                <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                  {session.description}
+                </p>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+
+        {!session.is_break && (
+          <div className="grid grid-cols-2 gap-3 border-b px-6 py-3">
+            <Stat
+              label="Signed up"
+              value={
+                session.capacity != null
+                  ? `${signups} / ${session.capacity}`
+                  : String(signups)
+              }
+              hint={
+                counts.walkIns > 0
+                  ? `+${counts.walkIns} walk-in${counts.walkIns === 1 ? '' : 's'}`
+                  : undefined
+              }
+            />
+            <Stat label="Checked in" value={checkIns === 0 ? '—' : String(checkIns)} />
+          </div>
+        )}
+
+        {!session.is_break ? (
+          <>
+            <div className="px-6 pt-4 pb-3 border-b space-y-3 shrink-0">
+              <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
+                <TabsList className="h-11 w-full rounded-xl md:h-9">
+                  <TabsTrigger value="all" className="h-full flex-1 rounded-lg px-2">
+                    All
+                    <span className="ml-1.5 text-muted-foreground tabular-nums">
+                      {counts.all}
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger value="in" className="h-full flex-1 rounded-lg px-2">
+                    Checked in
+                    <span className="ml-1.5 text-muted-foreground tabular-nums">
+                      {counts.in}
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger value="out" className="h-full flex-1 rounded-lg px-2">
+                    Not checked in
+                    <span className="ml-1.5 text-muted-foreground tabular-nums">
+                      {counts.out}
+                    </span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <Input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search attendees..."
+                  aria-label="Search attendees"
+                  className="h-11 bg-background pl-9 pr-11 md:h-9 md:pr-9"
+                />
+                {search && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSearch('')}
+                    className="absolute right-0.5 top-1/2 size-10 -translate-y-1/2 text-muted-foreground hover:text-foreground md:right-1 md:size-7"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    <span className="sr-only">Clear search</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div>
+              {error ? (
+                <ErrorState message={error} />
+              ) : entries === null ? (
+                <LoadingState />
+              ) : entries.length === 0 ? (
+                <EmptyAll />
+              ) : filtered.length === 0 ? (
+                <EmptyFiltered hasSearch={search.length > 0} filter={filter} />
+              ) : (
+                <ul className="divide-y">
+                  {filtered.map((e) => (
+                    <RosterRow key={e.userId} entry={e} timezone={conference.timezone} />
+                  ))}
+                </ul>
+              )}
+            </div>
+          </>
+        ) : null}
+      </div>
+
+      <footer className="flex shrink-0 justify-end gap-2 border-t bg-muted/30 px-6 py-3">
         <Button
           variant="ghost"
-          size="sm"
           onClick={() => onModeChange('delete', session)}
-          className="text-muted-foreground hover:text-destructive"
+          className="h-11 text-muted-foreground hover:text-destructive md:h-9"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 aria-hidden="true" />
           Delete
         </Button>
-        <Button size="sm" onClick={() => onModeChange('edit', session)}>
-          <Edit className="w-4 h-4" />
+        <Button className="h-11 md:h-9" onClick={() => onModeChange('edit', session)}>
+          <Edit aria-hidden="true" />
           Edit
         </Button>
       </footer>
@@ -679,8 +681,8 @@ function FormMode({
 
   return (
     <div className="flex flex-col h-full">
-      <header className="p-6 pb-4 border-b">
-        <h2 className="text-lg font-semibold tracking-tight">{heading}</h2>
+      <header className="border-b p-6 pb-5">
+        <h2 className="ym-h2">{heading}</h2>
         {dateOk && (
           <p className="text-sm text-muted-foreground mt-1">
             {format(parseISO(form.date), 'EEEE, MMMM d')}
@@ -695,11 +697,11 @@ function FormMode({
         />
 
         <div>
-          <Label className="text-xs">Day</Label>
+          <Label>Day</Label>
           <Select value={form.date} onValueChange={(v) => field('date', v)}>
             <SelectTrigger
               className={cn(
-                'mt-1',
+                'mt-1.5 h-11 md:h-9',
                 !dateOk && 'border-destructive focus-visible:ring-destructive'
               )}
             >
@@ -722,7 +724,7 @@ function FormMode({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="sp-start" className="text-xs">
+            <Label htmlFor="sp-start">
               Start
             </Label>
             <Input
@@ -732,7 +734,7 @@ function FormMode({
               onChange={(e) => field('startTime', e.target.value)}
               onBlur={() => touch('startTime')}
               className={cn(
-                'mt-1 font-mono',
+                'mt-1.5 h-11 font-mono md:h-9',
                 showErr('startTime', startFmtOk) &&
                   'border-destructive focus-visible:ring-destructive'
               )}
@@ -744,7 +746,7 @@ function FormMode({
             )}
           </div>
           <div>
-            <Label htmlFor="sp-end" className="text-xs">
+            <Label htmlFor="sp-end">
               End
             </Label>
             <Input
@@ -754,7 +756,7 @@ function FormMode({
               onChange={(e) => field('endTime', e.target.value)}
               onBlur={() => touch('endTime')}
               className={cn(
-                'mt-1 font-mono',
+                'mt-1.5 h-11 font-mono md:h-9',
                 showErr('endTime', endTimeOk) &&
                   'border-destructive focus-visible:ring-destructive'
               )}
@@ -770,12 +772,12 @@ function FormMode({
         </div>
 
         <div className="space-y-1">
-          <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+          <label className="inline-flex min-h-11 cursor-pointer select-none items-center gap-2">
             <Checkbox
               checked={form.endsNextDay}
               onCheckedChange={(v) => field('endsNextDay', v === true)}
             />
-            <span className="text-xs">Ends next day</span>
+            <span className="text-sm">Ends next day</span>
           </label>
           {form.endsNextDay && !endDateOk && (
             <p className="text-xs text-destructive">
@@ -785,7 +787,7 @@ function FormMode({
         </div>
 
         <div>
-          <Label htmlFor="sp-title" className="text-xs">
+          <Label htmlFor="sp-title">
             Title
           </Label>
           <Input
@@ -800,7 +802,7 @@ function FormMode({
                 : 'The Ethics of Community Building'
             }
             className={cn(
-              'mt-1',
+              'mt-1.5 h-11 md:h-9',
               showErr('title', titleOk) &&
                 'border-destructive focus-visible:ring-destructive'
             )}
@@ -813,7 +815,7 @@ function FormMode({
         {!form.isBreak && (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="sp-speaker" className="text-xs">
+              <Label htmlFor="sp-speaker">
                 Speaker
               </Label>
               <Input
@@ -821,11 +823,11 @@ function FormMode({
                 value={form.speaker}
                 onChange={(e) => field('speaker', e.target.value)}
                 placeholder="Dr. Sameer Ansari"
-                className="mt-1"
+                className="mt-1.5 h-11 md:h-9"
               />
             </div>
             <div>
-              <Label htmlFor="sp-room" className="text-xs">
+              <Label htmlFor="sp-room">
                 Room
               </Label>
               <Input
@@ -833,7 +835,7 @@ function FormMode({
                 value={form.room}
                 onChange={(e) => field('room', e.target.value)}
                 placeholder="Ballroom A"
-                className="mt-1"
+                className="mt-1.5 h-11 md:h-9"
               />
               {roomConflict && (
                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
@@ -847,7 +849,7 @@ function FormMode({
 
         {form.isBreak && (
           <div>
-            <Label htmlFor="sp-room-break" className="text-xs">
+            <Label htmlFor="sp-room-break">
               Location{' '}
               <span className="text-muted-foreground font-normal">
                 (optional)
@@ -858,13 +860,13 @@ function FormMode({
               value={form.room}
               onChange={(e) => field('room', e.target.value)}
               placeholder="Mezzanine Foyer"
-              className="mt-1"
+              className="mt-1.5 h-11 md:h-9"
             />
           </div>
         )}
 
         <div>
-          <Label htmlFor="sp-description" className="text-xs">
+          <Label htmlFor="sp-description">
             Description{' '}
             <span className="text-muted-foreground font-normal">
               (optional)
@@ -875,7 +877,7 @@ function FormMode({
             id="sp-description"
             value={form.description}
             onChange={(e) => field('description', e.target.value)}
-            className="mt-1 resize-none overflow-hidden"
+            className="mt-1.5 resize-none overflow-hidden"
             style={{ minHeight: '4rem' }}
           />
         </div>
@@ -883,7 +885,7 @@ function FormMode({
         {!form.isBreak && (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="sp-capacity" className="text-xs">
+              <Label htmlFor="sp-capacity">
                 Capacity{' '}
                 <span className="text-muted-foreground font-normal">
                   (optional)
@@ -898,7 +900,7 @@ function FormMode({
                 onBlur={() => touch('capacity')}
                 placeholder="80"
                 className={cn(
-                  'mt-1 tabular-nums',
+                  'mt-1.5 h-11 tabular-nums md:h-9',
                   showErr('capacity', capacityOk) &&
                     'border-destructive focus-visible:ring-destructive'
                 )}
@@ -910,7 +912,7 @@ function FormMode({
               )}
             </div>
             <div>
-              <Label htmlFor="sp-code" className="text-xs">
+              <Label htmlFor="sp-code">
                 Check-in code{' '}
                 <span className="text-muted-foreground font-normal">
                   (optional)
@@ -923,7 +925,7 @@ function FormMode({
                   field('checkInCode', e.target.value.slice(0, 15))
                 }
                 placeholder="e.g. GATE, 7291"
-                className="mt-1 font-mono tracking-widest"
+                className="mt-1.5 h-11 font-mono tracking-widest md:h-9"
               />
               {form.checkInCode.length > 0 && (
                 <p className="text-xs text-muted-foreground mt-1 text-right tabular-nums">
@@ -935,11 +937,11 @@ function FormMode({
         )}
       </div>
 
-      <footer className="px-6 py-3 border-t bg-muted/30 flex justify-end gap-2">
-        <Button variant="ghost" size="sm" disabled={pending} onClick={handleCancel}>
+      <footer className="flex justify-end gap-2 border-t bg-muted/30 px-6 py-3">
+        <Button variant="ghost" className="h-11 md:h-9" disabled={pending} onClick={handleCancel}>
           Cancel
         </Button>
-        <Button size="sm" onClick={handleSubmit} disabled={pending}>
+        <Button className="h-11 md:h-9" onClick={handleSubmit} disabled={pending}>
           {pending ? 'Saving…' : submitLabel}
         </Button>
       </footer>
@@ -980,11 +982,9 @@ function DeleteMode({
 
   return (
     <div className="flex flex-col h-full">
-      <header className="p-6 pb-4 border-b">
-        <div className="text-xs uppercase tracking-widest text-destructive font-medium mb-2">
-          Confirm delete
-        </div>
-        <h2 className="text-lg font-semibold tracking-tight">
+      <header className="border-b p-6 pb-5">
+        <div className="ym-eyebrow mb-2 text-destructive">Confirm delete</div>
+        <h2 className="ym-h2">
           {session.is_break ? 'Delete this break?' : 'Delete this session?'}
         </h2>
         <p className="text-sm text-muted-foreground mt-2">
@@ -1006,7 +1006,7 @@ function DeleteMode({
         </p>
       </header>
       <div className="px-6 py-4 flex-1">
-        <Label htmlFor="sp-confirm-delete" className="text-xs">
+        <Label htmlFor="sp-confirm-delete">
           Type <span className="font-mono">delete</span> to confirm
         </Label>
         <Input
@@ -1014,14 +1014,14 @@ function DeleteMode({
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           aria-label="Type delete to confirm"
-          className="mt-1 font-mono"
+          className="mt-1.5 h-11 font-mono md:h-9"
           autoFocus
         />
       </div>
-      <footer className="px-6 py-3 border-t bg-muted/30 flex justify-end gap-2">
+      <footer className="flex justify-end gap-2 border-t bg-muted/30 px-6 py-3">
         <Button
           variant="ghost"
-          size="sm"
+          className="h-11 md:h-9"
           disabled={pending}
           onClick={() => onModeChange('view', session)}
         >
@@ -1029,7 +1029,7 @@ function DeleteMode({
         </Button>
         <Button
           variant="destructive"
-          size="sm"
+          className="h-11 md:h-9"
           disabled={!enabled}
           onClick={handleDelete}
         >
@@ -1052,23 +1052,23 @@ function ModeToggle({
   onToggle: () => void
 }) {
   return (
-    <div className="rounded-lg border bg-muted/40 p-3 flex items-center gap-3">
+    <div className="flex items-center gap-3 rounded-2xl border bg-muted/40 p-3">
       <div className="rounded-full bg-muted p-2">
         {isBreak ? (
-          <Coffee className="w-4 h-4 text-muted-foreground" />
+          <Coffee className="size-4 text-muted-foreground" aria-hidden="true" />
         ) : (
-          <Users className="w-4 h-4 text-muted-foreground" />
+          <Users className="size-4 text-muted-foreground" aria-hidden="true" />
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium">{isBreak ? 'Break' : 'Session'}</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm font-semibold">{isBreak ? 'Break' : 'Session'}</p>
+        <p className="text-sm text-muted-foreground">
           {isBreak
             ? 'Information only — no signup or capacity'
             : 'Attendees can sign up and check in'}
         </p>
       </div>
-      <Button variant="ghost" size="sm" onClick={onToggle} type="button">
+      <Button variant="ghost" className="h-11 shrink-0 md:h-9" onClick={onToggle} type="button">
         {isBreak ? 'Make session' : 'Make break'}
       </Button>
     </div>
@@ -1085,11 +1085,11 @@ function Stat({
   hint?: string
 }) {
   return (
-    <div>
-      <div className="text-xs text-muted-foreground uppercase tracking-wider">
+    <div className="rounded-xl bg-secondary px-4 py-3">
+      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
-      <div className="text-lg font-semibold tabular-nums mt-0.5">
+      <div className="mt-0.5 text-2xl font-bold tabular-nums">
         {value}
         {hint && (
           <span className="ml-2 text-xs font-normal text-muted-foreground tabular-nums">
@@ -1110,9 +1110,9 @@ function RosterRow({
 }) {
   const checkedIn = entry.checkedInAt !== null
   return (
-    <li className="flex items-center gap-3 px-6 py-3">
+    <li className="flex min-h-14 items-center gap-3 px-6 py-3">
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">{entry.name}</div>
+        <div className="truncate text-sm font-semibold">{entry.name}</div>
         {checkedIn && entry.checkedInAt && (
           <div className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1">
             <Clock className="w-3 h-3" />
@@ -1122,12 +1122,12 @@ function RosterRow({
         )}
       </div>
       {checkedIn ? (
-        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary shrink-0">
-          <CheckCircle2 className="w-3 h-3" />
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
+          <CheckCircle2 className="size-3" aria-hidden="true" />
           Checked in
         </span>
       ) : (
-        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground shrink-0">
+        <span className="inline-flex shrink-0 items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
           Not checked in
         </span>
       )}
@@ -1153,14 +1153,12 @@ function ErrorState({ message }: { message: string }) {
 
 function EmptyAll() {
   return (
-    <div className="max-w-xs mx-auto py-12 text-center px-6">
-      <div className="mx-auto rounded-full bg-muted/50 p-4 w-fit mb-4">
-        <Users className="w-6 h-6 text-muted-foreground" />
+    <div className="mx-auto max-w-xs px-6 py-12 text-center">
+      <div className="mx-auto mb-4 w-fit rounded-full bg-muted/50 p-4">
+        <Users className="size-6 text-muted-foreground" aria-hidden="true" />
       </div>
-      <h3 className="text-sm font-semibold tracking-tight mb-1">
-        Nobody signed up yet
-      </h3>
-      <p className="text-xs text-muted-foreground leading-relaxed">
+      <h3 className="ym-h3 mb-1">Nobody signed up yet</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">
         Attendees who sign up for this session will show up here.
       </p>
     </div>

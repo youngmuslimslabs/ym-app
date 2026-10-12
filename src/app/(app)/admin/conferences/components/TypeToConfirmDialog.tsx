@@ -65,7 +65,7 @@ export function TypeToConfirmDialog({
         onOpenChange(next)
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md sm:rounded-2xl">
         <DialogHeader>
           <div className="flex items-start gap-3">
             <div
@@ -76,15 +76,16 @@ export function TypeToConfirmDialog({
               }
             >
               <Icon
+                aria-hidden="true"
                 className={
                   tone === 'destructive'
-                    ? 'w-5 h-5 text-destructive'
-                    : 'w-5 h-5 text-primary'
+                    ? 'size-5 text-destructive'
+                    : 'size-5 text-primary'
                 }
               />
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <DialogTitle className="text-base">{title}</DialogTitle>
+              <DialogTitle className="ym-h3 leading-snug">{title}</DialogTitle>
               <DialogDescription className="mt-1">
                 {description}
               </DialogDescription>
@@ -104,18 +105,20 @@ export function TypeToConfirmDialog({
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             disabled={pending}
-            className="mt-1.5"
+            className="mt-1.5 h-11 md:h-9"
           />
         </div>
         <DialogFooter className="gap-2 sm:gap-2">
           <Button
             variant="ghost"
+            className="h-11 md:h-9"
             disabled={pending}
             onClick={() => onOpenChange(false)}
           >
             Cancel
           </Button>
           <Button
+            className="h-11 md:h-9"
             variant={tone === 'destructive' ? 'destructive' : 'default'}
             disabled={!matches || pending}
             onClick={async () => {

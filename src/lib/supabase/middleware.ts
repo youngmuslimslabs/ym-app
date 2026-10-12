@@ -4,6 +4,20 @@ import { getPostHogServer } from '@/lib/posthog/server'
 import { logger } from '@/lib/posthog/logger'
 import { claimUserByEmail } from '@/lib/supabase/claim-user'
 
+/**
+ * Routes reachable without a session. `/design-system` is here because it is
+ * the review surface for the brand work and has to be openable on Netlify
+ * deploy previews, where Google sign-in fails with `origin_mismatch` — each
+ * preview gets a fresh hostname and Google does not accept wildcard JS
+ * origins (#81). It renders design tokens and sample components only: no user
+ * data, no Supabase reads.
+ */
+const PUBLIC_PREFIXES = ['/login', '/auth', '/legal-lol', '/api/legal-lol', '/design-system']
+
+function isPublicPath(pathname: string) {
+    return pathname === '/' || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
+}
+
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
         request,
@@ -67,13 +81,7 @@ export async function updateSession(request: NextRequest) {
             }
 
             // Don't redirect if already on login, auth, or onboarding pages (prevents redirect loop)
-            if (
-                !request.nextUrl.pathname.startsWith('/login') &&
-                !request.nextUrl.pathname.startsWith('/auth') &&
-                !request.nextUrl.pathname.startsWith('/legal-lol') &&
-                !request.nextUrl.pathname.startsWith('/api/legal-lol') &&
-                request.nextUrl.pathname !== '/'
-            ) {
+            if (!isPublicPath(request.nextUrl.pathname)) {
                 // Redirect to login on auth errors
                 const url = request.nextUrl.clone()
                 url.pathname = '/login'
@@ -83,14 +91,7 @@ export async function updateSession(request: NextRequest) {
             // Allow access to login/auth pages even without session
         }
 
-        if (
-            !user &&
-            !request.nextUrl.pathname.startsWith('/login') &&
-            !request.nextUrl.pathname.startsWith('/auth') &&
-            !request.nextUrl.pathname.startsWith('/legal-lol') &&
-            !request.nextUrl.pathname.startsWith('/api/legal-lol') &&
-            request.nextUrl.pathname !== '/'
-        ) {
+        if (!user && !isPublicPath(request.nextUrl.pathname)) {
             // no user, potentially respond by redirecting the user to the login page
             const url = request.nextUrl.clone()
             url.pathname = '/login'
@@ -129,11 +130,7 @@ export async function updateSession(request: NextRequest) {
         // 1. Incomplete users on protected routes → redirect to onboarding
         // 2. Completed users on onboarding → redirect to home
         const isOnboardingRoute = request.nextUrl.pathname.startsWith('/onboarding')
-        const isPublicRoute = request.nextUrl.pathname.startsWith('/login') ||
-            request.nextUrl.pathname.startsWith('/auth') ||
-            request.nextUrl.pathname.startsWith('/legal-lol') ||
-            request.nextUrl.pathname.startsWith('/api/legal-lol') ||
-            request.nextUrl.pathname === '/'
+        const isPublicRoute = isPublicPath(request.nextUrl.pathname)
         const isProtectedRoute = !isPublicRoute && !isOnboardingRoute
 
         if (user && (isProtectedRoute || isOnboardingRoute)) {

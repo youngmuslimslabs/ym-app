@@ -81,6 +81,213 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /**
+   * Young Muslims brand theme (Brandbook pp.30–32) — OPT-IN. Nothing in the
+   * app sets `data-theme="ym"` except /design-system, so every existing screen
+   * keeps the legacy tokens on `:root` above. Rolling the brand out to a
+   * screen is a deliberate, reviewable change (set the attribute on that
+   * screen's subtree), not a side effect of merging this file.
+   *
+   * Semantic values are OKLCH channels (Tailwind wraps them as
+   * `oklch(var(--token) / <alpha-value>)`); the literal hex each one comes
+   * from is noted inline, and exact brand colors live in tailwind.config.ts
+   * under `brand.*`. Sidebar tokens stay HSL channels (the sidebar's existing
+   * format) so the legacy and branded values share one Tailwind mapping.
+   */
+  [data-theme='ym'] {
+    /* Brand body face. Figtree's `--font-figtree` is defined by the layout
+       that loads it, on this same element; elsewhere `font-sans` is Geist. */
+    --font-sans-active: var(--font-figtree);
+    --background: 0.9861 0.0034 67.784;      /* #FCFAF8 Warm Snow */
+    --foreground: 0.2118 0.0275 283.806;     /* #171725 Deep Obsidian */
+    --card: 1 0 0;                           /* #FFFFFF — lifts off Warm Snow */
+    --card-foreground: 0.2118 0.0275 283.806;
+    --popover: 1 0 0;
+    --popover-foreground: 0.2118 0.0275 283.806;
+    --primary: 0.3865 0.1137 263.626;        /* #234080 Royal Blue */
+    --primary-foreground: 0.9861 0.0034 67.784;
+    --secondary: 0.955 0.004 67.784;         /* Warm Snow, stepped down */
+    --secondary-foreground: 0.2118 0.0275 283.806;
+    --muted: 0.955 0.004 67.784;
+    --muted-foreground: 0.51 0.018 283.806;  /* Obsidian hue; 5:1 on every surface, 4.5:1+ even on --muted */
+    --accent: 0.955 0.004 67.784;
+    --accent-foreground: 0.2118 0.0275 283.806;
+    --destructive: 0.577 0.245 27.325;       /* no brand error color — kept */
+    --destructive-foreground: 0.9861 0.0034 67.784;
+    --success: 0.5089 0.0839 155.775;        /* #397451 Jade Foliage */
+    --success-foreground: 0.9861 0.0034 67.784;
+    /* Warm Brass hue, darkened for legibility: the Brandbook (p.32) says Brass
+       is "for fills and large elements, never small type on white", and this
+       token is used as small badge text (text-warning on bg-warning/15), which
+       needs 4.5:1. True #D8AA45 is `brand-brass`. */
+    --warning: 0.50 0.128 83.979;
+    --warning-foreground: 0.9861 0.0034 67.784;
+    --border: 0.91 0.004 67.784;
+    --input: 0.91 0.004 67.784;
+    --ring: 0.3865 0.1137 263.626;
+    --chart-1: 0.3865 0.1137 263.626;        /* Royal Blue */
+    --chart-2: 0.5089 0.0839 155.775;        /* Jade Foliage */
+    --chart-3: 0.641 0.1309 251.419;         /* Sky Blue */
+    --chart-4: 0.7617 0.1283 83.979;         /* Warm Brass */
+    --chart-5: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
+    /* Sidebar — the branded dark surface, anchored on Deep Obsidian. HSL
+       channels, converted from the brand hex (#171725 etc.). */
+    --sidebar-background: 240 23.3% 11.8%;   /* #171725 Deep Obsidian */
+    --sidebar-foreground: 30 40% 98%;        /* #FCFAF8 Warm Snow */
+    --sidebar-primary: 220.8 45.4% 45.1%;    /* Royal Blue, lifted */
+    --sidebar-primary-foreground: 30 40% 98%;
+    --sidebar-accent: 239.3 17.4% 17.3%;     /* hover — Obsidian +1 step */
+    --sidebar-accent-foreground: 30 40% 98%;
+    --sidebar-border: 239.2 16.2% 20.4%;
+    --sidebar-ring: 210.6 65.3% 57.1%;       /* #4A90D9 Sky Blue */
+  }
+
+  /**
+   * Brothers theme (Brandbook p.31). Midnight Blue anchors as the darkest
+   * base, Royal Blue is the signature, Sky Blue the bright accent, Cool Slate
+   * the soft neutral. Per the book, Midnight and Royal carry text; Sky and
+   * Slate are fills only.
+   *
+   * Applied via a `data-side` attribute on any subtree (which is how
+   * /design-system previews all three). Each side block is a complete token
+   * set, so it does not need `data-theme="ym"` as well. Nothing sets it on a
+   * real screen yet — `users` has no side column on this branch.
+   */
+  [data-side='brothers'] {
+    --background: 0.985 0.005 255.956;       /* whisper of Cool Slate */
+    --foreground: 0.2875 0.074 262.653;      /* #16294F Midnight Blue */
+    --card: 1 0 0;                           /* #FFFFFF Pure White */
+    --card-foreground: 0.2875 0.074 262.653;
+    --popover: 1 0 0;
+    --popover-foreground: 0.2875 0.074 262.653;
+    --primary: 0.3865 0.1137 263.626;        /* #234080 Royal Blue */
+    --primary-foreground: 1 0 0;
+    --secondary: 0.955 0.012 255.956;        /* Cool Slate tint */
+    --secondary-foreground: 0.2875 0.074 262.653;
+    --muted: 0.955 0.012 255.956;
+    --muted-foreground: 0.51 0.04 262.653;
+    --accent: 0.955 0.012 255.956;
+    --accent-foreground: 0.2875 0.074 262.653;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 1 0 0;
+    --success: 0.5089 0.0839 155.775;        /* Jade — shared General color */
+    --success-foreground: 1 0 0;
+    --warning: 0.50 0.128 83.979;
+    --warning-foreground: 1 0 0;
+    --border: 0.90 0.018 255.956;            /* Cool Slate, light */
+    --input: 0.90 0.018 255.956;
+    --ring: 0.3865 0.1137 263.626;
+    --chart-1: 0.2875 0.074 262.653;         /* Midnight Blue */
+    --chart-2: 0.3865 0.1137 263.626;        /* Royal Blue */
+    --chart-3: 0.641 0.1309 251.419;         /* Sky Blue */
+    --chart-4: 0.7413 0.0451 255.956;        /* Cool Slate */
+    --chart-5: 0.5089 0.0839 155.775;        /* Jade Foliage */
+    --sidebar-background: 220 56.4% 19.8%;   /* Midnight Blue */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 210.6 65.3% 57.1%;     /* Sky Blue */
+    --sidebar-primary-foreground: 220.7 68.1% 7.6%;  /* deeper than Midnight: 5.7:1 on Sky (Midnight is 4.3:1) */
+    --sidebar-accent: 219.8 46.7% 26.4%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 219.7 43.5% 29.7%;
+    --sidebar-ring: 210.6 65.3% 57.1%;
+  }
+
+  /**
+   * Sisters theme (Brandbook p.32). Deep Forest Green anchors as the darkest
+   * base, Jade Foliage is the signature, Buttercup the bright accent, Warm
+   * Brass adds richness. Per the book, Forest and Jade carry text; Buttercup
+   * and Brass are for fills and large elements only.
+   */
+  [data-side='sisters'] {
+    --background: 0.985 0.004 164.37;        /* whisper of Forest */
+    --foreground: 0.2824 0.0565 164.37;      /* #043222 Deep Forest Green */
+    --card: 1 0 0;                           /* #FFFFFF Pure White */
+    --card-foreground: 0.2824 0.0565 164.37;
+    --popover: 1 0 0;
+    --popover-foreground: 0.2824 0.0565 164.37;
+    --primary: 0.5089 0.0839 155.775;        /* #397451 Jade Foliage */
+    --primary-foreground: 1 0 0;
+    --secondary: 0.955 0.010 164.37;
+    --secondary-foreground: 0.2824 0.0565 164.37;
+    --muted: 0.955 0.010 164.37;
+    --muted-foreground: 0.51 0.03 164.37;
+    --accent: 0.955 0.010 164.37;
+    --accent-foreground: 0.2824 0.0565 164.37;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 1 0 0;
+    /* Forest rather than Jade here: Jade is this theme's `primary`, and a
+       success badge that matches every button is unreadable as a signal. */
+    --success: 0.2824 0.0565 164.37;         /* Deep Forest Green */
+    --success-foreground: 1 0 0;
+    --warning: 0.50 0.128 83.979;            /* Brass hue, darkened for type */
+    --warning-foreground: 1 0 0;
+    --border: 0.90 0.015 164.37;
+    --input: 0.90 0.015 164.37;
+    --ring: 0.5089 0.0839 155.775;
+    --chart-1: 0.2824 0.0565 164.37;         /* Deep Forest Green */
+    --chart-2: 0.5089 0.0839 155.775;        /* Jade Foliage */
+    --chart-3: 0.7617 0.1283 83.979;         /* Warm Brass */
+    --chart-4: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
+    --chart-5: 0.641 0.1309 251.419;         /* Sky Blue */
+    --sidebar-background: 159.1 85.3% 10.6%;  /* Deep Forest Green */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 144.4 34.1% 33.9%;    /* Jade Foliage */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 156.7 51.8% 16.9%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 156.1 45.3% 19.9%;
+    --sidebar-ring: 50 78.9% 62.7%;        /* Buttercup Yellow */
+  }
+
+  /* Dark mode is not yet reachable — nothing adds `.dark` to <html> (see the
+     "Wire up dark mode toggle" item in docs/project-todos.md). Tokens are kept
+     brand-correct here so the toggle is a one-line change when it lands.
+     Foundation is Deep Obsidian; blues are lightened for contrast on dark. */
+  .dark[data-theme='ym'] {
+    --background: 0.2118 0.0275 283.806;     /* #171725 Deep Obsidian */
+    --foreground: 0.9861 0.0034 67.784;      /* #FCFAF8 Warm Snow */
+    --card: 0.26 0.026 283.806;              /* Obsidian, stepped up */
+    --card-foreground: 0.9861 0.0034 67.784;
+    --popover: 0.26 0.026 283.806;
+    --popover-foreground: 0.9861 0.0034 67.784;
+    --primary: 0.65 0.1137 263.626;          /* Royal Blue, lightened */
+    --primary-foreground: 0.2118 0.0275 283.806;
+    --secondary: 0.30 0.02 283.806;
+    --secondary-foreground: 0.9861 0.0034 67.784;
+    --muted: 0.30 0.02 283.806;
+    --muted-foreground: 0.72 0.015 283.806;
+    --accent: 0.30 0.02 283.806;
+    --accent-foreground: 0.9861 0.0034 67.784;
+    --destructive: 0.705 0.205 29.234;
+    --destructive-foreground: 0.9861 0.0034 67.784;
+    --success: 0.68 0.0839 155.775;          /* Jade, lightened */
+    --success-foreground: 0.2118 0.0275 283.806;
+    --warning: 0.7617 0.1283 83.979;         /* #D8AA45 Warm Brass */
+    --warning-foreground: 0.2118 0.0275 283.806;
+    --border: 0.30 0.02 283.806;
+    --input: 0.30 0.02 283.806;
+    --ring: 0.65 0.1137 263.626;
+    --chart-1: 0.641 0.1309 251.419;         /* Sky Blue */
+    --chart-2: 0.68 0.0839 155.775;          /* Jade, lightened */
+    --chart-3: 0.7413 0.0451 255.956;        /* Cool Slate */
+    --chart-4: 0.7617 0.1283 83.979;         /* Warm Brass */
+    --chart-5: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
+    --sidebar-background: 240.3 29.3% 7.7%;    /* below page bg for depth */
+    --sidebar-foreground: 30 40% 98%;
+    --sidebar-primary: 220.2 55.5% 62.7%;
+    --sidebar-primary-foreground: 240 23.3% 11.8%;
+    --sidebar-accent: 239.4 18.9% 14.3%;
+    --sidebar-accent-foreground: 30 40% 98%;
+    --sidebar-border: 239.2 16.6% 18.3%;
+    --sidebar-ring: 210.6 65.3% 57.1%;
+  }
+
+  /* Side themes are light-mode only for now. When the dark-mode toggle lands
+     (docs/project-todos.md, "Wire up dark mode toggle"), add
+     `.dark [data-side='brothers']` / `[data-side='sisters']` blocks here —
+     until then a side theme under `.dark` falls back to General dark, which
+     is unreachable today. */
 }
 
 @layer base {

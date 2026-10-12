@@ -7,6 +7,7 @@ import { MoreHorizontal, Search, Trash2, UserPlus, Users, X } from 'lucide-react
 import type { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
@@ -175,25 +176,21 @@ export function AttendeePicker({
     <TooltipProvider>
       <div className="flex flex-col gap-4 pb-24">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div
-            role="tablist"
-            aria-label="Attendee views"
-            className="inline-flex rounded-lg border bg-muted/40 p-1"
-          >
-            <ModeButton
-              active={!adding}
-              onClick={() => switchMode('attendees')}
-              icon={<Users className="w-4 h-4" />}
-              label="Attendees"
-              count={attendees.length}
-            />
-            <ModeButton
-              active={adding}
-              onClick={() => switchMode('add')}
-              icon={<UserPlus className="w-4 h-4" />}
-              label="Add people"
-            />
-          </div>
+          <Tabs value={mode} onValueChange={(next) => switchMode(next as 'attendees' | 'add')}>
+            <TabsList aria-label="Attendee views" className="h-auto">
+              <TabsTrigger value="attendees" className="gap-1.5 py-1.5">
+                <Users className="w-4 h-4" />
+                Attendees
+                <span className="text-muted-foreground tabular-nums">
+                  {attendees.length.toLocaleString()}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="add" className="gap-1.5 py-1.5">
+                <UserPlus className="w-4 h-4" />
+                Add people
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
           {adding && (
             <p className="text-sm text-muted-foreground">
               Members not attending yet. Select people, then add them.
@@ -390,40 +387,6 @@ function PersonNameCell({ person }: { person: PersonListItem }) {
         </div>
       </div>
     </div>
-  )
-}
-
-function ModeButton({
-  active,
-  onClick,
-  icon,
-  label,
-  count,
-}: {
-  active: boolean
-  onClick: () => void
-  icon: React.ReactNode
-  label: string
-  count?: number
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-        active
-          ? 'bg-background text-foreground shadow-sm'
-          : 'text-muted-foreground hover:text-foreground'
-      }`}
-    >
-      {icon}
-      {label}
-      {count !== undefined && (
-        <span className="text-muted-foreground tabular-nums">{count.toLocaleString()}</span>
-      )}
-    </button>
   )
 }
 

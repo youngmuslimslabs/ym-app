@@ -29,7 +29,7 @@ export function CopyEmailsButton({ people }: CopyEmailsButtonProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-9 w-9 rounded-lg"
           onClick={handleCopy}
         >
           {copied ? (

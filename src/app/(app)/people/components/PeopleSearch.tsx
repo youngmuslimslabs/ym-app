@@ -43,21 +43,21 @@ export function PeopleSearch({
 
   return (
     <div className="relative w-full sm:w-80">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
       <Input
         type="text"
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="pl-9 pr-9 h-10 bg-background"
+        className="h-11 rounded-xl bg-card pl-10 pr-11"
       />
       <Button
         variant="ghost"
         size="icon"
         onClick={() => handleChange('')}
         className={cn(
-          'absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7',
+          'absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg',
           'text-muted-foreground hover:text-foreground',
           'transition-opacity duration-200',
           value ? 'opacity-100' : 'opacity-0 pointer-events-none'

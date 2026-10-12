@@ -6,6 +6,7 @@ import { usePostHog } from 'posthog-js/react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { replaceSearchParams } from '@/lib/replace-search-params'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   PeopleSearch,
   PeopleFilters,
@@ -76,45 +77,48 @@ export function PeoplePageClient({ initialPeople, filterCategories }: PeoplePage
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col min-h-[calc(100vh-3.5rem)] md:min-h-screen">
-        {/* Header */}
-        <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="px-4 md:px-6 py-4">
-            {/* Single row: Search + Filters + Controls */}
-            <div className="flex items-center gap-4">
-              <PeopleSearch
-                value={filters.search}
-                onChange={setSearch}
-                placeholder="Search"
+      <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-7xl flex-col px-4 pb-16 pt-6 sm:px-6 md:min-h-screen md:pt-10">
+        <PageHeader
+          title="People"
+          description="Find your people across YM."
+        />
+
+        {/* Toolbar: sticks under the page title while the directory scrolls */}
+        <div className="sticky top-0 z-30 -mx-4 mt-6 bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+          {/* Single row: Search + Filters + Controls */}
+          <div className="flex items-center gap-4">
+            <PeopleSearch
+              value={filters.search}
+              onChange={setSearch}
+              placeholder="Search"
+            />
+
+            {/* Filters - desktop only */}
+            {!isMobile && (
+              <PeopleFilters
+                filters={filters}
+                filterCategories={filterCategories}
+                onFilterChange={setFilterValues}
+                onClearCategory={clearCategory}
+                onClearAll={clearAllFilters}
               />
+            )}
 
-              {/* Filters - desktop only */}
-              {!isMobile && (
-                <PeopleFilters
-                  filters={filters}
-                  filterCategories={filterCategories}
-                  onFilterChange={setFilterValues}
-                  onClearCategory={clearCategory}
-                  onClearAll={clearAllFilters}
-                />
-              )}
+            {/* Spacer to push controls right */}
+            <div className="hidden flex-1 md:block" />
 
-              {/* Spacer to push controls right */}
-              <div className="flex-1" />
-
-              {/* View toggle + Copy emails - desktop only */}
-              {!isMobile && (
-                <div className="flex items-center gap-1">
-                  <ViewToggle view={viewMode} onChange={handleViewChange} />
-                  <CopyEmailsButton people={filteredPeople} />
-                </div>
-              )}
-            </div>
+            {/* View toggle + Copy emails - desktop only */}
+            {!isMobile && (
+              <div className="flex items-center gap-1">
+                <ViewToggle view={viewMode} onChange={handleViewChange} />
+                <CopyEmailsButton people={filteredPeople} />
+              </div>
+            )}
           </div>
-        </header>
+        </div>
 
         {/* Main content */}
-        <main className="flex-1 px-4 md:px-6 py-6">
+        <div className="flex-1 pt-4">
           {/* Cards view (default, always on mobile) */}
           {(viewMode === 'cards' || isMobile) && (
             <>
@@ -125,9 +129,9 @@ export function PeoplePageClient({ initialPeople, filterCategories }: PeoplePage
 
           {/* Table view (desktop only) */}
           {viewMode === 'table' && !isMobile && (
-            <PeopleTable people={filteredPeople} />
+            <PeopleTable people={filteredPeople} appearance="brand" />
           )}
-        </main>
+        </div>
       </div>
     </TooltipProvider>
   )

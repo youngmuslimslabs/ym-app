@@ -12,11 +12,11 @@ export function LoadMoreButton({ hasMore, onLoadMore }: LoadMoreButtonProps) {
   if (!hasMore) return null
 
   return (
-    <div className="flex justify-center pt-6">
+    <div className="flex justify-center pt-8">
       <Button
         variant="outline"
         onClick={onLoadMore}
-        className="gap-2 transition-all duration-200 hover:shadow-sm"
+        className="h-11 gap-2 rounded-xl bg-card px-6 transition-all duration-200 hover:shadow-sm"
       >
         Load more
         <ChevronDown className="h-4 w-4" />

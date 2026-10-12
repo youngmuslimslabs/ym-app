@@ -97,14 +97,14 @@ export function ConferenceCreateDialog() {
       }}
     >
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="w-4 h-4" />
+        <Button className="h-11 md:h-9">
+          <Plus className="size-4" aria-hidden="true" />
           New conference
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[520px] sm:rounded-2xl">
         <DialogHeader>
-          <DialogTitle>New conference</DialogTitle>
+          <DialogTitle className="ym-h2">New conference</DialogTitle>
           <DialogDescription>
             Just the essentials to get started. You can edit everything else
             after.
@@ -119,7 +119,7 @@ export function ConferenceCreateDialog() {
               placeholder="National Convention 2027"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1.5"
+              className="mt-1.5 h-11 md:h-9"
             />
           </div>
           <div>
@@ -132,7 +132,7 @@ export function ConferenceCreateDialog() {
               placeholder="Building together, believing together"
               value={tagline}
               onChange={(e) => setTagline(e.target.value)}
-              className="mt-1.5"
+              className="mt-1.5 h-11 md:h-9"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -143,7 +143,7 @@ export function ConferenceCreateDialog() {
                 value={startDate}
                 onChange={setStartDate}
                 placeholder="Select date"
-                className="mt-1.5"
+                className="mt-1.5 h-11 md:h-9"
               />
             </div>
             <div>
@@ -154,14 +154,14 @@ export function ConferenceCreateDialog() {
                 onChange={setEndDate}
                 placeholder="Select date"
                 fromDate={startDate}
-                className="mt-1.5"
+                className="mt-1.5 h-11 md:h-9"
               />
             </div>
           </div>
           <div>
             <Label>Timezone</Label>
             <Select value={timezone} onValueChange={setTimezone}>
-              <SelectTrigger className="mt-1.5">
+              <SelectTrigger className="mt-1.5 h-11 md:h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -183,7 +183,7 @@ export function ConferenceCreateDialog() {
               placeholder="Chicago Hilton"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="mt-1.5"
+              className="mt-1.5 h-11 md:h-9"
             />
           </div>
           <div>
@@ -204,12 +204,13 @@ export function ConferenceCreateDialog() {
         <DialogFooter className="gap-2 sm:gap-2">
           <Button
             variant="ghost"
+            className="h-11 md:h-9"
             disabled={pending}
             onClick={() => setOpen(false)}
           >
             Cancel
           </Button>
-          <Button disabled={!canCreate || pending} onClick={handleCreate}>
+          <Button className="h-11 md:h-9" disabled={!canCreate || pending} onClick={handleCreate}>
             {pending ? 'Creating…' : 'Create conference'}
           </Button>
         </DialogFooter>

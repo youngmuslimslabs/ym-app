@@ -77,7 +77,7 @@ export function SessionCommentsSheet({ session, timezone, onClose }: Props) {
         className={cn(
           'flex flex-col p-0 gap-0',
           isMobile
-            ? 'h-auto max-h-[90vh] rounded-t-xl'
+            ? 'h-auto max-h-[90vh] rounded-t-2xl'
             : 'w-full sm:max-w-lg'
         )}
       >
@@ -92,10 +92,8 @@ export function SessionCommentsSheet({ session, timezone, onClose }: Props) {
         )}
 
         <SheetHeader className="p-6 border-b text-left space-y-2">
-          <div className="text-xs uppercase tracking-widest text-primary font-medium">
-            Feedback
-          </div>
-          <SheetTitle className="text-xl font-semibold tracking-tight pr-8">
+          <div className="ym-eyebrow text-primary">Feedback</div>
+          <SheetTitle className="ym-h2 pr-8">
             {session.title}
           </SheetTitle>
           <p className="text-sm text-muted-foreground">
@@ -126,11 +124,11 @@ export function SessionCommentsSheet({ session, timezone, onClose }: Props) {
 
 function CommentRowView({ comment }: { comment: CommentRow }) {
   return (
-    <li className="px-6 py-4 space-y-2">
+    <li className="space-y-2 px-6 py-4">
       <div className="flex items-center gap-3">
         <RatingStars rating={comment.rating} />
         <span className="text-xs text-muted-foreground">·</span>
-        <div className="text-sm font-medium truncate flex-1 min-w-0">
+        <div className="min-w-0 flex-1 truncate text-sm font-semibold">
           {comment.authorName}
         </div>
         <div className="text-xs text-muted-foreground tabular-nums shrink-0">
@@ -189,14 +187,12 @@ function ErrorState({ message }: { message: string }) {
 
 function EmptyState() {
   return (
-    <div className="max-w-xs mx-auto py-12 text-center px-6">
-      <div className="mx-auto rounded-full bg-muted/50 p-4 w-fit mb-4">
-        <MessageSquare className="w-6 h-6 text-muted-foreground" />
+    <div className="mx-auto max-w-xs px-6 py-12 text-center">
+      <div className="mx-auto mb-4 w-fit rounded-full bg-muted/50 p-4">
+        <MessageSquare className="size-6 text-muted-foreground" aria-hidden="true" />
       </div>
-      <h3 className="text-sm font-semibold tracking-tight mb-1">
-        No responses yet
-      </h3>
-      <p className="text-xs text-muted-foreground leading-relaxed">
+      <h3 className="ym-h3 mb-1">No responses yet</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">
         Once attendees rate this session, their feedback shows up here.
       </p>
     </div>

@@ -274,7 +274,7 @@ function CardList({
   onRemoveInvite,
 }: CardListProps) {
   return (
-    <ul className="rounded-xl border overflow-hidden divide-y">
+    <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
       {people.map((person) => {
         const isInvited = invitedSet.has(person.id)
         const isSelected = selected.has(person.id)
@@ -338,7 +338,7 @@ function PersonNameCell({ person }: { person: PersonListItem }) {
 
 function InvitedBadge() {
   return (
-    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
       Invited
     </span>
   )
@@ -354,7 +354,7 @@ function RowActionsMenu({ onRemove }: { onRemove: () => void }) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground"
+          className="size-11 text-muted-foreground md:size-7"
           onClick={(e) => e.stopPropagation()}
           aria-label="Open row actions"
         >
@@ -421,11 +421,11 @@ function ActionBar({
 
 function EmptyState() {
   return (
-    <div className="rounded-xl border bg-card p-10 text-center">
+    <div className="rounded-2xl border bg-card p-6 py-10 text-center">
       <div className="mx-auto rounded-full bg-muted/50 p-4 w-fit mb-4">
         <Search className="w-6 h-6 text-muted-foreground" />
       </div>
-      <h3 className="text-base font-semibold tracking-tight mb-1.5">
+      <h3 className="ym-h3 mb-1.5">
         No matching people
       </h3>
       <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">

@@ -94,6 +94,14 @@ export function SessionCard({
             Happening now
           </span>
         )}
+        {/* Explicit finished state (#68). Skipped while check-in is still open
+            in the grace tail, where "Check in now" is the message that matters. */}
+        {ended && !pendingCheckIn && (
+          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+            <Check className="w-3 h-3" />
+            Ended
+          </span>
+        )}
       </div>
 
       {/* Title + speaker: pr-24 clears the absolute badge in the top-right */}

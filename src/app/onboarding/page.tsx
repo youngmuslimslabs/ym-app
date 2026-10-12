@@ -4,21 +4,21 @@
 // onboarding_completed_at = null here. Reference data (subregions / NeighborNets
 // / roles) comes from Supabase via OnboardingReferenceProvider (authenticated →
 // real data). On completion, completePart1Onboarding persists everything and
-// sets onboarding_completed_at, then routes into the app.
+// sets onboarding_completed_at, then loads the app.
 
-import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { OnboardingFlow } from '@/components/onboarding-flow/OnboardingFlow'
 import { completePart1Onboarding } from '@/lib/supabase/onboarding'
+import { toUserMessage } from '@/lib/errors/userMessage'
 import {
   OnboardingReferenceProvider,
   useOnboardingReference,
 } from '@/contexts/OnboardingReferenceContext'
 
 function OnboardingContent() {
-  const router = useRouter()
   const { subregions, neighborNets, roleTypes, isLoading, error } = useOnboardingReference()
 
   // The authenticated flow MUST render with real DB options, whose values are
@@ -49,19 +49,36 @@ function OnboardingContent() {
   return (
     <OnboardingFlow
       onComplete={async (answers) => {
-        const result = await completePart1Onboarding({
-          phone: answers.phone as string | undefined,
-          email: answers.email as string | undefined,
-          ethnicity: answers.ethnicity as string | undefined,
-          dob: answers.dob as Date | undefined,
-          neighbornet: answers.neighbornet as string | undefined,
-          role: answers.role as string | undefined,
-        })
-        if (!result.success) {
-          toast.error(result.error ?? 'Could not save your info. Please try again.')
-          return
+        let result: { success: boolean; error?: string }
+        try {
+          result = await completePart1Onboarding({
+            phone: answers.phone as string | undefined,
+            email: answers.email as string | undefined,
+            ethnicity: answers.ethnicity as string | undefined,
+            dob: answers.dob as Date | undefined,
+            neighbornet: answers.neighbornet as string | undefined,
+            role: answers.role as string | undefined,
+          })
+        } catch (err) {
+          console.error('Onboarding completion threw:', err)
+          result = { success: false, error: toUserMessage(err, { action: 'save your info' }) }
         }
-        router.push('/home')
+        if (!result.success) {
+          try {
+            posthog.capture('onboarding_error', {
+              error_type: 'completion_failed',
+              error_message: result.error,
+            })
+          } catch { /* observability must not affect error handling */ }
+          toast.error(result.error ?? 'Could not save your info. Please try again.')
+          return false
+        }
+        // A full page load rather than router.push: middleware re-reads the
+        // now-set onboarding flag on a fresh request, there is no client
+        // navigation for a re-tap to supersede, and replace() keeps the
+        // finished form out of history (#61).
+        window.location.replace('/home')
+        return true
       }}
       subregions={subregions.map((s) => ({ value: s.id, label: s.name }))}
       neighborNetsFor={(subregionId: string) =>

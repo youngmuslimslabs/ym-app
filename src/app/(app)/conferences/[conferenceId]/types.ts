@@ -71,6 +71,9 @@ export interface CheckInResult {
   error?: string
   // True when the row already existed (idempotent re-check-in).
   alreadyCheckedIn?: boolean
+  // Set with error 'Too many attempts': seconds until this session's check-in
+  // unlocks for the member (#73).
+  retryAfterSeconds?: number
 }
 
 export interface FeedbackResult {

@@ -41,6 +41,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useIsClamped } from '@/hooks/use-is-clamped'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import { CHECK_IN_CODE_MAX_LENGTH, formatCheckInCode } from '@/lib/check-in-code'
 import { createSession, deleteSession, updateSession } from '../../client-actions'
 import {
   composeSessionIsos,
@@ -920,14 +921,17 @@ function FormMode({
                 id="sp-code"
                 value={form.checkInCode}
                 onChange={(e) =>
-                  field('checkInCode', e.target.value.slice(0, 15))
+                  field('checkInCode', formatCheckInCode(e.target.value))
                 }
                 placeholder="e.g. GATE, 7291"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
                 className="mt-1 font-mono tracking-widest"
               />
               {form.checkInCode.length > 0 && (
                 <p className="text-xs text-muted-foreground mt-1 text-right tabular-nums">
-                  {form.checkInCode.length}/15
+                  {form.checkInCode.length}/{CHECK_IN_CODE_MAX_LENGTH}
                 </p>
               )}
             </div>

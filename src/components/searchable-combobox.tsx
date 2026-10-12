@@ -29,6 +29,9 @@ import {
 export interface ComboboxOption {
   value: string
   label: string
+  // Secondary text shown muted beside the label and matched by search, e.g.
+  // where a member is from when several share a name.
+  description?: string
 }
 
 export interface ComboboxValue {
@@ -71,9 +74,14 @@ export function SearchableCombobox({
   const filteredOptions = React.useMemo(() => {
     if (!search) return options.slice(0, maxDisplayed)
 
-    const searchLower = search.toLowerCase()
+    // Every typed word must appear somewhere in the label or description, so
+    // "zaid houston" finds the Zaid Khan from Houston.
+    const terms = search.toLowerCase().split(/\s+/).filter(Boolean)
     return options
-      .filter((option) => option.label.toLowerCase().includes(searchLower))
+      .filter((option) => {
+        const haystack = `${option.label} ${option.description ?? ""}`.toLowerCase()
+        return terms.every((term) => haystack.includes(term))
+      })
       .slice(0, maxDisplayed)
   }, [options, search, maxDisplayed])
 
@@ -89,7 +97,9 @@ export function SearchableCombobox({
   const displayValue = React.useMemo(() => {
     if (!value) return null
     if (value.type === "custom") return value.value
-    return value.label || options.find((o) => o.value === value.value)?.label
+    const option = options.find((o) => o.value === value.value)
+    const label = value.label || option?.label
+    return label && option?.description ? `${label} · ${option.description}` : label
   }, [value, options])
 
   const handleSelect = (selectedValue: string) => {
@@ -172,7 +182,12 @@ export function SearchableCombobox({
                     : "opacity-0"
                 )}
               />
-              {option.label}
+              <span className="truncate">{option.label}</span>
+              {option.description && (
+                <span className="ml-auto truncate pl-3 text-xs text-muted-foreground">
+                  {option.description}
+                </span>
+              )}
             </CommandItem>
           ))}
           {allowCustom && search && !exactMatch && filteredOptions.length > 0 && (

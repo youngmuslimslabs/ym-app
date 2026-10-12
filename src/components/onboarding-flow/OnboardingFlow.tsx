@@ -1,12 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { ChevronLeft, Check, MapPin, BadgeCheck } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { formatPhoneNumber, isValidPhone, isValidEmail } from '@/lib/validation'
 import { NATIONALITY_OPTIONS } from '@/lib/constants/nationalities'
 
+import { EnterAppButton } from './EnterAppButton'
 import { useOnboardingFlow } from './useOnboardingFlow'
 import { TextStep, SelectStep, ComboboxStep, DateStep, type SelectOption } from './steps'
 
@@ -50,7 +49,9 @@ const DOB_FROM_YEAR = 1940
 const DOB_TO_YEAR = new Date().getFullYear() - 10
 
 interface OnboardingFlowProps {
-  onComplete?: (answers: Record<string, unknown>) => void
+  // Resolve true once the app is leaving onboarding; the CTA then stays pending
+  // until the page unloads. Anything else re-enables it for another try.
+  onComplete?: (answers: Record<string, unknown>) => Promise<boolean | void> | boolean | void
   // Real reference data (injected by the authenticated page). When omitted, the
   // hardcoded preview lists are used so the anonymous preview + tests still work.
   subregions?: SelectOption[]
@@ -65,7 +66,6 @@ export function OnboardingFlow({
   roles = ROLES,
 }: OnboardingFlowProps) {
   const flow = useOnboardingFlow(STEPS)
-  const [submitting, setSubmitting] = useState(false)
   const val = (id: string) => (flow.answers[id] as string) ?? ''
   const set = (id: string, v: string) => flow.setAnswer(id, v)
   const choose = (id: string, v: string) => {
@@ -221,24 +221,7 @@ export function OnboardingFlow({
             </dl>
           )}
 
-          <Button
-            size="lg"
-            className="w-full"
-            disabled={submitting}
-            onClick={async () => {
-              // Guard against a double-tap: onComplete writes the profile and
-              // stamps the (immutable-once-set) onboarding flag, so a second
-              // in-flight call would error on an otherwise-successful signup.
-              setSubmitting(true)
-              try {
-                await onComplete?.(flow.answers)
-              } finally {
-                setSubmitting(false)
-              }
-            }}
-          >
-            {submitting ? 'Entering…' : 'Enter the app'}
-          </Button>
+          <EnterAppButton onEnter={() => onComplete?.(flow.answers)} />
         </div>
       )
       break

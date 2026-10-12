@@ -139,3 +139,20 @@ describe('SessionCard chrome (bright while an action is wanted)', () => {
     expect(card()).toHaveAccessibleName('Opening Keynote — full')
   })
 })
+
+describe('SessionCard ended state (#68)', () => {
+  it('says "Ended" once the session and its check-in window are over', () => {
+    renderCard({ now: new Date('2025-06-27T16:30:00Z') })
+    expect(screen.getByText('Ended')).toBeInTheDocument()
+  })
+
+  it('does not say "Ended" while check-in is still open in the grace tail', () => {
+    renderCard({ now: new Date('2025-06-27T15:07:00Z') })
+    expect(screen.queryByText('Ended')).not.toBeInTheDocument()
+  })
+
+  it('does not say "Ended" for a session that is on now', () => {
+    renderCard({ now: new Date('2025-06-27T14:30:00Z') })
+    expect(screen.queryByText('Ended')).not.toBeInTheDocument()
+  })
+})

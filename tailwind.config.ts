@@ -11,8 +11,33 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
+        // `--font-sans-active` is only set inside the opt-in `data-theme='ym'`
+        // scope (Figtree, loaded by the /design-system layout); everywhere else
+        // it is undefined and `sans` stays Geist, exactly as before.
+        sans: ['var(--font-sans-active, var(--font-geist-sans))', 'system-ui', 'sans-serif'],
+        // Boldonse is for headlines only (Brandbook p.34). Also scope-provided.
+        display: ['var(--font-boldonse)', 'var(--font-sans-active, var(--font-geist-sans))', 'sans-serif'],
         mono: ['var(--font-geist-mono)', 'monospace'],
+      },
+      letterSpacing: {
+        // Brandbook p.34 specifies -2% tracking on both faces.
+        brand: '-0.02em',
+      },
+      /**
+       * Type scale (Brandbook p.35). Use it through the `.ym-*` classes in
+       * globals.css, which also set the face, weight and case; a size on its
+       * own is only half of a level.
+       *
+       * Boldonse's caps are taller than its em (64px set is about 75px of cap),
+       * so its levels need a line-height near 1.3 just to keep lines from
+       * touching, and are sized smaller than a Figtree scale would be.
+       */
+      fontSize: {
+        display: ['clamp(2.25rem, 1.4rem + 3vw, 3.75rem)', { lineHeight: '1.3' }],
+        h1: ['clamp(1.5rem, 1.25rem + 1.1vw, 2rem)', { lineHeight: '1.32' }],
+        h2: ['1.375rem', { lineHeight: '1.3' }],
+        h3: ['1.0625rem', { lineHeight: '1.4' }],
+        eyebrow: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.08em' }],
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -58,6 +83,10 @@ const config = {
           DEFAULT: 'oklch(var(--warning) / <alpha-value>)',
           foreground: 'oklch(var(--warning-foreground) / <alpha-value>)',
         },
+        highlight: {
+          DEFAULT: 'oklch(var(--highlight) / <alpha-value>)',
+          foreground: 'oklch(var(--highlight-foreground) / <alpha-value>)',
+        },
 
         border: 'oklch(var(--border) / <alpha-value>)',
         input: 'oklch(var(--input) / <alpha-value>)',
@@ -78,6 +107,29 @@ const config = {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
+        },
+
+        /**
+         * Literal brand palette (Brandbook pp.30–32). Fixed values, NOT themed —
+         * these are the exact brand colors and must not shift between light and
+         * dark. For UI, prefer the semantic tokens above (primary, background,
+         * …) which are built from these; reach for `brand-*` only when you need
+         * a specific brand color by name (e.g. a Brothers/Sisters treatment).
+         */
+        brand: {
+          // General palette — the app's foundation
+          obsidian: 'oklch(0.2118 0.0275 283.806 / <alpha-value>)', // #171725 Deep Obsidian
+          snow: 'oklch(0.9861 0.0034 67.784 / <alpha-value>)', //     #FCFAF8 Warm Snow
+          royal: 'oklch(0.3865 0.1137 263.626 / <alpha-value>)', //   #234080 Royal Blue
+          jade: 'oklch(0.5089 0.0839 155.775 / <alpha-value>)', //    #397451 Jade Foliage
+          // Brothers palette
+          midnight: 'oklch(0.2875 0.074 262.653 / <alpha-value>)', // #16294F Midnight Blue
+          sky: 'oklch(0.641 0.1309 251.419 / <alpha-value>)', //      #4A90D9 Sky Blue
+          slate: 'oklch(0.7413 0.0451 255.956 / <alpha-value>)', //   #99ADC8 Cool Slate
+          // Sisters palette
+          forest: 'oklch(0.2824 0.0565 164.37 / <alpha-value>)', //   #043222 Deep Forest Green
+          buttercup: 'oklch(0.8618 0.1448 97.929 / <alpha-value>)', //#EBD255 Buttercup Yellow
+          brass: 'oklch(0.7617 0.1283 83.979 / <alpha-value>)', //    #D8AA45 Warm Brass
         },
       },
       keyframes: {

@@ -83,7 +83,7 @@ describe('StatsStrip', () => {
     expect(accent).toHaveClass('text-success')
   })
 
-  it('uses a 3-column grid layout', () => {
+  it('stacks on phones and uses a 3-column grid from sm', () => {
     const { container } = render(
       <StatsStrip
         stats={[
@@ -93,7 +93,8 @@ describe('StatsStrip', () => {
         ]}
       />,
     )
-    const grid = container.firstChild as HTMLElement
-    expect(grid).toHaveClass('grid-cols-3')
+    const grid = container.querySelector('.grid') as HTMLElement
+    expect(grid).toHaveClass('grid-cols-1')
+    expect(grid).toHaveClass('sm:grid-cols-3')
   })
 })

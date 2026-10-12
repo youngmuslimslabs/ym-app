@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useState, useMemo, useCallback, useDeferredValue, useEffect, useRef } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
 import Fuse, { type IFuseOptions } from 'fuse.js'
 import posthog from 'posthog-js'
+import { replaceSearchParams } from '@/lib/replace-search-params'
 import type { PersonListItem, PeopleFilters } from '../types'
 
 const FUSE_OPTIONS: IFuseOptions<PersonListItem> = {
@@ -32,6 +33,7 @@ function getInitialFilters(): PeopleFilters {
     projectTypes: [],
     projectRoles: [],
     skills: [],
+    sides: [],
     yearsInYM: undefined,
   }
 }
@@ -44,6 +46,7 @@ const MULTI_FILTER_KEYS = [
   'projectTypes',
   'projectRoles',
   'skills',
+  'sides',
 ] as const
 
 function readFiltersFromParams(params: URLSearchParams): PeopleFilters {
@@ -105,7 +108,6 @@ interface UsePeopleFiltersReturn {
 }
 
 export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersReturn {
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -117,23 +119,22 @@ export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersRetu
   // when the URL already matches the derived state.
   const isFirstRender = useRef(true)
 
-  // filters → URL (debounced for typing comfort)
+  // filters → URL (debounced for typing comfort). History-only: the server page
+  // doesn't read these params, so router.replace() re-fetching the whole
+  // directory on every pause was pure waste.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
       return
     }
     const handle = setTimeout(() => {
-      const params = writeFiltersToParams(
-        filters,
-        new URLSearchParams(searchParams.toString()),
+      replaceSearchParams(
+        pathname,
+        writeFiltersToParams(filters, new URLSearchParams(searchParams.toString())),
       )
-      const queryString = params.toString()
-      const url = queryString ? `${pathname}?${queryString}` : pathname
-      router.replace(url, { scroll: false })
     }, URL_DEBOUNCE_MS)
     return () => clearTimeout(handle)
-  }, [filters, pathname, router, searchParams])
+  }, [filters, pathname, searchParams])
 
   // URL → filters (external navigation: browser back/forward, paste-in URL)
   useEffect(() => {
@@ -181,13 +182,26 @@ export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersRetu
 
   const fuse = useMemo(() => new Fuse(people, FUSE_OPTIONS), [people])
 
+  // Filtering ~1,800 people through Fuse is too slow to run inside a keystroke.
+  // The input renders from `filters` immediately; the result list catches up
+  // from this deferred copy in a lower-priority render.
+  const deferredFilters = useDeferredValue(filters)
+
   const filteredPeople = useMemo(() => {
+    const filters = deferredFilters
     // Start from fuzzy results (preserving relevance order) or full list
     const candidates = filters.search
       ? fuse.search(filters.search).map((r) => r.item)
       : people
 
     return candidates.filter((person) => {
+      // Side filter
+      if (filters.sides.length > 0) {
+        if (!person.side || !filters.sides.includes(person.side)) {
+          return false
+        }
+      }
+
       // Region filter
       if (filters.regions.length > 0) {
         if (!person.region || !filters.regions.includes(person.region.id)) {
@@ -247,7 +261,7 @@ export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersRetu
 
       return true
     })
-  }, [people, fuse, filters])
+  }, [people, fuse, deferredFilters])
 
   // Pagination state for Load More
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)

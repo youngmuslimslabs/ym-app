@@ -21,7 +21,12 @@
 - **Notifications: use Sonner via `import { toast } from 'sonner'`** — never inline status strips inside Sheets/Dialogs. Toaster is mounted globally in `src/app/layout.tsx` at `top-center`. Inline error chrome (e.g., destructive border around a wrong-input field) is the right pattern for validation correction; toasts are for transient confirmations and unexpected errors.
 - OKLCH color tokens in CSS variables, Tailwind wraps with `oklch(var(...) / <alpha-value>)`
 - Sidebar tokens use HSL (separate system from main OKLCH tokens)
-- Brand color: `#254FA0` → `oklch(0.445 0.14 261.872)` light, `oklch(0.65 0.14 261.872)` dark
+- Brand color: `#254FA0` → `oklch(0.445 0.14 261.872)` light, `oklch(0.65 0.14 261.872)` dark. This is what every existing screen uses; `:root` and `.dark` are the legacy tokens.
+- **The brand is opt-in, not global.** Brandbook tokens (Royal Blue `#234080`, Warm Snow, white sidebar), Figtree and -2% tracking apply only inside `data-theme="ym"`, set by `<BrandScope>` (`components/brand/brand-scope.tsx`). A screen adopts the brand from its route `layout.tsx` (see `(app)/home/layout.tsx`: `<BrandScope side={await getSide()}>`), in its own draft PR, never by editing `:root`. Adopted so far: Login, Home, the onboarding side step, `/design-system`. Fonts load in the root layout (`lib/brand-fonts.ts`) but only take effect inside a scope
+- Three themes (General, Brothers, Sisters): `data-theme-side` on any subtree, set by `BrandScope` from the `ym_side` cookie (`getSide()` in `lib/side-server.ts`). Prefer semantic tokens (`primary`, `highlight`, …) over `brand-*`; `brand-*` are fixed colours and take `/opacity`
+- **Redesign direction B ("Obsidian") rules:** Boldonse once per screen (`ym-display` / `ym-h1`: the Login headline, the member's name on Home, the page title elsewhere; section and card titles, figures and conference names are Figtree). At most one dark block per screen, in Deep Obsidian (`bg-brand-obsidian`), not the side colour. The sidebar is white. The side colour is for accents only: buttons, the active nav item, avatars, links
+- **Type: use the `.ym-*` classes** (`ym-display`, `ym-h1` Boldonse caps; `ym-h2`, `ym-h3` Figtree; `ym-eyebrow` caps label). Page titles go through `PageHeader` (`components/layout/page-header.tsx`), not a hand-built `<h1>`
+- Brand pieces live in `components/brand/`: `BrandScope`, `Logo`, `BrandBlob`/`BrandWave` (organic shapes, `currentColor`), `LocalLockup`, `MemberAvatar` (use it for every member avatar)
 - Animations: `duration-200` standardized across custom components (shadcn primitives keep their own timing)
 - Card padding: `p-6`. Empty states: Lucide icon in `rounded-full bg-muted/50 p-4`, no emojis, no CTAs
 - Responsive: test at 375px, 393px, 430px, 1280px+

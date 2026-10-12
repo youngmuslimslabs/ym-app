@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation'
 
 import { useProfileData } from '@/app/profile/hooks/useProfileData'
 import { fetchProfileCompletedAt } from '@/lib/supabase/queries/profile'
-import { computeProfileCompletion, part2Progress } from '@/lib/profile-completion'
+import {
+  computeProfileCompletion,
+  part2Progress,
+  SECTION_ORDER,
+  type ProfileCompletion,
+} from '@/lib/profile-completion'
 
 import { CompletionProvider, useCompletion } from './CompletionProvider'
 import { CompletionStrip } from './CompletionStrip'
@@ -23,10 +28,17 @@ const ACTIONABLE_SELECTOR =
  * per-button wiring. The sidebar/header live outside this subtree (nav stays
  * free); the strip and gate dialog are excluded via [data-completion-allow].
  */
-export function GatedContent({ children }: { children: React.ReactNode }) {
+export function GatedContent({
+  active = true,
+  children,
+}: {
+  active?: boolean
+  children: React.ReactNode
+}) {
   const { requireComplete } = useCompletion()
 
   function handleClickCapture(e: React.MouseEvent) {
+    if (!active) return
     const el = (e.target as HTMLElement).closest(ACTIONABLE_SELECTOR)
     if (!el || el.closest('[data-completion-allow]')) return
     e.preventDefault()
@@ -50,12 +62,16 @@ export function GatedContent({ children }: { children: React.ReactNode }) {
  * - a uniform gate that blocks every content-area action button until complete.
  *
  * `isComplete` is the durable `profile_completed_at` flag (skip-safe), NOT the
- * client-side percent. Fails safe: until data loads, renders children with no
- * gating chrome, so a slow/failed fetch never blocks the app.
+ * client-side percent. Fails safe: until data loads, the app runs ungated, so a
+ * slow/failed fetch never blocks it.
+ *
+ * The element tree is identical in every state (only `active` and the strip
+ * change) — swapping wrappers once data arrived used to remount the whole page
+ * a beat after load. The full profile (a multi-query fetch) is only loaded for
+ * users who are actually incomplete, to size the strip.
  */
 export function AppCompletion({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { profileData } = useProfileData()
   const [flag, setFlag] = useState<{ completedAt: string | null; errored: boolean } | undefined>(
     undefined,
   ) // undefined = still loading
@@ -70,26 +86,26 @@ export function AppCompletion({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const completion = profileData ? computeProfileCompletion(profileData, new Set()) : null
-  const ready = flag !== undefined && completion !== null
-
-  if (!ready || !completion) {
-    return <>{children}</>
-  }
-
   // Fail OPEN on a flag-fetch error: a transient network/DB hiccup must never
   // gate a user who has actually completed their profile. The gate resumes on
   // the next successful load.
-  const isComplete = flag.errored ? true : flag.completedAt !== null
+  const isIncomplete = flag !== undefined && !flag.errored && flag.completedAt === null
+  const { profileData } = useProfileData({ enabled: isIncomplete })
+  const counts = isIncomplete && profileData ? computeProfileCompletion(profileData, new Set()) : null
+  const gating = counts !== null
+
   const goToComplete = () => router.push('/complete-profile')
+  const completion: ProfileCompletion = counts
+    ? { ...counts, isComplete: false }
+    : ASSUMED_COMPLETE
 
   return (
-    <CompletionProvider completion={{ ...completion, isComplete }} onGoToComplete={goToComplete}>
-      {!isComplete && (
+    <CompletionProvider completion={completion} onGoToComplete={goToComplete}>
+      {counts && (
         <div className="px-4 pt-4 md:px-6" data-completion-allow>
           {(() => {
             // Count only the four Part-2 sections, matching the completion hub.
-            const p = part2Progress(completion)
+            const p = part2Progress(counts)
             return (
               <CompletionStrip
                 resolvedCount={p.resolved}
@@ -101,7 +117,19 @@ export function AppCompletion({ children }: { children: React.ReactNode }) {
           })()}
         </div>
       )}
-      {isComplete ? children : <GatedContent>{children}</GatedContent>}
+      <GatedContent active={gating}>{children}</GatedContent>
     </CompletionProvider>
   )
+}
+
+// Stand-in while the flag loads, when it errored, or when the profile is done —
+// every requireComplete() call proceeds (fail open).
+const ASSUMED_COMPLETE: ProfileCompletion = {
+  sections: Object.fromEntries(
+    SECTION_ORDER.map((k) => [k, 'done']),
+  ) as ProfileCompletion['sections'],
+  resolvedCount: SECTION_ORDER.length,
+  total: SECTION_ORDER.length,
+  percent: 100,
+  isComplete: true,
 }

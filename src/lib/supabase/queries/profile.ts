@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { isSide } from '@/lib/side'
 import type { ProfileFormState } from '@/app/profile/hooks/useProfileForm'
 import type { Tables } from '@/types/database.types'
 import type { YMRoleEntry, YMProjectEntry, EducationEntry, EducationLevel } from '@/contexts/OnboardingContext'
@@ -183,6 +184,7 @@ export async function fetchUserProfileById(userId: string): Promise<{
     // Transform database data to form state
     const formState: ProfileFormState = {
       googleEmail: user.email,
+      side: isSide(user.side) ? user.side : undefined,
       firstName: user.first_name ?? undefined,
       lastName: user.last_name ?? undefined,
       avatarUrl: user.avatar_url ?? undefined,
@@ -279,10 +281,10 @@ export async function fetchCurrentUserProfile(): Promise<{
       return { data: null, error: 'Not authenticated' }
     }
 
-    // Fetch user profile by auth_id
+    // Resolve auth_id → users.id (fetchUserProfileById reads the full row)
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('*')
+      .select('id')
       .eq('auth_id', authUser.id)
       .single()
 

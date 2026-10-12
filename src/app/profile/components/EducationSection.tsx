@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { GraduationCap } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -20,14 +20,31 @@ import { ExpandableCard, ExpandableCardList } from './ExpandableCard'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import type { EducationEntry } from '@/contexts/OnboardingContext'
 
-// Import universities list
-import universitiesData from '@/data/us-universities.json'
+// The universities list (~230 KB) is only needed to edit, so it's loaded on
+// demand rather than bundled into every read-only /people/[id] view. Converted
+// once per session and shared across mounts.
+let universitiesCache: ComboboxOption[] | null = null
 
-// Convert to combobox options
-const UNIVERSITIES: ComboboxOption[] = (universitiesData as string[]).map((name: string) => ({
-  value: name.toLowerCase().replace(/\s+/g, '-'),
-  label: name,
-}))
+function useUniversityOptions(enabled: boolean): ComboboxOption[] {
+  const [options, setOptions] = useState<ComboboxOption[]>(() => universitiesCache ?? [])
+
+  useEffect(() => {
+    if (!enabled || universitiesCache) return
+    let cancelled = false
+    void import('@/data/us-universities.json').then((mod) => {
+      universitiesCache = (mod.default as string[]).map((name) => ({
+        value: name.toLowerCase().replace(/\s+/g, '-'),
+        label: name,
+      }))
+      if (!cancelled) setOptions(universitiesCache)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [enabled])
+
+  return options
+}
 
 // Degree types
 const DEGREE_TYPES = [
@@ -88,10 +105,11 @@ export function EducationSection({
 }: EducationSectionProps) {
   const { isEditable } = useProfileMode()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const universities = useUniversityOptions(isEditable)
 
   const getSchoolValue = (edu: EducationEntry): ComboboxValue | undefined => {
     if (edu.schoolName) {
-      const option = UNIVERSITIES.find(u => u.label === edu.schoolName)
+      const option = universities.find(u => u.label === edu.schoolName)
       if (option) {
         return { type: 'existing', value: option.value, label: edu.schoolName }
       }
@@ -149,7 +167,7 @@ export function EducationSection({
               <div className="space-y-1.5">
                 <Label>School Name</Label>
                 <SearchableCombobox
-                  options={UNIVERSITIES}
+                  options={universities}
                   value={getSchoolValue(edu)}
                   onChange={(value) => handleSchoolChange(index, value)}
                   placeholder="Search for your school"

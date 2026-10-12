@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import Image from 'next/image'
 import {
   Home,
   Users,
@@ -20,6 +19,7 @@ import {
   Shield,
   X,
 } from 'lucide-react'
+import { MemberAvatar } from '@/components/brand/member-avatar'
 import {
   Sidebar,
   SidebarContent,
@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/brand/logo'
 import { useAuth } from '@/contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -69,27 +70,28 @@ export function AppSidebar() {
   // is_event_admin() function the DB policies use, so the sidebar visibility
   // matches what they're actually allowed to do.
   //
-  // Re-fetched on every pathname change (so a newly granted admin sees the
-  // Admin group as soon as they navigate anywhere) and on window focus
-  // (catches the long-idle-tab case). Real-time push for instant deltas
-  // would need a Supabase realtime subscription on conference_attendees +
-  // role_assignments; we'll add that in the realtime stage.
+  // Fetched once per signed-in user, then refreshed on window focus (catches
+  // the long-idle-tab case, e.g. a newly granted admin). It used to re-run on
+  // every pathname change — three queries per click for data that rarely
+  // changes. Real-time push for instant deltas would need a Supabase realtime
+  // subscription on conference_attendees + role_assignments; we'll add that in
+  // the realtime stage.
+  const authId = user?.id
   useEffect(() => {
-    if (!user) return
+    if (!authId) return
     let cancelled = false
     // Coalesce focus-triggered refetches: tab-thrash should not fire
-    // back-to-back queries. Pathname-change refetches always go through
-    // because the effect itself re-runs and resets this closure.
+    // back-to-back queries.
     let lastFetchStartedAt = 0
     const supabase = createClient()
 
     async function fetchSidebarData() {
-      if (Date.now() - lastFetchStartedAt < 2000) return
+      if (Date.now() - lastFetchStartedAt < 30_000) return
       lastFetchStartedAt = Date.now()
       const { data: userRow } = await supabase
         .from('users')
         .select('id')
-        .eq('auth_id', user!.id)
+        .eq('auth_id', authId!)
         .maybeSingle()
       if (!userRow || cancelled) return
       const [confRes, adminRes] = await Promise.all([
@@ -117,7 +119,7 @@ export function AppSidebar() {
       cancelled = true
       window.removeEventListener('focus', onFocus)
     }
-  }, [user, pathname])
+  }, [authId])
 
   // Custom state for hover effect on entire collapsed sidebar
   const [isHoveringCollapsed, setIsHoveringCollapsed] = useState(false)
@@ -127,7 +129,6 @@ export function AppSidebar() {
   // Extract display name from email (e.g., "omar.khan@..." -> "Omar")
   const displayName = user?.email?.split('@')[0]?.split('.')[0] ?? 'User'
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1)
-  const initials = capitalizedName.charAt(0).toUpperCase()
 
   const handleNavClick = () => {
     // Close mobile sidebar when navigating
@@ -192,26 +193,13 @@ export function AppSidebar() {
                 {isHoveringCollapsed ? (
                   <PanelLeft className="!size-4" />
                 ) : (
-                  <Image
-                    src="/favicon.ico"
-                    alt="Young Muslims"
-                    width={24}
-                    height={24}
-                    className="rounded shrink-0"
-                  />
+                  <Logo className="h-6 max-w-8" />
                 )}
               </SidebarMenuButton>
             ) : (
               /* When expanded: show logo with app name */
               <SidebarMenuButton size="lg" className="pointer-events-none select-none" tabIndex={-1}>
-                <Image
-                  src="/favicon.ico"
-                  alt="Young Muslims"
-                  width={24}
-                  height={24}
-                  className="rounded shrink-0"
-                />
-                <span className="truncate font-semibold">Young Muslims</span>
+                <Logo variant="full" className="h-4 max-w-44" />
               </SidebarMenuButton>
             )}
           </SidebarMenuItem>
@@ -336,22 +324,12 @@ export function AppSidebar() {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   {/* Avatar - 24px to match logo size in lg variant buttons */}
-                  {user?.user_metadata?.avatar_url ? (
-                    <Image
-                      src={user.user_metadata.avatar_url}
-                      alt={capitalizedName}
-                      width={24}
-                      height={24}
-                      className="size-6 shrink-0 rounded-full object-cover"
-                      referrerPolicy="no-referrer"
-                      unoptimized
-                      priority
-                    />
-                  ) : (
-                    <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                      {initials}
-                    </div>
-                  )}
+                  <MemberAvatar
+                    name={user?.user_metadata?.full_name || capitalizedName}
+                    src={user?.user_metadata?.avatar_url}
+                    size="xs"
+                    className="bg-sidebar-primary text-sidebar-primary-foreground"
+                  />
                   {/* Name with inline chevron */}
                   <span className="truncate font-semibold max-w-[100px]">{capitalizedName}</span>
                   <ChevronUp className="ml-auto h-4 w-4 shrink-0" />

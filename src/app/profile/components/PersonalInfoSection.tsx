@@ -1,6 +1,6 @@
 'use client'
 
-import { Phone, Mail, Globe, Calendar } from 'lucide-react'
+import { Phone, Mail, Globe, Calendar, Users } from 'lucide-react'
 import { InlineEditField } from './InlineEditField'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import { format } from 'date-fns'
@@ -8,6 +8,7 @@ import { formatPhoneNumber, isValidPhone, isValidEmail } from '@/lib/validation'
 import { Label } from '@/components/ui/label'
 import { SearchableCombobox } from '@/components/searchable-combobox'
 import { NATIONALITY_OPTIONS } from '@/lib/constants/nationalities'
+import { SIDE_LABELS, type Side } from '@/lib/side'
 
 // Nationality uses the shared ~190-entry list (single source of truth) via a
 // searchable combobox with free entry — the same field the Part-1 onboarding
@@ -41,6 +42,8 @@ interface PersonalInfoSectionProps {
   phoneNumber?: string
   personalEmail?: string
   googleEmail?: string
+  // Chosen in onboarding and permanent — displayed, never edited here.
+  side?: Side
   ethnicity?: string
   dateOfBirth?: Date
   onPhoneChange: (value: string) => void
@@ -53,6 +56,7 @@ export function PersonalInfoSection({
   phoneNumber = '',
   personalEmail = '',
   googleEmail,
+  side,
   ethnicity = '',
   dateOfBirth,
   onPhoneChange,
@@ -107,6 +111,15 @@ export function PersonalInfoSection({
                 disabled
               />
             )}
+
+            <InlineEditField
+              type="text"
+              label="Side"
+              value={side ? SIDE_LABELS[side] : ''}
+              onChange={() => {}}
+              icon={<Users className="h-4 w-4" />}
+              disabled
+            />
 
             <div className="flex flex-col gap-1.5">
               <Label className="flex items-center gap-2">
@@ -164,6 +177,12 @@ export function PersonalInfoSection({
                 icon={<Mail className="h-4 w-4" />}
               />
             )}
+
+            <ReadOnlyField
+              label="Side"
+              value={side ? SIDE_LABELS[side] : ''}
+              icon={<Users className="h-4 w-4" />}
+            />
 
             <ReadOnlyField
               label="Nationality"

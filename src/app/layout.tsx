@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Suspense } from "react";
+import { BrandPreviewToggle } from "@/components/dev/BrandPreviewToggle";
+import { boldonse, figtree } from "@/lib/brand-fonts";
 import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper";
 import { ServiceWorkerRegistration } from "@/components/providers/ServiceWorkerRegistration";
 import { IOSInstallPrompt } from "@/components/pwa/IOSInstallPrompt";
@@ -54,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${figtree.variable} ${boldonse.variable}`}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -67,6 +69,7 @@ export default function RootLayout({
             <IOSInstallPrompt />
             {children}
             <Toaster />
+            <BrandPreviewToggle />
           </AuthProviderWrapper>
         </PHProvider>
       </body>

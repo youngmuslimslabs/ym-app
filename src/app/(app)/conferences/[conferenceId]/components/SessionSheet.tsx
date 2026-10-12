@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button'
 import { CheckInDialog } from './CheckInDialog'
 import { FeedbackForm } from './FeedbackForm'
 import { canRemoveSignUp, canSignUp, getSessionState } from '../lib/checkInWindow'
+import { BRAND_PORTAL_CLASS, brandPortalProps } from '../lib/brandPortal'
+import type { Side } from '@/lib/side'
 import type { Session } from '../types'
 
 interface Props {
@@ -30,6 +32,8 @@ interface Props {
   checkInError: string | null
   pending: boolean
   now: Date
+  // Re-applies the brand scope to the portalled sheet and dialog.
+  side?: Side | null
   onClose: () => void
   onSignup: (sessionId: string) => Promise<void>
   onCancel: (sessionId: string) => Promise<void>
@@ -51,6 +55,7 @@ export function SessionSheet({
   checkInError,
   pending,
   now,
+  side = null,
   onClose,
   onSignup,
   onCancel,
@@ -129,17 +134,19 @@ export function SessionSheet({
   )}`
 
   // Bottom sheet on mobile (more thumb-friendly), right sheet on tablet+.
-  const side = isMobile ? 'bottom' : 'right'
+  const sheetSide = isMobile ? 'bottom' : 'right'
 
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         ref={isMobile ? sheetRef : undefined}
-        side={side}
+        side={sheetSide}
+        {...brandPortalProps(side)}
         className={cn(
+          BRAND_PORTAL_CLASS,
           'flex flex-col p-0',
           isMobile
-            ? 'h-auto max-h-[90vh] rounded-t-xl'
+            ? 'h-auto max-h-[90vh] rounded-t-3xl'
             : 'w-full sm:max-w-md'
         )}
       >
@@ -152,16 +159,16 @@ export function SessionSheet({
             <div className="h-1 w-10 rounded-full bg-border" />
           </div>
         )}
-        <SheetHeader className="p-6 border-b text-left space-y-2">
-          <div className="text-xs uppercase tracking-widest text-primary font-medium">
+        <SheetHeader className="space-y-2 border-b p-6 pr-14 text-left">
+          <div className="ym-eyebrow text-primary">
             {dateLabel} · {timeRangeLabel}
           </div>
           <div className="flex items-start justify-between gap-3">
-            <SheetTitle className="text-2xl font-semibold tracking-tight">
+            <SheetTitle className="ym-h2 text-balance">
               {session.title}
             </SheetTitle>
             {full && (
-              <span className="shrink-0 inline-flex items-center rounded-md bg-destructive text-destructive-foreground px-2.5 py-0.5 text-xs font-semibold">
+              <span className="inline-flex shrink-0 items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
                 Full
               </span>
             )}
@@ -169,19 +176,18 @@ export function SessionSheet({
           {session.speaker && (
             <p className="text-sm text-muted-foreground">{session.speaker}</p>
           )}
-          <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
             {session.room && (
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
                 {session.room}
               </span>
             )}
-            {session.room && <span className="text-muted-foreground/40">·</span>}
             <span className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
-              inProgress ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold',
+              inProgress ? 'bg-success/10 text-success' : 'bg-secondary text-secondary-foreground'
             )}>
-              {inProgress && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
+              {inProgress && <span className="size-1.5 rounded-full bg-success animate-status-pulse" aria-hidden="true" />}
               {ended
                 ? w.inGrace
                   ? 'Ended · check-in open'
@@ -191,20 +197,17 @@ export function SessionSheet({
                   : 'Upcoming'}
             </span>
             {showFeedback && (
-              <>
-                <span className="text-muted-foreground/40">·</span>
-                <span className="inline-flex items-center gap-1 text-primary">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Checked in
-                </span>
-              </>
+              <span className="inline-flex items-center gap-1.5 font-medium text-success">
+                <CheckCircle2 className="size-3.5 shrink-0" aria-hidden="true" />
+                Checked in
+              </span>
             )}
           </div>
         </SheetHeader>
 
         <div className={cn('p-6 flex-1 overflow-y-auto space-y-6', full && 'opacity-60')}>
           {session.description ? (
-            <p className="text-sm text-foreground/80 leading-relaxed">
+            <p className="text-sm leading-relaxed text-foreground/80">
               {session.description}
             </p>
           ) : (
@@ -216,13 +219,13 @@ export function SessionSheet({
           )}
 
           {showMissedNotice && (
-            <div className="rounded-lg border bg-muted/40 p-4 flex items-start gap-3">
-              <div className="rounded-full bg-muted p-2 shrink-0">
-                <CircleSlash className="w-4 h-4 text-muted-foreground" />
+            <div className="flex items-start gap-3 rounded-2xl border bg-muted/40 p-4">
+              <div className="shrink-0 rounded-full bg-muted/50 p-2.5">
+                <CircleSlash className="size-4 text-muted-foreground" aria-hidden="true" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium">You didn&apos;t check in</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
+              <div className="min-w-0 flex-1">
+                <h3 className="ym-h3 text-sm">You didn&apos;t check in</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   No worries — feedback isn&apos;t open without a check-in.
                 </p>
               </div>
@@ -250,15 +253,16 @@ export function SessionSheet({
           )}
         </div>
 
-        <div className="p-6 border-t bg-muted/30 flex justify-center gap-2 shrink-0">
+        <div className="flex shrink-0 justify-center gap-2 border-t bg-muted/30 p-6">
           {isBreak ? (
-            <Button variant="outline" className="flex-1" onClick={onClose}>
+            <Button variant="outline" className="h-11 flex-1" onClick={onClose}>
               Close
             </Button>
           ) : removable ? (
             <Button
               variant="link-destructive"
               size="sm"
+              className="min-h-11"
               disabled={pending}
               onClick={() => setConfirmRemoveOpen(true)}
             >
@@ -266,18 +270,18 @@ export function SessionSheet({
             </Button>
           ) : signedUp ? null : joinable ? (
             <Button
-              className="flex-1"
+              className="h-11 flex-1"
               disabled={pending}
               onClick={() => onSignup(session.id)}
             >
               {pending ? 'Signing up…' : 'Sign up'}
             </Button>
           ) : !w.signUpOpen ? (
-            <Button variant="outline" className="flex-1" disabled>
+            <Button variant="outline" className="h-11 flex-1" disabled>
               Session has ended
             </Button>
           ) : (
-            <Button variant="outline" className="flex-1" disabled>
+            <Button variant="outline" className="h-11 flex-1" disabled>
               Session full
             </Button>
           )}
@@ -288,9 +292,12 @@ export function SessionSheet({
         open={confirmRemoveOpen}
         onOpenChange={(open) => !pending && setConfirmRemoveOpen(open)}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          {...brandPortalProps(side)}
+          className={cn(BRAND_PORTAL_CLASS, 'sm:max-w-md sm:rounded-2xl')}
+        >
           <DialogHeader>
-            <DialogTitle>Remove your RSVP?</DialogTitle>
+            <DialogTitle className="ym-h3">Remove your RSVP?</DialogTitle>
             <DialogDescription>
               You&apos;ll lose your spot for{' '}
               <span className="font-medium text-foreground">{session.title}</span>
@@ -302,6 +309,7 @@ export function SessionSheet({
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
+              className="h-11 sm:h-9"
               disabled={pending}
               onClick={() => setConfirmRemoveOpen(false)}
             >
@@ -309,6 +317,7 @@ export function SessionSheet({
             </Button>
             <Button
               variant="destructive"
+              className="h-11 sm:h-9"
               disabled={pending}
               onClick={async () => {
                 await onCancel(session.id)

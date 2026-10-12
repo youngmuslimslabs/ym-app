@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { CalendarDays } from 'lucide-react'
 import { SessionCard } from './SessionCard'
 import type { Session } from '../types'
 
@@ -37,28 +38,33 @@ export function DaySchedule(props: Props) {
 
   if (days.length === 0) {
     return (
-      <div className="px-6 md:px-8 py-16 text-center text-sm text-muted-foreground">
-        No sessions scheduled yet.
+      <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-6 py-16 text-center sm:px-10">
+        <div className="rounded-full bg-muted/50 p-4">
+          <CalendarDays className="size-6 text-muted-foreground" aria-hidden="true" />
+        </div>
+        <p className="text-sm text-muted-foreground">No sessions scheduled yet.</p>
       </div>
     )
   }
 
   return (
-    <div className="pb-16">
+    <div className="mx-auto max-w-5xl">
       {days.map((day) => (
-        <section key={day.dayKey}>
-          <div className="sticky top-0 z-10 px-6 md:px-8 py-3 bg-muted backdrop-blur supports-[backdrop-filter]:bg-muted/90 border-y">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-primary">{day.dayLabel}</h2>
+        <section key={day.dayKey} className="mt-10">
+          <div className="sticky top-0 z-10 border-b bg-background/90 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-10">
+            <h2 className="ym-h2">{day.dayLabel}</h2>
           </div>
 
-          <div className="px-6 md:px-8 pt-6 space-y-8">
+          <div className="space-y-8 px-6 pt-6 sm:px-10">
             {day.blocks.map((block) => (
-              <div key={`${day.dayKey}-${block.startMs}-${block.endMs}`}>
-                <div className="flex items-baseline gap-3 mb-3">
-                  <div className="text-sm font-semibold tabular-nums">{block.startLabel}</div>
-                  <div className="text-xs text-muted-foreground">–</div>
-                  <div className="text-sm text-muted-foreground tabular-nums">{block.endLabel}</div>
-                  <div className="h-px bg-border flex-1 ml-2" />
+              <div
+                key={`${day.dayKey}-${block.startMs}-${block.endMs}`}
+                className="md:grid md:grid-cols-[7.5rem_1fr] md:gap-6"
+              >
+                <div className="mb-3 flex items-baseline gap-2 tabular-nums md:mb-0 md:block md:pt-5">
+                  <div className="text-sm font-bold">{block.startLabel}</div>
+                  <div className="text-xs text-muted-foreground md:hidden" aria-hidden="true">–</div>
+                  <div className="text-sm text-muted-foreground">{block.endLabel}</div>
                 </div>
                 <div className="grid gap-3">
                   {block.sessions.map((session) => (

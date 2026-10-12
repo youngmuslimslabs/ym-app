@@ -117,12 +117,12 @@ export function OnboardingFlow({
     case 'ethnicity':
       content = (
         <ComboboxStep
-          label="What's your nationality?"
+          label="What's your ethnicity?"
           help="Pick the closest match, or type your own."
           options={NATIONALITY_OPTIONS}
           value={val('ethnicity')}
-          placeholder="Select your nationality"
-          searchPlaceholder="Search nationalities…"
+          placeholder="Select your ethnicity"
+          searchPlaceholder="Search ethnicities…"
           allowCustom
           onSelect={(v) => choose('ethnicity', v)}
           onNext={flow.next}

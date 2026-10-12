@@ -13,9 +13,9 @@ export function PersonCardGrid({ people }: PersonCardGridProps) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="mb-4 rounded-full bg-muted/50 p-4">
-          <Search className="h-8 w-8 text-muted-foreground" />
+          <Search className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
         </div>
-        <h3 className="text-lg font-medium text-foreground mb-1">No people found</h3>
+        <h3 className="ym-h3 mb-1">No people found</h3>
         <p className="text-sm text-muted-foreground max-w-xs">
           Try adjusting your search or filters to find what you&apos;re looking for.
         </p>
@@ -24,7 +24,7 @@ export function PersonCardGrid({ people }: PersonCardGridProps) {
   }
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {people.map((person, index) => (
         <div
           key={person.id}

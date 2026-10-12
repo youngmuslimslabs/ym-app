@@ -4,32 +4,33 @@ import { PersonCardGridSkeleton } from './components/PersonCardSkeleton'
 /**
  * Loading UI for the people directory page.
  * Shown automatically by Next.js while the page's server component is loading.
+ * Mirrors the loaded layout: page title, toolbar, card grid.
  */
 export default function PeopleLoading() {
   return (
-    <div className="flex flex-col min-h-[calc(100vh-3.5rem)] md:min-h-screen">
-      {/* Header skeleton */}
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
-        <div className="px-4 md:px-6 py-4">
-          <div className="flex items-center gap-4">
-            {/* Search skeleton */}
-            <Skeleton className="h-10 w-64" />
-            {/* Filter buttons skeleton (hidden on mobile) */}
-            <div className="hidden md:flex gap-2">
-              <Skeleton className="h-9 w-24" />
-              <Skeleton className="h-9 w-24" />
-              <Skeleton className="h-9 w-24" />
-            </div>
-            {/* Spacer */}
-            <div className="flex-1" />
-            {/* View toggle skeleton */}
-            <Skeleton className="h-9 w-20" />
-          </div>
+    <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-7xl flex-col px-4 pb-16 pt-6 sm:px-6 md:min-h-screen md:pt-10">
+      {/* Page title skeleton */}
+      <div className="space-y-3">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-5 w-64" />
+      </div>
+
+      {/* Toolbar skeleton */}
+      <div className="-mx-4 mt-6 px-4 py-3 sm:-mx-6 sm:px-6">
+        <div className="flex items-center gap-4">
+          {/* Search skeleton */}
+          <Skeleton className="h-11 w-full rounded-xl sm:w-80" />
+          {/* Filter button skeleton (hidden on mobile) */}
+          <Skeleton className="hidden h-11 w-24 rounded-xl md:block" />
+          {/* Spacer */}
+          <div className="flex-1" />
+          {/* View toggle skeleton */}
+          <Skeleton className="hidden h-10 w-20 rounded-xl md:block" />
         </div>
-      </header>
+      </div>
 
       {/* Content skeleton */}
-      <div className="flex-1 px-4 md:px-6 py-6">
+      <div className="flex-1 pt-4">
         <PersonCardGridSkeleton count={12} />
       </div>
     </div>

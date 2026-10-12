@@ -27,6 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { PersonListItem } from '../types'
 import { ROLE_CATEGORY_ICONS, ROLE_CATEGORY_VARIANTS } from '../constants'
 import { MemberAvatar } from '@/components/brand/member-avatar'
+import { cn } from '@/lib/utils'
 
 // Column ids managed by this component. `hiddenColumns` accepts any of these.
 type DefaultColumnId = 'name' | 'roles' | 'region' | 'subregion' | 'skills'
@@ -54,6 +55,10 @@ interface PeopleTableProps {
   // Optional column appended after the defaults — for context-specific cells
   // like the "Invited" pill on the attendee picker.
   trailingColumn?: ColumnDef<PersonListItem>
+  // 'brand' is the redesigned look (rounded card, pill role badges, no dimmed
+  // rows) for screens inside a BrandScope. The default is unchanged, so the
+  // attendee picker on Admin keeps rendering exactly as before.
+  appearance?: 'default' | 'brand'
 }
 
 export function PeopleTable({
@@ -61,7 +66,9 @@ export function PeopleTable({
   selection,
   hiddenColumns,
   trailingColumn,
+  appearance = 'default',
 }: PeopleTableProps) {
+  const brand = appearance === 'brand'
   const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'name', desc: false },
@@ -104,11 +111,11 @@ export function PeopleTable({
                 decorative
               />
               <div>
-                <span className="font-medium">
+                <span className={brand ? 'font-semibold' : 'font-medium'}>
                   {person.firstName} {person.lastName}
                 </span>
                 {!person.isClaimed && (
-                  <span className="ml-2 text-xs text-muted-foreground/60 italic">
+                  <span className={cn('ml-2 text-xs italic', brand ? 'text-muted-foreground' : 'text-muted-foreground/60')}>
                     Not yet joined
                   </span>
                 )}
@@ -130,7 +137,10 @@ export function PeopleTable({
                 <Badge
                   key={`${role.id}-${i}`}
                   variant={variant}
-                  className="gap-1 px-2 py-0.5 text-[11px] font-medium"
+                  className={cn(
+                    'gap-1 px-2 py-0.5 text-[11px] font-medium',
+                    brand && 'rounded-full px-2.5 text-xs',
+                  )}
                 >
                   {Icon && <Icon className="h-3 w-3 opacity-70" aria-hidden="true" />}
                   {role.name}
@@ -235,7 +245,7 @@ export function PeopleTable({
     }
     if (trailingColumn) result.push(trailingColumn)
     return result
-  }, [hiddenColumns, selection, trailingColumn])
+  }, [hiddenColumns, selection, trailingColumn, brand])
 
   const table = useReactTable({
     data: people,
@@ -266,13 +276,13 @@ export function PeopleTable({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border bg-card">
+      <div className={cn('border bg-card', brand ? 'overflow-hidden rounded-2xl' : 'rounded-lg')}>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className={brand ? 'bg-muted/50 hover:bg-muted/50' : undefined}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className={brand ? 'h-12' : undefined}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -306,7 +316,9 @@ export function PeopleTable({
                   }`
                 : isClaimed
                   ? 'cursor-pointer focus:outline-none focus-visible:bg-muted/50'
-                  : 'opacity-60'
+                  : brand
+                    ? 'text-muted-foreground hover:bg-transparent'
+                    : 'opacity-60'
               return (
                 <TableRow
                   key={row.id}

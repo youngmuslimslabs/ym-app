@@ -24,10 +24,6 @@ export function PersonCard({ person }: PersonCardProps) {
 
   const inner = (
     <>
-      {person.isClaimed && (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-      )}
-
       <div className="relative p-6">
         {/* Header: Avatar + Name + Location */}
         <div className="flex items-start gap-4 mb-4">
@@ -38,13 +34,12 @@ export function PersonCard({ person }: PersonCardProps) {
             side={person.side ?? 'general'}
             size="md"
             decorative
-            className="ring-2 ring-background shadow-sm"
           />
 
           {/* Name and Location */}
           <div className="min-w-0 flex-1">
             <h3
-              className={`font-semibold text-foreground truncate ${person.isClaimed ? 'group-hover:text-primary transition-colors' : ''}`}
+              className={`ym-h3 truncate ${person.isClaimed ? 'text-foreground transition-colors duration-200 group-hover:text-primary' : 'text-muted-foreground'}`}
             >
               {person.firstName} {person.lastName}
             </h3>
@@ -64,7 +59,7 @@ export function PersonCard({ person }: PersonCardProps) {
                 <Badge
                   key={`${role.id}-${i}`}
                   variant={variant}
-                  className="gap-1 px-2 py-0.5 text-[11px] font-medium"
+                  className="gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
                 >
                   {Icon && <Icon className="h-3 w-3 opacity-70" aria-hidden="true" />}
                   {role.name}
@@ -77,7 +72,7 @@ export function PersonCard({ person }: PersonCardProps) {
         {/* Skills — only for claimed users */}
         {person.isClaimed && person.skills.length > 0 && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Tag className="h-3 w-3 opacity-60" />
+            <Tag className="h-3 w-3 shrink-0" aria-hidden="true" />
             <span className="truncate">
               {person.skills.slice(0, 3).join(' • ')}
             </span>
@@ -86,7 +81,7 @@ export function PersonCard({ person }: PersonCardProps) {
 
         {/* Unclaimed indicator */}
         {!person.isClaimed && (
-          <p className="text-xs text-muted-foreground/60 italic">
+          <p className="text-xs text-muted-foreground">
             Not yet joined
           </p>
         )}
@@ -96,7 +91,7 @@ export function PersonCard({ person }: PersonCardProps) {
 
   if (!person.isClaimed) {
     return (
-      <Card className="group relative h-full overflow-hidden transition-all duration-200 opacity-60">
+      <Card className="group relative h-full overflow-hidden rounded-2xl border-dashed bg-transparent shadow-none">
         {inner}
       </Card>
     )
@@ -109,10 +104,10 @@ export function PersonCard({ person }: PersonCardProps) {
   return (
     <Link
       href={href}
-      className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      className="block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       aria-label={`View profile of ${person.firstName} ${person.lastName}`}
     >
-      <Card className="group relative h-full overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-lg hover:scale-[1.02] hover:border-primary/20 active:scale-[0.99]">
+      <Card className="group relative h-full cursor-pointer overflow-hidden rounded-2xl shadow-none transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md motion-reduce:hover:translate-y-0">
         {inner}
       </Card>
     </Link>

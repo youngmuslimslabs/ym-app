@@ -153,7 +153,7 @@ function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
       {swatches.map((s) => (
         <div key={`${s.name}-${s.hex}`} className="overflow-hidden rounded-lg border">
           <div className={`${s.className} ${s.onClassName} flex h-24 items-end p-3`}>
-            <span className="font-mono text-xs">{s.hex}</span>
+            <span translate="no" className="font-mono text-xs">{s.hex}</span>
           </div>
           <div className="space-y-1 bg-card p-3">
             <p className="text-sm font-semibold">{s.name}</p>
@@ -169,7 +169,8 @@ function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
 
 /**
  * Renders the same small UI under one of the three themes. The General theme
- * lives on `:root`, so it is the variant with no `data-side` attribute.
+ * is the page-level `data-theme="ym"` scope (see layout.tsx), so it is the
+ * variant with no `data-side` attribute.
  */
 function ThemePreview({
   name,
@@ -248,7 +249,7 @@ function TypeRow({
     <div className="grid gap-2 border-b py-5 last:border-b-0 md:grid-cols-[14rem_1fr] md:gap-6">
       <div className="space-y-1">
         <p className="text-sm font-semibold">{label}</p>
-        <code className="block font-mono text-xs text-muted-foreground">{classes}</code>
+        <code translate="no" className="block font-mono text-xs text-muted-foreground">{classes}</code>
       </div>
       <div className="min-w-0">{children}</div>
     </div>
@@ -260,20 +261,30 @@ export default function DesignSystemPage() {
     <div className="mx-auto max-w-5xl space-y-12 p-4 pb-20 sm:p-6">
       <header className="space-y-2">
         <Badge variant="info">Brandbook 2026</Badge>
-        <h1 className="font-display text-3xl leading-tight sm:text-4xl">
+        <h1 className="text-balance font-display text-3xl leading-tight sm:text-4xl">
           Design System
         </h1>
         <p className="max-w-2xl text-muted-foreground">
-          Every color, typeface, and component the app is built from. Tokens
-          come from the Young Muslims Brandbook — change one in{' '}
+          Every color, typeface, and component of the Young Muslims brand.
+          Tokens come from the Brandbook — change one in{' '}
           <code className="font-mono text-xs">globals.css</code> and everything
           here updates with it.
+        </p>
+        <p className="max-w-2xl rounded-md border bg-card p-3 text-sm text-muted-foreground">
+          <strong className="font-semibold text-foreground">
+            Opt-in preview.
+          </strong>{' '}
+          This page sits inside the brand scope (
+          <code className="font-mono text-xs">data-theme=&quot;ym&quot;</code>
+          ). No other screen uses it yet — the sidebar beside this page is the
+          app&apos;s current styling, unchanged. Screens adopt the brand one at
+          a time, each as its own reviewable change.
         </p>
       </header>
 
       <Section
         title="Themes"
-        description="Three complete themes, each anchored on its palette's darkest base. Set data-side='brothers' or 'sisters' on any element to theme it and everything inside. Nothing sets this automatically yet — the users table has no side field."
+        description="Three complete themes, each anchored on its palette's darkest base. General is the page-level data-theme='ym' scope; set data-side='brothers' or 'sisters' on any element to theme it and everything inside. Nothing sets these on a real screen yet."
       >
         <div className="grid gap-4 lg:grid-cols-3">
           <ThemePreview name="General" anchor="Deep Obsidian #171725" />
@@ -320,7 +331,7 @@ export default function DesignSystemPage() {
 
       <Section
         title="Sidebar tokens"
-        description="The sidebar is the app's branded dark surface and re-colors with the active theme. These moved off a separate HSL system onto OKLCH, so opacity modifiers now work on them."
+        description="The branded dark sidebar surface, re-colored per theme. Still HSL channels, like the app's existing sidebar, so nothing about how the sidebar is styled today changes."
       >
         <SwatchGrid swatches={SIDEBAR} />
       </Section>
@@ -414,11 +425,11 @@ export default function DesignSystemPage() {
           <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="ds-name">Full name</Label>
-              <Input id="ds-name" placeholder="Yusuf Abdullah" />
+              <Input id="ds-name" name="name" autoComplete="off" placeholder="Yusuf Abdullah…" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="ds-email">Email</Label>
-              <Input id="ds-email" type="email" placeholder="you@youngmuslims.com" />
+              <Input id="ds-email" name="email" type="email" autoComplete="off" spellCheck={false} placeholder="you@youngmuslims.com…" />
             </div>
           </CardContent>
         </Card>

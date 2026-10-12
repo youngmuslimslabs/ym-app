@@ -21,7 +21,8 @@
 - **Notifications: use Sonner via `import { toast } from 'sonner'`** — never inline status strips inside Sheets/Dialogs. Toaster is mounted globally in `src/app/layout.tsx` at `top-center`. Inline error chrome (e.g., destructive border around a wrong-input field) is the right pattern for validation correction; toasts are for transient confirmations and unexpected errors.
 - OKLCH color tokens in CSS variables, Tailwind wraps with `oklch(var(...) / <alpha-value>)`
 - Sidebar tokens use HSL (separate system from main OKLCH tokens)
-- Brand color: `#254FA0` → `oklch(0.445 0.14 261.872)` light, `oklch(0.65 0.14 261.872)` dark
+- Brand color: `#254FA0` → `oklch(0.445 0.14 261.872)` light, `oklch(0.65 0.14 261.872)` dark. This is what every existing screen uses; `:root` and `.dark` are the legacy tokens.
+- **Brand theme is opt-in, not global** — the Brandbook palette (Royal Blue `#234080`, Warm Snow, Obsidian sidebar), Figtree and -2% tracking only apply inside `data-theme="ym"` (currently just `/design-system`, via its `layout.tsx`, which also loads the fonts). Brothers/Sisters themes are `data-side="brothers|sisters"` on any subtree. Adopt the brand screen by screen, each in its own draft PR, never by editing `:root`. `brand-*` Tailwind colors are fixed (not themed) and support `/opacity`.
 - Animations: `duration-200` standardized across custom components (shadcn primitives keep their own timing)
 - Card padding: `p-6`. Empty states: Lucide icon in `rounded-full bg-muted/50 p-4`, no emojis, no CTAs
 - Responsive: test at 375px, 393px, 430px, 1280px+

@@ -11,9 +11,12 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        // Figtree is the body face for everything; Boldonse is headlines only.
-        sans: ['var(--font-figtree)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-boldonse)', 'var(--font-figtree)', 'sans-serif'],
+        // `--font-sans-active` is only set inside the opt-in `data-theme='ym'`
+        // scope (Figtree, loaded by the /design-system layout); everywhere else
+        // it is undefined and `sans` stays Geist, exactly as before.
+        sans: ['var(--font-sans-active, var(--font-geist-sans))', 'system-ui', 'sans-serif'],
+        // Boldonse is for headlines only (Brandbook p.34). Also scope-provided.
+        display: ['var(--font-boldonse)', 'var(--font-sans-active, var(--font-geist-sans))', 'sans-serif'],
         mono: ['var(--font-geist-mono)', 'monospace'],
       },
       letterSpacing: {
@@ -75,21 +78,15 @@ const config = {
           '4': 'oklch(var(--chart-4) / <alpha-value>)',
           '5': 'oklch(var(--chart-5) / <alpha-value>)',
         },
-        /**
-         * Sidebar tokens moved from their own HSL system onto OKLCH, matching
-         * every other token. Side effect worth knowing: these now support
-         * Tailwind opacity modifiers — `text-sidebar-foreground/70` was
-         * silently a no-op under plain `hsl(var(--x))` and now actually works.
-         */
         sidebar: {
-          DEFAULT: 'oklch(var(--sidebar-background) / <alpha-value>)',
-          foreground: 'oklch(var(--sidebar-foreground) / <alpha-value>)',
-          primary: 'oklch(var(--sidebar-primary) / <alpha-value>)',
-          'primary-foreground': 'oklch(var(--sidebar-primary-foreground) / <alpha-value>)',
-          accent: 'oklch(var(--sidebar-accent) / <alpha-value>)',
-          'accent-foreground': 'oklch(var(--sidebar-accent-foreground) / <alpha-value>)',
-          border: 'oklch(var(--sidebar-border) / <alpha-value>)',
-          ring: 'oklch(var(--sidebar-ring) / <alpha-value>)',
+          DEFAULT: 'hsl(var(--sidebar-background))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          primary: 'hsl(var(--sidebar-primary))',
+          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+          accent: 'hsl(var(--sidebar-accent))',
+          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+          ring: 'hsl(var(--sidebar-ring))',
         },
 
         /**
@@ -101,18 +98,18 @@ const config = {
          */
         brand: {
           // General palette — the app's foundation
-          obsidian: 'oklch(0.2118 0.0275 283.806)', // #171725 Deep Obsidian
-          snow: 'oklch(0.9861 0.0034 67.784)', //     #FCFAF8 Warm Snow
-          royal: 'oklch(0.3865 0.1137 263.626)', //   #234080 Royal Blue
-          jade: 'oklch(0.5089 0.0839 155.775)', //    #397451 Jade Foliage
+          obsidian: 'oklch(0.2118 0.0275 283.806 / <alpha-value>)', // #171725 Deep Obsidian
+          snow: 'oklch(0.9861 0.0034 67.784 / <alpha-value>)', //     #FCFAF8 Warm Snow
+          royal: 'oklch(0.3865 0.1137 263.626 / <alpha-value>)', //   #234080 Royal Blue
+          jade: 'oklch(0.5089 0.0839 155.775 / <alpha-value>)', //    #397451 Jade Foliage
           // Brothers palette
-          midnight: 'oklch(0.2875 0.074 262.653)', // #16294F Midnight Blue
-          sky: 'oklch(0.641 0.1309 251.419)', //      #4A90D9 Sky Blue
-          slate: 'oklch(0.7413 0.0451 255.956)', //   #99ADC8 Cool Slate
+          midnight: 'oklch(0.2875 0.074 262.653 / <alpha-value>)', // #16294F Midnight Blue
+          sky: 'oklch(0.641 0.1309 251.419 / <alpha-value>)', //      #4A90D9 Sky Blue
+          slate: 'oklch(0.7413 0.0451 255.956 / <alpha-value>)', //   #99ADC8 Cool Slate
           // Sisters palette
-          forest: 'oklch(0.2824 0.0565 164.37)', //   #043222 Deep Forest Green
-          buttercup: 'oklch(0.8618 0.1448 97.929)', //#EBD255 Buttercup Yellow
-          brass: 'oklch(0.7617 0.1283 83.979)', //    #D8AA45 Warm Brass
+          forest: 'oklch(0.2824 0.0565 164.37 / <alpha-value>)', //   #043222 Deep Forest Green
+          buttercup: 'oklch(0.8618 0.1448 97.929 / <alpha-value>)', //#EBD255 Buttercup Yellow
+          brass: 'oklch(0.7617 0.1283 83.979 / <alpha-value>)', //    #D8AA45 Warm Brass
         },
       },
       keyframes: {

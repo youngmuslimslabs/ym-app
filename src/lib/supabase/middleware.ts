@@ -6,14 +6,14 @@ import { claimUserByEmail } from '@/lib/supabase/claim-user'
 import { isSide, SIDE_COOKIE, SIDE_COOKIE_MAX_AGE, type Side } from '@/lib/side'
 
 /**
- * Routes reachable without a session. `/design-system` is here because it is
- * the review surface for the brand work and has to be openable on Netlify
+ * Routes reachable without a session. `/design-system` and `/design-preview` are here because they are
+ * the review surface for the brand work and have to be openable on Netlify
  * deploy previews, where Google sign-in fails with `origin_mismatch` — each
  * preview gets a fresh hostname and Google does not accept wildcard JS
- * origins (#81). It renders design tokens and sample components only: no user
+ * origins (#81). They render design tokens and sample components only: no user
  * data, no Supabase reads.
  */
-const PUBLIC_PREFIXES = ['/login', '/auth', '/legal-lol', '/api/legal-lol', '/design-system']
+const PUBLIC_PREFIXES = ['/login', '/auth', '/legal-lol', '/api/legal-lol', '/design-system', '/design-preview']
 
 function isPublicPath(pathname: string) {
     return pathname === '/' || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))

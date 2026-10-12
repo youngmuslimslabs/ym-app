@@ -18,6 +18,7 @@ import { SkillsChipSelector } from './components/SkillsChipSelector'
 import { SaveButton } from './components/SaveButton'
 import { ProfilePageSkeleton } from './components/ProfilePageSkeleton'
 import { MemberAvatar } from '@/components/brand/member-avatar'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   UnsavedChangesModal,
   useUnsavedChangesWarning,
@@ -138,6 +139,8 @@ export default function ProfilePage() {
     setPendingNavigation(null)
   }
 
+  const displayName = `${profileData?.firstName ?? ''} ${profileData?.lastName ?? ''}`.trim()
+
   if (isLoading) {
     return <ProfilePageSkeleton />
   }
@@ -145,48 +148,57 @@ export default function ProfilePage() {
   return (
     <ProfileModeProvider isEditable={true}>
       <div className="flex min-h-screen flex-col bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-16 items-center gap-4 px-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleNavigationAttempt('/home')}
-            className="shrink-0"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="sr-only">Back to home</span>
-          </Button>
+      {/* Main Content. Phones get 44px tap targets on the controls the sections
+          render (inputs, selects, comboboxes) and on the skill chips. */}
+      <main
+        className={[
+          'flex-1 px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pt-8',
+          'max-sm:[&_input:not([type=checkbox])]:h-11',
+          'max-sm:[&_[role=combobox]]:min-h-11',
+          'max-sm:[&_div:has(>button[aria-pressed])]:gap-y-3',
+          'max-sm:[&_div:has(>button[aria-pressed])>button]:-my-1.5',
+          'max-sm:[&_div:has(>button[aria-pressed])>button]:py-1.5',
+        ].join(' ')}
+      >
+        <div className="mx-auto max-w-2xl space-y-12">
+          <div className="space-y-6">
+            {/* Not PageHeader's `back` link: leaving with edits has to go through
+                the unsaved-changes guard, which a plain link would bypass. */}
+            <button
+              type="button"
+              onClick={() => handleNavigationAttempt('/home')}
+              className="-ml-1 inline-flex min-h-11 w-fit items-center gap-1 rounded-md pr-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Home
+            </button>
 
-          <div className="flex items-center gap-3">
-            {/* Your own avatar follows your theme, so no side is passed */}
-            <MemberAvatar
-              name={`${profileData?.firstName ?? ''} ${profileData?.lastName ?? ''}`.trim() || 'Your profile'}
-              src={profileData?.avatarUrl}
-              size="sm"
-              className="size-10"
-            />
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">My Profile</h1>
-              <p className="text-sm text-muted-foreground">
-                Manage your personal information
-              </p>
+            <PageHeader title="My Profile" description="Manage your personal information" />
+
+            <div className="flex items-center gap-4 rounded-2xl border bg-card p-6">
+              {/* Your own avatar follows your theme, so no side is passed */}
+              <MemberAvatar
+                name={displayName || 'Your profile'}
+                src={profileData?.avatarUrl}
+                size="lg"
+              />
+              <div className="min-w-0">
+                <p className="truncate text-lg font-bold">{displayName || 'Your profile'}</p>
+                {formData.googleEmail && (
+                  <p className="truncate text-sm text-muted-foreground">{formData.googleEmail}</p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 px-6 py-8 pb-24">
-        <div className="mx-auto max-w-2xl space-y-12">
           {/* Error State */}
           {error && (
-            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
+            <div className="rounded-2xl border border-destructive/50 bg-destructive/10 p-6 text-center">
               <p className="text-sm text-destructive">{error}</p>
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-4"
+                className="mt-4 min-h-11"
                 onClick={() => window.location.reload()}
               >
                 Try Again

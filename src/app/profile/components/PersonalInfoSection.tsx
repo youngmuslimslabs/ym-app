@@ -113,7 +113,7 @@ export function PersonalInfoSection({
                 <span className="text-muted-foreground">
                   <Globe className="h-4 w-4" />
                 </span>
-                Nationality
+                Ethnicity
               </Label>
               <SearchableCombobox
                 options={NATIONALITY_OPTIONS}
@@ -125,8 +125,8 @@ export function PersonalInfoSection({
                     : undefined
                 }
                 onChange={(v) => onEthnicityChange(v?.value ?? '')}
-                placeholder="Select your nationality"
-                searchPlaceholder="Search nationalities…"
+                placeholder="Select your ethnicity"
+                searchPlaceholder="Search ethnicities…"
                 allowCustom
                 // Show the full ~191-nationality list (scrollable) rather than the
                 // default 50-item cap, which truncated the un-searched list at "D".
@@ -166,7 +166,7 @@ export function PersonalInfoSection({
             )}
 
             <ReadOnlyField
-              label="Nationality"
+              label="Ethnicity"
               value={ethnicity}
               icon={<Globe className="h-4 w-4" />}
             />

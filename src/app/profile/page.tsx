@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { usePostHog } from 'posthog-js/react'
 import { User, ArrowLeft } from 'lucide-react'
@@ -39,6 +40,7 @@ const EMPTY_PROFILE_DATA: ProfileFormState = {
 }
 
 export default function ProfilePage() {
+  const router = useRouter()
   const posthog = usePostHog()
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
@@ -99,7 +101,7 @@ export default function ProfilePage() {
       setPendingNavigation(href)
       setShowUnsavedModal(true)
     } else {
-      window.location.href = href
+      router.push(href)
     }
   }
 
@@ -111,7 +113,7 @@ export default function ProfilePage() {
       } catch { /* observability */ }
       setShowUnsavedModal(false)
       if (pendingNavigation) {
-        window.location.href = pendingNavigation
+        router.push(pendingNavigation)
       }
     } else {
       console.error('Save profile failed:', result.error)
@@ -127,7 +129,7 @@ export default function ProfilePage() {
     resetForm()
     setShowUnsavedModal(false)
     if (pendingNavigation) {
-      window.location.href = pendingNavigation
+      router.push(pendingNavigation)
     }
   }
 

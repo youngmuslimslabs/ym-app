@@ -80,6 +80,11 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Which side's logo <Logo> shows (components/brand/logo.tsx). General
+       unless a Brothers/Sisters scope below says otherwise. */
+    --ym-logo-general: block;
+    --ym-logo-brothers: none;
+    --ym-logo-sisters: none;
   }
 
   /**
@@ -99,6 +104,9 @@
     /* Brand body face. Figtree's `--font-figtree` is defined by the layout
        that loads it, on this same element; elsewhere `font-sans` is Geist. */
     --font-sans-active: var(--font-figtree);
+    --ym-logo-general: block;
+    --ym-logo-brothers: none;
+    --ym-logo-sisters: none;
     --background: 0.9861 0.0034 67.784;      /* #FCFAF8 Warm Snow */
     --foreground: 0.2118 0.0275 283.806;     /* #171725 Deep Obsidian */
     --card: 1 0 0;                           /* #FFFFFF — lifts off Warm Snow */
@@ -123,6 +131,11 @@
        needs 4.5:1. True #D8AA45 is `brand-brass`. */
     --warning: 0.50 0.128 83.979;
     --warning-foreground: 0.9861 0.0034 67.784;
+    /* The palette's bright accent, for fills, blobs and accent words on dark
+       blocks, never small type on white. Buttercup for General (Brandbook p.49
+       sets place names in it). */
+    --highlight: 0.8618 0.1448 97.929;       /* #EBD255 Buttercup Yellow */
+    --highlight-foreground: 0.2118 0.0275 283.806;
     --border: 0.91 0.004 67.784;
     --input: 0.91 0.004 67.784;
     --ring: 0.3865 0.1137 263.626;
@@ -131,16 +144,17 @@
     --chart-3: 0.641 0.1309 251.419;         /* Sky Blue */
     --chart-4: 0.7617 0.1283 83.979;         /* Warm Brass */
     --chart-5: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
-    /* Sidebar — the branded dark surface, anchored on Deep Obsidian. HSL
-       channels, converted from the brand hex (#171725 etc.). */
-    --sidebar-background: 240 23.3% 11.8%;   /* #171725 Deep Obsidian */
-    --sidebar-foreground: 30 40% 98%;        /* #FCFAF8 Warm Snow */
-    --sidebar-primary: 220.8 45.4% 45.1%;    /* Royal Blue, lifted */
+    /* Sidebar: white, one neutral chrome for every side (redesign direction B,
+       "Obsidian": the page has a single dark block, the Home hero). The side
+       colour shows only on the active item. */
+    --sidebar-background: 0 0% 100%;         /* Pure White */
+    --sidebar-foreground: 240 23.3% 11.8%;   /* #171725 Deep Obsidian */
+    --sidebar-primary: 221.3 57% 32% /* #234080 Royal Blue */;
     --sidebar-primary-foreground: 30 40% 98%;
-    --sidebar-accent: 239.3 17.4% 17.3%;     /* hover — Obsidian +1 step */
-    --sidebar-accent-foreground: 30 40% 98%;
-    --sidebar-border: 239.2 16.2% 20.4%;
-    --sidebar-ring: 210.6 65.3% 57.1%;       /* #4A90D9 Sky Blue */
+    --sidebar-accent: 30 15.1% 94%;          /* hover — Warm Snow, stepped down */
+    --sidebar-accent-foreground: 240 23.3% 11.8%;
+    --sidebar-border: 30 7.6% 88.1%;
+    --sidebar-ring: 221.3 57% 32% /* #234080 Royal Blue */;
   }
 
   /**
@@ -149,12 +163,15 @@
    * the soft neutral. Per the book, Midnight and Royal carry text; Sky and
    * Slate are fills only.
    *
-   * Applied via a `data-side` attribute on any subtree (which is how
-   * /design-system previews all three). Each side block is a complete token
-   * set, so it does not need `data-theme="ym"` as well. Nothing sets it on a
-   * real screen yet — `users` has no side column on this branch.
+   * Applied via `data-theme-side` on a subtree: <BrandScope side="brothers">
+   * sets it together with `data-theme="ym"`, and /design-system previews all
+   * three. Each side block is a complete token set. Not `data-side`: Radix
+   * popper content and the shadcn Sidebar already use that attribute.
    */
-  [data-side='brothers'] {
+  [data-theme-side='brothers'] {
+    --ym-logo-general: none;
+    --ym-logo-brothers: block;
+    --ym-logo-sisters: none;
     --background: 0.985 0.005 255.956;       /* whisper of Cool Slate */
     --foreground: 0.2875 0.074 262.653;      /* #16294F Midnight Blue */
     --card: 1 0 0;                           /* #FFFFFF Pure White */
@@ -175,6 +192,8 @@
     --success-foreground: 1 0 0;
     --warning: 0.50 0.128 83.979;
     --warning-foreground: 1 0 0;
+    --highlight: 0.641 0.1309 251.419;       /* #4A90D9 Sky Blue */
+    --highlight-foreground: 0.2875 0.074 262.653;
     --border: 0.90 0.018 255.956;            /* Cool Slate, light */
     --input: 0.90 0.018 255.956;
     --ring: 0.3865 0.1137 263.626;
@@ -183,14 +202,17 @@
     --chart-3: 0.641 0.1309 251.419;         /* Sky Blue */
     --chart-4: 0.7413 0.0451 255.956;        /* Cool Slate */
     --chart-5: 0.5089 0.0839 155.775;        /* Jade Foliage */
-    --sidebar-background: 220 56.4% 19.8%;   /* Midnight Blue */
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 210.6 65.3% 57.1%;     /* Sky Blue */
-    --sidebar-primary-foreground: 220.7 68.1% 7.6%;  /* deeper than Midnight: 5.7:1 on Sky (Midnight is 4.3:1) */
-    --sidebar-accent: 219.8 46.7% 26.4%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 219.7 43.5% 29.7%;
-    --sidebar-ring: 210.6 65.3% 57.1%;
+    /* Sidebar: white, one neutral chrome for every side (redesign direction B,
+       "Obsidian": the page has a single dark block, the Home hero). The side
+       colour shows only on the active item. */
+    --sidebar-background: 0 0% 100%;         /* Pure White */
+    --sidebar-foreground: 240 23.3% 11.8%;   /* #171725 Deep Obsidian */
+    --sidebar-primary: 221.3 57% 32% /* #234080 Royal Blue */;
+    --sidebar-primary-foreground: 30 40% 98%;
+    --sidebar-accent: 30 15.1% 94%;          /* hover — Warm Snow, stepped down */
+    --sidebar-accent-foreground: 240 23.3% 11.8%;
+    --sidebar-border: 30 7.6% 88.1%;
+    --sidebar-ring: 221.3 57% 32% /* #234080 Royal Blue */;
   }
 
   /**
@@ -199,7 +221,10 @@
    * Brass adds richness. Per the book, Forest and Jade carry text; Buttercup
    * and Brass are for fills and large elements only.
    */
-  [data-side='sisters'] {
+  [data-theme-side='sisters'] {
+    --ym-logo-general: none;
+    --ym-logo-brothers: none;
+    --ym-logo-sisters: block;
     --background: 0.985 0.004 164.37;        /* whisper of Forest */
     --foreground: 0.2824 0.0565 164.37;      /* #043222 Deep Forest Green */
     --card: 1 0 0;                           /* #FFFFFF Pure White */
@@ -222,6 +247,8 @@
     --success-foreground: 1 0 0;
     --warning: 0.50 0.128 83.979;            /* Brass hue, darkened for type */
     --warning-foreground: 1 0 0;
+    --highlight: 0.8618 0.1448 97.929;       /* #EBD255 Buttercup Yellow */
+    --highlight-foreground: 0.2824 0.0565 164.37;
     --border: 0.90 0.015 164.37;
     --input: 0.90 0.015 164.37;
     --ring: 0.5089 0.0839 155.775;
@@ -230,14 +257,17 @@
     --chart-3: 0.7617 0.1283 83.979;         /* Warm Brass */
     --chart-4: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
     --chart-5: 0.641 0.1309 251.419;         /* Sky Blue */
-    --sidebar-background: 159.1 85.3% 10.6%;  /* Deep Forest Green */
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 144.4 34.1% 33.9%;    /* Jade Foliage */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 156.7 51.8% 16.9%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 156.1 45.3% 19.9%;
-    --sidebar-ring: 50 78.9% 62.7%;        /* Buttercup Yellow */
+    /* Sidebar: white, one neutral chrome for every side (redesign direction B,
+       "Obsidian": the page has a single dark block, the Home hero). The side
+       colour shows only on the active item. */
+    --sidebar-background: 0 0% 100%;         /* Pure White */
+    --sidebar-foreground: 240 23.3% 11.8%;   /* #171725 Deep Obsidian */
+    --sidebar-primary: 144.4 34.1% 33.9% /* #397451 Jade Foliage */;
+    --sidebar-primary-foreground: 30 40% 98%;
+    --sidebar-accent: 30 15.1% 94%;          /* hover — Warm Snow, stepped down */
+    --sidebar-accent-foreground: 240 23.3% 11.8%;
+    --sidebar-border: 30 7.6% 88.1%;
+    --sidebar-ring: 144.4 34.1% 33.9% /* #397451 Jade Foliage */;
   }
 
   /* Dark mode is not yet reachable — nothing adds `.dark` to <html> (see the
@@ -265,6 +295,8 @@
     --success-foreground: 0.2118 0.0275 283.806;
     --warning: 0.7617 0.1283 83.979;         /* #D8AA45 Warm Brass */
     --warning-foreground: 0.2118 0.0275 283.806;
+    --highlight: 0.8618 0.1448 97.929;
+    --highlight-foreground: 0.2118 0.0275 283.806;
     --border: 0.30 0.02 283.806;
     --input: 0.30 0.02 283.806;
     --ring: 0.65 0.1137 263.626;
@@ -285,7 +317,7 @@
 
   /* Side themes are light-mode only for now. When the dark-mode toggle lands
      (docs/project-todos.md, "Wire up dark mode toggle"), add
-     `.dark [data-side='brothers']` / `[data-side='sisters']` blocks here —
+     `.dark[data-theme-side='brothers']` / `[data-theme-side='sisters']` blocks here —
      until then a side theme under `.dark` falls back to General dark, which
      is unreachable today. */
 }
@@ -328,88 +360,45 @@
   }
 }
 
-/* Login Page — Geometric Pattern + Frosted Glass */
-.login-bg {
-  background:
-    radial-gradient(ellipse at 30% 20%, oklch(var(--primary) / 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, oklch(var(--primary) / 0.06) 0%, transparent 50%),
-    oklch(var(--background));
-}
-
-.login-bg::before {
-  content: '';
-  position: fixed;
-  inset: -500px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='200'%3E%3Cg fill='none' stroke='%23254FA0' stroke-width='0.6' opacity='0.15'%3E%3Cpath d='M0,4 Q125,5,250,4 T500,4'/%3E%3Cpath d='M0,12 Q125,16,250,12 T500,12'/%3E%3Cpath d='M0,20 Q125,26,250,20 T500,20'/%3E%3Cpath d='M0,28 Q125,36,250,28 T500,28'/%3E%3Cpath d='M0,36 Q125,45,250,36 T500,36'/%3E%3Cpath d='M0,44 Q125,54,250,44 T500,44'/%3E%3Cpath d='M0,52 Q125,62,250,52 T500,52'/%3E%3Cpath d='M0,60 Q125,70,250,60 T500,60'/%3E%3Cpath d='M0,68 Q125,76,250,68 T500,68'/%3E%3Cpath d='M0,76 Q125,83,250,76 T500,76'/%3E%3Cpath d='M0,84 Q125,89,250,84 T500,84'/%3E%3Cpath d='M0,92 Q125,95,250,92 T500,92'/%3E%3Cpath d='M0,100 Q125,100,250,100 T500,100'/%3E%3Cpath d='M0,108 Q125,105,250,108 T500,108'/%3E%3Cpath d='M0,116 Q125,111,250,116 T500,116'/%3E%3Cpath d='M0,124 Q125,117,250,124 T500,124'/%3E%3Cpath d='M0,132 Q125,124,250,132 T500,132'/%3E%3Cpath d='M0,140 Q125,130,250,140 T500,140'/%3E%3Cpath d='M0,148 Q125,138,250,148 T500,148'/%3E%3Cpath d='M0,156 Q125,146,250,156 T500,156'/%3E%3Cpath d='M0,164 Q125,155,250,164 T500,164'/%3E%3Cpath d='M0,172 Q125,164,250,172 T500,172'/%3E%3Cpath d='M0,180 Q125,174,250,180 T500,180'/%3E%3Cpath d='M0,188 Q125,184,250,188 T500,188'/%3E%3Cpath d='M0,196 Q125,195,250,196 T500,196'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 500px 200px;
-  animation: patternDrift 120s linear infinite;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.login-bg::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(ellipse at center, transparent 40%, oklch(var(--background) / 0.6) 100%);
-  z-index: 0;
-  pointer-events: none;
-}
-
-.login-orb {
-  position: fixed;
-  border-radius: 9999px;
-  filter: blur(80px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.login-orb-1 {
-  width: 300px;
-  height: 300px;
-  top: -60px;
-  right: -60px;
-  background: oklch(var(--primary) / 0.08);
-  animation: loginFloat1 20s ease-in-out infinite;
-}
-
-.login-orb-2 {
-  width: 250px;
-  height: 250px;
-  bottom: -40px;
-  left: -40px;
-  background: oklch(var(--primary) / 0.08);
-  animation: loginFloat2 25s ease-in-out infinite;
-}
-
-@keyframes patternDrift {
-  from { transform: translate(0, 0); }
-  to { transform: translate(500px, 200px); }
-}
-
-@keyframes loginFloat1 {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-20px, 20px); }
-}
-
-@keyframes loginFloat2 {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(20px, -20px); }
-}
-
-@keyframes loginCardEntry {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* Login entrance (components/auth/YMLoginForm.tsx) */
 @keyframes loginFadeUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .login-bg::before,
-  .login-orb {
-    animation: none;
+/**
+ * Type scale (Brandbook p.35). One class per level, so a heading is one
+ * decision instead of five utilities:
+ *   .ym-display  Boldonse, caps — hero moments (login, home greeting)
+ *   .ym-h1       Boldonse, caps — page titles
+ *   .ym-h2       Figtree Bold — sub-headlines, section titles
+ *   .ym-h3       Figtree SemiBold — in-text headlines, card titles
+ *   .ym-eyebrow  Figtree SemiBold, caps — labels above a title, nav
+ * Body copy is the default (Figtree Regular inside the brand scope) and needs
+ * no class. These are only used by screens that have adopted the brand.
+ */
+@layer components {
+  .ym-display {
+    @apply font-display text-display uppercase;
   }
+  .ym-h1 {
+    @apply font-display text-h1 uppercase;
+  }
+  .ym-h2 {
+    @apply text-h2 font-bold;
+  }
+  .ym-h3 {
+    @apply text-h3 font-semibold;
+  }
+  .ym-eyebrow {
+    @apply text-eyebrow font-semibold uppercase;
+  }
+}
+
+@layer utilities {
+  /* Side-aware logo switching: the nearest themed ancestor wins, because the
+     custom properties above inherit. Outside a brand scope it is General. */
+  .ym-logo-general { display: var(--ym-logo-general, block); }
+  .ym-logo-brothers { display: var(--ym-logo-brothers, none); }
+  .ym-logo-sisters { display: var(--ym-logo-sisters, none); }
 }

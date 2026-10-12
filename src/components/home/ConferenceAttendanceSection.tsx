@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 
 import { fetchUpcomingAttendance } from '@/lib/supabase/queries'
+import type { UpcomingAttendance } from '@/lib/supabase/queries/conferences'
 import { cn } from '@/lib/utils'
 
 const MONTH_DAY = new Intl.DateTimeFormat('en-US', {
@@ -58,7 +59,11 @@ export function conferenceDateTile(startDate: string, endDate: string): { month:
 export async function ConferenceAttendanceSection() {
   const attendance = await fetchUpcomingAttendance()
   if (!attendance) return null
+  return <ConferenceAttendanceCard attendance={attendance} />
+}
 
+/** The card itself, separate from the fetch so it can render from sample data. */
+export function ConferenceAttendanceCard({ attendance }: { attendance: UpcomingAttendance }) {
   const dateRange = formatConferenceDateRange(
     attendance.startDate,
     attendance.endDate

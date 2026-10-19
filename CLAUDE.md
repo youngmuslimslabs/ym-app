@@ -72,6 +72,7 @@ All profile list sections use `ExpandableCardList` → `ExpandableCard` and must
 
 ## Git
 - Conventional commits: `feat:`, `fix:`, `docs:`, etc.
+- Create regular PRs by default; use a draft only when explicitly requested.
 - **NEVER include Claude as co-author or add AI-generated footers**
 - Branches: `main` is the integration branch; cut `feature/*` from `main` and merge back to `main`
 - Pre-prod, no `dev` or staging branch — revisit when we go to production

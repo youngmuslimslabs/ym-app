@@ -1,5 +1,9 @@
 # YM App — Product Roadmap
 
+## 2026-10-19 — Issue templates (#80)
+
+- ✅ **[DONE — implementation]** Added GitHub forms for bugs, features, parent initiatives and implementation tasks/sub-issues. Required fields capture reproducibility or acceptance/verification, and the contributor guide explains native hierarchy. YAML and form structure validated locally. **Pending:** merge to main so the issue chooser can display them; no existing issue or board ownership was changed.
+
 > **Immediate goal: get the app working to test live at a convention on ~July 14 2026 (2 weeks away).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
 ## Confirmed product decisions (do not relitigate)

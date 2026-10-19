@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a new capability or an improvement with clear acceptance criteria.
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and affected users
+      description: Explain the need before describing the proposed solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include the member/admin experience and any data or permission changes.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      placeholder: |
+        In scope:
+        Out of scope:
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable, testable outcomes. Include empty/error states or access rules when relevant.
+      placeholder: "- [ ] A member can..."
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification approach
+      description: Explain how the outcomes can be checked with test data.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and open decisions
+      description: Parent issue, blockers, Figma/spec links and unresolved product questions. Write None when there are no known dependencies.

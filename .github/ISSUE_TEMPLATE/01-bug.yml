@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a reproducible problem in the YM app or its backend.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Search existing issues first. This repository is public: redact member details and credentials from screenshots, logs and recordings."
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is broken?
+      description: Describe who is affected and what they cannot do.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Frontend / user interface
+        - Backend / database
+        - Authentication / onboarding
+        - Infrastructure / deployment
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the page or API, account role and steps. Use test data instead of member details.
+      placeholder: "1. Sign in as a regular member..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected and actual behavior
+      placeholder: |
+        Expected:
+        Actual:
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Live app, preview or local; browser/device; approximate time and timezone; affected version or commit if known.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and related issues
+      description: Redacted screenshots, error messages, reproduction recordings or links to existing issues.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: How to verify the fix
+      description: Describe the behavior that would prove the problem is resolved, including any nearby flow that must keep working.

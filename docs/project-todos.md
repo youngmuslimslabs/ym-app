@@ -1,5 +1,9 @@
 # YM App — Product Roadmap
 
+## 2026-10-19 — Shared developer workflows (#87)
+
+- ✅ **[DONE — implementation]** Added repository skills for code review, regression testing, browser verification and release readiness. Corrected the existing database skill's stale disposable-DB assumption and reset/ledger-rewrite workflow; the shared project is live and populated. Both project skill directories reference one canonical copy. Frontmatter/naming validated and repository commands/references reviewed. No global skill installation or production workflow execution was performed. Adoption by the team follows merge.
+
 > **Immediate goal: get the app working to test live at a convention on ~July 14 2026 (2 weeks away).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
 ## Confirmed product decisions (do not relitigate)

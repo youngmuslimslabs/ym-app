@@ -6,7 +6,7 @@ description: Use when changing the ym-app Supabase database — editing the sche
 # YM Database Changes
 
 ## Overview
-One Supabase Postgres project (ref `todqvyzdvpnwuuonxwch`, dashboard name `ym-app-dev`). The schema is **one consolidated baseline**; reference data is **one seed**. It is pre-prod and throwaway — the remote gets wiped and users re-sync from Google Workspace before real users onboard.
+The shared Supabase Postgres project (ref `todqvyzdvpnwuuonxwch`, dashboard name `ym-app-dev`) holds live member data. Its name does **not** make it a disposable development database. The consolidated baseline describes a fresh rebuild; it does not authorize resetting the shared project. Use an isolated local/preview database for replay tests and follow the user's actual authorization for live changes.
 
 ## Layout
 - `supabase/migrations/00001_initial_schema.sql` — the entire schema (enums, tables, indexes, functions, triggers, RLS, realtime). The old `00001`–`00019` chain was squashed here 2026-07-06.
@@ -33,20 +33,29 @@ PSQL=(psql -h aws-1-us-east-2.pooler.supabase.com -p 5432 -U postgres.todqvyzdvp
 - Package manager is **bun**: type-check with `bunx tsc --noEmit`.
 
 ## Making a change
-1. **Back up first** for anything destructive (same pooler host/user as `PSQL` above):
-   `pg_dump -h aws-1-us-east-2.pooler.supabase.com -p 5432 -U postgres.todqvyzdvpnwuuonxwch -d postgres -n public -f backup_public.sql`
-2. **Edit** `00001_initial_schema.sql` (greenfield/rebuild) — reconstruct from **live**, never hand-write, so you can't silently drop an object:
-   `pg_get_functiondef`, `pg_policies`, `pg_get_constraintdef`, `pg_indexes`, `pg_publication_tables`.
-   For an incremental change to an already-populated DB later, add `000NN_name.sql` instead.
-3. **Apply atomically** — wrap drop + `\i 00001_initial_schema.sql` + `\i seed.sql` in ONE transaction. On any error the whole thing rolls back and nothing is lost, so this doubles as a clean-replay test:
-   `"${PSQL[@]}" --single-transaction -v ON_ERROR_STOP=1 -f reset.sql`
-   `--single-transaction` wraps every `-c`/`-f` in ONE transaction, so a partial/additive apply (a few `ALTER`s + `-f seed.sql -f seed_geography.sql`) is atomic too — any error rolls the whole thing back.
-   Drop app objects but **keep the `public` schema** so Supabase grants + default privileges survive (new tables stay reachable by anon/authenticated).
-4. **Fix the migration ledger** after a manual rebuild:
-   `delete from supabase_migrations.schema_migrations; insert into supabase_migrations.schema_migrations(version,name) values ('00001','initial_schema');`
-5. **Regenerate types + verify**:
-   `npx supabase gen types typescript --linked --schema public > src/types/database.types.ts && bunx tsc --noEmit`
-6. **After a wipe, re-run the Google Workspace sync** — users repopulate from there, not the seed.
+1. Inspect the current catalog and migration ledger read-only. Use
+   `pg_get_functiondef`, `pg_policies`, `pg_get_constraintdef`, `pg_indexes` and
+   `pg_publication_tables` rather than assuming the baseline matches the hosted DB.
+2. For an already-populated project, add an **incremental migration** with a unique
+   number, checking open PRs for reserved numbers. A baseline-only edit does not
+   deploy a change to existing data. Edit the baseline only for an explicitly
+   requested fresh-schema rebuild; never use a reset as a routine migration.
+3. Replay the chain on an isolated database and test permission/failure behavior.
+   Prepare the intended delta and recovery procedure before a live apply. An
+   encryption/restore workflow may be available on the current branch; check it.
+4. Before an authorized live change, verify the target and take a private backup.
+   Include Auth identities and migration history as well as public app data when
+   the recovery plan needs them. Never commit or publicly upload a raw dump.
+5. Apply the reviewed incremental file atomically with `psql -X`,
+   `--single-transaction` and `-v ON_ERROR_STOP=1` (or the migration's own explicit
+   transaction). Do not drop app objects or rewrite the migration ledger as part
+   of ordinary application. A committed migration is not evidence it was applied.
+6. Regenerate public types when the public schema/RPC interface changes, using
+   a temporary output file; replace `src/types/database.types.ts` only after the
+   command succeeds. Then run `bunx tsc --noEmit` and the relevant checks. Policy-
+   only changes do not require a generated type change. Report local/preview/live
+   verification separately. Do not wipe accounts or run Directory sync as a
+   validation shortcut.
 
 ## Rules of thumb
 - Keep unique constraints that guard onboarding double-submit (`idx_*_unique`, one-active-membership). CLAUDE.md: "use unique constraints to prevent race conditions."

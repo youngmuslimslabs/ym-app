@@ -1,0 +1,38 @@
+name: Implementation task / sub-issue
+description: Describe one bounded piece of frontend, backend, infrastructure or operational work.
+title: "[Task] "
+body:
+  - type: input
+    id: parent
+    attributes:
+      label: Parent issue
+      description: Link the initiative or write None for standalone work. Attach the native parent relationship after creating the issue.
+      placeholder: "#123 or None"
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Required change
+      description: Explain the current behavior and the intended result for this task.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: "- [ ] ..."
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Specific checks, test cases, evidence or a manual acceptance step.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Blockers and rollout requirements
+      description: Related PRs/issues, credentials, migrations, review or external setup. Write None if no known blockers.

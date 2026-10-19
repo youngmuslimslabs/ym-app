@@ -1,0 +1,37 @@
+name: Parent initiative
+description: Define a larger outcome that will be delivered through linked sub-issues.
+title: "[Initiative] "
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome and reason
+      description: State the user or operational problem and the result this initiative should achieve.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and boundaries
+      description: Identify the included areas and explicitly deferred work.
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: Completion criteria
+      description: Define when the initiative can close, including required rollout or acceptance work.
+    validations:
+      required: true
+  - type: textarea
+    id: breakdown
+    attributes:
+      label: Proposed sub-issues
+      description: List the work packages or existing issue links. After creation, attach them using GitHub's sub-issues control; a list of links alone does not establish hierarchy.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies, release and open decisions
+      description: Identify blockers and the intended milestone if known. Do not invent a release date.

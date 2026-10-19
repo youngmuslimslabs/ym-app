@@ -13,15 +13,35 @@
 
 ## Data population model (how real data gets in)
 
-There is **no bulk import** and **no data-model validation step**. Real org data enters three ways:
+The original population model uses self-selection. Issue #83 now has a prepared,
+reviewed-CSV additive role importer (`docs/roles/collection-and-import.md`); actual
+SRC submissions and live import remain pending. Real org data enters three ways:
 
 1. **Users** — created by the Google Workspace sync (`scripts/sync-google-users.ts`: writes email + first/last name + avatar) and/or on first login via the auth trigger. No manual user import. **Status: 1,823 real users already loaded in prod** — the sync has run.
-2. **Roles + memberships** — **self-selected by each user during onboarding** (`onboarding.ts` saveStep3 = `role_assignments`, saveStep2 = membership). NOT imported. **Status: only ~8 memberships / ~18 role_assignments exist** — because real users can't place themselves until the real geography seed lands (#1).
+2. **Roles + memberships** — self-selected during onboarding (`role_assignments` and memberships). The #83 importer additionally prepares verified current roles, without changing memberships or creating users. Historical counts below are not a current live inventory.
 3. **Geography (regions / subregions / neighbor_nets)** — **owner-maintained seed data** (P0 #1). **Status:** placeholders removed in the 2026-07 squash; `seed.sql` now seeds `role_types` only. Real geography still owner-pending — the top remaining blocker.
 
 ## Branching & Environments
 
-Single environment — no `dev`/`staging`. Cut `feature/*` from `main`; test on the **Netlify deploy preview**; merge to `main` (production). **Host is Netlify** (`netlify.toml` is source of truth). Migrations apply directly to the one Supabase project — review carefully and **back up before applying** (P0 #7 / P1 #10).
+Cut `feature/*` from `main`; merge to `main` (production). Host: Netlify.
+Issue #81 adds guards requiring a separate Supabase target for previews and the
+GitHub Preview E2E environment. Hosted preview configuration is still pending;
+`todqvyzdvpnwuuonxwch` remains the live/shared project and is explicitly denied to
+preview builds. See `docs/platform/preview-environments.md`. Review migrations
+and back up before applying; no live database change was made in this session.
+
+## Platform work — 2026-10-19 (#81, #60, #82, #83)
+
+- ✅ **[DONE — implementation] #81 preview isolation guard and runbook.** Configuration tests reject missing/live/mismatched targets and inherited admin secrets. GitHub E2E requires isolated Preview configuration. **Pending:** separate project, Netlify contexts, Google origins and a hosted signed-in smoke test.
+- ✅ **[DONE — implementation] #60 encrypted backup workflow and recovery rehearsal.** Manual/main-CI triggers, encrypted-only public artifacts and 30-day retention. Synthetic local dump → encrypt → decrypt → restore passes with row counts and RPC ACL preserved. **Pending:** Production database secret, public encryption recipient, first hosted run and managed-Supabase recovery rehearsal.
+- ✅ **[DONE — repository audit] #82 access inventory, fixes and SQL regression suite.** Migration 00026 protects organization reads, identity fields, old/new system-role rows and anonymous RPC access. Direct-database tests pass. See `docs/platform/security-audit-2026-10-19.md`. **Pending:** security-owner review, live catalog comparison and backed-up migration application. Coordinate with open #47 and #92; accepted app-layer check-in limits are recorded explicitly.
+- **[OPEN — #82 dependency remediation]** Critical advisory scan passes; high scan reports 46 advisories, including sharp/ws and build/test dependencies. Triage runtime exposure, update affected dependency chains and verify separately; no lockfile changes are included in this platform work.
+- ✅ **[DONE — tooling] #83 collection workbook/CSV and additive importer.** Reference lists contain 19 seeded roles and 166 seeded scope keys. Unit/database tests cover validation, rollback, idempotency and role capacity. **Pending:** refresh lists against live data, distribute/collect/verify SRC submissions, approve/import and reassess onboarding roles. No outreach or member-data import was performed.
+
+Validation: 375 existing app tests pass with the project's Node 20 runtime; lint
+has no errors (existing warnings remain), and TypeScript checks pass. The database
+regression workflow targets PostgreSQL 17; local SQL/recovery tests used PostgreSQL
+18 with synthetic Auth fixtures, not the hosted Supabase Auth service.
 
 ---
 

@@ -1,0 +1,56 @@
+name: Database backup
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-24.04
+    environment: Production
+    timeout-minutes: 15
+    steps:
+      # Never checkout the triggering PR/branch in this privileged workflow.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Install encryption tool
+        run: sudo apt-get update && sudo apt-get install -y age
+      - name: Dump and encrypt using PostgreSQL 17
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+        run: |
+          test -n "$SUPABASE_DB_URL" || { echo 'Configure Production secret SUPABASE_DB_URL'; exit 1; }
+          test -n "$BACKUP_AGE_RECIPIENT" || { echo 'Configure Production variable BACKUP_AGE_RECIPIENT'; exit 1; }
+          mkdir -p "$RUNNER_TEMP/ym-backup"
+          docker run --rm --network host \
+            -e SUPABASE_DB_URL -e BACKUP_AGE_RECIPIENT \
+            -v "$GITHUB_WORKSPACE/scripts/platform:/scripts:ro" \
+            -v "$RUNNER_TEMP/ym-backup:/output" \
+            -v /usr/bin/age:/usr/local/bin/age:ro \
+            postgres:17-bookworm bash /scripts/backup.sh /output
+      - name: Retain encrypted snapshot for 30 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ym-backup/*.dump.age
+          if-no-files-found: error
+          retention-days: 30

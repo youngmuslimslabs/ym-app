@@ -1,5 +1,12 @@
 ## YM App
 
+### Platform operations
+
+- [Preview environments](platform/preview-environments.md)
+- [Encrypted database backups and recovery](platform/database-backups.md)
+- [Access-control audit](platform/security-audit-2026-10-19.md)
+- [SRC role collection and import](roles/collection-and-import.md)
+
 Young Muslim's proprietary application that serves to create a database of organization leadership, track meaningful metrics in the field of tarbiyah, PDP, Study circle, and overall organizational operations. By consolidating this information, the application streamlines leadership management and strengthens overall organizational effectiveness.
 
 <br> 

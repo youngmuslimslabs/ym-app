@@ -9,11 +9,13 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:workspace": "vitest run --config vitest.workspace.config.mts",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "db:types": "bunx supabase gen types typescript --project-id todqvyzdvpnwuuonxwch > src/types/database.types.ts",
-    "sync:google": "bun run scripts/sync-google-users.ts"
+    "sync:google": "bun run scripts/sync-google-users.ts",
+    "audit:workspace": "bun run scripts/workspace/audit.ts"
   },
   "dependencies": {
     "@opentelemetry/api-logs": "^0.219.0",

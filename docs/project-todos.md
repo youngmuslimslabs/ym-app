@@ -1,9 +1,5 @@
 # YM App — Product Roadmap
 
-## 2026-10-19 — Shared developer workflows (#87)
-
-- ✅ **[DONE — implementation]** Added repository skills for code review, regression testing, browser verification and release readiness. Corrected the existing database skill's stale disposable-DB assumption and reset/ledger-rewrite workflow; the shared project is live and populated. Both project skill directories reference one canonical copy. Frontmatter/naming validated and repository commands/references reviewed. No global skill installation or production workflow execution was performed. Adoption by the team follows merge.
-
 > **Immediate goal: get the app working to test live at a convention on ~July 14 2026 (2 weeks away).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
 ## Confirmed product decisions (do not relitigate)
@@ -145,6 +141,10 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 # 🔮 Future Roadmap (post-MVP)
 
 ## Quality & Test Hardening (begin right after launch)
+
+### 2026-10-19 — Shared developer workflows (#87)
+
+- ✅ **[DONE — implementation]** Added repository skills for code review, regression testing, browser verification and release readiness. Corrected the existing database skill's stale disposable-DB assumption and reset/ledger-rewrite workflow; the shared project is live and populated. Both project skill directories reference one canonical copy. Frontmatter/naming validated and repository commands/references reviewed. No global skill installation or production workflow execution was performed. Adoption by the team follows merge.
 
 - Authenticated onboarding E2E (un-skip `e2e/onboarding.spec.ts:29`) — **first item post-launch**; every merge to prod is unguarded until then. Needs a seeded test user + `storageState` fixture.
 - Authenticated auth E2E — signed-in redirects, domain validation (un-skip `e2e/auth.spec.ts:61`)

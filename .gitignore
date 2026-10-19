@@ -56,3 +56,6 @@ supabase/.temp/
 
 # git worktrees
 .worktrees/
+
+# Workspace exports/review plans contain member and account information.
+/private-data/

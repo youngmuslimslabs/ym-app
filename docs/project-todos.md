@@ -193,6 +193,10 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 
 ## Exploratory Spikes (research / ideation — no implementation yet)
 
+### 2026-10-19 — Workspace account audit (#84)
+
+- ✅ **[DONE — tooling]** Added read-only, customer-wide Directory collection plus JSON/Admin-CSV audit input. Produces private inventory/findings and an unapproved account/alias review plan; namesakes, unknown admin status and address conflicts are handled conservatively. Synthetic unit/CLI tests and TypeScript validation cover the tool. **Pending:** real Directory access/export, review with the existing issue owner, approved account-specific changes and post-change login/mail checks. No Workspace or app account was changed.
+
 - **Employment data integration** — referral network across members' companies (LinkedIn API limits, privacy/GDPR)
 - **Collective social media feed** — unified Instagram feed across NeighborNets (API restrictions, moderation)
 - **User engagement & retention** — social features, gamification, community features, personal value (prayer times, masjid info), notifications

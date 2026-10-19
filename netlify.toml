@@ -1,5 +1,5 @@
 [build]
-  command = "bun run build"
+  command = "node scripts/platform/check-preview-env.mjs && bun run build"
   publish = ".next"
 
 [build.environment]
@@ -17,7 +17,13 @@
 
 # Deploy Preview settings (for PRs)
 [context.deploy-preview]
-  command = "bun run build"
+  command = "node scripts/platform/check-preview-env.mjs && bun run build"
+
+[context.branch-deploy]
+  command = "node scripts/platform/check-preview-env.mjs && bun run build"
+
+[context.preview-server]
+  command = "node scripts/platform/check-preview-env.mjs && bun run build"
 
 # Production settings — inject + upload source maps to PostHog after build
 # Requires POSTHOG_CLI_PERSONAL_API_KEY in Netlify environment variables

@@ -1,0 +1,4 @@
+-- Run with psql from a private working folder. Exports reference values only.
+\set ON_ERROR_STOP on
+\copy (SELECT code,name,scope_type,max_per_scope FROM public.role_types WHERE category<>'system' ORDER BY sort_order) TO 'role-codes.csv' CSV HEADER
+\copy (SELECT 'region' AS scope_type,code AS scope_key,name FROM public.regions WHERE is_active UNION ALL SELECT 'subregion',code,name FROM public.subregions WHERE is_active UNION ALL SELECT 'neighbor_net',sr.code || '/' || nn.name,nn.name FROM public.neighbor_nets nn JOIN public.subregions sr ON sr.id=nn.subregion_id WHERE nn.is_active AND sr.is_active UNION ALL SELECT 'cabinet_department',code,name FROM public.cabinet_departments WHERE is_active UNION ALL SELECT 'cabinet_team',cd.code || '/' || ct.name,ct.name FROM public.cabinet_teams ct JOIN public.cabinet_departments cd ON cd.id=ct.department_id WHERE ct.is_active AND cd.is_active ORDER BY 1,2) TO 'scope-keys.csv' CSV HEADER

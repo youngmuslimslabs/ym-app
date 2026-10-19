@@ -56,3 +56,10 @@ supabase/.temp/
 
 # git worktrees
 .worktrees/
+
+# Operational files contain member data or database snapshots; never commit.
+/private-data/
+/backups/
+*.dump
+*.dump.age
+*.private.sql

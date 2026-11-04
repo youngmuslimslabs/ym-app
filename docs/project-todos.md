@@ -240,3 +240,7 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 - Resolved: local jsdom CJS load error — the `lru-cache` override in `package.json` fixed it; the full vitest suite runs clean locally.
 - **CI already runs the full gate** — lint + tsc + `bun audit` + `vitest --coverage` + `next build` + Playwright e2e (`ci.yml`). The remaining gap is making it *blocking* (P1 #20), not adding steps.
 - 4 silent-data-loss holes in the admin schedule editor; color-coded role badge variants (PR #21); iOS Safari install banner (`IOSInstallPrompt`)
+
+### Figma implementation — 2026-11-04
+- ✅ **[DONE]** Login layout translated from Figma 109:196 / 109:350: Figtree, unified logo, exact decorative SVGs, quiet centered layout; real Google Identity Services retained. Wrong-account alert and signing-in status remain accessible. Layout review fixtures and responsive checks tracked in the follow-on preview PR.
+- Home and onboarding implementation in progress in separate focused PRs. Profile overview, navigation restructure, and mobile session-editor proposals still require product review.

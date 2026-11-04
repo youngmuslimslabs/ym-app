@@ -250,7 +250,7 @@ export default function GoogleSignInButton({
 
         {/* Loading overlay */}
         {isLoading && (
-          <div className="flex items-center justify-center mt-2">
+          <div role="status" className="flex items-center justify-center mt-2">
             <span className="text-sm text-muted-foreground">
               Signing in...
             </span>

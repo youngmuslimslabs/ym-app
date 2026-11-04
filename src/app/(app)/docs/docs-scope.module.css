@@ -1,0 +1,10 @@
+.scope {
+  --background: 0.9861 0.0034 67.784;
+  --foreground: 0.2118 0.0275 283.806;
+  --card: 1 0 0;
+  --card-foreground: 0.2118 0.0275 283.806;
+  --border: 0.7413 0.0451 255.956;
+  --muted-foreground: 0.359 0.021 290;
+  --secondary: 0.915 0.011 255.956;
+  --secondary-foreground: 0.2118 0.0275 283.806;
+}

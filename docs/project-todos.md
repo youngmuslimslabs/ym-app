@@ -1,5 +1,13 @@
 # YM App — Product Roadmap
 
+## Current approved feature delivery — 4 November 2026
+
+- **User confirmed:** screens without improvement comments are approved. Implement and push ONLY those screens by feature. Commented screens and derived revisions need Figma work first; their code drafts are on hold. No further design approval is required for comment-free screens.
+- ✅ **[DONE — implementation] Docs:** approved overview, expanded categories and loading states (Figma 112:18051 / 112:18276 / 112:18507 / 112:18591 / 122:12934 / 122:13133) implemented in `feature/approved-docs`, directly from foundation #88. Existing destinations and multiple-open accordion behavior retained. Scope excludes commented navigation and all Login/Home/onboarding/Profile/editor work. Review fixture: `/design-system/docs/`, sample links only. Full suite 377/377; final responsive validation recorded with the PR.
+- **On hold:** mixed #99/#101, Profile #104/#111, editor #105, Login #112, Home #113, onboarding #114. Existing branches preserved. Directory #102 and member conferences #103 require feature/screen scope reconciliation before delivery; do not pull in the held parent #99.
+- **Still open:** current-head hosted preview, hosted audit remediation and isolated authenticated validation. Finance expansion remains deferred.
+
+
 > **Immediate goal: get the app working to test live at a convention on ~July 14 2026 (2 weeks away).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
 ## Design reconciliation — 4 November 2026

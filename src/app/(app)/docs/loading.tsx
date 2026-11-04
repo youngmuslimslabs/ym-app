@@ -1,49 +1,10 @@
-import { FileText } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 
-/** Loading UI for the docs page. */
 export default function DocsLoading() {
-  return (
-    <div className="min-h-[calc(100vh-3.5rem)] md:min-h-screen px-4 py-8 md:px-6 md:py-12">
-      <div className="mx-auto max-w-3xl space-y-12">
-        {/* Page Header */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
-              <FileText className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="space-y-1.5">
-              <Skeleton className="h-7 w-24" />
-              <Skeleton className="h-4 w-56" />
-            </div>
-          </div>
-        </div>
-
-        {/* Resources Section */}
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <Skeleton className="h-6 w-28" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <div className="space-y-1">
-            <Skeleton className="h-11 w-full rounded-md" />
-            <Skeleton className="h-11 w-full rounded-md" />
-            <Skeleton className="h-11 w-full rounded-md" />
-          </div>
-        </div>
-
-        {/* SOPs Section */}
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <Skeleton className="h-6 w-64" />
-            <Skeleton className="h-4 w-52" />
-          </div>
-          <div className="space-y-4">
-            <Skeleton className="h-12 w-full rounded-md" />
-            <Skeleton className="h-12 w-full rounded-md" />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  return <div role="status" aria-label="Loading documents" className="w-full max-w-[1064px] space-y-6 px-4 py-5 sm:px-8 sm:py-8">
+    <div className="space-y-3"><Skeleton className="h-7 w-24 bg-secondary" /><Skeleton className="h-4 w-4/5 max-w-sm bg-secondary" /></div>
+    <div className="space-y-3"><Skeleton className="h-5 w-32 bg-secondary" /><div className="divide-y divide-border overflow-hidden rounded-3xl border bg-card">{[0, 1].map(row => <div key={row} className="flex min-h-14 items-center gap-4 p-4"><Skeleton className="size-6 rounded-full bg-secondary" /><Skeleton className="h-4 w-3/5 bg-secondary" /></div>)}</div></div>
+    <div className="space-y-3"><Skeleton className="h-5 w-56 max-w-full bg-secondary" /><div className="divide-y divide-border overflow-hidden rounded-3xl border bg-card">{[0, 1, 2, 3, 4].map(row => <div key={row} className="flex min-h-14 items-center gap-4 p-4"><Skeleton className="h-4 w-2/5 bg-secondary" /><Skeleton className="h-6 w-14 rounded-full bg-secondary" /></div>)}</div></div>
+    <span className="sr-only">Loading documents…</span>
+  </div>
 }

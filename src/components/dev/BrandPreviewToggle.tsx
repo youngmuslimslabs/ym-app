@@ -10,19 +10,17 @@ import { useEffect, useState } from 'react'
  * It only exists when NEXT_PUBLIC_BRAND_PREVIEW=1, which is set for local runs
  * and Netlify deploy previews and never for production. In a production build
  * this component renders nothing and never touches the DOM. Nothing here edits
- * a screen: it only sets `data-theme` / `data-side` on <html>, which the tokens
+ * a screen: it only sets `data-theme` on <html>, which the tokens
  * in globals.css already key off.
  *
- * Also works via URL: ?brand=ym | brothers | sisters | off
+ * Also works via URL: ?brand=ym | off
  */
 const ENABLED = process.env.NEXT_PUBLIC_BRAND_PREVIEW === '1'
 const STORAGE_KEY = 'ym-brand-preview'
 
 const OPTIONS = [
   { value: 'off', label: 'Current' },
-  { value: 'ym', label: 'General' },
-  { value: 'brothers', label: 'Brothers' },
-  { value: 'sisters', label: 'Sisters' },
+  { value: 'ym', label: 'Shared brand' },
 ] as const
 type Mode = (typeof OPTIONS)[number]['value']
 
@@ -32,22 +30,22 @@ function isMode(v: string | null): v is Mode {
 
 function apply(mode: Mode) {
   const root = document.documentElement
-  if (mode === 'off') {
-    delete root.dataset.theme
-    delete root.dataset.side
-    return
-  }
-  // General is the base scope; Brothers/Sisters sit on top of it.
-  root.dataset.theme = 'ym'
-  if (mode === 'ym') delete root.dataset.side
-  else root.dataset.side = mode
+  // Retire persisted attributes from previous preview versions.
+  delete root.dataset.side
+  delete root.dataset.themeSide
+  if (mode === 'off') delete root.dataset.theme
+  else root.dataset.theme = 'ym'
+
 }
 
 function readStored(): Mode {
   try {
     const fromUrl = new URLSearchParams(window.location.search).get('brand')
     if (isMode(fromUrl)) return fromUrl
+    // Old program-specific links become the shared preview.
+    if (fromUrl === 'brothers' || fromUrl === 'sisters') return 'ym'
     const stored = window.localStorage.getItem(STORAGE_KEY)
+    if (stored === 'brothers' || stored === 'sisters') return 'ym'
     return isMode(stored) ? stored : 'off'
   } catch {
     return 'off'

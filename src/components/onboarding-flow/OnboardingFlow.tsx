@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ChevronLeft, Check, MapPin, BadgeCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -50,7 +50,7 @@ const DOB_FROM_YEAR = 1940
 const DOB_TO_YEAR = new Date().getFullYear() - 10
 
 interface OnboardingFlowProps {
-  onComplete?: (answers: Record<string, unknown>) => void
+  onComplete?: (answers: Record<string, unknown>) => void | boolean | Promise<void | boolean>
   // Real reference data (injected by the authenticated page). When omitted, the
   // hardcoded preview lists are used so the anonymous preview + tests still work.
   subregions?: SelectOption[]
@@ -66,6 +66,8 @@ export function OnboardingFlow({
 }: OnboardingFlowProps) {
   const flow = useOnboardingFlow(STEPS)
   const [submitting, setSubmitting] = useState(false)
+  const submittingRef = useRef(false)
+  const [saveFailed, setSaveFailed] = useState(false)
   const val = (id: string) => (flow.answers[id] as string) ?? ''
   const set = (id: string, v: string) => flow.setAnswer(id, v)
   const choose = (id: string, v: string) => {
@@ -73,7 +75,7 @@ export function OnboardingFlow({
     flow.next()
   }
 
-  const progress = Math.round((flow.index / (STEPS.length - 1)) * 100)
+  const progress = Math.round(((flow.index + 1) / STEPS.length) * 100)
   // Show Back on every non-first step, including the final "done" screen — a user
   // who realizes they picked the wrong role/nationality needs a way back to fix it
   // before entering the app.
@@ -147,11 +149,15 @@ export function OnboardingFlow({
           label="Which subregion are you in?"
           options={subregions}
           value={val('subregion')}
+          presentation="list"
+          searchLabel="Search subregions"
+          help="Choose the subregion where you take part in YM."
+          emptyHelp="Can’t find your subregion? Contact your YM coordinator."
           placeholder="Select your subregion"
           onSelect={(v) => {
             // reset dependent neighbornet when subregion changes
             if (v !== val('subregion')) set('neighbornet', '')
-            choose('subregion', v)
+            set('subregion', v)
           }}
           onNext={flow.next}
         />
@@ -163,8 +169,12 @@ export function OnboardingFlow({
           label="And your NeighborNet?"
           options={neighborNetsFor(val('subregion'))}
           value={val('neighbornet')}
+          presentation="list"
+          searchLabel="Search NeighborNets"
+          help="Choose your local NeighborNet."
+          emptyHelp="Can’t find your NeighborNet? Go back to check your subregion or contact your YM coordinator."
           placeholder="Select your NeighborNet"
-          onSelect={(v) => choose('neighbornet', v)}
+          onSelect={(v) => set('neighbornet', v)}
           onNext={flow.next}
         />
       )
@@ -188,7 +198,7 @@ export function OnboardingFlow({
       )?.label
       const roleLabel = roles.find((o) => o.value === val('role'))?.label
       content = (
-        <div className="flex flex-col gap-8">
+        <div className="ym-onboarding-step">
           <div className="flex flex-col gap-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
               <Check className="h-3.5 w-3.5" strokeWidth={3} /> You&rsquo;re all set
@@ -197,8 +207,8 @@ export function OnboardingFlow({
               Welcome to Young Muslims.
             </h1>
             <p className="text-[15px] leading-relaxed text-muted-foreground">
-              You&rsquo;re in the directory and placed in your NeighborNet. Round out the rest of
-              your profile whenever you&rsquo;re ready — it unlocks the full app.
+              Your NeighborNet and role are ready. Enter the app to save your answers.
+              You can add the rest of your profile later.
             </p>
           </div>
 
@@ -221,23 +231,32 @@ export function OnboardingFlow({
             </dl>
           )}
 
+          {saveFailed && <p role="alert" className="rounded-xl border border-destructive p-4 text-sm text-destructive">We couldn’t save your information. Your answers are still here. Please try again.</p>}
           <Button
             size="lg"
-            className="w-full"
+            className="mt-auto min-h-11 w-full rounded-[10px]"
             disabled={submitting}
             onClick={async () => {
-              // Guard against a double-tap: onComplete writes the profile and
-              // stamps the (immutable-once-set) onboarding flag, so a second
-              // in-flight call would error on an otherwise-successful signup.
+              if (submittingRef.current) return
+              submittingRef.current = true
               setSubmitting(true)
+              setSaveFailed(false)
+              let navigated = false
               try {
-                await onComplete?.(flow.answers)
+                const saved = await onComplete?.(flow.answers)
+                navigated = saved === true
+                if (saved === false) setSaveFailed(true)
+              } catch {
+                setSaveFailed(true)
               } finally {
-                setSubmitting(false)
+                if (!navigated) {
+                  submittingRef.current = false
+                  setSubmitting(false)
+                }
               }
             }}
           >
-            {submitting ? 'Entering…' : 'Enter the app'}
+            {submitting ? 'Entering…' : saveFailed ? 'Try again' : 'Enter the app'}
           </Button>
         </div>
       )
@@ -246,25 +265,17 @@ export function OnboardingFlow({
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5">
-      <div className="pt-6">
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-primary/15">
-          <div
-            className="h-full rounded-full bg-primary transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
+    <div className="ym-revised-screen min-h-dvh bg-background">
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 py-6 sm:px-8">
+        <div className="mx-5 space-y-2">
+          <div className="flex min-h-11 items-center justify-between text-xs">
+            {showBack ? <button type="button" onClick={flow.back} disabled={submitting} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ChevronLeft className="size-5" aria-hidden="true" />Back</button> : <span />}
+            <span>Step {flow.index + 1} of {STEPS.length}</span>
+          </div>
+          <div role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={flow.index + 1} className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full bg-primary transition-all duration-200 motion-reduce:transition-none" style={{ width: `${progress}%` }} /></div>
         </div>
+        <div key={flow.stepId} className="flex flex-1 flex-col pt-8">{content}</div>
       </div>
-      {showBack && (
-        <button
-          type="button"
-          onClick={flow.back}
-          className="mt-4 -ml-1 flex w-fit items-center gap-1 rounded-md px-1 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:fixed sm:left-6 sm:top-6 sm:z-10 sm:mt-0 sm:ml-0"
-        >
-          <ChevronLeft className="h-4 w-4" /> Back
-        </button>
-      )}
-      <div className="flex flex-1 flex-col justify-center py-8">{content}</div>
     </div>
   )
 }

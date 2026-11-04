@@ -61,10 +61,10 @@ describe('ConferenceAttendanceSection', () => {
     mockFetchUpcomingAttendance.mockReset()
   })
 
-  it('returns null when there is no upcoming attendance', async () => {
+  it('shows a clear empty state when there is no upcoming attendance', async () => {
     mockFetchUpcomingAttendance.mockResolvedValue(null)
     const { container } = await renderAsync(ConferenceAttendanceSection())
-    expect(container).toBeEmptyDOMElement()
+    expect(container).toHaveTextContent('No upcoming conferences')
   })
 
   it('renders eyebrow, name, dates, and a link to the conference', async () => {
@@ -78,10 +78,10 @@ describe('ConferenceAttendanceSection', () => {
     })
     await renderAsync(ConferenceAttendanceSection())
 
-    expect(screen.getByText('You’re going')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Attending' })).toBeInTheDocument()
     expect(screen.getByText('· Houston, TX')).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { level: 2, name: 'YM Annual Conference 2026' }),
+      screen.getByRole('heading', { level: 3, name: 'YM Annual Conference 2026' }),
     ).toBeInTheDocument()
     expect(screen.getByText('April 30 – May 2')).toBeInTheDocument()
 

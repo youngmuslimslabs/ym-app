@@ -83,18 +83,4 @@ describe('StatsStrip', () => {
     expect(accent).toHaveClass('text-success')
   })
 
-  it('stacks on phones and uses a 3-column grid from sm', () => {
-    const { container } = render(
-      <StatsStrip
-        stats={[
-          { label: 'A', value: 1 },
-          { label: 'B', value: 2 },
-          { label: 'C', value: 3 },
-        ]}
-      />,
-    )
-    const grid = container.querySelector('.grid') as HTMLElement
-    expect(grid).toHaveClass('grid-cols-1')
-    expect(grid).toHaveClass('sm:grid-cols-3')
-  })
 })

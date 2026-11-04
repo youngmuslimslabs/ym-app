@@ -88,9 +88,9 @@ describe('TextStep (Typeform: type then Enter)', () => {
     expect(screen.getByText(/valid email address/i)).toBeInTheDocument()
   })
 
-  it('shows a "press Enter" hint', () => {
+  it('exposes the question as the text field’s accessible name', () => {
     render(<TextStep label="Phone" value="" onChange={vi.fn()} onNext={vi.fn()} />)
-    expect(screen.getByText(/press enter/i)).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Phone' })).toBeInTheDocument()
   })
 })
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 function StepHeader({ label, help }: { label: string; help?: string }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight text-balance">{label}</h1>
+      <h1 className="text-[22px] font-bold tracking-brand sm:text-[28px] text-balance">{label}</h1>
       {help && <p className="mt-2 text-sm text-muted-foreground">{help}</p>}
     </div>
   )
@@ -53,6 +53,7 @@ export function TextStep({
   validate,
   errorMessage,
 }: TextStepProps) {
+  const fieldId = useId()
   const [touched, setTouched] = useState(false)
   // With a validator, advance only when VALID; otherwise fall back to non-empty.
   const canAdvance = validate ? validate(value) : value.trim().length > 0
@@ -61,10 +62,13 @@ export function TextStep({
   const showError = touched && value.trim().length > 0 && !!validate && !validate(value)
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="ym-onboarding-step">
       <StepHeader label={label} help={help} />
       <div className="flex flex-col gap-1.5">
         <Input
+          id={fieldId}
+          aria-label={label}
+          aria-describedby={showError ? `${fieldId}-error` : undefined}
           type={type}
           inputMode={inputMode}
           autoComplete={autoComplete}
@@ -81,17 +85,16 @@ export function TextStep({
             }
           }}
           className={cn(
-            'h-14 text-base',
+            'h-12 rounded-[10px] bg-card text-base',
             showError && 'border-destructive focus-visible:ring-destructive',
           )}
         />
         {showError && errorMessage && (
-          <p className="text-sm text-destructive">{errorMessage}</p>
+          <p id={`${fieldId}-error`} role="alert" className="text-sm text-destructive">{errorMessage}</p>
         )}
       </div>
-      <div className="flex items-center justify-end gap-3">
-        <span className="text-xs text-muted-foreground">press Enter ↵</span>
-        <Button onClick={onNext} disabled={!canAdvance} className="min-w-32">
+      <div className="ym-onboarding-actions">
+        <Button onClick={onNext} disabled={!canAdvance} className="min-h-11 w-full rounded-[10px]">
           {ctaLabel}
         </Button>
       </div>
@@ -112,16 +115,12 @@ interface SelectStepProps {
   value?: string
   placeholder?: string
   help?: string
+  presentation?: 'dropdown' | 'list'
+  searchLabel?: string
+  emptyHelp?: string
 }
 
-/**
- * Typeform single choice on the proven shadcn <Select>. Picking an option fires
- * onSelect (the flow sets the answer and auto-advances). The Continue button is
- * the forward affordance when a value is already set — e.g. after navigating Back
- * to an answered screen, where no new selection fires.
- * NOTE (roadmap): later upgrade to full-width tappable tiles + search-at-top /
- * the Nationality soft-suggestion combobox — see docs/project-todos.md.
- */
+/** Reuse the existing dropdown for Role; reviewed geography uses visible rows. */
 export function SelectStep({
   label,
   options,
@@ -130,9 +129,13 @@ export function SelectStep({
   value,
   placeholder = 'Select an option',
   help,
+  presentation = 'dropdown',
+  searchLabel = 'Search choices',
+  emptyHelp,
 }: SelectStepProps) {
+  if (presentation === 'list') return <VisibleChoiceStep label={label} help={help} options={options} value={value} onSelect={onSelect} onNext={onNext} searchLabel={searchLabel} emptyHelp={emptyHelp} />
   return (
-    <div className="flex flex-col gap-6">
+    <div className="ym-onboarding-step">
       <StepHeader label={label} help={help} />
       <ResponsiveSelect
         options={options}
@@ -141,8 +144,8 @@ export function SelectStep({
         placeholder={placeholder}
         triggerClassName="h-14 text-base"
       />
-      <div className="flex justify-end">
-        <Button onClick={onNext} disabled={!value} className="min-w-32">
+      <div className="ym-onboarding-actions">
+        <Button onClick={onNext} disabled={!value} className="min-h-11 w-full rounded-[10px]">
           Continue
         </Button>
       </div>
@@ -187,7 +190,7 @@ export function ComboboxStep({
     : undefined
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="ym-onboarding-step">
       <StepHeader label={label} help={help} />
       <SearchableCombobox
         options={options}
@@ -203,8 +206,8 @@ export function ComboboxStep({
         // nationalities cut off at "D") and force users to type to find the rest.
         maxDisplayed={options.length}
       />
-      <div className="flex justify-end">
-        <Button onClick={onNext} disabled={!value} className="min-w-32">
+      <div className="ym-onboarding-actions">
+        <Button onClick={onNext} disabled={!value} className="min-h-11 w-full rounded-[10px]">
           Continue
         </Button>
       </div>
@@ -237,7 +240,7 @@ export function DateStep({
   toYear,
 }: DateStepProps) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="ym-onboarding-step">
       <StepHeader label={label} help={help} />
       <DatePicker
         id="onboarding-dob"
@@ -248,11 +251,34 @@ export function DateStep({
         toYear={toYear}
         className="h-14 text-base"
       />
-      <div className="flex justify-end">
-        <Button onClick={onNext} disabled={!value} className="min-w-32">
+      <div className="ym-onboarding-actions">
+        <Button onClick={onNext} disabled={!value} className="min-h-11 w-full rounded-[10px]">
           Continue
         </Button>
       </div>
     </div>
   )
+}
+
+function VisibleChoiceStep({ label, help, options, value, onSelect, onNext, searchLabel, emptyHelp }: SelectStepProps) {
+  const id = useId()
+  const [query, setQuery] = useState('')
+  const matches = options.filter(option => option.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+  const validSelection = options.some(option => option.value === value)
+  return <div className="ym-onboarding-step">
+    <StepHeader label={label} />
+    <div className="space-y-2"><label htmlFor={id} className="text-sm">{searchLabel}</label>
+      <Input id={id} type="search" value={query} placeholder="Search by name" onChange={event => setQuery(event.target.value)} className="h-12 rounded-[10px] bg-card" />
+      {help && <p className="pt-2 text-xs text-muted-foreground">{help}</p>}
+    </div>
+    <fieldset className="min-w-0 space-y-2"><legend className="sr-only">{label}</legend>
+      {matches.map(option => <label key={option.value} className={cn('relative flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-[10px] border bg-card px-4 py-3 text-center text-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2', value === option.value && 'border-primary bg-secondary')}>
+        <input type="radio" name={`${id}-choice`} value={option.value} checked={value === option.value} onChange={() => onSelect(option.value)} className="sr-only" />
+        {option.label}{value === option.value && <span aria-hidden="true">✓</span>}
+      </label>)}
+      {!matches.length && <div role="status" className="space-y-2 rounded-xl border bg-card p-4 text-sm"><p>{options.length ? 'No matches found.' : 'No options are available here yet.'}</p>{query && <Button type="button" variant="outline" className="min-h-11" onClick={() => setQuery('')}>Clear search</Button>}</div>}
+    </fieldset>
+    {emptyHelp && <p className="text-xs text-muted-foreground">{emptyHelp}</p>}
+    <div className="ym-onboarding-actions"><Button onClick={onNext} disabled={!validSelection} className="min-h-11 w-full rounded-[10px]">Continue</Button></div>
+  </div>
 }

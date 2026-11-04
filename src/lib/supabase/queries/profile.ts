@@ -279,10 +279,10 @@ export async function fetchCurrentUserProfile(): Promise<{
       return { data: null, error: 'Not authenticated' }
     }
 
-    // Fetch user profile by auth_id
+    // Resolve auth_id → users.id (fetchUserProfileById reads the full row)
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('*')
+      .select('id')
       .eq('auth_id', authUser.id)
       .single()
 

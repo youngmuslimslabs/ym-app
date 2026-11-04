@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Logo } from '@/components/brand/logo'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -269,8 +270,7 @@ export default function DesignSystemPage() {
           </strong>{' '}
           This page sits inside the brand scope (
           <code className="font-mono text-xs">data-theme=&quot;ym&quot;</code>
-          ). No other screen uses it yet — the sidebar beside this page is the
-          app&apos;s current styling, unchanged. Screens adopt the brand one at
+          ). Routes adopt this shared scope individually; the sidebar beside this page retains the current styling. Screens adopt the brand one at
           a time, each as its own reviewable change.
         </p>
       </header>
@@ -280,6 +280,12 @@ export default function DesignSystemPage() {
         description="One shared Young Muslims experience. Palette colors are available to every member; no program selection or separate app themes."
       >
         <ThemePreview name="Young Muslims" anchor="Deep Obsidian #171725" />
+      </Section>
+
+      <Section title="Unified logos" description="Official unified assets used by every member. Program-specific originals remain source reference assets only.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(['mark', 'full', 'wordmark', 'stacked'] as const).map(variant => <div key={variant} className="space-y-3 rounded-lg border bg-card p-6"><Logo variant={variant} className="h-12 max-w-full text-primary" /><p>{variant}</p></div>)}
+        </div>
       </Section>
 
       <Section

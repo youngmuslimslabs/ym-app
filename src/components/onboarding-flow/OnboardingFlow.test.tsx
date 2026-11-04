@@ -5,6 +5,14 @@ import userEvent from '@testing-library/user-event'
 import { OnboardingFlow } from './OnboardingFlow'
 
 describe('OnboardingFlow (Part 1 wiring)', () => {
+  it('starts shared setup on Phone with no program choice', () => {
+    render(<OnboardingFlow />)
+    expect(screen.getByText("What's your phone number?")).toBeInTheDocument()
+    expect(screen.queryByRole('radiogroup', { name: 'Side' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/brothers|sisters/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /back/i })).not.toBeInTheDocument()
+  })
+
   it('lands directly on the phone question — no welcome/intro screen', () => {
     render(<OnboardingFlow />)
     expect(screen.getByText("What's your phone number?")).toBeInTheDocument()

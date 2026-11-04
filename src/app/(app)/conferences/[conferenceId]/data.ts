@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentUserRow } from '@/lib/supabase/current-user'
 import type {
   Conference,
   ScheduleView,
@@ -22,36 +23,26 @@ export async function getConferenceScheduleData(
 ): Promise<ScheduleView | null> {
   const supabase = await createClient()
 
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
-  if (!authUser) return null
-
-  // Resolve auth_id → public.users.id
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('id')
-    .eq('auth_id', authUser.id)
-    .maybeSingle()
+  // The user lookup, conference and sessions are independent — run them
+  // together. RLS returns zero conference/session rows if the user isn't
+  // invited, so nothing leaks by not waiting on the user row first.
+  const [userRow, conferenceRes, sessionsRes] = await Promise.all([
+    getCurrentUserRow(),
+    supabase.from('conferences').select('*').eq('id', conferenceId).maybeSingle(),
+    // All sessions for this conference (excluding check_in_code)
+    supabase
+      .from('sessions')
+      .select(SESSION_COLUMNS)
+      .eq('conference_id', conferenceId)
+      .order('start_at', { ascending: true }),
+  ])
   if (!userRow) return null
-  const currentUserId = userRow.id as string
+  const currentUserId = userRow.id
 
-  // RLS will return zero rows if the user is not invited.
-  const { data: conferenceRow, error: confErr } = await supabase
-    .from('conferences')
-    .select('*')
-    .eq('id', conferenceId)
-    .maybeSingle()
-  if (confErr || !conferenceRow) return null
-  const conference = conferenceRow as Conference
+  if (conferenceRes.error || !conferenceRes.data) return null
+  const conference = conferenceRes.data as Conference
 
-  // All sessions for this conference (excluding check_in_code)
-  const { data: sessionRows } = await supabase
-    .from('sessions')
-    .select(SESSION_COLUMNS)
-    .eq('conference_id', conferenceId)
-    .order('start_at', { ascending: true })
-  const sessions = (sessionRows ?? []) as Session[]
+  const sessions = (sessionsRes.data ?? []) as Session[]
   const sessionIds = sessions.map((s) => s.id)
 
   if (sessionIds.length === 0) {

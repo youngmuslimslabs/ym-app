@@ -11,7 +11,7 @@ interface SaveButtonProps {
 
 /**
  * Profile-specific save button wrapper.
- * Uses the reusable FloatingSaveBar component.
+ * Uses the shared save controller in its full-width footer presentation.
  */
 export function SaveButton({
   hasChanges,
@@ -21,6 +21,8 @@ export function SaveButton({
 }: SaveButtonProps) {
   return (
     <FloatingSaveBar
+      presentation="footer"
+      errorMessage="Changes weren’t saved. Your edits are still here."
       hasChanges={hasChanges}
       changeCount={changeCount}
       onSave={onSave}

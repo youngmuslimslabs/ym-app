@@ -14,11 +14,12 @@ interface UseProfileDataReturn {
 }
 
 /**
- * Hook to fetch the current authenticated user's profile
+ * Hook to fetch the current authenticated user's profile. Pass
+ * `{ enabled: false }` to hold off the (multi-query) fetch until it's needed.
  */
-export function useProfileData(): UseProfileDataReturn {
+export function useProfileData({ enabled = true }: { enabled?: boolean } = {}): UseProfileDataReturn {
   const [profileData, setProfileData] = useState<ProfileFormState | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(enabled)
   const [error, setError] = useState<string | null>(null)
 
   const fetchProfile = useCallback(async () => {
@@ -44,8 +45,8 @@ export function useProfileData(): UseProfileDataReturn {
   }, [])
 
   useEffect(() => {
-    fetchProfile()
-  }, [fetchProfile])
+    if (enabled) fetchProfile()
+  }, [enabled, fetchProfile])
 
   return {
     profileData,

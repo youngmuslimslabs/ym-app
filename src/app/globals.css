@@ -96,6 +96,9 @@
    * format) so the legacy and branded values share one Tailwind mapping.
    */
   [data-theme='ym'] {
+    --highlight: 0.8618 0.1448 97.929;
+    --highlight-foreground: 0.2118 0.0275 283.806;
+
     /* Brand body face. Figtree's `--font-figtree` is defined by the layout
        that loads it, on this same element; elsewhere `font-sans` is Geist. */
     --font-sans-active: var(--font-figtree);
@@ -131,16 +134,15 @@
     --chart-3: 0.641 0.1309 251.419;         /* Sky Blue */
     --chart-4: 0.7617 0.1283 83.979;         /* Warm Brass */
     --chart-5: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
-    /* Sidebar — the branded dark surface, anchored on Deep Obsidian. HSL
-       channels, converted from the brand hex (#171725 etc.). */
-    --sidebar-background: 240 23.3% 11.8%;   /* #171725 Deep Obsidian */
-    --sidebar-foreground: 30 40% 98%;        /* #FCFAF8 Warm Snow */
-    --sidebar-primary: 220.8 45.4% 45.1%;    /* Royal Blue, lifted */
+    /* Shared white navigation surface; brand accents stay available to everyone. */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 23.3% 11.8%;
+    --sidebar-primary: 221.3 57% 32%;
     --sidebar-primary-foreground: 30 40% 98%;
-    --sidebar-accent: 239.3 17.4% 17.3%;     /* hover — Obsidian +1 step */
-    --sidebar-accent-foreground: 30 40% 98%;
-    --sidebar-border: 239.2 16.2% 20.4%;
-    --sidebar-ring: 210.6 65.3% 57.1%;       /* #4A90D9 Sky Blue */
+    --sidebar-accent: 30 15.1% 94%;
+    --sidebar-accent-foreground: 240 23.3% 11.8%;
+    --sidebar-border: 30 7.6% 88.1%;
+    --sidebar-ring: 221.3 57% 32%;
   }
 
   /* Dark mode is not yet reachable — nothing adds `.dark` to <html> (see the
@@ -310,5 +312,23 @@
   .login-bg::before,
   .login-orb {
     animation: none;
+  }
+}
+
+@layer components {
+  .ym-display {
+    @apply font-display text-display uppercase;
+  }
+  .ym-h1 {
+    @apply font-display text-h1 uppercase;
+  }
+  .ym-h2 {
+    @apply text-h2 font-bold;
+  }
+  .ym-h3 {
+    @apply text-h3 font-semibold;
+  }
+  .ym-eyebrow {
+    @apply text-eyebrow font-semibold uppercase;
   }
 }

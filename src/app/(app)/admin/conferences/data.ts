@@ -1,24 +1,17 @@
+import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentUserRow } from '@/lib/supabase/current-user'
 import type { AdminConferenceRow } from './types'
 
 // Resolves the current user's public.users.id and returns it along with their
-// admin status. Used by every admin server component to gate access.
-export async function resolveAdminContext(): Promise<
+// admin status. Used by every admin server component to gate access. Cached per
+// request so a page and its sections don't re-run the admin check.
+export const resolveAdminContext = cache(async (): Promise<
   | { isAdmin: true; userId: string }
   | { isAdmin: false; userId: string | null; reason: 'unauth' | 'not-admin' }
-> {
-  const supabase = await createClient()
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
-  if (!authUser) return { isAdmin: false, userId: null, reason: 'unauth' }
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('id')
-    .eq('auth_id', authUser.id)
-    .maybeSingle()
+> => {
+  const [supabase, userRow] = await Promise.all([createClient(), getCurrentUserRow()])
   if (!userRow) return { isAdmin: false, userId: null, reason: 'unauth' }
 
   // is_event_admin() function is the single source of truth — same one RLS
@@ -27,16 +20,16 @@ export async function resolveAdminContext(): Promise<
     p_user_id: userRow.id,
   })
   if (!adminFlag) {
-    return { isAdmin: false, userId: userRow.id as string, reason: 'not-admin' }
+    return { isAdmin: false, userId: userRow.id, reason: 'not-admin' }
   }
-  return { isAdmin: true, userId: userRow.id as string }
-}
+  return { isAdmin: true, userId: userRow.id }
+})
 
 // Convenience: redirect non-admins to /home. Pages call this before any other
 // data fetch so we never leak data to a non-admin even if RLS hadn't caught it.
 export async function requireAdmin(): Promise<string> {
   const ctx = await resolveAdminContext()
-  if (!ctx.isAdmin) redirect('/home')
+  if (!ctx.isAdmin) redirect('/home/')
   return ctx.userId
 }
 

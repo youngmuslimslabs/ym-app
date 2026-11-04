@@ -24,6 +24,12 @@
 [context.deploy-preview]
   command = "bun run build"
 
+# Shows the "Brand preview" switch (bottom-right) on deploy previews only, so the
+# whole app can be viewed in the new brand without any screen adopting it.
+# Never set for production.
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_BRAND_PREVIEW = "1"
+
 # Production settings — inject + upload source maps to PostHog after build
 # Requires POSTHOG_CLI_PERSONAL_API_KEY in Netlify environment variables
 [context.production]

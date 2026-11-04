@@ -5,6 +5,7 @@
 ## Design reconciliation — 4 November 2026
 
 - **Confirmed:** one shared experience; no program choice or separate Brothers/Sisters app themes. Historical logo assets and palette references may be retained; archived theme CSS is not imported.
+- **[IN REVIEW] #97:** preview control now offers Current / Shared brand only; old saved program modes normalize to the shared preview. Preview-only production guard retained. Three regression tests, type checking and focused lint pass.
 - **[IN REVIEW] #88:** shared opt-in foundation; existing routes remain unchanged. Broader navigation, Profile section restructuring, completion-step removal, role approval and mobile editor UX remain review proposals.
 
 ## Confirmed product decisions (do not relitigate)

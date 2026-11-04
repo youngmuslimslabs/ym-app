@@ -95,6 +95,12 @@
    * under `brand.*`. Sidebar tokens stay HSL channels (the sidebar's existing
    * format) so the legacy and branded values share one Tailwind mapping.
    */
+  /* -2% tracking on both brand faces (Brandbook p.34), whenever the brand scope
+     is on <html> (the preview toggle). /design-system also sets it itself. */
+  [data-theme='ym'] body {
+    letter-spacing: -0.02em;
+  }
+
   [data-theme='ym'] {
     /* Brand body face. Figtree's `--font-figtree` is defined by the layout
        that loads it, on this same element; elsewhere `font-sans` is Geist. */

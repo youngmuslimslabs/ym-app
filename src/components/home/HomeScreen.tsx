@@ -28,7 +28,7 @@ export function HomeScreen({ attendance, stats, ...identity }: HomeScreenProps) 
         {attendance}
         <HomeHero {...identity} />
       </div>
-      <section className="space-y-3" aria-labelledby="home-actions"><h2 id="home-actions" className="text-lg font-medium">Quick actions</h2><QuickActionList actions={QUICK_ACTIONS} /></section>
+      <section className="space-y-3" aria-labelledby="home-actions"><h2 id="home-actions" className="text-lg font-medium leading-tight">Quick actions</h2><QuickActionList actions={QUICK_ACTIONS} /></section>
       <section className="space-y-2" aria-labelledby="home-community"><h2 id="home-community" className="text-xs">Community at a glance</h2>
         <StatsStrip stats={[{ label: 'Active members', value: stats.activeMembers }, { label: 'NeighborNets', value: stats.neighborNets }, { label: 'New this week', value: stats.newThisWeek }]} />
       </section>

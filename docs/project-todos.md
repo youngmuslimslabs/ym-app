@@ -4,6 +4,8 @@
 
 ## Design reconciliation — 4 November 2026
 
+- ✅ **[DONE] #104 reconciliation:** 392 tests, type checking and lint pass (existing warnings only). Visual/layout approval remains pending. Reconciled with the shared parent; program-specific fields, props and theme reads removed. Earlier visual/layout work remains a draft for comparison against the current Figma. No unreviewed navigation, section-saving or mobile-editor behavior is introduced.
+
 - **Confirmed:** one shared experience; no program choice or separate Brothers/Sisters app themes. Historical logo assets and palette references may be retained; archived theme CSS is not imported.
 - **[IN REVIEW] #99:** removed program queries/writes, required choice, prompt, cookie theming and directory/profile fields. Old bookmarks recover through existing gates; the unapplied program SQL is reference only. No database was changed. Existing performance work and unified official logos are retained. Broader visual alignment remains design review.
 - **[IN REVIEW] #88:** shared opt-in foundation; existing routes remain unchanged. Broader navigation, Profile section restructuring, completion-step removal, role approval and mobile editor UX remain review proposals.

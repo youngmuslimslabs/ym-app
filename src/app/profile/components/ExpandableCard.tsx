@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { SectionHeader } from './SectionHeader'
 
 interface ExpandableCardProps {
   id: string
@@ -32,8 +33,10 @@ export function ExpandableCard({
   return (
     <Card
       className={cn(
-        'overflow-hidden transition-all duration-200 ease-out',
-        isExpanded ? 'ring-2 ring-primary/20 shadow-lg' : 'hover:shadow-md',
+        'overflow-hidden transition-all duration-200 ease-out [[data-theme=ym]_&]:rounded-2xl [[data-theme=ym]_&]:shadow-none',
+        isExpanded
+          ? 'ring-2 ring-primary/20 shadow-lg [[data-theme=ym]_&]:border-primary/40 [[data-theme=ym]_&]:ring-1'
+          : 'hover:shadow-md [[data-theme=ym]_&]:hover:border-primary/30 [[data-theme=ym]_&]:hover:shadow-none',
         className
       )}
     >
@@ -42,15 +45,15 @@ export function ExpandableCard({
         type="button"
         onClick={onToggle}
         className={cn(
-          'w-full flex items-center gap-4 p-4 text-left transition-colors',
+          'w-full flex items-center gap-4 p-4 text-left transition-colors [[data-theme=ym]_&]:min-h-14 [[data-theme=ym]_&]:px-6',
           'hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring'
         )}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="font-medium text-foreground truncate">{title}</h3>
+            <h3 className="font-medium text-foreground truncate [[data-theme=ym]_&]:text-h3 [[data-theme=ym]_&]:font-semibold">{title}</h3>
             {badge && (
-              <Badge variant="secondary" className="shrink-0">
+              <Badge variant="secondary" className="shrink-0 [[data-theme=ym]_&]:bg-success/15 [[data-theme=ym]_&]:text-success">
                 {badge}
               </Badge>
             )}
@@ -76,7 +79,7 @@ export function ExpandableCard({
         )}
       >
         <div className="overflow-hidden">
-          <CardContent className="pt-0 pb-4 border-t">
+          <CardContent className="pt-0 pb-4 border-t [[data-theme=ym]_&]:pb-6">
             <div className="pt-4 space-y-4">
               {children}
 
@@ -90,7 +93,7 @@ export function ExpandableCard({
                       e.stopPropagation()
                       onDelete()
                     }}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 [[data-theme=ym]_&]:min-h-11"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Remove
@@ -129,12 +132,7 @@ export function ExpandableCardList({
   return (
     <section className={cn('space-y-5', className)}>
       {title && (
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
-          {description && (
-            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-          )}
-        </div>
+        <SectionHeader title={title} description={description} />
       )}
 
       {!hasChildren && emptyState ? (
@@ -148,7 +146,7 @@ export function ExpandableCardList({
               type="button"
               variant="outline"
               onClick={onAdd}
-              className="w-full border-dashed hover:border-solid hover:border-primary hover:bg-primary/5"
+              className="w-full border-dashed hover:border-solid hover:border-primary hover:bg-primary/5 [[data-theme=ym]_&]:min-h-11 [[data-theme=ym]_&]:rounded-xl"
             >
               <Plus className="h-4 w-4 mr-2" />
               {addLabel}

@@ -1,5 +1,3 @@
-import { ArrowLeft, User } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
 /**
@@ -9,28 +7,24 @@ import { Skeleton } from '@/components/ui/skeleton'
 export function ProfilePageSkeleton() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Header skeleton */}
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-        <div className="flex h-16 items-center gap-4 px-6">
-          <Button variant="ghost" size="icon" disabled className="shrink-0">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <User className="h-5 w-5 text-primary" />
+      {/* Back link, title, and identity card skeletons (same spacing as the page) */}
+      <main className="flex-1 px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pt-8">
+        <div className="mx-auto max-w-2xl space-y-12">
+          <div className="space-y-6">
+            <Skeleton className="h-11 w-20" />
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-64 max-w-full" />
+              <Skeleton className="h-5 w-56 max-w-full" />
             </div>
-            <div className="space-y-1">
-              <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-4 w-48" />
+            <div className="flex items-center gap-4 rounded-2xl border bg-card p-6">
+              <Skeleton className="size-16 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-4 w-56 max-w-full" />
+              </div>
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* Content skeletons - 5 sections matching profile page */}
-      <main className="flex-1 px-6 py-8">
-        <div className="mx-auto max-w-2xl space-y-12">
           {/* Personal Info Section Skeleton */}
           <ProfileSectionSkeleton
             titleWidth="w-40"
@@ -102,7 +96,7 @@ function ProfileSectionSkeleton({
 
       {/* Fields or card */}
       {showCard ? (
-        <div className="rounded-lg border p-6 space-y-4">
+        <div className="rounded-2xl border bg-card p-6 space-y-4">
           {Array.from({ length: fieldCount }).map((_, i) => (
             <div key={i} className="space-y-2">
               <Skeleton className="h-4 w-20" />

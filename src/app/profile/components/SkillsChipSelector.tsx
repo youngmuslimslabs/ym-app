@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { TagChipSelector } from '@/components/tag-chip-selector'
 import { useProfileMode } from '@/contexts/ProfileModeContext'
 import { cn } from '@/lib/utils'
+import { SectionHeader } from './SectionHeader'
 
 // Concrete, resume-grade skills spanning what YM's cabinet departments
 // (Marketing, HR, Operations, Special Projects, Fundraising, Finance, IT,
@@ -86,14 +87,10 @@ export function SkillsChipSelector({
   return (
     <section className={cn('space-y-5', className)}>
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">Skills</h2>
-          {isEditable && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Select as many as are applicable — or add your own.
-            </p>
-          )}
-        </div>
+        <SectionHeader
+          title="Skills"
+          description={isEditable ? 'Select as many as are applicable — or add your own.' : undefined}
+        />
         {isEditable && (
           <Badge variant={selectionCount > 0 ? 'default' : 'secondary'} className="shrink-0">
             {selectionCount} selected

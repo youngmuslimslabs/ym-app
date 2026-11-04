@@ -349,3 +349,7 @@
   --muted-foreground: 0.359 0.021 290;
   --radius: 16px;
 }
+
+.ym-revised-screen .ym-onboarding-step { display: flex; flex: 1; flex-direction: column; gap: 24px; }
+.ym-revised-screen .ym-onboarding-actions { margin-top: auto; padding-top: 24px; }
+.ym-revised-screen .ym-onboarding-choices { gap: 16px; }

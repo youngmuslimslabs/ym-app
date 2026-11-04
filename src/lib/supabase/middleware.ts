@@ -75,6 +75,7 @@ export async function updateSession(request: NextRequest) {
                 !request.nextUrl.pathname.startsWith('/legal-lol') &&
                 !request.nextUrl.pathname.startsWith('/api/legal-lol') &&
                 !request.nextUrl.pathname.startsWith('/design-system') &&
+                !request.nextUrl.pathname.startsWith('/design-preview') &&
                 request.nextUrl.pathname !== '/'
             ) {
                 // Redirect to login on auth errors
@@ -93,6 +94,7 @@ export async function updateSession(request: NextRequest) {
             !request.nextUrl.pathname.startsWith('/legal-lol') &&
             !request.nextUrl.pathname.startsWith('/api/legal-lol') &&
                 !request.nextUrl.pathname.startsWith('/design-system') &&
+                !request.nextUrl.pathname.startsWith('/design-preview') &&
             request.nextUrl.pathname !== '/'
         ) {
             // no user, potentially respond by redirecting the user to the login page
@@ -139,6 +141,7 @@ export async function updateSession(request: NextRequest) {
             request.nextUrl.pathname.startsWith('/legal-lol') ||
             request.nextUrl.pathname.startsWith('/api/legal-lol') ||
             request.nextUrl.pathname.startsWith('/design-system') ||
+            request.nextUrl.pathname.startsWith('/design-preview') ||
             request.nextUrl.pathname === '/'
         const isProtectedRoute = !isPublicRoute && !isOnboardingRoute
         // The onboarding lookup is a DB round-trip. Skip it for background link

@@ -4,6 +4,8 @@
 
 ## Design reconciliation — 4 November 2026
 
+- ✅ **[DONE] #101 reconciliation:** 34 tests, type checking and lint pass (existing warnings only). Visual/layout approval remains pending. Reconciled with the shared parent; program-specific fields, props and theme reads removed. Earlier visual/layout work remains a draft for comparison against the current Figma. No unreviewed navigation, section-saving or mobile-editor behavior is introduced.
+
 - **Confirmed:** one shared experience; no program choice or separate Brothers/Sisters app themes. Historical logo assets and palette references may be retained; archived theme CSS is not imported.
 - **[IN REVIEW] #99:** removed program queries/writes, required choice, prompt, cookie theming and directory/profile fields. Old bookmarks recover through existing gates; the unapplied program SQL is reference only. No database was changed. Existing performance work and unified official logos are retained. Broader visual alignment remains design review.
 - **[IN REVIEW] #88:** shared opt-in foundation; existing routes remain unchanged. Broader navigation, Profile section restructuring, completion-step removal, role approval and mobile editor UX remain review proposals.
@@ -249,4 +251,6 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 
 - ✅ **[DONE]** Figma onboarding geography (109:8791 / 109:8813): searchable visible choices, explicit Continue, dependent NeighborNet reset and Back preservation; shared Figtree framing and 8-step progress. Keeps Nationality, Role dropdown and Done. Persistent save failure retains answers and retries; production reference IDs remain injected by the authenticated page.
 
+
+- ✅ **[DONE]** #101 current-screen review: latest Login/Home/onboarding composed with synthetic state controls, final frozen production build and responsive browser checks. See `docs/figma-screen-review-2026-11-04.md`. Earlier Obsidian comparison claims are superseded; keep this branch out of production.
 - ✅ **[DONE]** Current screen stack validation: 392/392 full-suite tests, then 57/57 affected Home/onboarding tests after browser refinements. Types, lint (3 existing warnings) and frozen Next 15.5.24 production build pass. Sample browser review at 375/393/430/1280px; no overflow; role-empty guidance visible on mobile. #101 is review-only. Authenticated testing in an isolated environment and a current-head hosted preview remain open.

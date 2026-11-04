@@ -246,3 +246,5 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 - Home and onboarding implementation in progress in separate focused PRs. Profile overview, navigation restructure, and mobile session-editor proposals still require product review.
 
 - ✅ **[DONE]** Figma Home content implemented (107:2 / 109:7975): green attendance card, desktop identity, list shortcuts, yellow community counts, matching loading/empty/live states. Retains existing data queries and navigation; actual available metrics used, no fabricated check-in count.
+
+- ✅ **[DONE]** Figma onboarding geography (109:8791 / 109:8813): searchable visible choices, explicit Continue, dependent NeighborNet reset and Back preservation; shared Figtree framing and 8-step progress. Keeps Nationality, Role dropdown and Done. Persistent save failure retains answers and retries; production reference IDs remain injected by the authenticated page.

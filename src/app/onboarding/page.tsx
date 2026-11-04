@@ -7,7 +7,6 @@
 // sets onboarding_completed_at, then routes into the app.
 
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { OnboardingFlow } from '@/components/onboarding-flow/OnboardingFlow'
@@ -58,10 +57,10 @@ function OnboardingContent() {
           role: answers.role as string | undefined,
         })
         if (!result.success) {
-          toast.error(result.error ?? 'Could not save your info. Please try again.')
-          return
+          return false
         }
         router.push('/home')
+        return true
       }}
       subregions={subregions.map((s) => ({ value: s.id, label: s.name }))}
       neighborNetsFor={(subregionId: string) =>

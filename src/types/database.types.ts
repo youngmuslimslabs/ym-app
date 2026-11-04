@@ -793,7 +793,6 @@ export type Database = {
           personal_email: string | null
           phone: string | null
           profile_completed_at: string | null
-          side: string | null
           skills: string[] | null
           updated_at: string
         }
@@ -814,7 +813,6 @@ export type Database = {
           personal_email?: string | null
           phone?: string | null
           profile_completed_at?: string | null
-          side?: string | null
           skills?: string[] | null
           updated_at?: string
         }
@@ -835,7 +833,6 @@ export type Database = {
           personal_email?: string | null
           phone?: string | null
           profile_completed_at?: string | null
-          side?: string | null
           skills?: string[] | null
           updated_at?: string
         }

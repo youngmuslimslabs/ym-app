@@ -12,7 +12,6 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { OnboardingFlow } from '@/components/onboarding-flow/OnboardingFlow'
 import { completePart1Onboarding } from '@/lib/supabase/onboarding'
-import { rememberSide, isSide } from '@/lib/side'
 import {
   OnboardingReferenceProvider,
   useOnboardingReference,
@@ -50,9 +49,7 @@ function OnboardingContent() {
   return (
     <OnboardingFlow
       onComplete={async (answers) => {
-        const side = isSide(answers.side) ? answers.side : undefined
         const result = await completePart1Onboarding({
-          side,
           phone: answers.phone as string | undefined,
           email: answers.email as string | undefined,
           ethnicity: answers.ethnicity as string | undefined,
@@ -64,8 +61,7 @@ function OnboardingContent() {
           toast.error(result.error ?? 'Could not save your info. Please try again.')
           return
         }
-        if (side) rememberSide(side)
-        router.push('/home/')
+        router.push('/home')
       }}
       subregions={subregions.map((s) => ({ value: s.id, label: s.name }))}
       neighborNetsFor={(subregionId: string) =>

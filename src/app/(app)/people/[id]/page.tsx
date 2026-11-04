@@ -56,7 +56,7 @@ export default function PersonProfilePage() {
               <MemberAvatar
                 name={`${personData.firstName ?? ''} ${personData.lastName ?? ''}`.trim() || (personData.googleEmail ?? '')}
                 src={personData.avatarUrl}
-                side={personData.side ?? 'general'}
+
                 size="sm"
                 decorative
                 className="size-10 ring-2 ring-background shadow-sm"
@@ -86,7 +86,7 @@ export default function PersonProfilePage() {
                 phoneNumber={personData.phoneNumber}
                 personalEmail={personData.personalEmail}
                 googleEmail={personData.googleEmail}
-                side={personData.side}
+
                 ethnicity={personData.ethnicity}
                 dateOfBirth={personData.dateOfBirth}
                 onPhoneChange={noop}

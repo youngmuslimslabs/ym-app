@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 function StepHeader({ label, help }: { label: string; help?: string }) {
   return (
     <div>
-      <h1 className="text-[22px] font-bold tracking-brand sm:text-[28px] text-balance">{label}</h1>
+      <h1 className="text-[22px] font-bold leading-tight tracking-brand sm:text-[28px] text-balance">{label}</h1>
       {help && <p className="mt-2 text-sm text-muted-foreground">{help}</p>}
     </div>
   )
@@ -265,11 +265,11 @@ function VisibleChoiceStep({ label, help, options, value, onSelect, onNext, sear
   const [query, setQuery] = useState('')
   const matches = options.filter(option => option.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   const validSelection = options.some(option => option.value === value)
-  return <div className="ym-onboarding-step">
+  return <div className="ym-onboarding-step ym-onboarding-choices">
     <StepHeader label={label} />
-    <div className="space-y-2"><label htmlFor={id} className="text-sm">{searchLabel}</label>
+    <div className="space-y-2"><label htmlFor={id} className="block text-sm leading-tight">{searchLabel}</label>
       <Input id={id} type="search" value={query} placeholder="Search by name" onChange={event => setQuery(event.target.value)} className="h-12 rounded-[10px] bg-card" />
-      {help && <p className="pt-2 text-xs text-muted-foreground">{help}</p>}
+      {help && <p className="pt-2 text-xs leading-tight text-muted-foreground">{help}</p>}
     </div>
     <fieldset className="min-w-0 space-y-2"><legend className="sr-only">{label}</legend>
       {matches.map(option => <label key={option.value} className={cn('relative flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-[10px] border bg-card px-4 py-3 text-center text-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2', value === option.value && 'border-primary bg-secondary')}>

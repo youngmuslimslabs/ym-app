@@ -1,0 +1,16 @@
+# Current Figma screen implementation — 4 November 2026
+
+Review order: shared foundation #88 → rollout #99 → Login #112 → Home #113 → onboarding #114. All remain drafts. Preview #101 is review-only and must never merge into production.
+
+- [Login #112](https://github.com/youngmuslimslabs/ym-app/pull/112), branch `feature/figma-login`: calm Figtree layout, official unified logo and exact decorative exports. Real Google Identity Services retained; its official button differs from the generic Figma placeholder.
+- [Home #113](https://github.com/youngmuslimslabs/ym-app/pull/113), branch `feature/figma-home`: green attendance, outlined shortcut list, yellow counts, desktop identity and visible missing-role guidance. Existing navigation and real available metrics retained. Figma’s mobile check-in metric needs a defined data source; attendance lookup errors still share the pre-existing empty result.
+- [Onboarding #114](https://github.com/youngmuslimslabs/ym-app/pull/114), branch `feature/figma-onboarding`: search, visible geography choices, explicit Continue, dependent reset, Back preservation, 8-step framing and persistent save retry. Nationality, Role dropdown and Done remain.
+- [Preview #101](https://github.com/youngmuslimslabs/ym-app/pull/101), branch `preview/new-designs-v2`: [local review](http://127.0.0.1:4312/design-preview/) with Login default/loading/error, Home default/loading/empty/live/no-roles and full sample onboarding. First sample final save fails; retry opens sample Home. No completion helper or production write runs from this fixture.
+
+Figma sources: [Login mobile](https://www.figma.com/design/JcnqbgW7KIYDyBYX3BZJ2t/YM-Design-Branding?node-id=109-196), [desktop](https://www.figma.com/design/JcnqbgW7KIYDyBYX3BZJ2t/YM-Design-Branding?node-id=109-350); [Home mobile](https://www.figma.com/design/JcnqbgW7KIYDyBYX3BZJ2t/YM-Design-Branding?node-id=107-2), [desktop](https://www.figma.com/design/JcnqbgW7KIYDyBYX3BZJ2t/YM-Design-Branding?node-id=109-7975); [Subregion](https://www.figma.com/design/JcnqbgW7KIYDyBYX3BZJ2t/YM-Design-Branding?node-id=109-8791), [NeighborNet](https://www.figma.com/design/JcnqbgW7KIYDyBYX3BZJ2t/YM-Design-Branding?node-id=109-8813).
+
+Validation: 392/392 full-suite tests across 53 files; 57/57 affected Home/onboarding tests after final visual refinements. Types, lint (3 existing warnings), and production builds pass with frozen Next 15.5.24 dependencies. Browser widths 375/393/430/1280px show no horizontal overflow. The full sample onboarding flow verified validation, retained Nationality, keyboard radio selection, no-match recovery, Back, dependent clearing, pending save, failure and retry. Real Google sign-in and authenticated database writes were not exercised.
+
+No hosted preview is verified for current heads: Netlify’s existing #101 bot link refers to older commit 1ffc5de. Stacked PRs do not trigger the present main-targeted CI workflow; absence of checks is not success. Existing critical audit remediation remains separate. No audit policy was weakened.
+
+Profile section editing, navigation restructure, Done removal, directory visibility, role-review routing and the mobile session editor remain pending decisions. Finance expansion is deferred. No GitHub PR merge, production deployment or Supabase mutation was performed.

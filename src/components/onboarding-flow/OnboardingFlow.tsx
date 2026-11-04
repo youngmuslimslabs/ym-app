@@ -268,13 +268,13 @@ export function OnboardingFlow({
     <div className="ym-revised-screen min-h-dvh bg-background">
       <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 py-6 sm:px-8">
         <div className="mx-5 space-y-2">
-          <div className="flex min-h-11 items-center justify-between text-xs">
+          <div className="flex h-8 items-center justify-between text-xs">
             {showBack ? <button type="button" onClick={flow.back} disabled={submitting} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ChevronLeft className="size-5" aria-hidden="true" />Back</button> : <span />}
             <span>Step {flow.index + 1} of {STEPS.length}</span>
           </div>
           <div role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={flow.index + 1} className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full bg-primary transition-all duration-200 motion-reduce:transition-none" style={{ width: `${progress}%` }} /></div>
         </div>
-        <div key={flow.stepId} className="flex flex-1 flex-col pt-8">{content}</div>
+        <div key={flow.stepId} className="flex flex-1 flex-col pt-10">{content}</div>
       </div>
     </div>
   )

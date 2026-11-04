@@ -252,3 +252,5 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 - ✅ **[DONE]** Figma onboarding geography (109:8791 / 109:8813): searchable visible choices, explicit Continue, dependent NeighborNet reset and Back preservation; shared Figtree framing and 8-step progress. Keeps Nationality, Role dropdown and Done. Persistent save failure retains answers and retries; production reference IDs remain injected by the authenticated page.
 
 - ✅ **[DONE]** Review-only #101 now composes latest Login/Home/onboarding implementations, replacing the old Home candidate. Login default/error/loading, Home default/loading/empty/live/no-roles, and full sample onboarding with fail/retry are available without production writes. Never merge this preview branch into production.
+
+- ✅ **[DONE]** #101 current-screen review: latest Login/Home/onboarding composed with synthetic state controls, final frozen production build and responsive browser checks. See `docs/figma-screen-review-2026-11-04.md`. Earlier Obsidian comparison claims are superseded; keep this branch out of production.

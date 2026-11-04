@@ -2,6 +2,12 @@
 
 > **Immediate goal: get the app working to test live at a convention on ~July 14 2026 (2 weeks away).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
+## Design implementation — 4 November 2026
+
+- **Confirmed:** one shared member experience; program choice and separate Brothers/Sisters themes are superseded. Do not merge the old program branch as product direction.
+- ✅ **[DONE] Save recovery foundation:** Profile uses a full-width footer; save failures persist with one Retry action; duplicate submissions are blocked. Verified with component regression tests. Broader Profile restructuring remains a design proposal.
+- **Open:** review the revised Figma exemplars and settle navigation, completion-screen removal, directory visibility, role approval routing, and the mobile editor before implementing those behaviors. Finance expansion stays deferred.
+
 ## Confirmed product decisions (do not relitigate)
 
 - **Access is `@youngmuslims.com`-only, by design.** Every user has a youngmuslims.com Google account; no alumni/external login. The auth domain gate is correct, not a gap.

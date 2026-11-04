@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { Tag } from 'lucide-react'
 import type { PersonListItem } from '../types'
 import { ROLE_CATEGORY_ICONS, ROLE_CATEGORY_VARIANTS } from '../constants'
-import { SIDE_LABELS } from '@/lib/side'
 import { MemberAvatar } from '@/components/brand/member-avatar'
 
 interface PersonCardProps {
@@ -20,7 +19,7 @@ export function PersonCard({ person }: PersonCardProps) {
 
   // Get location display (prefer subregion, fallback to region)
   const place = person.subregion?.name ?? person.region?.name ?? 'No location'
-  const location = person.side ? `${place} · ${SIDE_LABELS[person.side]}` : place
+  const location = place
 
   const inner = (
     <>
@@ -31,7 +30,7 @@ export function PersonCard({ person }: PersonCardProps) {
           <MemberAvatar
             name={`${person.firstName} ${person.lastName}`}
             src={person.avatarUrl}
-            side={person.side ?? 'general'}
+
             size="md"
             decorative
           />

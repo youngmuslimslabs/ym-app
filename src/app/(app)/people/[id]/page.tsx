@@ -59,7 +59,7 @@ export default function PersonProfilePage() {
         <PersonHero
           name={displayName}
           avatarUrl={personData.avatarUrl}
-          side={personData.side}
+
           roles={currentRoles}
         />
 
@@ -72,7 +72,7 @@ export default function PersonProfilePage() {
               phoneNumber={personData.phoneNumber}
               personalEmail={personData.personalEmail}
               googleEmail={personData.googleEmail}
-              side={personData.side}
+
               ethnicity={personData.ethnicity}
               dateOfBirth={personData.dateOfBirth}
               onPhoneChange={noop}

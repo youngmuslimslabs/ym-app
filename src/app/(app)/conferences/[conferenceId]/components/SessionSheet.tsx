@@ -135,7 +135,7 @@ export function SessionSheet({
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         ref={isMobile ? sheetRef : undefined}
-        side={side}
+
         className={cn(
           'flex flex-col p-0',
           isMobile

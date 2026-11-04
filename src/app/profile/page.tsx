@@ -159,7 +159,7 @@ export default function ProfilePage() {
           </Button>
 
           <div className="flex items-center gap-3">
-            {/* Your own avatar follows your theme, so no side is passed */}
+            {/* All members use the shared brand avatar. */}
             <MemberAvatar
               name={`${profileData?.firstName ?? ''} ${profileData?.lastName ?? ''}`.trim() || 'Your profile'}
               src={profileData?.avatarUrl}
@@ -205,7 +205,7 @@ export default function ProfilePage() {
                   phoneNumber={formData.phoneNumber}
                   personalEmail={formData.personalEmail}
                   googleEmail={formData.googleEmail}
-                  side={formData.side}
+
                   ethnicity={formData.ethnicity}
                   dateOfBirth={formData.dateOfBirth}
                   onPhoneChange={(v) => updateField('phoneNumber', v)}

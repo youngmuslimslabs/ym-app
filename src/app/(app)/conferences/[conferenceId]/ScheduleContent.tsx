@@ -15,7 +15,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/page-header'
 import { cn } from '@/lib/utils'
-import type { Side } from '@/lib/side'
 import { BRAND_PORTAL_CLASS, brandPortalProps } from './lib/brandPortal'
 import { ConferenceOnboardingBanner } from './components/ConferenceOnboardingBanner'
 import { getCheckInWindow } from './lib/checkInWindow'
@@ -33,10 +32,9 @@ interface Props {
   initialView: ScheduleView
   // The member's side, for the portalled sheet/dialogs (they render outside
   // the route's BrandScope). Null for General.
-  side?: Side | null
 }
 
-export function ScheduleContent({ initialView, side = null }: Props) {
+export function ScheduleContent({ initialView }: Props) {
   const [view, setView] = useState<ScheduleView>(initialView)
   const [openSessionId, setOpenSessionId] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -243,7 +241,7 @@ export function ScheduleContent({ initialView, side = null }: Props) {
         checkInError={checkInError}
         pending={pending}
         now={now}
-        side={side}
+
         onClose={closeSheet}
         onSignup={handleSignup}
         onCancel={handleCancel}
@@ -259,7 +257,7 @@ export function ScheduleContent({ initialView, side = null }: Props) {
         }}
       >
         <DialogContent
-          {...brandPortalProps(side)}
+          {...brandPortalProps()}
           className={cn(BRAND_PORTAL_CLASS, 'sm:max-w-md sm:rounded-2xl')}
         >
           <DialogHeader>

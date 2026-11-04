@@ -19,7 +19,6 @@ import { CheckInDialog } from './CheckInDialog'
 import { FeedbackForm } from './FeedbackForm'
 import { canRemoveSignUp, canSignUp, getSessionState } from '../lib/checkInWindow'
 import { BRAND_PORTAL_CLASS, brandPortalProps } from '../lib/brandPortal'
-import type { Side } from '@/lib/side'
 import type { Session } from '../types'
 
 interface Props {
@@ -33,7 +32,6 @@ interface Props {
   pending: boolean
   now: Date
   // Re-applies the brand scope to the portalled sheet and dialog.
-  side?: Side | null
   onClose: () => void
   onSignup: (sessionId: string) => Promise<void>
   onCancel: (sessionId: string) => Promise<void>
@@ -55,7 +53,6 @@ export function SessionSheet({
   checkInError,
   pending,
   now,
-  side = null,
   onClose,
   onSignup,
   onCancel,
@@ -141,7 +138,7 @@ export function SessionSheet({
       <SheetContent
         ref={isMobile ? sheetRef : undefined}
         side={sheetSide}
-        {...brandPortalProps(side)}
+        {...brandPortalProps()}
         className={cn(
           BRAND_PORTAL_CLASS,
           'flex flex-col p-0',
@@ -293,7 +290,7 @@ export function SessionSheet({
         onOpenChange={(open) => !pending && setConfirmRemoveOpen(open)}
       >
         <DialogContent
-          {...brandPortalProps(side)}
+          {...brandPortalProps()}
           className={cn(BRAND_PORTAL_CLASS, 'sm:max-w-md sm:rounded-2xl')}
         >
           <DialogHeader>

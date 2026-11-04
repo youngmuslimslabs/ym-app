@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { getSide } from '@/lib/side-server'
 import { getConferenceScheduleData } from './data'
 import { ScheduleContent } from './ScheduleContent'
 
@@ -9,11 +8,11 @@ interface PageProps {
 
 export default async function ConferenceSchedulePage({ params }: PageProps) {
   const { conferenceId } = await params
-  const [data, side] = await Promise.all([getConferenceScheduleData(conferenceId), getSide()])
+  const data = await getConferenceScheduleData(conferenceId)
 
   if (!data) {
     notFound()
   }
 
-  return <ScheduleContent initialView={data} side={side} />
+  return <ScheduleContent initialView={data} />
 }

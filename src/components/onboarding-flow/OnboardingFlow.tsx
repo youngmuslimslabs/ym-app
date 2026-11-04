@@ -1,15 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronLeft, Check, MapPin, BadgeCheck, Users } from 'lucide-react'
+import { ChevronLeft, Check, MapPin, BadgeCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { formatPhoneNumber, isValidPhone, isValidEmail } from '@/lib/validation'
 import { NATIONALITY_OPTIONS } from '@/lib/constants/nationalities'
-import { SIDE_LABELS, isSide } from '@/lib/side'
 
 import { useOnboardingFlow } from './useOnboardingFlow'
-import { TextStep, SelectStep, ComboboxStep, DateStep, SideStep, type SelectOption } from './steps'
+import { TextStep, SelectStep, ComboboxStep, DateStep, type SelectOption } from './steps'
 
 // NOTE: static option lists for the auth-free preview. At DB-integration time these
 // come from Supabase (subregions/neighbor_nets/role_types tables). Nationality is a
@@ -42,9 +41,8 @@ const ROLES: SelectOption[] = [
   'Council Coordinator', 'National Cloud Rep', 'NS Member',
 ].map((v) => ({ value: v, label: v }))
 
-// `side` is first so the rest of onboarding already renders in that theme.
 const STEPS = [
-  'side', 'phone', 'email', 'ethnicity', 'dob', 'subregion', 'neighbornet', 'role', 'done',
+  'phone', 'email', 'ethnicity', 'dob', 'subregion', 'neighbornet', 'role', 'done',
 ]
 
 // DOB range mirrors the original onboarding's DatePicker (1940 … today − 10y).
@@ -83,19 +81,6 @@ export function OnboardingFlow({
 
   let content: React.ReactNode = null
   switch (flow.stepId) {
-    case 'side': {
-      const side = flow.answers.side
-      content = (
-        <SideStep
-          value={isSide(side) ? side : undefined}
-          // Preview only (SideStep themes itself); the cookie + DB value are
-          // written on completion.
-          onSelect={(v) => flow.setAnswer('side', v)}
-          onNext={flow.next}
-        />
-      )
-      break
-    }
     case 'phone':
       content = (
         <TextStep
@@ -202,7 +187,6 @@ export function OnboardingFlow({
         (o) => o.value === val('neighbornet'),
       )?.label
       const roleLabel = roles.find((o) => o.value === val('role'))?.label
-      const sideLabel = isSide(flow.answers.side) ? SIDE_LABELS[flow.answers.side] : undefined
       content = (
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-3">
@@ -218,15 +202,8 @@ export function OnboardingFlow({
             </p>
           </div>
 
-          {(sideLabel || nnLabel || roleLabel) && (
+          {(nnLabel || roleLabel) && (
             <dl className="divide-y divide-border overflow-hidden rounded-xl border bg-card">
-              {sideLabel && (
-                <div className="flex items-center gap-3 px-4 py-3.5">
-                  <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <dt className="text-sm text-muted-foreground">Side</dt>
-                  <dd className="ml-auto text-sm font-medium">{sideLabel}</dd>
-                </div>
-              )}
               {nnLabel && (
                 <div className="flex items-center gap-3 px-4 py-3.5">
                   <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />

@@ -318,7 +318,7 @@ function PersonNameCell({ person }: { person: PersonListItem }) {
       <MemberAvatar
         name={`${person.firstName} ${person.lastName}`}
         src={person.avatarUrl}
-        side={person.side ?? 'general'}
+
         size="sm"
         decorative
       />

@@ -1,17 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { BRAND_PORTAL_CLASS, brandPortalProps } from './brandPortal'
 
-describe('brandPortalProps', () => {
-  it('re-applies the brand scope and the side to portalled content', () => {
-    expect(brandPortalProps('sisters')).toEqual({ 'data-theme': 'ym', 'data-theme-side': 'sisters' })
+describe('shared brand portals', () => {
+  it('reapplies only the shared brand scope', () => {
+    expect(brandPortalProps()).toEqual({ 'data-theme': 'ym' })
+    expect(brandPortalProps()).not.toHaveProperty('data-theme-side')
   })
-
-  it('leaves the side off for General (null or undefined)', () => {
-    expect(brandPortalProps(null)['data-theme-side']).toBeUndefined()
-    expect(brandPortalProps(undefined)['data-theme']).toBe('ym')
-  })
-
-  it('carries the same type classes BrandScope sets', () => {
+  it('carries the shared typography classes', () => {
     expect(BRAND_PORTAL_CLASS).toContain('font-sans')
     expect(BRAND_PORTAL_CLASS).toContain('tracking-brand')
   })

@@ -2,6 +2,21 @@
 
 > **Immediate goal: get the app working to test live at a convention on ~July 14 2026 (2 weeks away).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
+## Design reconciliation — 4 November 2026
+
+- ✅ **[DONE] #103 reconciliation:** 394 tests, type checking and lint pass (existing warnings only). Visual/layout approval remains pending. Reconciled with the shared parent; program-specific fields, props and theme reads removed. Earlier visual/layout work remains a draft for comparison against the current Figma. No unreviewed navigation, section-saving or mobile-editor behavior is introduced.
+
+- **Confirmed:** one shared experience; no program choice or separate Brothers/Sisters app themes. Historical logo assets and palette references may be retained; archived theme CSS is not imported.
+- **[IN REVIEW] #99:** removed program queries/writes, required choice, prompt, cookie theming and directory/profile fields. Old bookmarks recover through existing gates; the unapplied program SQL is reference only. No database was changed. Existing performance work and unified official logos are retained. Broader visual alignment remains design review.
+- **[IN REVIEW] #88:** shared opt-in foundation; existing routes remain unchanged. Broader navigation, Profile section restructuring, completion-step removal, role approval and mobile editor UX remain review proposals.
+
+## Design implementation — 4 November 2026
+
+- **Confirmed:** one shared member experience; program choice and separate Brothers/Sisters themes are superseded. Do not merge the old program branch as product direction.
+- ✅ **[DONE] Save recovery foundation:** Profile uses a full-width footer; save failures persist with one Retry action; duplicate submissions are blocked. Pushed in draft [PR #111](https://github.com/youngmuslimslabs/ym-app/pull/111). Verified with four regression tests, all 379 tests, type checking, lint and a frozen-dependency Next 15.5.24 build; mock responsive checks at 375/393/430/1280px. CI is blocked by the existing critical dependency audit; E2E and a Netlify preview remain unavailable. Broader Profile restructuring remains a design proposal.
+- **Open:** refresh dependency remediation (the current critical audit also covers Next 15.5.27, used in existing PR #109), obtain green CI/preview, and validate the authenticated Profile flow in an isolated environment.
+- **Open:** review the revised Figma exemplars and settle navigation, completion-screen removal, directory visibility, role approval routing, and the mobile editor before implementing those behaviors. Finance expansion stays deferred.
+
 ## Confirmed product decisions (do not relitigate)
 
 - **Access is `@youngmuslims.com`-only, by design.** Every user has a youngmuslims.com Google account; no alumni/external login. The auth domain gate is correct, not a gap.

@@ -60,12 +60,17 @@ export function SessionCard({
   // Card chrome — active/signed-up gets a primary border; full is muted; a truly
   // finished card (ended, nothing left to do or join) is dimmed.
   const cardClass = cn(
-    'rounded-xl border bg-card p-5 md:p-6 shadow-sm relative transition-all duration-200',
-    ((signedUp && !ended) || wantsAction) && 'border-2 border-primary bg-primary/5',
+    'relative rounded-2xl border bg-card p-5 shadow-sm transition-all duration-200 sm:p-6',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+    ((signedUp && !ended) || wantsAction) && 'border-primary/50 bg-primary/5',
+    wantsAction && 'border-primary ring-1 ring-primary',
     joinable && 'hover:border-foreground/20 hover:shadow-md cursor-pointer',
     full && 'opacity-60 cursor-not-allowed',
     ended && !wantsAction && !joinable && 'opacity-70'
   )
+
+  const showSignedUp = signedUp && (!ended || pendingCheckIn)
+  const hasStatusRow = showSignedUp || full || inProgress
 
   return (
     <button
@@ -75,32 +80,36 @@ export function SessionCard({
       className={cn(cardClass, 'w-full text-left')}
       aria-label={`${session.title} — ${signedUp ? 'signed up' : full ? 'full' : joinable ? 'available' : 'ended'}`}
     >
-      {/* Top-right badges — stacked column so Signed up + Happening now don't overlap */}
-      <div className="absolute top-4 right-4 flex flex-col items-end gap-1.5">
-        {signedUp && (!ended || pendingCheckIn) && (
-          <span className="inline-flex items-center rounded-md bg-primary text-primary-foreground px-2.5 py-0.5 text-xs font-semibold gap-1">
-            <Check className="w-3 h-3" />
-            Signed up
-          </span>
-        )}
-        {full && (
-          <span className="inline-flex items-center rounded-md bg-destructive text-destructive-foreground px-2.5 py-0.5 text-xs font-semibold">
-            Full
-          </span>
-        )}
-        {inProgress && (
-          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-primary font-medium">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            Happening now
-          </span>
-        )}
-      </div>
+      {/* Status row: its own line above the title, so long titles never run under a badge */}
+      {hasStatusRow && (
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          {inProgress && (
+            <span className="ym-eyebrow inline-flex items-center gap-2 text-success">
+              <span
+                aria-hidden="true"
+                className="size-2 shrink-0 rounded-full bg-success animate-status-pulse"
+              />
+              Happening now
+            </span>
+          )}
+          {showSignedUp && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+              <Check className="size-3" aria-hidden="true" />
+              Signed up
+            </span>
+          )}
+          {full && (
+            <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
+              Full
+            </span>
+          )}
+        </div>
+      )}
 
-      {/* Title + speaker: pr-24 clears the absolute badge in the top-right */}
-      <div className="pr-24">
-        <h3 className="font-semibold text-base tracking-tight mb-1">{session.title}</h3>
+      <div>
+        <h3 className="ym-h3 text-balance">{session.title}</h3>
         {session.speaker && (
-          <p className="text-sm text-muted-foreground">{session.speaker}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{session.speaker}</p>
         )}
       </div>
 
@@ -109,22 +118,22 @@ export function SessionCard({
         <ClampedDescription description={session.description} />
       )}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
         {session.room && (
           <span className="inline-flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5" />
+            <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
             {session.room}
           </span>
         )}
         {checkedIn && (
-          <span className="inline-flex items-center gap-1.5 text-primary font-medium">
-            <CheckCircle2 className="w-3.5 h-3.5" />
+          <span className="inline-flex items-center gap-1.5 font-medium text-success">
+            <CheckCircle2 className="size-3.5 shrink-0" aria-hidden="true" />
             Checked in
           </span>
         )}
         {slot.kind === 'check-in' && slot.grace && (
-          <span className="inline-flex items-center gap-1.5 text-primary font-medium">
-            <Clock className="w-3.5 h-3.5" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 font-semibold text-primary">
+            <Clock className="size-3.5 shrink-0" aria-hidden="true" />
             Check in now
           </span>
         )}
@@ -132,18 +141,18 @@ export function SessionCard({
           <span className="text-muted-foreground">You didn&apos;t check in</span>
         )}
         {slot.kind === 'feedback' && !feedback && (
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2 py-0.5 font-medium text-foreground">
-            <Star className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 font-semibold text-primary-foreground">
+            <Star className="size-3 shrink-0" aria-hidden="true" />
             Leave feedback
           </span>
         )}
         {feedback && (
           <span className="inline-flex items-center gap-1 text-muted-foreground">
             You rated
-            <span className="text-primary font-medium tabular-nums">
+            <span className="font-semibold tabular-nums text-foreground">
               {feedback.rating}/5
             </span>
-            <Star className="w-3 h-3 text-primary" fill="currentColor" />
+            <Star className="size-3 text-primary" fill="currentColor" aria-hidden="true" />
           </span>
         )}
       </div>
@@ -159,7 +168,7 @@ function ClampedDescription({ description }: { description: string }) {
 
   return (
     <div className="relative mt-2 mb-1">
-      <p ref={ref} className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
+      <p ref={ref} className="text-sm leading-relaxed text-foreground/80 line-clamp-3">
         {description}
       </p>
       {/* from-card matches bg-card; the bg-primary/5 tint on signed-up cards is imperceptible at 5% opacity */}
@@ -172,12 +181,12 @@ function ClampedDescription({ description }: { description: string }) {
 
 function BreakCard({ session }: { session: Session }) {
   return (
-    <div className="rounded-xl border border-dashed bg-muted/40 py-5 px-5 flex items-center gap-4">
+    <div className="flex items-center gap-4 rounded-2xl border border-dashed bg-muted/40 px-5 py-4 sm:px-6">
       <div className="rounded-full bg-muted/50 p-3">
-        <Coffee className="w-5 h-5 text-muted-foreground" />
+        <Coffee className="size-5 text-muted-foreground" aria-hidden="true" />
       </div>
       <div>
-        <h3 className="font-medium text-sm">{session.title}</h3>
+        <h3 className="text-sm font-semibold">{session.title}</h3>
         {session.room && (
           <p className="text-xs text-muted-foreground mt-0.5">{session.room}</p>
         )}

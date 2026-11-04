@@ -13,6 +13,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
+import { cn } from '@/lib/utils'
+import { BRAND_PORTAL_CLASS, brandPortalProps } from './lib/brandPortal'
 import { ConferenceOnboardingBanner } from './components/ConferenceOnboardingBanner'
 import { getCheckInWindow } from './lib/checkInWindow'
 import { DaySchedule } from './components/DaySchedule'
@@ -27,6 +30,8 @@ import type { ScheduleView, Session } from './types'
 
 interface Props {
   initialView: ScheduleView
+  // The member's side, for the portalled sheet/dialogs (they render outside
+  // the route's BrandScope). Null for General.
 }
 
 export function ScheduleContent({ initialView }: Props) {
@@ -193,27 +198,25 @@ export function ScheduleContent({ initialView }: Props) {
   const dateRangeLabel = formatDateRange(conference.start_date, conference.end_date)
 
   return (
-    <div className="overflow-hidden">
-      <header className="px-6 md:px-8 pt-10 md:pt-12 pb-6 border-b">
-        <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-          {conference.name}
-        </div>
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          {conference.tagline ?? conference.name}
-        </h1>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+    <div className="overflow-hidden pb-16">
+      <div className="mx-auto max-w-5xl px-6 pt-8 sm:px-10 sm:pt-12">
+        <PageHeader
+          title={conference.name}
+          description={conference.tagline}
+        />
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <Calendar className="w-4 h-4" />
+            <Calendar className="size-4 shrink-0" aria-hidden="true" />
             {dateRangeLabel}
           </span>
           {conference.location && (
             <span className="inline-flex items-center gap-1.5">
-              <MapPin className="w-4 h-4" />
+              <MapPin className="size-4 shrink-0" aria-hidden="true" />
               {conference.location}
             </span>
           )}
         </div>
-      </header>
+      </div>
 
       <ConferenceOnboardingBanner conferenceId={conference.id} />
 
@@ -238,6 +241,7 @@ export function ScheduleContent({ initialView }: Props) {
         checkInError={checkInError}
         pending={pending}
         now={now}
+
         onClose={closeSheet}
         onSignup={handleSignup}
         onCancel={handleCancel}
@@ -252,14 +256,17 @@ export function ScheduleContent({ initialView }: Props) {
           if (!next) setPendingSwap(null)
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          {...brandPortalProps()}
+          className={cn(BRAND_PORTAL_CLASS, 'sm:max-w-md sm:rounded-2xl')}
+        >
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="rounded-full bg-primary/10 p-2 shrink-0">
-                <ArrowLeftRight className="w-5 h-5 text-primary" />
+              <div className="rounded-full bg-primary/10 p-2.5 shrink-0">
+                <ArrowLeftRight className="size-5 text-primary" aria-hidden="true" />
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <DialogTitle className="text-base">
+                <DialogTitle className="ym-h3">
                   Replace your current signup?
                 </DialogTitle>
                 <DialogDescription className="mt-1">
@@ -285,12 +292,14 @@ export function ScheduleContent({ initialView }: Props) {
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="ghost"
+              className="h-11 sm:h-9"
               disabled={pending}
               onClick={() => setPendingSwap(null)}
             >
               Cancel
             </Button>
             <Button
+              className="h-11 sm:h-9"
               disabled={pending}
               onClick={async () => {
                 if (!pendingSwap) return

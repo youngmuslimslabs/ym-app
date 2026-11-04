@@ -29,11 +29,11 @@ export function CheckInDialog({
 
   if (alreadyCheckedIn) {
     return (
-      <div className="rounded-lg border bg-card p-6 text-center">
-        <div className="mx-auto rounded-full bg-primary/10 p-3 w-fit mb-3">
-          <CheckCircle2 className="w-6 h-6 text-primary" />
+      <div className="rounded-2xl border bg-card p-6 text-center">
+        <div className="mx-auto mb-3 w-fit rounded-full bg-success/10 p-3">
+          <CheckCircle2 className="size-6 text-success" aria-hidden="true" />
         </div>
-        <h3 className="text-base font-semibold tracking-tight mb-1">
+        <h3 className="ym-h3 mb-1">
           You&apos;re checked in
         </h3>
         <p className="text-sm text-muted-foreground">
@@ -46,7 +46,7 @@ export function CheckInDialog({
   return (
     <div
       className={cn(
-        'rounded-lg border p-4 transition-colors',
+        'rounded-2xl border p-5 transition-colors duration-200',
         error
           ? 'border-destructive/40 bg-destructive/5'
           : 'border-border bg-card'
@@ -55,20 +55,20 @@ export function CheckInDialog({
       <div className="flex items-start gap-3 mb-4">
         <div
           className={cn(
-            'rounded-full p-2 shrink-0',
+            'rounded-full p-2.5 shrink-0',
             error ? 'bg-destructive/10' : 'bg-primary/10'
           )}
         >
           {error ? (
-            <AlertTriangle className="w-4 h-4 text-destructive" />
+            <AlertTriangle className="size-4 text-destructive" aria-hidden="true" />
           ) : inGracePeriod ? (
-            <Clock className="w-4 h-4 text-primary" />
+            <Clock className="size-4 text-primary" aria-hidden="true" />
           ) : (
-            <Lock className="w-4 h-4 text-primary" />
+            <Lock className="size-4 text-primary" aria-hidden="true" />
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium">
+          <h3 className="ym-h3 text-sm">
             {error
               ? "That code didn't match"
               : inGracePeriod
@@ -96,12 +96,12 @@ export function CheckInDialog({
         autoComplete="one-time-code"
         placeholder="Enter code"
         className={cn(
-          'mb-3 font-mono tracking-widest text-center',
+          'mb-3 h-11 text-center font-mono tracking-widest',
           error && 'border-destructive focus-visible:ring-destructive'
         )}
       />
       <Button
-        className="w-full"
+        className="h-11 w-full"
         disabled={!code.trim() || pending}
         onClick={() => { void onSubmit(code.trim()) }}
       >

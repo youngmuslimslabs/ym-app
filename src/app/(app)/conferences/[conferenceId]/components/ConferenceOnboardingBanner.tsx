@@ -47,35 +47,38 @@ export function ConferenceOnboardingBanner({ conferenceId }: Props) {
   if (!visible) return null
 
   return (
-    <div className="mx-6 md:mx-8 mt-6 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
-          How it works
-        </p>
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label="Dismiss"
-          className="rounded-md p-0.5 text-primary/60 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-3">
-        {STEPS.map(({ icon: Icon, text }, i) => (
-          <div key={text} className="flex items-start gap-2.5 flex-1">
-            <div className="rounded-full bg-primary/10 p-1.5 shrink-0 mt-0.5">
-              <Icon className="w-3.5 h-3.5 text-primary" />
-            </div>
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-primary/60 block mb-0.5">
-                Step {i + 1}
-              </span>
-              <p className="text-sm text-foreground/80 leading-snug">{text}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="mx-auto mt-8 max-w-5xl px-6 sm:px-10">
+      <section
+        aria-label="How it works"
+        className="rounded-2xl border bg-card p-5 sm:p-6"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <p className="ym-eyebrow text-primary">How it works</p>
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label="Dismiss"
+            className="-mr-2 -mt-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+        <ol className="mt-1 grid gap-4 sm:grid-cols-3 sm:gap-6">
+          {STEPS.map(({ icon: Icon, text }, i) => (
+            <li key={text} className="flex items-start gap-3">
+              <div className="shrink-0 rounded-full bg-primary/10 p-2.5">
+                <Icon className="size-4 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <span className="ym-eyebrow block text-xs text-muted-foreground">
+                  Step {i + 1}
+                </span>
+                <p className="mt-0.5 text-sm leading-snug">{text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
     </div>
   )
 }

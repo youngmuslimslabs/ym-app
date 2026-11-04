@@ -12,7 +12,7 @@ import {
 import type { UpcomingAttendance } from '@/lib/supabase/queries/conferences'
 
 export const metadata: Metadata = {
-  title: 'New designs preview',
+  title: 'Shared design review',
   robots: { index: false },
 }
 
@@ -33,36 +33,17 @@ const CONFERENCE: UpcomingAttendance = {
   isLive: false,
 }
 
-const SIDES = [
-  {
-    side: 'brothers',
-    label: 'Brothers',
-    name: 'Yusuf',
-    roles: ['Sub-Regional Coordinator', 'Event Admin'],
-  },
-  {
-    side: 'sisters',
-    label: 'Sisters',
-    name: 'Maryam',
-    roles: ['Cloud Member'],
-  },
-] as const
+const MEMBERS = [{ name: 'Aisha', roles: ['NeighborNet Coordinator'] }] as const
 
-/**
- * The redesigned Home, rendered from sample data once per side, so the team can
- * review the new designs without signing in (preview URLs can't use Google
- * sign-in, #81). Each block is exactly what a member of that side would see.
- */
+/** Shared Home review with synthetic data only; no sign-in or database reads. */
 export default function DesignPreviewPage() {
   return (
     <BrandScope className="space-y-16 pb-24">
       <header className="mx-auto max-w-5xl space-y-3 px-4 pt-6 sm:px-6">
         <p className="ym-eyebrow text-muted-foreground">Preview · sample data</p>
-        <h1 className="ym-h1">New designs</h1>
+        <h1 className="ym-h1">Shared design preview</h1>
         <p className="max-w-2xl text-muted-foreground">
-          The redesigned Home as a Brothers member and as a Sisters member, with made-up people
-          and numbers. Only Login and Home are redesigned so far; the other screens are coming
-          as separate changes. The{' '}
+          The shared Home experience with synthetic people and numbers. This is an implementation candidate for comparison with the current Figma. Visual refinement remains under review; other screen changes are separate drafts. The{' '}
           <Link href="/login" className="underline underline-offset-4">
             login screen
           </Link>{' '}
@@ -74,10 +55,10 @@ export default function DesignPreviewPage() {
         </p>
       </header>
 
-      {SIDES.map(({ side, label, name, roles }) => (
-        <BrandScope key={side} side={side} className="pb-12 pt-6">
+      {MEMBERS.map(({ name, roles }) => (
+        <BrandScope key={name} className="pb-12 pt-6">
           <h2 className="ym-eyebrow mx-auto max-w-5xl px-4 pb-2 text-muted-foreground sm:px-6">
-            {label} view
+            Shared experience
           </h2>
           <HomeHero
             fullName={name}

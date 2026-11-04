@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 //
 //   ← Back link            (optional)
 //   EYEBROW                (optional, Figtree caps)
-//   BOLDONSE TITLE         [actions]
+//   FIGTREE TITLE          [actions]
 //   Description / meta     (optional)
 
 interface PageHeaderProps {
@@ -36,7 +36,7 @@ export function PageHeader({ title, eyebrow, description, actions, back, classNa
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 space-y-2">
           {eyebrow && <p className="ym-eyebrow text-primary">{eyebrow}</p>}
-          <h1 className="ym-h1 text-balance">{title}</h1>
+          <h1 className="font-sans text-h2 font-bold tracking-brand text-balance sm:text-[1.75rem]">{title}</h1>
           {description && (
             <p className="max-w-2xl text-pretty text-muted-foreground">{description}</p>
           )}

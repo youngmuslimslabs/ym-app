@@ -1,10 +1,6 @@
 import type { Metadata } from 'next'
+import { Logo } from '@/components/brand/logo'
 
-import { BrandBlob, BrandWave, type BlobShape } from '@/components/brand/blob'
-import { LocalLockup } from '@/components/brand/local-lockup'
-import { Logo, type LogoVariant } from '@/components/brand/logo'
-import { MemberAvatar } from '@/components/brand/member-avatar'
-import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -62,18 +58,18 @@ const GENERAL: Swatch[] = [
     hex: '#234080',
     className: 'bg-brand-royal',
     onClassName: 'text-brand-snow',
-    note: 'Signature — from the Brothers palette',
+    note: 'Signature action color',
   },
   {
     name: 'Jade Foliage',
     hex: '#397451',
     className: 'bg-brand-jade',
     onClassName: 'text-brand-snow',
-    note: 'Accent — from the Sisters palette',
+    note: 'Supporting brand color',
   },
 ]
 
-const BROTHERS: Swatch[] = [
+const BLUE_PALETTE: Swatch[] = [
   {
     name: 'Midnight Blue',
     hex: '#16294F',
@@ -102,7 +98,7 @@ const BROTHERS: Swatch[] = [
   },
 ]
 
-const SISTERS: Swatch[] = [
+const GREEN_PALETTE: Swatch[] = [
   {
     name: 'Deep Forest Green',
     hex: '#043222',
@@ -172,23 +168,16 @@ function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
   )
 }
 
-/**
- * Renders the same small UI under one of the three themes. General is set
- * explicitly so the preview stays General even when the viewer's own side
- * theme is on <html>.
- */
+/** A specimen of the single shared app theme. */
 function ThemePreview({
   name,
   anchor,
-  side,
 }: {
   name: string
   anchor: string
-  side?: 'brothers' | 'sisters'
 }) {
   return (
     <div
-      data-theme-side={side}
       className="overflow-hidden rounded-lg border bg-background"
     >
       {/* Stand-in for the sidebar, which is this theme's anchor color */}
@@ -266,7 +255,9 @@ export default function DesignSystemPage() {
     <div className="mx-auto max-w-5xl space-y-12 p-4 pb-20 sm:p-6">
       <header className="space-y-2">
         <Badge variant="info">Brandbook 2026</Badge>
-        <h1 className="ym-h1">Design System</h1>
+        <h1 className="text-balance font-display text-3xl leading-tight sm:text-4xl">
+          Design System
+        </h1>
         <p className="max-w-2xl text-muted-foreground">
           Every color, typeface, and component of the Young Muslims brand.
           Tokens come from the Brandbook — change one in{' '}
@@ -275,96 +266,59 @@ export default function DesignSystemPage() {
         </p>
         <p className="max-w-2xl rounded-md border bg-card p-3 text-sm text-muted-foreground">
           <strong className="font-semibold text-foreground">
-            Opt-in brand.
+            Opt-in preview.
           </strong>{' '}
           This page sits inside the brand scope (
           <code className="font-mono text-xs">data-theme=&quot;ym&quot;</code>
-          ). A screen gets the brand by being wrapped in{' '}
-          <code className="font-mono text-xs">BrandScope</code>; screens that
-          aren&apos;t keep today&apos;s styling, like the sidebar beside this page.
+          ). Routes adopt this shared scope individually; the sidebar beside this page retains the current styling. Screens adopt the brand one at
+          a time, each as its own reviewable change.
         </p>
       </header>
 
       <Section
-        title="Themes"
-        description="Three complete themes, each anchored on its palette's darkest base. General is the page-level data-theme='ym' scope; set data-theme-side='brothers' or 'sisters' on any element to theme it and everything inside. Redesigned screens get a member's side from their ym_side cookie (set in onboarding) through BrandScope."
+        title="Shared app theme"
+        description="One shared Young Muslims experience. Palette colors are available to every member; no program selection or separate app themes."
       >
-        <div className="grid gap-4 lg:grid-cols-3">
-          <ThemePreview name="General" anchor="Deep Obsidian #171725" />
-          <ThemePreview
-            name="Brothers"
-            anchor="Midnight Blue #16294F"
-            side="brothers"
-          />
-          <ThemePreview
-            name="Sisters"
-            anchor="Deep Forest Green #043222"
-            side="sisters"
-          />
-        </div>
+        <ThemePreview name="Young Muslims" anchor="Deep Obsidian #171725" />
       </Section>
 
-      <Section
-        title="Logos"
-        description="Brandbook p.15–28. Single-colour SVGs rendered with currentColor, so a logo takes the surrounding text colour. <Logo /> with no side prop follows the theme: both marks for General, the YM monogram for Brothers, the ym mark for Sisters."
-      >
-        <div className="grid gap-4 lg:grid-cols-3">
-          {(['general', 'brothers', 'sisters'] as const).map((side) => (
-            <div
-              key={side}
-              data-theme-side={side}
-              className="overflow-hidden rounded-lg border bg-background"
-            >
-              <div className="flex items-center justify-between gap-3 bg-sidebar px-4 py-3 text-sidebar-foreground">
-                <Logo variant="full" className="h-4 min-w-0 max-w-40" />
-                <span className="shrink-0 text-xs capitalize opacity-70">{side}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4 p-4 text-primary">
-                {(['mark', 'stacked', 'wordmark', 'full'] as LogoVariant[]).map((variant) => (
-                  <div key={variant} className="flex flex-col gap-2">
-                    <div className="flex h-16 items-center">
-                      <Logo variant={variant} className="h-full max-w-full" />
-                    </div>
-                    <code className="font-mono text-xs text-muted-foreground">{variant}</code>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+      <Section title="Unified logos" description="Official unified assets used by every member. Program-specific originals remain source reference assets only.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(['mark', 'full', 'wordmark', 'stacked'] as const).map(variant => <div key={variant} className="space-y-3 rounded-lg border bg-card p-6"><Logo variant={variant} className="h-12 max-w-full text-primary" /><p>{variant}</p></div>)}
         </div>
       </Section>
 
       <Section
         title="General palette"
-        description="For anything representing Young Muslims as a whole. Obsidian and Warm Snow are the base; blue and green signal the two sides united. (Brandbook p.30)"
+        description="For anything representing Young Muslims as a whole. Obsidian and Warm Snow are the base; blue, green and warm accents support distinct content sections. (Brandbook p.30)"
       >
         <SwatchGrid swatches={GENERAL} />
       </Section>
 
       <Section
-        title="Brothers palette"
-        description="For content speaking to or about the brothers' side. Lead with the deeper blues; Sky Blue where you want energy. (Brandbook p.31)"
+        title="Blue palette · brand reference"
+        description="Source palette from Brandbook p.31. Available to the shared experience; this is not a member theme."
       >
-        <SwatchGrid swatches={BROTHERS} />
+        <SwatchGrid swatches={BLUE_PALETTE} />
       </Section>
 
       <Section
-        title="Sisters palette"
-        description="For content speaking to or about the sisters' side. Lead with the greens; Buttercup and Brass for warmth. (Brandbook p.32)"
+        title="Green and warm palette · brand reference"
+        description="Source palette from Brandbook p.32. Available to the shared experience; this is not a member theme."
       >
-        <SwatchGrid swatches={SISTERS} />
+        <SwatchGrid swatches={GREEN_PALETTE} />
       </Section>
 
       <Section
         title="Semantic tokens"
-        description="What the UI actually uses. These are built from the brand palette — prefer them over brand-* so every theme works."
+        description="What the UI actually uses. These are built from the brand palette — prefer them over brand-* so the shared theme stays consistent."
       >
         <SwatchGrid swatches={SEMANTIC} />
       </Section>
 
       <Section
         title="Sidebar tokens"
-        description="The branded sidebar: white, one neutral chrome for every side (direction B), with the side color on the active item. Still HSL channels, like the app's existing sidebar."
+        description="The shared sidebar tokens. Still HSL channels, like the app's existing sidebar, so nothing about how the sidebar is styled today changes."
       >
         <SwatchGrid swatches={SIDEBAR} />
       </Section>
@@ -376,27 +330,24 @@ export default function DesignSystemPage() {
         description="Boldonse carries headlines; Figtree handles everything beneath, shifting weight to signal each level. Both set at -2% tracking. (Brandbook pp.34–35)"
       >
         <div className="rounded-lg border bg-card p-4 sm:p-6">
-          <TypeRow label="Display — hero moments" classes="ym-display">
-            <p className="ym-display">For the youth.</p>
+          <TypeRow label="H1 — Headlines" classes="font-display text-4xl">
+            <p className="font-display text-4xl leading-tight">For the youth.</p>
           </TypeRow>
-          <TypeRow label="H1 — Page titles" classes="ym-h1">
-            <p className="ym-h1">Conferences</p>
+          <TypeRow label="H2 — Sub-headlines" classes="text-2xl font-bold">
+            <p className="text-2xl font-bold">About us</p>
           </TypeRow>
-          <TypeRow label="H2 — Sub-headlines" classes="ym-h2">
-            <p className="ym-h2">About us</p>
+          <TypeRow label="H3 — In-text headlines" classes="text-lg font-medium">
+            <p className="text-lg font-medium">Mission</p>
           </TypeRow>
-          <TypeRow label="H3 — In-text headlines" classes="ym-h3">
-            <p className="ym-h3">Mission</p>
-          </TypeRow>
-          <TypeRow label="Body copy" classes="(none — the default)">
-            <p>
+          <TypeRow label="Body copy" classes="text-base (font-normal)">
+            <p className="text-base">
               Young Muslims isn&apos;t a program you attend. It&apos;s a friend
               group you belong to. Across the country, YM is thousands of young
               adults who hang out every week.
             </p>
           </TypeRow>
-          <TypeRow label="Eyebrow / navigation" classes="ym-eyebrow">
-            <p className="ym-eyebrow">Navigation items</p>
+          <TypeRow label="Navigation / all caps" classes="text-sm font-semibold uppercase">
+            <p className="text-sm font-semibold uppercase">Navigation items</p>
           </TypeRow>
           <TypeRow label="Small / meta" classes="text-sm text-muted-foreground">
             <p className="text-sm text-muted-foreground">
@@ -404,92 +355,6 @@ export default function DesignSystemPage() {
             </p>
           </TypeRow>
         </div>
-      </Section>
-
-      <Section
-        title="Page header"
-        description="components/layout/page-header.tsx. The one page title block: optional back link, eyebrow, Boldonse title, description and actions. Use it instead of writing an <h1> in a page."
-      >
-        <div className="rounded-lg border bg-background p-4 sm:p-6">
-          <PageHeader
-            back={{ href: '/design-system', label: 'All conferences' }}
-            eyebrow="October 8 – 10"
-            title="Fall Retreat 2026"
-            description="Camp Tall Timbers. Pull up with your Neighbor Net."
-            actions={
-              <>
-                <Button variant="outline">Share</Button>
-                <Button>View schedule</Button>
-              </>
-            }
-          />
-        </div>
-      </Section>
-
-      <Separator />
-
-      <Section
-        title="Shapes"
-        description="components/brand/blob.tsx (Brandbook p.2, 6, 41–42). Organic shapes that fill with currentColor, so a text class sets colour and opacity: text-white/[0.07] for a tint on a colour block, text-highlight for a solid accent. Let them bleed off the edge of the block. BrandWave ends a colour block in a curve."
-      >
-        <div className="relative isolate overflow-hidden rounded-lg bg-primary text-primary-foreground">
-          <div className="grid grid-cols-2 gap-6 p-6 sm:grid-cols-4">
-            {(['pebble', 'ripple', 'cloud', 'bloom'] as BlobShape[]).map((shape) => (
-              <div key={shape} className="flex flex-col items-center gap-2">
-                <BrandBlob shape={shape} className="size-24 text-highlight" />
-                <code className="font-mono text-xs opacity-80">{shape}</code>
-              </div>
-            ))}
-          </div>
-          <BrandWave className="-mb-px h-8 text-background" />
-        </div>
-      </Section>
-
-      <Section
-        title="Highlight"
-        description="The palette's bright accent: Buttercup for General and Sisters, Sky Blue for Brothers. For fills, blobs and accent words on dark blocks, never small type on white."
-      >
-        <div className="grid gap-4 lg:grid-cols-3">
-          {(['general', 'brothers', 'sisters'] as const).map((side) => (
-            <div
-              key={side}
-              data-theme-side={side}
-              className="relative isolate overflow-hidden rounded-lg bg-foreground p-5 text-background"
-            >
-              <BrandBlob shape="cloud" className="absolute -bottom-10 -right-8 -z-10 size-28 text-highlight" />
-              <p className="ym-eyebrow text-highlight">{side}</p>
-              <p className="ym-h1 mt-1">Pull up.</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        title="Local lockup"
-        description="components/brand/local-lockup.tsx (Brandbook p.49–50). The stacked logo with a subregion or Neighbor Net beneath it. Posters exist for four cities only, so the app builds the rest in code."
-      >
-        <div className="grid gap-4 sm:grid-cols-3">
-          {(['general', 'brothers', 'sisters'] as const).map((side) => (
-            <div key={side} data-theme-side={side} className="rounded-lg bg-primary p-6 text-primary-foreground">
-              <LocalLockup place="Houston" placeClassName="text-highlight" />
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        title="Member avatar"
-        description="components/brand/member-avatar.tsx (Brandbook p.45–46). Initials on a solid side colour, with the photo on top when it loads. Pass the member's side so their colour stays fixed for every viewer; omit it for your own avatar to follow the theme."
-      >
-        <Card>
-          <CardContent className="flex flex-wrap items-end gap-6 p-6">
-            <MemberAvatar name="Yusuf Abdullah" side="brothers" size="xl" />
-            <MemberAvatar name="Maryam Khan" side="sisters" size="lg" />
-            <MemberAvatar name="Young Muslims" side="general" size="md" />
-            <MemberAvatar name="Omar Anees" size="sm" />
-            <MemberAvatar name="Aisha Mohamed" side="sisters" size="xs" />
-          </CardContent>
-        </Card>
       </Section>
 
       <Separator />

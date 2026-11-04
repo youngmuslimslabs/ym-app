@@ -2,6 +2,12 @@
 
 > **Immediate goal: get the app working to test live at a convention on ~July 14 2026 (2 weeks away).** Prioritize "does it work for real users" over full production hardening. Work top-down: items are ordered by priority within each tier (P0 → P2). Audit-surfaced items are tagged `[AUDIT]` with file:line references.
 
+## Design reconciliation — 4 November 2026
+
+- **Confirmed:** one shared experience; no program choice or separate Brothers/Sisters app themes. Historical logo assets and palette references may be retained; archived theme CSS is not imported.
+- **[IN REVIEW] #99:** removed program queries/writes, required choice, prompt, cookie theming and directory/profile fields. Old bookmarks recover through existing gates; the unapplied program SQL is reference only. No database was changed. Existing performance work and unified official logos are retained. Broader visual alignment remains design review.
+- **[IN REVIEW] #88:** shared opt-in foundation; existing routes remain unchanged. Broader navigation, Profile section restructuring, completion-step removal, role approval and mobile editor UX remain review proposals.
+
 ## Confirmed product decisions (do not relitigate)
 
 - **Access is `@youngmuslims.com`-only, by design.** Every user has a youngmuslims.com Google account; no alumni/external login. The auth domain gate is correct, not a gap.

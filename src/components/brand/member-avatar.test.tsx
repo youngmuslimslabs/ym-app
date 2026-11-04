@@ -23,12 +23,7 @@ describe('MemberAvatar', () => {
     expect(screen.getByRole('img', { name: 'Fatima Ali' })).toHaveTextContent('FA')
   })
 
-  it('uses the fixed side colour when a side is given', () => {
-    render(<MemberAvatar name="Fatima Ali" side="sisters" />)
-    expect(screen.getByRole('img', { name: 'Fatima Ali' })).toHaveClass('bg-brand-jade')
-  })
-
-  it('follows the theme when no side is given', () => {
+  it('follows the theme for every member', () => {
     render(<MemberAvatar name="Fatima Ali" />)
     expect(screen.getByRole('img', { name: 'Fatima Ali' })).toHaveClass('bg-primary')
   })

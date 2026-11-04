@@ -3,9 +3,8 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
-import type { Side } from '@/lib/side'
 
-// Branded member avatar (Brandbook p.45–46): initials on a solid side-coloured
+// Branded member avatar (Brandbook p.45–46): initials on a solid shared brand
 // circle, with the member's photo on top when there is one and it loads.
 // Google profile photos expire or 403 often enough that the fallback is the
 // common case, so it has to look intentional rather than broken.
@@ -22,14 +21,6 @@ const SIZE: Record<AvatarSize, { box: string; px: number; text: string }> = {
   xl: { box: 'size-24', px: 96, text: 'text-3xl font-bold' },
 }
 
-// Fixed per side, so a Sisters member's avatar stays green when a Brothers
-// member views it. With no side, it follows the viewer's theme.
-const SIDE_FILL: Record<Side | 'general', string> = {
-  brothers: 'bg-brand-royal text-white',
-  sisters: 'bg-brand-jade text-white',
-  general: 'bg-brand-obsidian text-brand-snow',
-}
-
 export function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '?'
@@ -41,8 +32,6 @@ export function getInitials(name: string): string {
 interface MemberAvatarProps {
   name: string
   src?: string | null
-  /** The member's side. Omit to follow the active theme (e.g. your own avatar). */
-  side?: Side | 'general' | null
   size?: AvatarSize
   className?: string
   /**
@@ -52,10 +41,10 @@ interface MemberAvatarProps {
   decorative?: boolean
 }
 
-export function MemberAvatar({ name, src, side, size = 'md', className, decorative }: MemberAvatarProps) {
+export function MemberAvatar({ name, src, size = 'md', className, decorative }: MemberAvatarProps) {
   const [failed, setFailed] = useState(false)
   const s = SIZE[size]
-  const fill = side ? SIDE_FILL[side] : 'bg-primary text-primary-foreground'
+  const fill = 'bg-primary text-primary-foreground'
   const showImage = Boolean(src) && !failed
 
   return (

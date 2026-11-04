@@ -33,7 +33,6 @@ function getInitialFilters(): PeopleFilters {
     projectTypes: [],
     projectRoles: [],
     skills: [],
-    sides: [],
     yearsInYM: undefined,
   }
 }
@@ -46,7 +45,6 @@ const MULTI_FILTER_KEYS = [
   'projectTypes',
   'projectRoles',
   'skills',
-  'sides',
 ] as const
 
 function readFiltersFromParams(params: URLSearchParams): PeopleFilters {
@@ -195,13 +193,6 @@ export function usePeopleFilters(people: PersonListItem[]): UsePeopleFiltersRetu
       : people
 
     return candidates.filter((person) => {
-      // Side filter
-      if (filters.sides.length > 0) {
-        if (!person.side || !filters.sides.includes(person.side)) {
-          return false
-        }
-      }
-
       // Region filter
       if (filters.regions.length > 0) {
         if (!person.region || !filters.regions.includes(person.region.id)) {

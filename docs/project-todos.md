@@ -244,3 +244,5 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 ### Figma implementation — 2026-11-04
 - ✅ **[DONE]** Login layout translated from Figma 109:196 / 109:350: Figtree, unified logo, exact decorative SVGs, quiet centered layout; real Google Identity Services retained. Wrong-account alert and signing-in status remain accessible. Layout review fixtures and responsive checks tracked in the follow-on preview PR.
 - Home and onboarding implementation in progress in separate focused PRs. Profile overview, navigation restructure, and mobile session-editor proposals still require product review.
+
+- ✅ **[DONE]** Figma Home content implemented (107:2 / 109:7975): green attendance card, desktop identity, list shortcuts, yellow community counts, matching loading/empty/live states. Retains existing data queries and navigation; actual available metrics used, no fabricated check-in count.

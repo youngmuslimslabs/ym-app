@@ -1,5 +1,5 @@
 import { type LucideIcon } from 'lucide-react'
-import { QUICK_ACTION_TINTS, QuickActionRow } from './QuickActionRow'
+import { QuickActionRow } from './QuickActionRow'
 
 interface QuickAction {
   href: string
@@ -14,12 +14,11 @@ interface QuickActionListProps {
 
 export function QuickActionList({ actions }: QuickActionListProps) {
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      {actions.map((action, i) => (
+    <div className="divide-y divide-border overflow-hidden rounded-3xl border bg-card">
+      {actions.map((action) => (
         <QuickActionRow
           key={action.href}
           {...action}
-          tint={QUICK_ACTION_TINTS[i % QUICK_ACTION_TINTS.length]}
         />
       ))}
     </div>

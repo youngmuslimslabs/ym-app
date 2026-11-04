@@ -22,7 +22,7 @@
 - **PostHog is the error-monitoring + analytics tool.** No separate Sentry.
 - **No communications plan.**
 - **Intra-org PII visibility is acceptable.** Internal staff seeing each other's phone / personal email / ethnicity / DOB is fine; no field-level restriction needed.
-- **Brothers/Sisters (`users.side`) is required and permanent.** Chosen once in onboarding, visible to all members (profile, People cards, People filter), and it selects the Brothers/Sisters brand theme on screens that have adopted the brand. App users can't change it after; an admin corrects mistakes. *(Decided 2026-09-28.)*
+- **One shared experience.** No required program field, program choice, cookie-based member theme, or separate Brothers/Sisters app. This supersedes the 28 September decision. Keep the label **Nationality** for now; the storage key remains compatible.
 - **Freeze deploys to `main` during the convention weekend.** Avoids the PWA service worker swapping versions in attendees' open sessions mid-check-in (the optional reload-prompt code fix stays at P2 #28).
 
 ## Data population model (how real data gets in)
@@ -179,7 +179,7 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 ## UI / UX Polish
 
 - **Wire up dark mode toggle** — `darkMode: ['class']` + dark OKLCH tokens exist, but nothing adds the `dark` class to `<html>`. Needs `next-themes` or a hand-rolled toggle.
-- **Brand redesign rollout** — pass 1 (2026-09-28, branch `feature/redesign-pass-1`) redesigned Login and Home and added the type scale (`.ym-*`), `PageHeader`, `BrandBlob`/`BrandWave`, `LocalLockup`, `MemberAvatar` and the `highlight` token. Review feedback (Omar): pass 1 overused Boldonse and felt too blue. Pass 2 offered three variations (A Warm Snow, B Obsidian, C Palette blocks). **B, Obsidian, was picked (2026-09-28) and is built into Login + Home**: one Deep Obsidian block per screen, a white sidebar, Boldonse once per screen (the Login headline, the member's name on Home, page titles elsewhere), and the side colour only on accents. The variations page is removed. Per Omar's review the brand is **opt-in**: tokens live under `data-theme="ym"` and a screen adopts it by being wrapped in `<BrandScope>` (a route `layout.tsx`), one draft PR per screen. Done: Login, Home, the onboarding side step, `/design-system`. Next: People, Profile, Conferences, Admin (swap title blocks to `PageHeader`). `MemberAvatar` is already rolled out (see Recently shipped). Later: 44px tap targets, dialog margin on mobile, badge status variants, shared `EmptyState` + `ResponsiveSheet`, mobile bottom nav, copy in the brand voice. Photos from the Brandbook are **not** used yet; Omar asked that something in the book not be shown, so get sign-off first.
+- **Superseded design history — brand rollout** — pass 1 (2026-09-28, branch `feature/redesign-pass-1`) redesigned Login and Home and added the type scale (`.ym-*`), `PageHeader`, `BrandBlob`/`BrandWave`, `LocalLockup`, `MemberAvatar` and the `highlight` token. Review feedback (Omar): pass 1 overused Boldonse and felt too blue. Pass 2 offered three variations (A Warm Snow, B Obsidian, C Palette blocks). **B, Obsidian, was picked (2026-09-28) and is built into Login + Home**: one Deep Obsidian block per screen, a white sidebar, Boldonse once per screen (the Login headline, the member's name on Home, page titles elsewhere), and the side colour only on accents. The variations page is removed. Per Omar's review the brand is **opt-in**: tokens live under `data-theme="ym"` and a screen adopts it by being wrapped in `<BrandScope>` (a route `layout.tsx`), one draft PR per screen. Done: Login, Home, the onboarding side step, `/design-system`. Next: People, Profile, Conferences, Admin (swap title blocks to `PageHeader`). `MemberAvatar` is already rolled out (see Recently shipped). Later: 44px tap targets, dialog margin on mobile, badge status variants, shared `EmptyState` + `ResponsiveSheet`, mobile bottom nav, copy in the brand voice. Photos from the Brandbook are **not** used yet; Omar asked that something in the book not be shown, so get sign-off first.
 - ~~**Home "Who you are" — many-role overflow**~~ — resolved by the redesign: roles now render as wrapping chips in the Home hero.
 - Finalize loading/error state patterns across the app
 - Onboarding motion & transitions (use the `frontend-design` skill): page transitions, step 7 celebration, segmented step indicator, step 1 welcome reveal, micro-interactions
@@ -190,8 +190,8 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 
 ## New Features
 
-- **Brothers/Sisters side field** — ⏳ **built locally, migration NOT applied** (branch `feature/brothers-sisters`, stacked on `feature/design-system` + `fix/perf-pass`). `supabase/migrations/00024_users_side.sql` adds `users.side` (`brothers`|`sisters`, CHECK) + a trigger that rejects changes by `authenticated`/`anon` once set (SQL editor / service role can still correct). App: required first onboarding step; `/onboarding/side` one-question page for members onboarded before it existed (middleware routes NULL-side users there); read-only on profile; People card + filter; the `ym_side` cookie (kept in sync by middleware) is read by `<BrandScope>`, which sets `data-theme-side` on screens that have adopted the brand. Deploy-order safe: before the migration, middleware falls back to the old lookup and the side save is skipped. **To ship:** owner approves → back up → apply 00024 with `--single-transaction` (ym-db-changes skill) → regenerate `database.types.ts`.
-- **Admin UI to correct a member's side** — today it's SQL-editor only. Fold into the role-approval admin tooling.
+- **[SUPERSEDED — reference only] Brothers/Sisters side field and admin correction UI.** Removed from the active shared experience. PR #93 is closed; former migration 00024 is archived under `docs/reference/00024_users_side.sql.txt` and must not be applied. No production schema was changed.
+
 
 - **Org Chart** — visual hierarchy explorer (separate from the directory)
   - Option A: geographic only (Region → Subregion → NN); Option B: scoped by track (Geographic / Cabinet / Cloud)
@@ -243,8 +243,10 @@ Full authenticated click-through (desktop 1280 + mobile 393, negative tests) on 
 
 ### Figma implementation — 2026-11-04
 - ✅ **[DONE]** Login layout translated from Figma 109:196 / 109:350: Figtree, unified logo, exact decorative SVGs, quiet centered layout; real Google Identity Services retained. Wrong-account alert and signing-in status remain accessible. Layout review fixtures and responsive checks tracked in the follow-on preview PR.
-- Home and onboarding implementation in progress in separate focused PRs. Profile overview, navigation restructure, and mobile session-editor proposals still require product review.
+- Home and onboarding implementation are pushed in draft #113/#114; Login is draft #112. Profile overview, navigation restructure, and mobile session-editor proposals still require product review.
 
 - ✅ **[DONE]** Figma Home content implemented (107:2 / 109:7975): green attendance card, desktop identity, list shortcuts, yellow community counts, matching loading/empty/live states. Retains existing data queries and navigation; actual available metrics used, no fabricated check-in count.
 
 - ✅ **[DONE]** Figma onboarding geography (109:8791 / 109:8813): searchable visible choices, explicit Continue, dependent NeighborNet reset and Back preservation; shared Figtree framing and 8-step progress. Keeps Nationality, Role dropdown and Done. Persistent save failure retains answers and retries; production reference IDs remain injected by the authenticated page.
+
+- ✅ **[DONE]** Current screen stack validation: 392/392 full-suite tests, then 57/57 affected Home/onboarding tests after browser refinements. Types, lint (3 existing warnings) and frozen Next 15.5.24 production build pass. Sample browser review at 375/393/430/1280px; no overflow; role-empty guidance visible on mobile. #101 is review-only. Authenticated testing in an isolated environment and a current-head hosted preview remain open.

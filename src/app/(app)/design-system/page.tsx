@@ -57,18 +57,18 @@ const GENERAL: Swatch[] = [
     hex: '#234080',
     className: 'bg-brand-royal',
     onClassName: 'text-brand-snow',
-    note: 'Signature — from the Brothers palette',
+    note: 'Signature action color',
   },
   {
     name: 'Jade Foliage',
     hex: '#397451',
     className: 'bg-brand-jade',
     onClassName: 'text-brand-snow',
-    note: 'Accent — from the Sisters palette',
+    note: 'Supporting brand color',
   },
 ]
 
-const BROTHERS: Swatch[] = [
+const BLUE_PALETTE: Swatch[] = [
   {
     name: 'Midnight Blue',
     hex: '#16294F',
@@ -97,7 +97,7 @@ const BROTHERS: Swatch[] = [
   },
 ]
 
-const SISTERS: Swatch[] = [
+const GREEN_PALETTE: Swatch[] = [
   {
     name: 'Deep Forest Green',
     hex: '#043222',
@@ -167,23 +167,16 @@ function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
   )
 }
 
-/**
- * Renders the same small UI under one of the three themes. The General theme
- * is the page-level `data-theme="ym"` scope (see layout.tsx), so it is the
- * variant with no `data-side` attribute.
- */
+/** A specimen of the single shared app theme. */
 function ThemePreview({
   name,
   anchor,
-  side,
 }: {
   name: string
   anchor: string
-  side?: 'brothers' | 'sisters'
 }) {
   return (
     <div
-      data-side={side}
       className="overflow-hidden rounded-lg border bg-background"
     >
       {/* Stand-in for the sidebar, which is this theme's anchor color */}
@@ -283,55 +276,43 @@ export default function DesignSystemPage() {
       </header>
 
       <Section
-        title="Themes"
-        description="Three complete themes, each anchored on its palette's darkest base. General is the page-level data-theme='ym' scope; set data-side='brothers' or 'sisters' on any element to theme it and everything inside. Nothing sets these on a real screen yet."
+        title="Shared app theme"
+        description="One shared Young Muslims experience. Palette colors are available to every member; no program selection or separate app themes."
       >
-        <div className="grid gap-4 lg:grid-cols-3">
-          <ThemePreview name="General" anchor="Deep Obsidian #171725" />
-          <ThemePreview
-            name="Brothers"
-            anchor="Midnight Blue #16294F"
-            side="brothers"
-          />
-          <ThemePreview
-            name="Sisters"
-            anchor="Deep Forest Green #043222"
-            side="sisters"
-          />
-        </div>
+        <ThemePreview name="Young Muslims" anchor="Deep Obsidian #171725" />
       </Section>
 
       <Section
         title="General palette"
-        description="For anything representing Young Muslims as a whole. Obsidian and Warm Snow are the base; blue and green signal the two sides united. (Brandbook p.30)"
+        description="For anything representing Young Muslims as a whole. Obsidian and Warm Snow are the base; blue, green and warm accents support distinct content sections. (Brandbook p.30)"
       >
         <SwatchGrid swatches={GENERAL} />
       </Section>
 
       <Section
-        title="Brothers palette"
-        description="For content speaking to or about the brothers' side. Lead with the deeper blues; Sky Blue where you want energy. (Brandbook p.31)"
+        title="Blue palette · brand reference"
+        description="Source palette from Brandbook p.31. Available to the shared experience; this is not a member theme."
       >
-        <SwatchGrid swatches={BROTHERS} />
+        <SwatchGrid swatches={BLUE_PALETTE} />
       </Section>
 
       <Section
-        title="Sisters palette"
-        description="For content speaking to or about the sisters' side. Lead with the greens; Buttercup and Brass for warmth. (Brandbook p.32)"
+        title="Green and warm palette · brand reference"
+        description="Source palette from Brandbook p.32. Available to the shared experience; this is not a member theme."
       >
-        <SwatchGrid swatches={SISTERS} />
+        <SwatchGrid swatches={GREEN_PALETTE} />
       </Section>
 
       <Section
         title="Semantic tokens"
-        description="What the UI actually uses. These are built from the brand palette — prefer them over brand-* so every theme works."
+        description="What the UI actually uses. These are built from the brand palette — prefer them over brand-* so the shared theme stays consistent."
       >
         <SwatchGrid swatches={SEMANTIC} />
       </Section>
 
       <Section
         title="Sidebar tokens"
-        description="The branded dark sidebar surface, re-colored per theme. Still HSL channels, like the app's existing sidebar, so nothing about how the sidebar is styled today changes."
+        description="The shared sidebar tokens. Still HSL channels, like the app's existing sidebar, so nothing about how the sidebar is styled today changes."
       >
         <SwatchGrid swatches={SIDEBAR} />
       </Section>

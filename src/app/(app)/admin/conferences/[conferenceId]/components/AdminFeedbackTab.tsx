@@ -39,11 +39,11 @@ export function AdminFeedbackTab({
 
   if (totalResponses === 0) {
     return (
-      <div className="max-w-md mx-auto py-12 text-center">
-        <div className="mx-auto rounded-full bg-muted/50 p-4 w-fit mb-4">
-          <Star className="w-6 h-6 text-muted-foreground" />
+      <div className="mx-auto max-w-md rounded-2xl border bg-card p-6 py-10 text-center">
+        <div className="mx-auto mb-4 w-fit rounded-full bg-muted/50 p-4">
+          <Star className="size-6 text-muted-foreground" aria-hidden="true" />
         </div>
-        <h3 className="text-base font-semibold tracking-tight mb-1.5">
+        <h3 className="ym-h3 mb-1.5">
           No feedback yet
         </h3>
         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -58,11 +58,11 @@ export function AdminFeedbackTab({
     // Edge case: there's feedback in the DB but no ended sessions in the
     // current view (e.g., all sessions still upcoming). Lands gracefully.
     return (
-      <div className="max-w-md mx-auto py-12 text-center">
-        <div className="mx-auto rounded-full bg-muted/50 p-4 w-fit mb-4">
-          <Star className="w-6 h-6 text-muted-foreground" />
+      <div className="mx-auto max-w-md rounded-2xl border bg-card p-6 py-10 text-center">
+        <div className="mx-auto mb-4 w-fit rounded-full bg-muted/50 p-4">
+          <Star className="size-6 text-muted-foreground" aria-hidden="true" />
         </div>
-        <h3 className="text-base font-semibold tracking-tight mb-1.5">
+        <h3 className="ym-h3 mb-1.5">
           Nothing has ended yet
         </h3>
         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -73,14 +73,14 @@ export function AdminFeedbackTab({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="text-sm text-muted-foreground">
         {totalResponses === 1
           ? '1 response across this conference'
           : `${totalResponses.toLocaleString()} responses across this conference`}
       </div>
 
-      <ul className="rounded-xl border bg-card divide-y overflow-hidden">
+      <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
         {rows.map((row) => (
           <FeedbackRow
             key={row.session.id}
@@ -120,8 +120,8 @@ function FeedbackRow({
     return (
       <li className="flex items-center gap-4 px-5 py-4">
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate">{row.session.title}</div>
-          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+          <div className="truncate text-sm font-semibold">{row.session.title}</div>
+          <div className="mt-0.5 truncate text-xs text-muted-foreground">
             {dateLabel} · {formatTime(startWall.time)}
             {row.session.speaker ? ` · ${row.session.speaker}` : ''}
           </div>
@@ -139,11 +139,11 @@ function FeedbackRow({
         type="button"
         onClick={onOpen}
         aria-label={`Open feedback for ${row.session.title}`}
-        className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-muted/40 transition-colors focus:outline-none focus-visible:bg-muted/40"
+        className="flex min-h-14 w-full items-center gap-4 px-5 py-4 text-left transition-colors duration-200 hover:bg-muted/40 focus:outline-none focus-visible:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate">{row.session.title}</div>
-          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+          <div className="truncate text-sm font-semibold">{row.session.title}</div>
+          <div className="mt-0.5 truncate text-xs text-muted-foreground">
             {dateLabel} · {formatTime(startWall.time)}
             {row.session.speaker ? ` · ${row.session.speaker}` : ''}
           </div>
@@ -151,17 +151,17 @@ function FeedbackRow({
 
         <div className="flex items-center gap-4 shrink-0">
           <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 fill-primary text-primary" />
-            <span className="text-sm font-semibold tabular-nums">
+            <Star className="size-4 fill-primary text-primary" aria-hidden="true" />
+            <span className="text-base font-bold tabular-nums">
               {row.avgRating!.toFixed(1)}
             </span>
           </div>
-          <div className="text-xs text-muted-foreground tabular-nums w-20 text-right">
+          <div className="hidden w-20 text-right text-xs tabular-nums text-muted-foreground sm:block">
             {row.count === 1 ? '1 response' : `${row.count} responses`}
           </div>
         </div>
 
-        <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       </button>
     </li>
   )

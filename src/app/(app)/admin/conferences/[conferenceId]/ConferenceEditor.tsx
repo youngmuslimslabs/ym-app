@@ -1,17 +1,16 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import {
   Calendar as CalendarIcon,
-  ChevronLeft,
   MapPin,
   Plus,
 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   Tabs,
   TabsContent,
@@ -127,87 +126,82 @@ export function ConferenceEditor({ initialView }: Props) {
     // AppShell renders a mobile header above us that would otherwise push
     // the bottom of the page off-screen.
     <div className="flex flex-col md:h-dvh md:overflow-hidden">
-      <header className="px-6 md:px-8 pt-10 md:pt-12 pb-5 border-b shrink-0">
-        <Link
-          href="/admin/conferences"
-          className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-3"
-        >
-          <ChevronLeft className="w-3 h-3" />
-          All conferences
-        </Link>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
-            <div className="flex items-center gap-3 mb-1 flex-wrap">
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-                {conference.name}
-              </h1>
+      <div className="shrink-0 px-6 pb-5 pt-6 sm:px-10 md:pb-4 md:pt-4">
+        <PageHeader
+          back={{ href: '/admin/conferences', label: 'All conferences' }}
+          title={conference.name}
+          description={
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <ConferenceStatusBadge
                 status={conference.status}
                 start_date={conference.start_date}
                 end_date={conference.end_date}
               />
-            </div>
-            <div className="text-sm text-muted-foreground flex items-center gap-3 flex-wrap">
               {conference.location && (
-                <>
-                  <span className="inline-flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4" />
-                    {conference.location}
-                  </span>
-                  <span>·</span>
-                </>
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="size-4 shrink-0" aria-hidden="true" />
+                  {conference.location}
+                </span>
               )}
               <span className="inline-flex items-center gap-1.5">
-                <CalendarIcon className="w-4 h-4" />
+                <CalendarIcon className="size-4 shrink-0" aria-hidden="true" />
                 {formatHeaderDateRange(
                   conference.start_date,
                   conference.end_date
                 )}
               </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" onClick={handleAddSession}>
-              <Plus className="w-4 h-4" />
-              Add session
-            </Button>
-            {isDraft && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={() => setPublishOpen(true)}
-                      disabled={publishPending}
-                    >
-                      {publishPending ? 'Going live…' : 'Go Live'}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[220px] text-center">
-                    Opens this conference to all invited attendees. This cannot be undone.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-        </div>
-      </header>
+            </span>
+          }
+          actions={
+            <>
+              <Button
+                variant="outline"
+                className="h-11 md:h-9"
+                onClick={handleAddSession}
+              >
+                <Plus aria-hidden="true" />
+                Add session
+              </Button>
+              {isDraft && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="h-11 md:h-9"
+                        onClick={() => setPublishOpen(true)}
+                        disabled={publishPending}
+                      >
+                        {publishPending ? 'Going live…' : 'Go Live'}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[220px] text-center">
+                      Opens this conference to all invited attendees. This cannot be undone.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </>
+          }
+        />
+      </div>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="flex-1 flex flex-col min-h-0">
-        <div className="px-6 md:px-8 pt-6 shrink-0">
-          <TabsList>
-            <TabsTrigger value="info">
+        <div className="shrink-0 px-6 pb-4 sm:px-10">
+          {/* 52px on phones = 44px triggers inside the 4px padding. */}
+          <TabsList className="h-[3.25rem] w-full rounded-xl md:h-10 md:w-auto">
+            <TabsTrigger value="info" className="h-full flex-1 rounded-lg md:flex-none md:px-4">
               Info
             </TabsTrigger>
-            <TabsTrigger value="schedule">
+            <TabsTrigger value="schedule" className="h-full flex-1 rounded-lg md:flex-none md:px-4">
               Schedule
             </TabsTrigger>
-            <TabsTrigger value="attendees">
+            <TabsTrigger value="attendees" className="h-full flex-1 rounded-lg md:flex-none md:px-4">
               Attendees
               <span className="ml-1.5 text-muted-foreground tabular-nums">
                 {invitedCount}
               </span>
             </TabsTrigger>
-            <TabsTrigger value="feedback">
+            <TabsTrigger value="feedback" className="h-full flex-1 rounded-lg md:flex-none md:px-4">
               Feedback
               {feedbackCount > 0 && (
                 <span className="ml-1.5 text-muted-foreground tabular-nums">
@@ -218,7 +212,7 @@ export function ConferenceEditor({ initialView }: Props) {
           </TabsList>
         </div>
 
-        <TabsContent value="info" className="py-6 px-6 md:px-8 overflow-y-auto flex-1 min-h-0 mt-0">
+        <TabsContent value="info" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-2 sm:px-10">
           <ConferenceInfoForm
             conference={conference}
             onDeleteClick={() => setDeleteOpen(true)}
@@ -227,7 +221,7 @@ export function ConferenceEditor({ initialView }: Props) {
         <TabsContent value="schedule" className="flex-1 min-h-0 mt-0">
           <ScheduleEditor ref={scheduleRef} view={initialView} />
         </TabsContent>
-        <TabsContent value="attendees" className="py-6 px-6 md:px-8 overflow-y-auto flex-1 min-h-0 mt-0">
+        <TabsContent value="attendees" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-2 sm:px-10">
           <AttendeePicker
             conferenceId={conference.id}
             people={initialView.attendees.people}
@@ -235,7 +229,7 @@ export function ConferenceEditor({ initialView }: Props) {
             invitedUserIds={initialView.attendees.invitedUserIds}
           />
         </TabsContent>
-        <TabsContent value="feedback" className="py-6 px-6 md:px-8 overflow-y-auto flex-1 min-h-0 mt-0">
+        <TabsContent value="feedback" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-2 sm:px-10">
           <AdminFeedbackTab
             sessions={initialView.sessions}
             feedbackBySession={initialView.feedbackBySession}

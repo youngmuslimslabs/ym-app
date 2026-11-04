@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
+import { conferenceDateTile } from '@/components/home/ConferenceAttendanceSection'
 import { ConferenceStatusBadge } from './ConferenceStatusBadge'
 import type { AdminConferenceRow } from '../types'
 
@@ -12,40 +13,58 @@ export function AdminConferencesTable({ rows }: Props) {
   if (rows.length === 0) return null
 
   return (
-    <ul className="rounded-xl border overflow-hidden divide-y">
-      {rows.map((row) => (
-        <li key={row.id}>
-          <Link
-            href={`/admin/conferences/${row.id}`}
-            className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors"
-          >
-            <div className="min-w-0">
-              <div className="font-medium truncate">{row.name}</div>
-              <div className="text-xs text-muted-foreground truncate">
-                {row.location ? `${row.location} · ` : ''}
-                {formatDateRange(row.start_date, row.end_date)}
+    <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
+      {rows.map((row) => {
+        const tile = conferenceDateTile(row.start_date, row.end_date)
+        return (
+          <li key={row.id}>
+            <Link
+              href={`/admin/conferences/${row.id}`}
+              className="group flex items-center gap-4 p-4 transition-colors duration-200 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:p-5"
+            >
+              <div
+                aria-hidden="true"
+                className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-secondary"
+              >
+                <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {tile.month}
+                </span>
+                <span className="text-base font-bold leading-none tabular-nums">
+                  {tile.days}
+                </span>
               </div>
-            </div>
-            <div className="text-muted-foreground text-sm whitespace-nowrap">
-              {formatRelativeWindow(row.start_date, row.end_date)}
-            </div>
-            <div className="tabular-nums text-sm whitespace-nowrap">
-              {row.invitedCount.toLocaleString()} invited
-            </div>
-            <div>
-              <ConferenceStatusBadge
-                status={row.status}
-                start_date={row.start_date}
-                end_date={row.end_date}
+              <div className="min-w-0 flex-1 sm:flex sm:items-center sm:gap-6">
+                <div className="min-w-0 sm:flex-1">
+                  <div className="ym-h3 sm:truncate">{row.name}</div>
+                  <div className="text-sm text-muted-foreground sm:truncate">
+                    {row.location ? `${row.location} · ` : ''}
+                    {formatDateRange(row.start_date, row.end_date)}
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm sm:mt-0 sm:shrink-0 sm:gap-6">
+                  <span className="whitespace-nowrap text-muted-foreground sm:w-28">
+                    {formatRelativeWindow(row.start_date, row.end_date)}
+                  </span>
+                  <span className="whitespace-nowrap font-medium tabular-nums sm:w-24">
+                    {row.invitedCount.toLocaleString()} invited
+                  </span>
+                  <span className="sm:w-16">
+                    <ConferenceStatusBadge
+                      status={row.status}
+                      start_date={row.start_date}
+                      end_date={row.end_date}
+                    />
+                  </span>
+                </div>
+              </div>
+              <ArrowRight
+                className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary"
+                aria-hidden="true"
               />
-            </div>
-            <ArrowRight
-              className="w-4 h-4 text-muted-foreground"
-              aria-hidden
-            />
-          </Link>
-        </li>
-      ))}
+            </Link>
+          </li>
+        )
+      })}
     </ul>
   )
 }

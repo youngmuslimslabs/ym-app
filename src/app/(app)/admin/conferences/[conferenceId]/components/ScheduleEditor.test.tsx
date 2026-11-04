@@ -58,6 +58,15 @@ describe('ScheduleEditor', () => {
     expect(screen.queryByText(/select a session/i)).not.toBeInTheDocument()
   })
 
+  it('offers a way back to the day list once a session is open (phones show one pane)', () => {
+    render(<ScheduleEditor view={makeView()} />)
+    expect(screen.queryByRole('button', { name: /all sessions/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /opening keynote/i }))
+    fireEvent.click(screen.getByRole('button', { name: /all sessions/i }))
+    expect(screen.getByText(/select a session/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /all sessions/i })).not.toBeInTheDocument()
+  })
+
   it('shows conference empty state when there are no sessions', () => {
     render(<ScheduleEditor view={makeView({ sessions: [], signupCounts: {}, checkInCounts: {} })} />)
     expect(screen.getByText(/no sessions yet/i)).toBeInTheDocument()

@@ -53,9 +53,9 @@ export function SyncGoogleUsersButton() {
   const syncing = state.status === 'syncing'
 
   return (
-    <div className="flex flex-col items-end gap-3">
-      <Button variant="outline" onClick={handleSync} disabled={syncing}>
-        <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+    <div className="flex shrink-0 flex-col items-stretch gap-3 sm:items-end">
+      <Button variant="outline" onClick={handleSync} disabled={syncing} className="h-11 md:h-9">
+        <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
         Sync Google Users
       </Button>
 
@@ -66,7 +66,7 @@ export function SyncGoogleUsersButton() {
       )}
 
       {state.status === 'done' && (
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:justify-end">
           <span className="flex items-center gap-1 text-primary font-medium">
             <UserPlus className="w-3.5 h-3.5" />
             {state.result.created} added

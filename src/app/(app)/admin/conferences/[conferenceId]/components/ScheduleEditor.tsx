@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Calendar, Coffee, Plus } from 'lucide-react'
+import { Calendar, ChevronLeft, Coffee, Plus } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -159,19 +159,24 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
         open={pendingNav !== null}
         onOpenChange={(open) => !open && setPendingNav(null)}
       >
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent className="sm:max-w-[420px] sm:rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Discard unsaved changes?</DialogTitle>
+            <DialogTitle className="ym-h3">Discard unsaved changes?</DialogTitle>
             <DialogDescription>
               Your edits will be lost. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setPendingNav(null)}>
+            <Button
+              variant="ghost"
+              className="h-11 md:h-9"
+              onClick={() => setPendingNav(null)}
+            >
               Cancel
             </Button>
             <Button
               variant="destructive"
+              className="h-11 md:h-9"
               onClick={() => {
                 const action = pendingNav
                 setPendingNav(null)
@@ -192,11 +197,11 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
       return (
         <>
           {mode === 'create' ? (
-            <div className="max-w-2xl mx-auto border rounded-lg overflow-hidden min-h-[640px] flex flex-col bg-background">
+            <div className="mx-6 flex min-h-[640px] max-w-2xl flex-col overflow-hidden rounded-2xl border bg-card sm:mx-10 md:mx-auto">
               {panel}
             </div>
           ) : (
-            <div className="py-8">
+            <div className="px-6 py-8 sm:px-10">
               <EmptyConferenceState
                 onAdd={() => openCreate(conference.start_date)}
               />
@@ -207,20 +212,29 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
       )
     }
 
+    // Phones show one pane at a time: the day list, or the panel once a session
+    // (or the create form) is open, with a way back. From md they sit side by side.
+    const panelOpen = mode !== 'empty'
+
     return (
-      <div className="grid grid-cols-2 h-full border-t overflow-hidden">
-        <div className="border-r overflow-y-auto bg-muted/40">
+      <div className="grid h-full grid-cols-1 overflow-hidden border-t md:grid-cols-2">
+        <div
+          className={cn(
+            'overflow-y-auto bg-muted/40 md:border-r',
+            panelOpen && 'hidden md:block'
+          )}
+        >
           {groupedDays.map(({ date, sessions: daySessions }) => (
             <section key={date} className="pb-4 [&:not(:first-child)]:pt-2">
-              <div className="px-6 pt-5 pb-3 sticky top-0 bg-muted/40 backdrop-blur z-10 flex items-baseline gap-2.5">
-                <h2 className="text-[13px] font-semibold tracking-tight">
+              <div className="sticky top-0 z-10 flex items-baseline gap-2.5 bg-muted/40 px-6 pb-3 pt-5 backdrop-blur">
+                <h2 className="text-base font-bold">
                   {format(parseISO(date), 'EEEE, MMMM d')}
                 </h2>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {summarizeDay(daySessions)}
                 </span>
               </div>
-              <div className="mx-5 flex flex-col gap-1.5">
+              <div className="mx-5 flex flex-col gap-2">
                 {daySessions.map((s) => (
                   <SessionRow
                     key={s.id}
@@ -235,16 +249,33 @@ export const ScheduleEditor = forwardRef<ScheduleEditorHandle, Props>(
                 <button
                   type="button"
                   onClick={() => openCreate(date)}
-                  className="mt-1 rounded-md border border-dashed px-3 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-card hover:border-muted-foreground/60 flex items-center justify-center gap-1.5 transition-colors"
+                  className="mt-1 flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-dashed px-3 py-2.5 text-sm text-muted-foreground transition-colors duration-200 hover:border-primary/40 hover:bg-card hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="size-3.5" aria-hidden="true" />
                   Add on {format(parseISO(date), 'EEEE')}
                 </button>
               </div>
             </section>
           ))}
         </div>
-        <div className="bg-background flex flex-col overflow-hidden">{panel}</div>
+        <div
+          className={cn(
+            'flex flex-col overflow-hidden bg-background',
+            !panelOpen && 'hidden md:flex'
+          )}
+        >
+          {panelOpen && (
+            <button
+              type="button"
+              onClick={() => attemptNav(() => changeMode('empty', null))}
+              className="-mb-1 flex min-h-11 w-fit items-center gap-1 px-5 pt-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+            >
+              <ChevronLeft className="size-4" aria-hidden="true" />
+              All sessions
+            </button>
+          )}
+          {panel}
+        </div>
         {discardDialog}
       </div>
     )
@@ -276,19 +307,20 @@ function SessionRow({
       <button
         type="button"
         onClick={onSelect}
+        aria-pressed={selected}
         className={cn(
-          'flex items-center min-h-[48px] rounded-lg border border-dashed transition-colors text-left',
+          'flex min-h-[48px] items-center rounded-xl border border-dashed text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           selected
-            ? 'bg-muted border-border opacity-100'
-            : 'border-border bg-transparent opacity-85 hover:bg-card hover:border-muted-foreground/60'
+            ? 'border-primary/40 bg-primary/5'
+            : 'border-border bg-transparent hover:border-primary/30 hover:bg-card'
         )}
       >
-        <div className="w-[30px] h-[30px] rounded-full border bg-background ml-4 my-3 flex items-center justify-center text-muted-foreground shrink-0">
-          <Coffee className="w-3.5 h-3.5" />
+        <div className="my-3 ml-4 flex size-8 shrink-0 items-center justify-center rounded-full border bg-background text-muted-foreground">
+          <Coffee className="size-4" aria-hidden="true" />
         </div>
-        <div className="flex-1 min-w-0 px-3.5">
-          <div className="text-[13px] font-medium truncate">{session.title}</div>
-          <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+        <div className="min-w-0 flex-1 px-3.5">
+          <div className="truncate text-sm font-semibold">{session.title}</div>
+          <div className="mt-0.5 truncate text-xs text-muted-foreground">
             {startWall} – {endWall}
             {session.room && ` · ${session.room}`} · break
           </div>
@@ -301,28 +333,29 @@ function SessionRow({
     <button
       type="button"
       onClick={onSelect}
+      aria-pressed={selected}
       className={cn(
-        'flex items-stretch min-h-[60px] rounded-lg border bg-card transition-colors text-left overflow-hidden',
+        'flex min-h-[64px] items-stretch overflow-hidden rounded-xl border bg-card text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         selected
-          ? 'bg-muted border-border'
-          : 'border-transparent hover:bg-muted/60 hover:border-border/60'
+          ? 'border-primary/40 bg-primary/5'
+          : 'hover:border-primary/30'
       )}
     >
-      <div className="font-mono text-[11px] text-muted-foreground w-[62px] py-3.5 px-2.5 pl-4 text-right leading-tight flex flex-col justify-center shrink-0">
-        <div>{startWall}</div>
-        <div className="opacity-70">{endWall}</div>
+      <div className="flex w-[5.5rem] shrink-0 flex-col justify-center whitespace-nowrap px-3 py-3.5 text-right text-xs leading-tight tabular-nums text-muted-foreground">
+        <div className="font-semibold text-foreground">{startWall}</div>
+        <div>{endWall}</div>
       </div>
-      <div className="w-px bg-border/50 my-2.5" />
-      <div className="flex-1 min-w-0 px-3.5 py-3.5 flex flex-col justify-center">
-        <div className="text-[13px] font-medium truncate">{session.title}</div>
+      <div className="my-3 w-px bg-border" />
+      <div className="flex min-w-0 flex-1 flex-col justify-center px-3.5 py-3.5">
+        <div className="truncate text-sm font-semibold">{session.title}</div>
         {(session.speaker || session.room) && (
-          <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+          <div className="mt-0.5 truncate text-xs text-muted-foreground">
             {[session.speaker, session.room].filter(Boolean).join(' · ')}
           </div>
         )}
       </div>
       {session.capacity != null && (
-        <div className="hidden sm:flex items-center gap-4 px-4 shrink-0">
+        <div className="hidden shrink-0 items-center gap-4 px-4 sm:flex">
           <RowStat
             value={`${signupCount}/${session.capacity}`}
             label={isFull ? 'Full' : 'Signed up'}
@@ -354,14 +387,14 @@ function RowStat({
     <div className="text-right">
       <div
         className={cn(
-          'text-[13px] font-semibold tabular-nums leading-tight',
+          'text-sm font-bold tabular-nums leading-tight',
           tone === 'destructive' && 'text-destructive',
           tone === 'muted' && 'text-muted-foreground'
         )}
       >
         {value}
       </div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <div className="text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
     </div>
@@ -370,19 +403,17 @@ function RowStat({
 
 function EmptyConferenceState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="max-w-md mx-auto text-center">
-      <div className="mx-auto rounded-full bg-muted/50 p-4 w-fit mb-4">
-        <Calendar className="w-6 h-6 text-muted-foreground" />
+    <div className="mx-auto max-w-md rounded-2xl border bg-card p-6 py-10 text-center">
+      <div className="mx-auto mb-4 w-fit rounded-full bg-muted/50 p-4">
+        <Calendar className="size-6 text-muted-foreground" aria-hidden="true" />
       </div>
-      <h3 className="text-base font-semibold tracking-tight mb-1.5">
-        No sessions yet
-      </h3>
-      <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+      <h3 className="ym-h3 mb-1.5">No sessions yet</h3>
+      <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
         Add sessions one at a time — each gets its own day, time, speaker,
         room, and capacity.
       </p>
-      <Button onClick={onAdd}>
-        <Plus className="w-4 h-4" />
+      <Button className="h-11 md:h-9" onClick={onAdd}>
+        <Plus aria-hidden="true" />
         Add first session
       </Button>
     </div>

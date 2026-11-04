@@ -101,113 +101,114 @@ export function ConferenceInfoForm({ conference, onDeleteClick }: Props) {
   }
 
   return (
-    <div className="max-w-3xl space-y-6 pb-24">
-      <div>
-        <Label htmlFor="info-name">Name</Label>
-        <Input
-          id="info-name"
-          value={form.name}
-          onChange={(e) => field('name', e.target.value)}
-          className="mt-1.5"
-        />
-      </div>
-      <div>
-        <Label htmlFor="info-tagline">
-          Tagline{' '}
-          <span className="text-muted-foreground font-normal">(optional)</span>
-        </Label>
-        <Input
-          id="info-tagline"
-          value={form.tagline}
-          onChange={(e) => field('tagline', e.target.value)}
-          placeholder="Building together, believing together"
-          className="mt-1.5"
-        />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="max-w-3xl space-y-8 pb-24">
+      <section className="space-y-6 rounded-2xl border bg-card p-6">
+        <h2 className="ym-h2">Details</h2>
         <div>
-          <Label htmlFor="info-start-date">Start date</Label>
-          <DatePicker
-            id="info-start-date"
-            value={form.start_date ? parseDateInput(form.start_date) : undefined}
-            onChange={(d) => field('start_date', toDateInputString(d))}
-            placeholder="Select date"
-            className="mt-1.5"
+          <Label htmlFor="info-name">Name</Label>
+          <Input
+            id="info-name"
+            value={form.name}
+            onChange={(e) => field('name', e.target.value)}
+            className="mt-1.5 h-11 md:h-9"
           />
         </div>
         <div>
-          <Label htmlFor="info-end-date">End date</Label>
-          <DatePicker
-            id="info-end-date"
-            value={form.end_date ? parseDateInput(form.end_date) : undefined}
-            onChange={(d) => field('end_date', toDateInputString(d))}
-            placeholder="Select date"
-            fromDate={form.start_date ? parseDateInput(form.start_date) : undefined}
-            className="mt-1.5"
+          <Label htmlFor="info-tagline">
+            Tagline{' '}
+            <span className="text-muted-foreground font-normal">(optional)</span>
+          </Label>
+          <Input
+            id="info-tagline"
+            value={form.tagline}
+            onChange={(e) => field('tagline', e.target.value)}
+            placeholder="Building together, believing together"
+            className="mt-1.5 h-11 md:h-9"
           />
         </div>
-      </div>
-      <div className="max-w-md">
-        <Label>Timezone</Label>
-        <Select
-          value={form.timezone}
-          onValueChange={(value) => field('timezone', value)}
-        >
-          <SelectTrigger className="mt-1.5">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TIMEZONE_OPTIONS.map((tz) => (
-              <SelectItem key={tz.value} value={tz.value}>
-                {tz.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="max-w-md">
-        <Label htmlFor="info-location">
-          Location{' '}
-          <span className="text-muted-foreground font-normal">(optional)</span>
-        </Label>
-        <Input
-          id="info-location"
-          value={form.location}
-          onChange={(e) => field('location', e.target.value)}
-          className="mt-1.5"
-        />
-      </div>
-      <div>
-        <Label htmlFor="info-description">
-          Description{' '}
-          <span className="text-muted-foreground font-normal">(optional)</span>
-        </Label>
-        <Textarea
-          id="info-description"
-          rows={3}
-          value={form.description}
-          onChange={(e) => field('description', e.target.value)}
-          className="mt-1.5 resize-none"
-        />
-      </div>
-
-      <div className="border-t pt-6">
-        <h3 className="text-sm font-semibold mb-2 text-destructive">
-          Danger zone
-        </h3>
-        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 flex items-center justify-between gap-4 flex-wrap">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm font-medium">Delete this conference</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <Label htmlFor="info-start-date">Start date</Label>
+            <DatePicker
+              id="info-start-date"
+              value={form.start_date ? parseDateInput(form.start_date) : undefined}
+              onChange={(d) => field('start_date', toDateInputString(d))}
+              placeholder="Select date"
+              className="mt-1.5 h-11 md:h-9"
+            />
+          </div>
+          <div>
+            <Label htmlFor="info-end-date">End date</Label>
+            <DatePicker
+              id="info-end-date"
+              value={form.end_date ? parseDateInput(form.end_date) : undefined}
+              onChange={(d) => field('end_date', toDateInputString(d))}
+              placeholder="Select date"
+              fromDate={form.start_date ? parseDateInput(form.start_date) : undefined}
+              className="mt-1.5 h-11 md:h-9"
+            />
+          </div>
+        </div>
+        <div className="max-w-md">
+          <Label>Timezone</Label>
+          <Select
+            value={form.timezone}
+            onValueChange={(value) => field('timezone', value)}
+          >
+            <SelectTrigger className="mt-1.5 h-11 md:h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIMEZONE_OPTIONS.map((tz) => (
+                <SelectItem key={tz.value} value={tz.value}>
+                  {tz.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="max-w-md">
+          <Label htmlFor="info-location">
+            Location{' '}
+            <span className="text-muted-foreground font-normal">(optional)</span>
+          </Label>
+          <Input
+            id="info-location"
+            value={form.location}
+            onChange={(e) => field('location', e.target.value)}
+            className="mt-1.5 h-11 md:h-9"
+          />
+        </div>
+        <div>
+          <Label htmlFor="info-description">
+            Description{' '}
+            <span className="text-muted-foreground font-normal">(optional)</span>
+          </Label>
+          <Textarea
+            id="info-description"
+            rows={3}
+            value={form.description}
+            onChange={(e) => field('description', e.target.value)}
+            className="mt-1.5 resize-none"
+          />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="ym-h3 text-destructive">Danger zone</h2>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-destructive/40 bg-destructive/5 p-6">
+          <div>
+            <p className="text-sm font-semibold">Delete this conference</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
               Removes all sessions, signups, check-ins, and feedback. Cannot be
               undone.
             </p>
           </div>
-          <Button variant="destructive" onClick={onDeleteClick}>
+          <Button variant="destructive" className="h-11 md:h-9" onClick={onDeleteClick}>
             Delete
           </Button>
         </div>
-      </div>
+      </section>
 
       <FloatingSaveBar
         hasChanges={changeCount > 0}

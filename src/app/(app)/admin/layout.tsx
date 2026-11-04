@@ -1,5 +1,4 @@
 import { BrandScope } from '@/components/brand/brand-scope'
-import { getSide } from '@/lib/side-server'
 import { PortalBrandBridge } from './components/PortalBrandBridge'
 
 // Admin has adopted the brand (redesign direction B). The rest of the app
@@ -9,10 +8,9 @@ import { PortalBrandBridge } from './components/PortalBrandBridge'
 // <body>, outside this scope, so they would keep the legacy tokens. The bridge
 // carries the scope across to them (see PortalBrandBridge).
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const side = await getSide()
   return (
-    <BrandScope side={side} className="min-h-full">
-      <PortalBrandBridge side={side} />
+    <BrandScope className="min-h-full">
+      <PortalBrandBridge />
       {children}
     </BrandScope>
   )

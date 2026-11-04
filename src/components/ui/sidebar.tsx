@@ -210,7 +210,7 @@ const Sidebar = React.forwardRef<
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
               } as React.CSSProperties
             }
-            side={side}
+
           >
             <SheetHeader className="sr-only">
               <SheetTitle>Sidebar</SheetTitle>

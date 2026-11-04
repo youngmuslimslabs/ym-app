@@ -13,23 +13,23 @@ afterEach(() => {
 })
 
 describe('PortalBrandBridge', () => {
-  it('stamps a portal added to body with the scope and the side', async () => {
-    render(<PortalBrandBridge side="sisters" />)
+  it('stamps a portal added to body with the shared scope', async () => {
+    render(<PortalBrandBridge />)
     const portal = addPortal()
     await waitFor(() => expect(portal).toHaveAttribute('data-theme', 'ym'))
-    expect(portal).toHaveAttribute('data-theme-side', 'sisters')
+    expect(portal).not.toHaveAttribute('data-theme-side')
     expect(portal).toHaveClass('font-sans', 'tracking-brand')
   })
 
-  it('sets no side attribute for General', async () => {
-    render(<PortalBrandBridge side={null} />)
+  it('does not add a member-specific theme', async () => {
+    render(<PortalBrandBridge />)
     const portal = addPortal()
     await waitFor(() => expect(portal).toHaveAttribute('data-theme', 'ym'))
     expect(portal).not.toHaveAttribute('data-theme-side')
   })
 
   it('ignores non-div nodes (Next route announcer, dev overlay)', async () => {
-    render(<PortalBrandBridge side="brothers" />)
+    render(<PortalBrandBridge />)
     const other = addPortal('next-route-announcer')
     const portal = addPortal()
     await waitFor(() => expect(portal).toHaveAttribute('data-theme', 'ym'))
@@ -37,7 +37,7 @@ describe('PortalBrandBridge', () => {
   })
 
   it('leaves body itself and portals added after unmount alone', async () => {
-    const { unmount } = render(<PortalBrandBridge side="brothers" />)
+    const { unmount } = render(<PortalBrandBridge />)
     expect(document.body).not.toHaveAttribute('data-theme')
     unmount()
     const portal = addPortal()

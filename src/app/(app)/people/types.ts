@@ -14,7 +14,6 @@ export interface PeopleFilters {
   projectTypes: string[] // project type values
   projectRoles: string[] // free-form strings
   skills: string[] // skill IDs
-  sides: string[] // 'brothers' | 'sisters'
   yearsInYM?: {
     min?: number
     max?: number

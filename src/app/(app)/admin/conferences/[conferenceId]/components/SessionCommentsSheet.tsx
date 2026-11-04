@@ -73,7 +73,7 @@ export function SessionCommentsSheet({ session, timezone, onClose }: Props) {
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         ref={isMobile ? sheetRef : undefined}
-        side={side}
+
         className={cn(
           'flex flex-col p-0 gap-0',
           isMobile

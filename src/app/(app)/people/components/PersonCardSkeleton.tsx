@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function PersonCardSkeleton() {
   return (
-    <Card className="h-full">
+    <Card className="h-full rounded-2xl shadow-none">
       <div className="p-6">
         {/* Header: Avatar + Name + Location */}
         <div className="flex items-start gap-4 mb-4">
@@ -40,7 +40,7 @@ interface PersonCardGridSkeletonProps {
 
 export function PersonCardGridSkeleton({ count = 8 }: PersonCardGridSkeletonProps) {
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="h-full">
           <PersonCardSkeleton />

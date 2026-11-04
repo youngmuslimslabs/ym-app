@@ -60,11 +60,11 @@ export function PeopleFilters({
       {/* Filter Dropdown */}
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5">
+          <Button variant="outline" size="sm" className="h-11 gap-1.5 rounded-xl bg-card px-4 text-sm">
             <Filter className="h-3.5 w-3.5" />
             <span>Filter</span>
             {hasActiveFilters && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
                 {activeCategories.length}
                 <span className="sr-only"> active filters</span>
               </span>
@@ -131,7 +131,7 @@ export function PeopleFilters({
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+          className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
           onClick={onClearAll}
         >
           Clear all

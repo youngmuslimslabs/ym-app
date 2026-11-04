@@ -81,6 +81,112 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /**
+   * Young Muslims brand theme (Brandbook pp.30–32) — OPT-IN. Nothing in the
+   * app sets `data-theme="ym"` except /design-system, so every existing screen
+   * keeps the legacy tokens on `:root` above. Rolling the brand out to a
+   * screen is a deliberate, reviewable change (set the attribute on that
+   * screen's subtree), not a side effect of merging this file.
+   *
+   * Semantic values are OKLCH channels (Tailwind wraps them as
+   * `oklch(var(--token) / <alpha-value>)`); the literal hex each one comes
+   * from is noted inline, and exact brand colors live in tailwind.config.ts
+   * under `brand.*`. Sidebar tokens stay HSL channels (the sidebar's existing
+   * format) so the legacy and branded values share one Tailwind mapping.
+   */
+  [data-theme='ym'] {
+    /* Brand body face. Figtree's `--font-figtree` is defined by the layout
+       that loads it, on this same element; elsewhere `font-sans` is Geist. */
+    --font-sans-active: var(--font-figtree);
+    --background: 0.9861 0.0034 67.784;      /* #FCFAF8 Warm Snow */
+    --foreground: 0.2118 0.0275 283.806;     /* #171725 Deep Obsidian */
+    --card: 1 0 0;                           /* #FFFFFF — lifts off Warm Snow */
+    --card-foreground: 0.2118 0.0275 283.806;
+    --popover: 1 0 0;
+    --popover-foreground: 0.2118 0.0275 283.806;
+    --primary: 0.3865 0.1137 263.626;        /* #234080 Royal Blue */
+    --primary-foreground: 0.9861 0.0034 67.784;
+    --secondary: 0.955 0.004 67.784;         /* Warm Snow, stepped down */
+    --secondary-foreground: 0.2118 0.0275 283.806;
+    --muted: 0.955 0.004 67.784;
+    --muted-foreground: 0.51 0.018 283.806;  /* Obsidian hue; 5:1 on every surface, 4.5:1+ even on --muted */
+    --accent: 0.955 0.004 67.784;
+    --accent-foreground: 0.2118 0.0275 283.806;
+    --destructive: 0.577 0.245 27.325;       /* no brand error color — kept */
+    --destructive-foreground: 0.9861 0.0034 67.784;
+    --success: 0.5089 0.0839 155.775;        /* #397451 Jade Foliage */
+    --success-foreground: 0.9861 0.0034 67.784;
+    /* Warm Brass hue, darkened for legibility: the Brandbook (p.32) says Brass
+       is "for fills and large elements, never small type on white", and this
+       token is used as small badge text (text-warning on bg-warning/15), which
+       needs 4.5:1. True #D8AA45 is `brand-brass`. */
+    --warning: 0.50 0.128 83.979;
+    --warning-foreground: 0.9861 0.0034 67.784;
+    --border: 0.91 0.004 67.784;
+    --input: 0.91 0.004 67.784;
+    --ring: 0.3865 0.1137 263.626;
+    --chart-1: 0.3865 0.1137 263.626;        /* Royal Blue */
+    --chart-2: 0.5089 0.0839 155.775;        /* Jade Foliage */
+    --chart-3: 0.641 0.1309 251.419;         /* Sky Blue */
+    --chart-4: 0.7617 0.1283 83.979;         /* Warm Brass */
+    --chart-5: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
+    /* Sidebar — the branded dark surface, anchored on Deep Obsidian. HSL
+       channels, converted from the brand hex (#171725 etc.). */
+    --sidebar-background: 240 23.3% 11.8%;   /* #171725 Deep Obsidian */
+    --sidebar-foreground: 30 40% 98%;        /* #FCFAF8 Warm Snow */
+    --sidebar-primary: 220.8 45.4% 45.1%;    /* Royal Blue, lifted */
+    --sidebar-primary-foreground: 30 40% 98%;
+    --sidebar-accent: 239.3 17.4% 17.3%;     /* hover — Obsidian +1 step */
+    --sidebar-accent-foreground: 30 40% 98%;
+    --sidebar-border: 239.2 16.2% 20.4%;
+    --sidebar-ring: 210.6 65.3% 57.1%;       /* #4A90D9 Sky Blue */
+  }
+
+  /* Dark mode is not yet reachable — nothing adds `.dark` to <html> (see the
+     "Wire up dark mode toggle" item in docs/project-todos.md). Tokens are kept
+     brand-correct here so the toggle is a one-line change when it lands.
+     Foundation is Deep Obsidian; blues are lightened for contrast on dark. */
+  .dark[data-theme='ym'] {
+    --background: 0.2118 0.0275 283.806;     /* #171725 Deep Obsidian */
+    --foreground: 0.9861 0.0034 67.784;      /* #FCFAF8 Warm Snow */
+    --card: 0.26 0.026 283.806;              /* Obsidian, stepped up */
+    --card-foreground: 0.9861 0.0034 67.784;
+    --popover: 0.26 0.026 283.806;
+    --popover-foreground: 0.9861 0.0034 67.784;
+    --primary: 0.65 0.1137 263.626;          /* Royal Blue, lightened */
+    --primary-foreground: 0.2118 0.0275 283.806;
+    --secondary: 0.30 0.02 283.806;
+    --secondary-foreground: 0.9861 0.0034 67.784;
+    --muted: 0.30 0.02 283.806;
+    --muted-foreground: 0.72 0.015 283.806;
+    --accent: 0.30 0.02 283.806;
+    --accent-foreground: 0.9861 0.0034 67.784;
+    --destructive: 0.705 0.205 29.234;
+    --destructive-foreground: 0.9861 0.0034 67.784;
+    --success: 0.68 0.0839 155.775;          /* Jade, lightened */
+    --success-foreground: 0.2118 0.0275 283.806;
+    --warning: 0.7617 0.1283 83.979;         /* #D8AA45 Warm Brass */
+    --warning-foreground: 0.2118 0.0275 283.806;
+    --border: 0.30 0.02 283.806;
+    --input: 0.30 0.02 283.806;
+    --ring: 0.65 0.1137 263.626;
+    --chart-1: 0.641 0.1309 251.419;         /* Sky Blue */
+    --chart-2: 0.68 0.0839 155.775;          /* Jade, lightened */
+    --chart-3: 0.7413 0.0451 255.956;        /* Cool Slate */
+    --chart-4: 0.7617 0.1283 83.979;         /* Warm Brass */
+    --chart-5: 0.8618 0.1448 97.929;         /* Buttercup Yellow */
+    --sidebar-background: 240.3 29.3% 7.7%;    /* below page bg for depth */
+    --sidebar-foreground: 30 40% 98%;
+    --sidebar-primary: 220.2 55.5% 62.7%;
+    --sidebar-primary-foreground: 240 23.3% 11.8%;
+    --sidebar-accent: 239.4 18.9% 14.3%;
+    --sidebar-accent-foreground: 30 40% 98%;
+    --sidebar-border: 239.2 16.6% 18.3%;
+    --sidebar-ring: 210.6 65.3% 57.1%;
+  }
+
+
 }
 
 @layer base {
